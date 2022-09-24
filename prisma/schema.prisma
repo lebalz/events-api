@@ -1,0 +1,43 @@
+datasource db {
+    provider = "postgresql"
+    url      = env("DATABASE_URL")
+}
+
+generator client {
+    provider = "prisma-client-js"
+}
+
+model User {
+    id         String   @id @default(uuid())
+    email      String   @unique
+    shortName  String   @unique
+    firstName  String
+    lastName   String
+    department String
+    role       Role     @default(USER)
+    createdAt  DateTime @default(now())
+    updatedAt  DateTime @updatedAt
+    events     Event[]  @relation("events")
+
+    responsibleFor Event[] @relation("responsibleFor")
+}
+
+model Event {
+    id              String   @id @default(uuid())
+    author          User     @relation("events", fields: [authorId], references: [id])
+    authorId        String   @unique
+    startTime       DateTime
+    endTime         DateTime
+    location        String
+    description     String
+    descriptionLong String
+    categories      String[] @default([])
+    classes         String[] @default([])
+
+    responsible User[] @relation("responsibleFor")
+}
+
+enum Role {
+    USER
+    ADMIN
+}
