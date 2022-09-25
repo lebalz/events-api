@@ -25,7 +25,7 @@ model User {
 model Event {
     id              String   @id @default(uuid())
     author          User     @relation("events", fields: [authorId], references: [id])
-    authorId        String   @unique
+    authorId        String
     startTime       DateTime
     endTime         DateTime
     location        String
@@ -33,6 +33,9 @@ model Event {
     descriptionLong String
     categories      String[] @default([])
     classes         String[] @default([])
+    createdAt       DateTime @default(now())
+    updatedAt       DateTime @updatedAt @default(now())
+    state           EventState @default(DRAFT)
 
     responsible User[] @relation("responsibleFor")
 }
@@ -40,4 +43,11 @@ model Event {
 enum Role {
     USER
     ADMIN
+}
+
+enum EventState {
+    DRAFT
+    REVIEW
+    PUBLISHED
+    DELETED
 }
