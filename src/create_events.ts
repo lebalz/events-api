@@ -3,7 +3,7 @@ import readXlsxFile from 'read-excel-file/node';
 
 const prisma = new PrismaClient();
 async function main() {
-  const xlsx = await readXlsxFile('/Users/balz/Documents/git_code/lebalz/events-api/quartalsplan.xlsx');
+  const xlsx = await readXlsxFile('/Users/balz/Documents/git_code/lebalz/events-api/rahmenterminplan.xlsx');
   const del = await prisma.event.deleteMany({});
   console.log(del);
   const user = await prisma.user.findUnique({where: {shortName: 'hfr'}});
@@ -37,8 +37,8 @@ async function main() {
         description: e[2] as string || '',
         descriptionLong: e[13] as string || '',
         location: e[7] as string || '',
-        startTime: start,
-        endTime: ende || start,
+        start: start,
+        end: ende || start,
         state: EventState.PUBLISHED,
         categories: categories,
         author: {

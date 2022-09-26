@@ -23,18 +23,18 @@ model User {
 }
 
 model Event {
-    id              String   @id @default(uuid())
-    author          User     @relation("events", fields: [authorId], references: [id])
+    id              String     @id @default(uuid())
+    author          User       @relation("events", fields: [authorId], references: [id])
     authorId        String
-    startTime       DateTime
-    endTime         DateTime
+    start           DateTime
+    end             DateTime
     location        String
     description     String
     descriptionLong String
-    categories      String[] @default([])
-    classes         String[] @default([])
-    createdAt       DateTime @default(now())
-    updatedAt       DateTime @updatedAt @default(now())
+    categories      String[]   @default([])
+    classes         String[]   @default([])
+    createdAt       DateTime   @default(now())
+    updatedAt       DateTime   @default(now()) @updatedAt
     state           EventState @default(DRAFT)
 
     responsible User[] @relation("responsibleFor")
