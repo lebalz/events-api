@@ -1,14 +1,21 @@
+import { Departements, Event, Prisma } from '@prisma/client';
 import { strategyForEnvironment } from "./../auth/index";
-import express from "express";
+import express, { Request } from "express";
 import compression from "compression";
 import prisma from "./prisma";
 import path from "path";
 import cors from "cors";
 import morgan from "morgan";
 import passport from "passport";
-import { getMail } from "./helpers";
+import { findUser, getAuthInfo } from "./helpers";
+import data from "../data.json";
 
 const PORT = process.env.PORT || 3002;
+
+interface ErrorResponse {
+  message: string,
+  error: any
+}
 
 const app = express();
 app.use(compression(), express.json({ limit: "5mb" }));
@@ -23,8 +30,8 @@ app.use(express.json());
 
 // show some helpful logs in the commandline
 app.use(morgan("combined"));
-passport.use(strategyForEnvironment());
-app.use(passport.initialize());
+// passport.use(strategyForEnvironment());
+// app.use(passport.initialize());
 
 // Enable CORS (for local testing only -remove in production/deployment)
 app.use((req, res, next) => {
@@ -41,27 +48,30 @@ app.get("/api", (req, res) => {
   return res.status(200).send("Welcome to the EVENTES-API V1.0");
 });
 
+
 app.get(
   "/api/user",
-  passport.authenticate("oauth-bearer", { session: false }),
+  /*passport.authenticate("oauth-bearer", { session: false }),*/
   async (req, res) => {
-    const email = getMail(req.authInfo);
-    try {
-      const user = await prisma.user.findUnique({
-        where: { email: email },
-      });
-      res.json(user);
-    } catch (error) {
+    findUser(req.authInfo).then((user) => {
+      if (user) {
+        res.json(user);
+      } else {
+        res.status(500).json({
+          message: "No Credentials provided"
+        })
+      }
+    }).catch((err) => {
       res.status(500).json({
-        message: "Something went wrong",
-      });
-    }
+        message: "Something went wrong"
+      })
+    })
   }
 );
 
 app.get(
   "/api/users",
-  passport.authenticate("oauth-bearer", { session: false }),
+  /*passport.authenticate("oauth-bearer", { session: false }),*/
   async (req, res) => {
     try {
       const users = await prisma.user.findMany({});
@@ -76,7 +86,7 @@ app.get(
 
 app.get(
   "/api/events",
-  passport.authenticate("oauth-bearer", { session: false }),
+  /*passport.authenticate("oauth-bearer", { session: false }),*/
   async (req, res) => {
     try {
       const events = await prisma.event
@@ -98,9 +108,47 @@ app.get(
     } catch (error) {
       res.status(500).json({
         message: "Something went wrong",
-        error: JSON.stringify(error)
+        error: JSON.stringify(error),
       });
     }
+  }
+);
+
+app.post(
+  "/api/user/:id/events",
+  /*passport.authenticate("oauth-bearer", { session: false }),*/
+  async (req: Request<{id: string}, Event | ErrorResponse, {start: string, end: string, allDay: boolean, location: string, description: string, descriptionLong: string, departemens: Departements[], classes: string[], onlyKLP: boolean}>, res) => {
+    const { start, end, allDay, location, description, descriptionLong, classes, departemens, onlyKLP } = req.body;
+    try {
+      const event = await prisma.event.create({
+          data: {
+            start: start,
+            end: end,
+            allDay: allDay,
+            description: description,
+            descriptionLong: descriptionLong,
+            location: location,
+            state: 'DRAFT',
+            author: {
+              connect: {
+                id: req.params.id
+              }
+            }
+        }
+      });
+      res.status(200).json(event);
+    } catch (e) {
+      res.status(500).json({message: 'Could not create Event', error: JSON.stringify(e)});
+    }
+
+  }
+);
+
+app.get(
+  "/api/untis",
+  /*passport.authenticate("oauth-bearer", { session: false }),*/
+  async (req, res) => {
+    res.json(data);
   }
 );
 

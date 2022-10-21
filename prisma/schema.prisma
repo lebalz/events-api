@@ -10,10 +10,10 @@ generator client {
 model User {
     id         String   @id @default(uuid())
     email      String   @unique
-    shortName  String   @unique
+    untisId    Int?     @unique
+    shortName  String?  @unique
     firstName  String
     lastName   String
-    department String
     role       Role     @default(USER)
     createdAt  DateTime @default(now())
     updatedAt  DateTime @updatedAt
@@ -23,19 +23,21 @@ model User {
 }
 
 model Event {
-    id              String     @id @default(uuid())
-    author          User       @relation("events", fields: [authorId], references: [id])
+    id              String         @id @default(uuid())
+    author          User           @relation("events", fields: [authorId], references: [id])
     authorId        String
     start           DateTime
     end             DateTime
+    allDay          Boolean
     location        String
     description     String
     descriptionLong String
-    categories      String[]   @default([])
-    classes         String[]   @default([])
-    createdAt       DateTime   @default(now())
-    updatedAt       DateTime   @default(now()) @updatedAt
-    state           EventState @default(DRAFT)
+    departements    Departements[] @default([])
+    classes         String[]       @default([])
+    createdAt       DateTime       @default(now())
+    updatedAt       DateTime       @default(now()) @updatedAt
+    state           EventState     @default(DRAFT)
+    onlyKLP         Boolean        @default(false)
 
     responsible User[] @relation("responsibleFor")
 }
@@ -43,6 +45,12 @@ model Event {
 enum Role {
     USER
     ADMIN
+}
+
+enum Departements {
+    GYM
+    FMS
+    WMS
 }
 
 enum EventState {

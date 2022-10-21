@@ -1,4 +1,4 @@
-import { EventState, PrismaClient, Role } from "@prisma/client";
+import { Departements, EventState, PrismaClient, Role } from "@prisma/client";
 import readXlsxFile from 'read-excel-file/node';
 
 const prisma = new PrismaClient();
@@ -10,19 +10,27 @@ async function main() {
   xlsx.slice(1).map(async (e) => {
     const start = e[3] as any as Date;
     const startTime = e[4] as String;
+    let allDay = !startTime;
     if (startTime) {
       const [hours, minutes] = startTime.split(':').map((t) => Number.parseInt(t, 10));
       start.setUTCHours(hours);
       start.setUTCMinutes(minutes);
     }
-    const ende = e[5] as any as Date;
+    let ende = e[5] as any as Date;
     const endTime = e[6] as String;
-    if (endTime) {
+    if (allDay) {
+      if (!ende) {
+        ende = new Date(start.getTime());
+      }
+      ende.setUTCHours(23);
+      ende.setUTCMinutes(59);
+      ende.setUTCSeconds(59);
+    } else if (endTime) {
       const [hours, minutes] = endTime.split(':').map((t) => Number.parseInt(t, 10))
       ende.setUTCHours(hours);
       ende.setUTCMinutes(minutes);
     }
-    const categories: string[] = []
+    const categories: Departements[] = []
     if (e[9]) {
       categories.push('GYM');
     }    
@@ -35,12 +43,13 @@ async function main() {
     const newRecord = await prisma.event.create({
       data: {
         description: e[2] as string || '',
-        descriptionLong: e[13] as string || '',
+        descriptionLong: e[12] as string || '',
         location: e[7] as string || '',
         start: start,
         end: ende || start,
+        allDay: allDay,
         state: EventState.PUBLISHED,
-        categories: categories,
+        departements: categories,
         author: {
           connect: { id: user!.id }
         }
