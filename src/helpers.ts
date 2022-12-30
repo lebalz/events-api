@@ -14,7 +14,7 @@ export const getAuthInfo = (authInfo?: Express.AuthInfo) => {
   const firstName = nameParts.pop()!;
   const lastName = nameParts.join(" ");
   return {
-    email: preferred_username?.preferred_username.toLowerCase(),
+    email: preferred_username?.toLowerCase(),
     firstName: firstName,
     lastName: lastName,
     oid: oid

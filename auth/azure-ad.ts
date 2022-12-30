@@ -1,4 +1,6 @@
+import prisma from '../src/prisma';
 import { BearerStrategy, IBearerStrategyOptionWithRequest, VerifyBearerFunction } from 'passport-azure-ad';
+import { getAuthInfo, userProps } from '../src/helpers';
 // Set the Azure AD B2C options
 const auth = {
     tenantID: process.env.TENANT_ID,
@@ -24,9 +26,19 @@ const options: IBearerStrategyOptionWithRequest = {
     scope: auth.scope,
 };
 
-const BearerVerify: VerifyBearerFunction = (token, done) => {
+const BearerVerify: VerifyBearerFunction = async (token, done) => {
+    const { oid } = getAuthInfo(token);
+    // @link https://medium.com/@prashantramnyc/node-js-with-passport-authentication-simplified-76ca65ee91e5
+    const user = await prisma.user.upsert({
+        where: { id: oid },
+        update: userProps(token, false),
+        create: userProps(token, true)
+    }).catch((err) => {
+        console.log(err);
+        return false;
+    });
     // Send user info using the second argument
-    done(null, {}, token);
+    done(null, user, token);
 };
 
 export const getStrategy = () => {
