@@ -10,9 +10,21 @@ postgres=# ALTER ROLE events_api CREATEDB;
 postgres=# \du
 postgres=# \q
 
-psql -d postgres -U events_api
+psql -d postgres -h localhost -U events_api
 
 postgres=# CREATE DATABASE events_api;
 postgres=# \list
 postgres=# \c events_api
 ```
+### Setup DBPrisma JS
+
+```bash
+yarn run prisma migrate dev
+```
+
+## Start
+
+```bash
+yarn run dev
+```
+

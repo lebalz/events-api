@@ -5,3 +5,8 @@
 data.json
 teachers.json
 *.xlsx
+events-untis*.json
+teachers-untis*.json
+yarn-error.log
+.vscode
+/dist
