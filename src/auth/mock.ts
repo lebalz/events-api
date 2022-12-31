@@ -1,3 +1,4 @@
+import { User } from '@prisma/client';
 import { Request } from 'express';
 import { ParamsDictionary } from 'express-serve-static-core';
 import { Strategy, StrategyCreated, StrategyCreatedStatic } from 'passport';
@@ -20,7 +21,18 @@ class MockStrat extends Strategy {
         if (!auth.email) {
             return this.fail('Unauthorized');
         }
-        return this.success({ preferred_username: auth.email }, { preferred_username: auth.email });
+        const user: User = {
+            id: 'db82e1c1-638d-434b-a5f3-5fa3e1cc08ce',
+            email: auth.email,
+            firstName: '',
+            lastName: '',
+            role: 'USER',
+            shortName: '',
+            untisId: 0,
+            updatedAt: new Date('2022-12-13'),
+            createdAt: new Date('2022-12-13'),
+        }
+        return this.success(user, { preferred_username: auth.email });
     }
 }
 
