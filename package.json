@@ -28,6 +28,7 @@
     "passport": "^0.6.0",
     "passport-azure-ad": "^4.3.4",
     "path": "^0.12.7",
+    "socket.io": "^4.5.4",
     "webuntis": "2.0.2"
   },
   "devDependencies": {
@@ -41,5 +42,9 @@
     "read-excel-file": "^5.5.0",
     "ts-node": "^10.9.1",
     "typescript": "^4.8.3"
+  },
+  "optionalDependencies": {
+    "bufferutil": "^4.0.7",
+    "utf-8-validate": "^5.0.10"
   }
 }

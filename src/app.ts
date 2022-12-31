@@ -1,7 +1,7 @@
 import { Departements, Event, Prisma, User } from '@prisma/client';
 import { strategyForEnvironment } from "./../auth/index";
-import express, { Request } from "express";
-import session from 'express-session';
+import express, { Request, Response, NextFunction } from "express";
+import session, { Session } from 'express-session';
 import compression from "compression";
 import prisma from "./prisma";
 import path from "path";
@@ -10,6 +10,16 @@ import morgan from "morgan";
 import passport from "passport";
 import { findUser, getAuthInfo } from "./helpers";
 import data from "../data.json";
+import { Server } from "socket.io";
+import http from 'http';
+
+declare module 'http' {
+  interface IncomingMessage {
+    session: Session & {
+      authenticated: boolean
+    }
+  }
+}
 
 /**
  * Architecture samples
@@ -25,6 +35,8 @@ interface ErrorResponse {
 }
 
 const app = express();
+const server = http.createServer(app);
+
 app.use(compression(), express.json({ limit: "5mb" }));
 // Serve the static files from the React app
 app.use(express.static(path.join(__dirname, "client/build")));
@@ -41,11 +53,13 @@ app.use(express.json());
 // show some helpful logs in the commandline
 app.use(morgan("combined"));
 
-app.use(session({
+const sessionMiddleware = session({
   secret: process.env.SESSION_SECRET || 'secret',
   resave: false,
-  saveUninitialized: true
-}))
+  saveUninitialized: false /** TODO: check if false is ok */
+});
+
+app.use(sessionMiddleware)
 
 
 app.use(passport.initialize());
@@ -70,19 +84,22 @@ app.get("/api", (req, res) => {
   return res.status(200).send("Welcome to the EVENTES-API V1.0");
 });
 
+app.get('/api/checklogin',
+  passport.authenticate("oauth-bearer", { session: true }),
+  async (req, res) => {
+    res.status(req.user ? 200 : 401).send('OK')
+  }
+);
+
 
 app.get(
   "/api/user",
   passport.authenticate("oauth-bearer", { session: true }),
   async (req, res, next) => {
-    findUser(req.authInfo).then((user) => {
-      if (user) {
-        return res.json(user);
-      }
-      throw new Error('No credentials provided');
-    }).catch((err) => {
-      next(err)
-    })
+    if (req.user) {
+      return res.json(req.user);
+    }
+    res.status(401).send('Not Authorized');
   }
 );
 
@@ -163,4 +180,45 @@ app.get(
   }
 );
 
-app.listen(PORT, () => console.log(`Server is running on port ${PORT}`));
+
+const io = new Server(server, {
+  cors: {
+    origin: process.env.CORS_ORIGIN || true,
+    credentials: true,
+    methods: ["GET", "POST"]
+  }
+});
+
+
+// convert a connect middleware to a Socket.IO middleware
+io.use((socket, next) => {
+  sessionMiddleware(socket.request as Request, {} as Response, next as NextFunction);
+});
+io.use((socket, next) => {
+  passport.initialize()(socket.request as Request, {} as Response, next as NextFunction)
+});
+io.use((socket, next) => {
+  passport.session()(socket.request as Request, {} as Response, next as NextFunction)
+});
+// only allow authenticated users
+io.use((socket, next) => {
+  if ((socket.request as any).user) {
+    next();
+  } else {
+    next(new Error("unauthorized"));
+  }
+});
+
+io.on("connection", (socket) => {
+  console.log('Socket.io', (socket.request as any).user);
+  socket.on('echo', (msg) => {
+    socket.emit('echo', `Echo: ${msg}`);
+  })
+});
+
+
+// app.listen(PORT, () => console.log(`Server is running on port ${PORT}`));
+
+server.listen(PORT || 3002, () => {
+  console.log(`application is running at: http://localhost:${PORT}`);
+});
