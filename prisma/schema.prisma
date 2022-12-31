@@ -43,6 +43,7 @@ model Event {
 }
 
 enum Role {
+    STUDENT
     USER
     ADMIN
 }

@@ -1,5 +1,5 @@
-import { Departements, Event, Prisma, User } from '@prisma/client';
-import { strategyForEnvironment } from "./../auth/index";
+import { User } from '@prisma/client';
+import { strategyForEnvironment } from "./auth/index";
 import express, { Request, Response, NextFunction } from "express";
 import session, { Session } from 'express-session';
 import compression from "compression";
@@ -8,11 +8,12 @@ import path from "path";
 import cors from "cors";
 import morgan from "morgan";
 import passport from "passport";
-import { findUser, getAuthInfo } from "./helpers";
-import data from "../data.json";
 import { Server } from "socket.io";
 import http from 'http';
-
+import router from './routes/router';
+import routeGuard from './auth/guard';
+import authConfig from './authConfig';
+import EventRouter from './routes/events';
 declare module 'http' {
   interface IncomingMessage {
     session: Session & {
@@ -68,8 +69,8 @@ app.use(passport.session());
 passport.use(strategyForEnvironment());
 
 passport.serializeUser((user, done) => {
-  console.log('ser', (user as User).id);
-  done(null, (user as User).id)
+  console.log('ser', user.id);
+  done(null, user.id)
 })
 
 
@@ -80,106 +81,16 @@ passport.deserializeUser(async (id, done) => {
 });
 
 // Public Endpoints
-app.get("/api", (req, res) => {
+app.get("/api/v1", (req, res) => {
   return res.status(200).send("Welcome to the EVENTES-API V1.0");
 });
 
-app.get('/api/checklogin',
+app.get('/api/v1/checklogin',
   passport.authenticate("oauth-bearer", { session: true }),
   async (req, res) => {
     res.status(req.user ? 200 : 401).send('OK')
   }
 );
-
-
-app.get(
-  "/api/user",
-  passport.authenticate("oauth-bearer", { session: true }),
-  async (req, res, next) => {
-    if (req.user) {
-      return res.json(req.user);
-    }
-    res.status(401).send('Not Authorized');
-  }
-);
-
-app.get(
-  "/api/users",
-  passport.authenticate("oauth-bearer", { session: true }),
-  async (req, res, next) => {
-    try {
-      const users = await prisma.user.findMany({});
-      res.json(users);
-    } catch (error) {
-      next(error)
-    }
-  }
-);
-
-app.get(
-  "/api/events",
-  passport.authenticate("oauth-bearer", { session: true }),
-  async (req, res, next) => {
-    try {
-      const events = await prisma.event
-        .findMany({
-          include: { responsible: true, author: true },
-        })
-        .then((events) => {
-          return events.map((event) => {
-            return {
-              ...event,
-              author: undefined,
-              authorId: event.author.id,
-              responsible: undefined,
-              responsibleIds: event.responsible.map((r) => r.id),
-            };
-          });
-        });
-      res.json(events);
-    } catch (error) {
-      next(error);
-    }
-  }
-);
-
-app.post(
-  "/api/user/:id/events",
-  passport.authenticate("oauth-bearer", { session: true }),
-  async (req: Request<{ id: string }, Event | ErrorResponse, { start: string, end: string, allDay: boolean, location: string, description: string, descriptionLong: string, departemens: Departements[], classes: string[], onlyKLP: boolean }>, res, next) => {
-    const { start, end, allDay, location, description, descriptionLong, classes, departemens, onlyKLP } = req.body;
-    try {
-      const event = await prisma.event.create({
-        data: {
-          start: start,
-          end: end,
-          allDay: allDay,
-          description: description,
-          descriptionLong: descriptionLong,
-          location: location,
-          state: 'DRAFT',
-          author: {
-            connect: {
-              id: req.params.id
-            }
-          }
-        }
-      });
-      res.status(200).json(event);
-    } catch (e) {
-      next(e)
-    }
-  }
-);
-
-app.get(
-  "/api/untis",
-  passport.authenticate("oauth-bearer", { session: true }),
-  async (req, res) => {
-    res.json(data);
-  }
-);
-
 
 const io = new Server(server, {
   cors: {
@@ -188,7 +99,6 @@ const io = new Server(server, {
     methods: ["GET", "POST"]
   }
 });
-
 
 // convert a connect middleware to a Socket.IO middleware
 io.use((socket, next) => {
@@ -200,6 +110,9 @@ io.use((socket, next) => {
 io.use((socket, next) => {
   passport.session()(socket.request as Request, {} as Response, next as NextFunction)
 });
+
+EventRouter(io);
+
 // only allow authenticated users
 io.use((socket, next) => {
   if ((socket.request as any).user) {
@@ -209,12 +122,38 @@ io.use((socket, next) => {
   }
 });
 
-io.on("connection", (socket) => {
-  console.log('Socket.io', (socket.request as any).user);
-  socket.on('echo', (msg) => {
-    socket.emit('echo', `Echo: ${msg}`);
-  })
+// Make io accessible to our router
+app.use((req: Request,res,next) => {
+  req.io = io;
+  next();
 });
+
+
+app.use('/api/v1', (req, res, next) => {
+  passport.authenticate('oauth-bearer', { session: true }, (err, user, info) => {
+    if (err) {
+      /**
+       * An error occurred during authorization. Send a Not Autohrized 
+       * status code.
+       */
+      return res.status(401).json({ error: err.message });
+    }
+
+    if (!user) {
+      // If no user object found, send a 401 response.
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+    req.user = user;
+    if (info) {
+      // access token payload will be available in req.authInfo downstream
+      req.authInfo = info;
+      return next();
+    }
+  })(req, res, next);
+},
+  routeGuard(authConfig.accessMatrix), // route guard middleware
+  router // the router with all the routes
+);
 
 
 // app.listen(PORT, () => console.log(`Server is running on port ${PORT}`));

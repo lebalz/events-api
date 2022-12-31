@@ -1,24 +1,25 @@
-import prisma from '../src/prisma';
+import prisma from '../prisma';
 import { BearerStrategy, IBearerStrategyOptionWithRequest, VerifyBearerFunction } from 'passport-azure-ad';
-import { getAuthInfo, userProps } from '../src/helpers';
+import { getAuthInfo, userProps } from '../helpers';
+import authConfig from '../authConfig';
 // Set the Azure AD B2C options
 const auth = {
-    tenantID: process.env.TENANT_ID,
-    clientID: process.env.CLIENT_ID,
-    audience: process.env.CLIENT_ID,
-    authority: 'login.microsoftonline.com',
-    version: 'v2.0',
-    discovery: '.well-known/openid-configuration',
+    tenantID: authConfig.credentials.tenantID,
+    clientID: authConfig.credentials.clientID,
+    audience: authConfig.credentials.clientID,
+    authority: authConfig.metadata.authority,
+    version: authConfig.metadata.version,
+    discovery: authConfig.metadata.discovery,
     scope: ['access_as_user'],
-    validateIssuer: true,
-    passReqToCallback: false,
-    loggingLevel: 'info',
+    validateIssuer: authConfig.settings.validateIssuer,
+    passReqToCallback: authConfig.settings.passReqToCallback,
+    loggingLevel: authConfig.settings.loggingLevel,
 };
 
 const options: IBearerStrategyOptionWithRequest = {
     identityMetadata: `https://${auth.authority}/${auth.tenantID}/${auth.version}/${auth.discovery}`,
     issuer: `https://${auth.authority}/${auth.tenantID}/${auth.version}`,
-    clientID: auth.clientID || '',
+    clientID: auth.clientID,
     audience: auth.audience,
     validateIssuer: auth.validateIssuer,
     passReqToCallback: auth.passReqToCallback,
