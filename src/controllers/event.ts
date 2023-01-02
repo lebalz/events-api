@@ -40,14 +40,15 @@ interface CreateEvent {
 export const create = async (req: Request<{}, CreateEvent>, res: Response, next: NextFunction) => {
     const { start, end, allDay, location, description, descriptionLong, classes, departemens, onlyKLP } = req.body;
     try {
+      const d = new Date();
       const event = await prisma.event.create({
         data: {
           start: start,
           end: end,
-          allDay: allDay,
-          description: description,
-          descriptionLong: descriptionLong,
-          location: location,
+          allDay: allDay || false,
+          description: description || '',
+          descriptionLong: descriptionLong || '',
+          location: location || '',
           state: 'DRAFT',
           author: {
             connect: {
