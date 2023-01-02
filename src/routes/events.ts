@@ -1,12 +1,19 @@
+import { User } from "@prisma/client";
 import { Server } from "socket.io";
 
 const EventRouter = (io: Server) => {
     io.on("connection", (socket) => {
-        console.log('Socket.io', (socket.request as any).user);
+        const { user } = (socket.request as { user?: User });
+        console.log('Socket.io', user);
+        if (!user) {
+            return socket.disconnect();
+        }
+        socket.join(user.id);
         socket.on('echo', (msg) => {
-          socket.emit('echo', `Echo: ${msg}`);
+            socket.request
+            socket.emit('echo', `Echo: ${msg}`);
         })
-      });
+    });
 }
 
 export default EventRouter;
