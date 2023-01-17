@@ -10,36 +10,38 @@ generator client {
 model User {
     id         String   @id @default(uuid())
     email      String   @unique
-    untisId    Int?     @unique
-    shortName  String?  @unique
-    firstName  String
-    lastName   String
+    untisId    Int?     @unique @map("untis_id")
+    shortName  String?  @unique @map("short_name")
+    firstName  String   @map("first_name")
+    lastName   String   @map("last_name")
     role       Role     @default(USER)
-    createdAt  DateTime @default(now())
-    updatedAt  DateTime @updatedAt
+    createdAt  DateTime @default(now()) @map("created_at")
+    updatedAt  DateTime @updatedAt @map("updated_at")
     events     Event[]  @relation("events")
 
-    responsibleFor Event[] @relation("responsibleFor")
+    responsibleFor Event[] @relation("responsible_for")
+    @@map("users")
 }
 
 model Event {
     id              String         @id @default(uuid())
     author          User           @relation("events", fields: [authorId], references: [id])
-    authorId        String
+    authorId        String   @map("author_id")
     start           DateTime
     end             DateTime
-    allDay          Boolean
+    allDay          Boolean @map("all_day")
     location        String
     description     String
-    descriptionLong String
+    descriptionLong String   @map("description_long")
     departements    Departements[] @default([])
     classes         String[]       @default([])
-    createdAt       DateTime       @default(now())
-    updatedAt       DateTime       @default(now()) @updatedAt
+    createdAt       DateTime       @default(now()) @map("created_at")
+    updatedAt       DateTime       @updatedAt @map("updated_at")
     state           EventState     @default(DRAFT)
-    onlyKLP         Boolean        @default(false)
+    onlyKLP         Boolean        @default(false)  @map("only_klp")
 
-    responsible User[] @relation("responsibleFor")
+    responsible User[] @relation("responsible_for")
+    @@map("events")
 }
 
 enum Role {

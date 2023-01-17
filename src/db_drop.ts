@@ -5,9 +5,10 @@ import Teachers from "../teachers.json";
 const prisma = new PrismaClient();
 
 async function main() {
-  console.log('hello')
   const del = await prisma.event.deleteMany({});
   console.log(del);
+  const delUsr = await prisma.user.deleteMany({});
+  console.log(delUsr);
 }
 
 main()

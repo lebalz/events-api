@@ -12,7 +12,7 @@ import { Server } from "socket.io";
 import http from 'http';
 import router from './routes/router';
 import routeGuard from './auth/guard';
-import authConfig from './authConfig';
+import authConfig from './routes/authConfig';
 import EventRouter from './routes/events';
 declare module 'http' {
   interface IncomingMessage {

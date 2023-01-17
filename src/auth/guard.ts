@@ -1,6 +1,6 @@
 import { Role, User } from "@prisma/client";
 import express, { Request, Response, NextFunction } from "express";
-import { AccessMatrix } from "../authConfig";
+import { AccessMatrix } from "../routes/authConfig";
 
 const routeGuard = (accessMatrix: AccessMatrix) => {
     return (req: Request, res: Response, next: NextFunction) => {
