@@ -1,23 +1,23 @@
-import { Departements, Event, User } from "@prisma/client";
+import { Departements, User } from "@prisma/client";
 import { NextFunction, Request, RequestHandler, Response } from "express";
 import prisma from "../prisma";
+import { IoEvent, NewRecord } from "../routes/IoEventTypes";
 
-export const events: RequestHandler = async (req, res, next) => {
+export const event: RequestHandler = async (req, res, next) => {
     try {
         const events = await prisma.event
-          .findMany({
+          .findUnique({
+            where: { id: req.params.id },
             include: { responsible: true, author: true },
           })
-          .then((events) => {
-            return events.map((event) => {
-              return {
-                ...event,
+          .then((event) => {
+            return {
+              ...event,
                 author: undefined,
-                authorId: event.author.id,
+                authorId: event?.author.id,
                 responsible: undefined,
-                responsibleIds: event.responsible.map((r) => r.id),
-              };
-            });
+                responsibleIds: event?.responsible.map((r) => r.id),
+            };
           });
         res.json(events);
       } catch (error) {
@@ -25,7 +25,34 @@ export const events: RequestHandler = async (req, res, next) => {
       }
 }
 
+
+
+export const events: RequestHandler = async (req, res, next) => {
+  try {
+      const events = await prisma.event
+        .findMany({
+          include: { responsible: true, author: true },
+        })
+        .then((events) => {
+          return events.map((event) => {
+            return {
+              ...event,
+              author: undefined,
+              authorId: event.author.id,
+              responsible: undefined,
+              responsibleIds: event.responsible.map((r) => r.id),
+            };
+          });
+        });
+      res.json(events);
+    } catch (error) {
+      next(error);
+    }
+}
+
+
 interface CreateEvent { 
+    id: string,
     start: string, 
     end: string, 
     allDay: boolean, 
@@ -38,11 +65,13 @@ interface CreateEvent {
 }
 
 export const create = async (req: Request<{}, CreateEvent>, res: Response, next: NextFunction) => {
-    const { start, end, allDay, location, description, descriptionLong, classes, departemens, onlyKLP } = req.body;
+    const { start, end, allDay, location, description, descriptionLong, id, classes, departemens, onlyKLP } = req.body;
     try {
+      const uid = req.user!.id;
       const d = new Date();
       const event = await prisma.event.create({
         data: {
+          id: id,
           start: start,
           end: end,
           allDay: allDay || false,
@@ -52,11 +81,20 @@ export const create = async (req: Request<{}, CreateEvent>, res: Response, next:
           state: 'DRAFT',
           author: {
             connect: {
-              id: req.user?.id
+              id: uid
             }
           }
         }
       });
+
+      /* Notify connected clients */
+      const payload: NewRecord = {
+        record: 'EVENT',
+        state: 'DRAFT',
+        id: event.id
+      }
+
+      req.io?.to(uid).emit(IoEvent.NEW_RECORD, JSON.stringify(payload))
       res.status(201).json(event);
     } catch (e) {
       next(e)

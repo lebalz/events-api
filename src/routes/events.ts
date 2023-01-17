@@ -14,6 +14,19 @@ const EventRouter = (io: Server) => {
             socket.emit('echo', `Echo: ${msg}`);
         })
     });
+
+    io.on('disconnect', (socket) => {
+        const { user } = (socket.request as { user?: User });
+        console.log('Socket.io disconnect', socket);
+    });
+    io.on('error', (socket) => {
+        console.log('Socket.io error', socket);
+    })
+
+    io.on('reconnect', (socket) => {
+        const { user } = (socket.request as { user?: User });
+        console.log('Socket.io reconnect', socket);
+    })
 }
 
 export default EventRouter;
