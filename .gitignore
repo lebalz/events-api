@@ -10,3 +10,4 @@ teachers-untis*.json
 yarn-error.log
 .vscode
 /dist
+dokku.sh

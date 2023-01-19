@@ -14,13 +14,7 @@ import router from './routes/router';
 import routeGuard from './auth/guard';
 import authConfig from './routes/authConfig';
 import EventRouter from './routes/events';
-declare module 'http' {
-  interface IncomingMessage {
-    session: Session & {
-      authenticated: boolean
-    }
-  }
-}
+
 
 /**
  * Architecture samples
