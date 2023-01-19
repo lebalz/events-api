@@ -17,7 +17,7 @@ export interface Teacher {
 }
 
 export const teachers = (): Teacher[] => {
-    return data.teachers;
+    return data.teachers || [];
 }
 
 export const findTeacher = (firstName: string, lastName: string) => {
