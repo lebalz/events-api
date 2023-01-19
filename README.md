@@ -28,3 +28,28 @@ yarn run prisma migrate dev
 yarn run dev
 ```
 
+## Dokku
+
+
+
+```sh
+
+dokku apps:create events-api
+dokku domains:add events-api $DOMAIN
+dokku postgres:create events-api
+dokku postgres:link events-api events-api
+dokku config:set events-api CLIENT_ID="XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX"
+dokku config:set events-api TENANT_ID="XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX"
+dokku config:set --no-restart events-api DOKKU_LETSENCRYPT_EMAIL="foo@bar.ch"
+
+dokku nginx:set events-api client-max-body-size 5mb
+
+# deploy the app
+
+dokku letsencrypt:enable events-api
+```
+
+```sh
+git remote add dokku dokku@<your-ip>:events-api
+git push -u dokku
+```
