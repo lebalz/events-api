@@ -41,6 +41,13 @@ dokku postgres:link events-api events-api
 dokku config:set events-api CLIENT_ID="XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX"
 dokku config:set events-api TENANT_ID="XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX"
 dokku config:set --no-restart events-api DOKKU_LETSENCRYPT_EMAIL="foo@bar.ch"
+dokku config:set hfr-events-api CORS_ORIGIN="allowed.domain.ch"
+dokku config:set hfr-events-api SESSION_SECRET=""
+dokku config:set hfr-events-api UNTIS_SCHOOL="gym_Schoolname"
+dokku config:set hfr-events-api UNTIS_USER="xyz"
+dokku config:set hfr-events-api UNTIS_SECRET="XYZXZXYZ"
+dokku config:set hfr-events-api UNTIS_BASE_URL="xyz.webuntis.com"
+dokku config:set hfr-events-api SESSION_SECRET="asdfg"
 
 dokku nginx:set events-api client-max-body-size 5mb
 

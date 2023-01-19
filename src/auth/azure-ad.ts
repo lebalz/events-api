@@ -24,6 +24,7 @@ const options: IBearerStrategyOptionWithRequest = {
     validateIssuer: auth.validateIssuer,
     passReqToCallback: auth.passReqToCallback,
     loggingLevel: auth.loggingLevel as 'info' | 'warn' | 'error' | undefined,
+    loggingNoPII: false,
     scope: auth.scope,
 };
 
