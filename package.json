@@ -6,13 +6,13 @@
   "author": "Balthasar Hofer",
   "license": "MIT",
   "scripts": {
-    "build": "tsc",
+    "build": "tsc --build ./tsconfig.json",
     "start": "node -r dotenv/config ./dist/src/app.js",
     "dev": "ts-node -r dotenv/config ./src/app.ts",
-    "db_users": "ts-node -r dotenv/config ./src/create_users.ts",
-    "db_events": "ts-node -r dotenv/config ./src/create_events.ts",
-    "db_drop": "ts-node -r dotenv/config ./src/db_drop.ts",
-    "untis": "ts-node -r dotenv/config ./src/fetch_untis.ts"
+    "db_users": "ts-node -r dotenv/config ./bin/create_users.ts",
+    "db_events": "ts-node -r dotenv/config ./bin/create_events.ts",
+    "db_drop": "ts-node -r dotenv/config ./bin/db_drop.ts",
+    "untis": "ts-node -r dotenv/config ./bin/fetch_untis.ts"
   },
   "dependencies": {
     "@azure/msal-node": "^1.14.0",
