@@ -7,7 +7,7 @@
   "license": "MIT",
   "scripts": {
     "build": "tsc",
-    "start": "node -r dotenv/config ./out/app.js",
+    "start": "node -r dotenv/config ./dist/src/app.js",
     "dev": "ts-node -r dotenv/config ./src/app.ts",
     "db_users": "ts-node -r dotenv/config ./src/create_users.ts",
     "db_events": "ts-node -r dotenv/config ./src/create_events.ts",
