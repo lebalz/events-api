@@ -1,34 +1,32 @@
-let data = require('../data.json');
-const teacherCache = new Map<string, Teacher>();
+import { UntisTeacher } from "@prisma/client";
+import prisma from "./prisma";
+
+const teacherCache = new Map<string, UntisTeacher>();
 
 export const reload = () => {
     teacherCache.clear();
-    data = require('../data.json');
 }
-
-export interface Teacher {
-    id: number;
-    name: string;
-    foreName: string;
-    longName: string;
-    title: string;
-    active: boolean;
-    dids: { id: number }[];
-}
-
-export const teachers = (): Teacher[] => {
-    return data.teachers || [];
-}
-
-export const findTeacher = (firstName: string, lastName: string) => {
-    const longName = `${lastName} ${firstName}`;
-    if (teacherCache.has(longName)) {
-        return teacherCache.get(longName);
+export const findTeacher = async (id: string, firstName: string, lastName: string) => {
+    if (teacherCache.has(id)) {
+        return teacherCache.get(id);
     }
-    const teacher = teachers().find((t) => t.longName === longName);
+    const teacher = await prisma.untisTeacher.findFirst(
+        {where: {
+            AND: [
+                {longName: {
+                    contains: firstName,
+                    mode: 'insensitive'
+                }},
+                {longName: {
+                    contains: lastName,
+                    mode: 'insensitive'
+                }}
+            ]
+        }}
+    )
     if (teacher) {
-        teacherCache.set(longName, teacher);
+        teacherCache.set(id, teacher);
     }
-    return teacher;
+    return teacher || undefined;
 }
 

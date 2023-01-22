@@ -35,7 +35,8 @@ const BearerVerify: VerifyBearerFunction = async (token, done) => {
     const user = await prisma.user.upsert({
         where: { id: oid },
         update: userProps(token, false),
-        create: userProps(token, true)
+        create: userProps(token, true),
+        include: { untis: true }
     }).catch((err) => {
         console.log(err);
         return false;

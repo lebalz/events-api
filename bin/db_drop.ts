@@ -1,6 +1,5 @@
 
 import { PrismaClient, Role } from "@prisma/client";
-import Teachers from "../teachers.json";
 
 const prisma = new PrismaClient();
 

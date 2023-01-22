@@ -27,16 +27,13 @@ export const userProps = (authInfo?: Express.AuthInfo, includeId?: boolean): Pri
         id: includeId ? oid : undefined,
         email: email,
         firstName: firstName,
-        lastName: lastName,
-        untisId: findTeacher(firstName, lastName)?.id,
-        shortName: findTeacher(firstName, lastName)?.name
+        lastName: lastName
     }
 
 }
 
 export const findUser = (authInfo?: Express.AuthInfo) => {
     const {oid } = getAuthInfo(authInfo);
-    // console.log(oid);
     return prisma.user.upsert({
         where: {id: oid},
         update: userProps(authInfo, false),

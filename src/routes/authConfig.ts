@@ -94,6 +94,10 @@ const authConfig: Config = {
                 {
                     methods: ['GET'],
                     roles: [Role.ADMIN, Role.USER, Role.STUDENT],
+                },
+                {
+                    methods: ['GET', 'POST'],
+                    roles: [Role.ADMIN],
                 }
             ]
         }

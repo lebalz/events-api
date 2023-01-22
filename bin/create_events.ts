@@ -21,7 +21,7 @@ async function main() {
     const xlsx = await readXlsxFile(`./${fname}`);
     const del = await prisma.event.deleteMany({});
     console.log(del);
-    const user = await prisma.user.findUnique({where: {shortName: 'cad'}});
+    const user = await prisma.user.findUnique({where: { email: 'simon.vonheugel@gbsl.ch' }});
     xlsx.slice(1).map(async (e) => {
       const start = e[3] as any as Date;
       const startTime = e[4] as string;

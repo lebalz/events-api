@@ -17,9 +17,7 @@ async function main() {
       const longName = `${t.last_name} ${t.first_name.split(' ')[0]}`;
       const untisEntity = UntisTeachers.find((ut) => ut.longName === longName);
       return {
-        // department: t.deparement.toUpperCase(),
         email: t.email.toLowerCase(),
-        shortName: t.short_name,
         firstName: t.first_name,
         lastName: t.last_name,
         role: Role.USER,

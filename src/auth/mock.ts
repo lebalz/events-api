@@ -27,7 +27,6 @@ class MockStrat extends Strategy {
             firstName: '',
             lastName: '',
             role: 'USER',
-            shortName: '',
             untisId: 0,
             updatedAt: new Date('2022-12-13'),
             createdAt: new Date('2022-12-13'),
