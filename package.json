@@ -12,7 +12,7 @@
     "db_users": "ts-node -r dotenv/config ./bin/create_users.ts",
     "db_events": "ts-node -r dotenv/config ./bin/create_events.ts",
     "db_drop": "ts-node -r dotenv/config ./bin/db_drop.ts",
-    "untis": "ts-node -r dotenv/config ./bin/fetch_untis.ts"
+    "untis": "ts-node -r dotenv/config ./bin/fetch_untis_db.ts"
   },
   "dependencies": {
     "@azure/msal-node": "^1.14.0",

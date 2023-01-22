@@ -44,6 +44,42 @@ model Event {
     @@map("events")
 }
 
+model UntisTeacher {
+    id        Int    @id @default(autoincrement())
+    name      String    @unique
+    longName  String @map("long_name")
+    title     String
+    active    Boolean
+    lessons   UntisLesson[]
+    classes   UntisClass[]
+    @@map("untis_teachers")
+}
+
+model UntisLesson {
+    id        Int    @id @default(autoincrement())
+    room      String
+    subject   String
+    description String
+    semester  String
+    weekDay   Int    @map("week_day")
+    startDHHMM Int    @map("start_dhhmm")
+    endDHHMM   Int    @map("end_dhhmm")
+    classes UntisClass[]
+    teacher   UntisTeacher @relation(fields: [teacherId], references: [id])
+    teacherId Int    @map("teacher_id")
+
+    @@map("untis_lessons")
+}
+
+model UntisClass {
+    id        Int    @id @default(autoincrement())
+    name      String
+    sf        String
+    lessons UntisLesson[]
+    teachers   UntisTeacher[]
+    @@map("untis_classes")
+}
+
 enum Role {
     STUDENT
     USER
@@ -62,3 +98,23 @@ enum EventState {
     PUBLISHED
     DELETED
 }
+
+
+
+
+// model UntisSubject {
+//     id        Int    @id @default(autoincrement())
+//     name      String
+//     longName  String @map("long_name")
+//     backColor String @map("back_color")
+//     untisLessons UntisLesson[]
+//     @@map("untis_subjects")
+// }
+
+// model UntisRoom {
+//     id        Int    @id @default(autoincrement())
+//     name      String
+//     longName  String @map("long_name")
+//     untisLessons UntisLesson[]
+//     @@map("untis_rooms")
+// }
