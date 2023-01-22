@@ -6,7 +6,7 @@
   "author": "Balthasar Hofer",
   "license": "MIT",
   "scripts": {
-    "build": "tsc --build ./tsconfig.json",
+    "build": "tsc --build -p ./tsconfig.json",
     "start": "node -r dotenv/config ./dist/src/app.js",
     "dev": "ts-node -r dotenv/config ./src/app.ts",
     "db_users": "ts-node -r dotenv/config ./bin/create_users.ts",

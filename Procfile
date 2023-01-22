@@ -1,2 +1,2 @@
-web: node dist/src/app.js
+web: node dist/app.js
 release: npx prisma migrate deploy
