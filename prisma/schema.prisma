@@ -50,8 +50,8 @@ model UntisTeacher {
     longName  String @map("long_name")
     title     String
     active    Boolean
-    lessons   UntisLesson[]
-    classes   UntisClass[]
+    lessons   UntisLesson[] @relation("_teachers_to_lessons")
+    classes   UntisClass[] @relation("_teachers_to_classes")
     @@map("untis_teachers")
 }
 
@@ -64,9 +64,8 @@ model UntisLesson {
     weekDay   Int    @map("week_day")
     startDHHMM Int    @map("start_dhhmm")
     endDHHMM   Int    @map("end_dhhmm")
-    classes UntisClass[]
-    teacher   UntisTeacher @relation(fields: [teacherId], references: [id])
-    teacherId Int    @map("teacher_id")
+    classes UntisClass[] @relation("_classes_to_lessons")
+    teachers UntisTeacher[] @relation("_teachers_to_lessons")
 
     @@map("untis_lessons")
 }
@@ -75,8 +74,8 @@ model UntisClass {
     id        Int    @id @default(autoincrement())
     name      String
     sf        String
-    lessons UntisLesson[]
-    teachers   UntisTeacher[]
+    lessons UntisLesson[]   @relation("_classes_to_lessons")
+    teachers   UntisTeacher[] @relation("_teachers_to_classes")
     @@map("untis_classes")
 }
 

@@ -229,7 +229,7 @@ const syncDB = async () => {
   });
 
   let nextId = Math.max(...data.timetable_s1.map((t) => t.id), ...data.timetable_s2.map((t) => t.id), ...data.timetable_s3.map((t) => t.id)) + 1;
-  const lessonIdMap = new Map<number, number>();
+  const lessonIdSet = new Set<number>();
 
   const findSubject = (id: number) => {
     const sub = data.subjects.find((s) => s.id === id);
@@ -239,34 +239,26 @@ const syncDB = async () => {
     }
   }
   console.log('Next ID', nextId);
-  const extractLesson = (lesson: WebAPITimetable, semester: string): UntisLesson[] => {
+  const extractLesson = (lesson: WebAPITimetable, semester: string): UntisLesson | undefined => {
     const date = new Date(lesson.date);
-    return lesson.teachers.map((teachr, idx) => {
-      let id = lesson.id;
-      if (idx > 0) {
-        id = nextId;
-        nextId += 1;
-      }
-      if (lessonIdMap.has(id)) {
-        return;
-      }
-      lessonIdMap.set(lesson.id, id);
-      return {
-        id: id,
-        room: lesson.rooms.map((r) => r.element.name).join(', '),
-        ...findSubject(lesson.subjects[0].id), /** there is always only one subject */
-        teacherId: teachr.id,
-        semester: semester,
-        weekDay: date.getUTCDay(),
-        startDHHMM: untisDMMHH(lesson.startTime, date),
-        endDHHMM: untisDMMHH(lesson.endTime, date)
-      }
-    }).filter((l) => l) as UntisLesson[];
+    if (lessonIdSet.has(lesson.id)) {
+      return;
+    }
+    lessonIdSet.add(lesson.id);
+    return {
+      id: lesson.id,
+      room: lesson.rooms.map((r) => r.element.name).join(', '),
+      ...findSubject(lesson.subjects[0].id), /** there is always only one subject */
+      semester: semester,
+      weekDay: date.getUTCDay(),
+      startDHHMM: untisDMMHH(lesson.startTime, date),
+      endDHHMM: untisDMMHH(lesson.endTime, date)
+    }
   }
 
-  const tt1 = data.timetable_s1.map((t) => extractLesson(t, `${data.schoolyear.startDate.getFullYear()}HS`)).reduce((clx, val) => clx.concat(val), []);
-  const tt2 = data.timetable_s2.map((t) => extractLesson(t, `${data.schoolyear.endDate.getFullYear()}FS`)).reduce((clx, val) => clx.concat(val), []);
-  const tt3 = data.timetable_s3.map((t) => extractLesson(t, `${data.schoolyear.endDate.getFullYear()}HS`)).reduce((clx, val) => clx.concat(val), []);
+  const tt1 = data.timetable_s1.map((t) => extractLesson(t, `${data.schoolyear.startDate.getFullYear()}HS`)).filter(l => l) as UntisLesson[];
+  const tt2 = data.timetable_s2.map((t) => extractLesson(t, `${data.schoolyear.endDate.getFullYear()}FS`)).filter(l => l) as UntisLesson[];
+  const tt3 = data.timetable_s3.map((t) => extractLesson(t, `${data.schoolyear.endDate.getFullYear()}HS`)).filter(l => l) as UntisLesson[];
   
   const dbLessons = await prisma.untisLesson.createMany({
     data: [
@@ -278,9 +270,12 @@ const syncDB = async () => {
 
 
 
-  /** CONNECT CLASSES TO LESSONS and CLASSES TO TEACHERS */
+  /** CONNECT CLASSES TO LESSONS, CLASSES TO TEACHERS 
+   * AND TEACHERS TO LESSONS 
+  */
 
   const classes: { [key: number]: { lessons: { id: number }[], teachers: { id: number }[] } } = {};
+  const teachers: { [key: number]: { id: number }[] } = {};
   [...data.timetable_s1, ...data.timetable_s2, ...data.timetable_s3].forEach((lesson) => {
     lesson.classes.forEach((cls) => {
       if (!classes[cls.id]) {
@@ -289,31 +284,58 @@ const syncDB = async () => {
           teachers: []
         }
       }
-      if (lessonIdMap.has(lesson.id)) {
-        classes[cls.id].lessons.push({ id: lessonIdMap.get(lesson.id) as number });
+      if (lessonIdSet.has(lesson.id)) {
+        classes[cls.id].lessons.push({ id: lesson.id });
       } else {
         console.log('Lesson not found', lesson.id, findSubject(lesson.subjects[0].id), lesson.classes.map((c) => c.element.name).join(', '));
       }
-      classes[cls.id].teachers.push(...lesson.teachers.map((t) => ({ id: t.id })).filter(t => t.id));
+      if (lesson.teachers.length > 0) {
+        classes[cls.id].teachers.push(...lesson.teachers.map((t) => ({ id: t.id })).filter(t => t.id));
+      }
+    });
+    lesson.teachers.forEach((tchr) => {
+      if (!teachers[tchr.id]) {
+        teachers[tchr.id] = []
+      }
+      if (lessonIdSet.has(lesson.id)) {
+        teachers[tchr.id].push({ id: lesson.id });
+      } else {
+        console.log('Lesson not found', lesson.id, findSubject(lesson.subjects[0].id), lesson.classes.map((c) => c.element.name).join(', '));
+      }
     })
   });
 
-  const connectPromise = data.classes.map((cls) => {
+  const connectClasses = data.classes.map((cls) => {
     return prisma.untisClass.update({
       where: {
         id: cls.id
       },
       data: {
         lessons: {
-          connect: classes[cls.id]?.lessons || []
+          connect: classes[cls.id]?.lessons || undefined
         },
         teachers: {
-          connect: classes[cls.id]?.teachers || []
+          connect: classes[cls.id]!.teachers.length > 0 ? classes[cls.id]!.teachers : undefined
         }
       }
     })
   });
-  await Promise.all(connectPromise);
+  const connectTeachers = data.teachers.map((tchr) => {
+    if (!teachers[tchr.id] || teachers[tchr.id].length === 0) {
+      return;
+    }
+    return prisma.untisTeacher.update({
+      where: {
+        id: tchr.id
+      },
+      data: {
+        lessons: {
+          connect: teachers[tchr.id] || undefined
+        }
+      }
+    });
+  });
+  await Promise.all(connectClasses.concat(connectTeachers.filter(t => t) as any[]));
 }
 
 
