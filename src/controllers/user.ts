@@ -1,6 +1,5 @@
 import { RequestHandler } from "express";
 import prisma from "../prisma";
-import { IoEvent } from "../routes/IoEventTypes";
 import { notifyChangedRecord } from "../routes/notify";
   
 

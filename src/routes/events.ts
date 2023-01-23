@@ -4,7 +4,6 @@ import { Server } from "socket.io";
 const EventRouter = (io: Server) => {
     io.on("connection", (socket) => {
         const { user } = (socket.request as { user?: User });
-        console.log('Socket.io', user);
         if (!user) {
             return socket.disconnect();
         }
@@ -17,16 +16,16 @@ const EventRouter = (io: Server) => {
 
     io.on('disconnect', (socket) => {
         const { user } = (socket.request as { user?: User });
-        console.log('Socket.io disconnect', socket);
+        console.log('Socket.io disconnect');
     });
 
     io.on('error', (socket) => {
-        console.log('Socket.io error', socket);
+        console.log('Socket.io error');
     })
 
     io.on('reconnect', (socket) => {
         const { user } = (socket.request as { user?: User });
-        console.log('Socket.io reconnect', socket);
+        console.log('Socket.io reconnect');
     })
 }
 

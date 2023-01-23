@@ -3,8 +3,9 @@ import express, { Request, Response, NextFunction } from "express";
 import { AccessMatrix } from "../routes/authConfig";
 
 interface AccessRegexRule {
-    path: RegExp;
-    parts: number;
+    path: string;
+    regex: RegExp;
+    weight: number;
     access: {
         methods: ("GET" | "POST" | "PUT" | "DELETE")[];
         roles: Role[];
@@ -13,11 +14,17 @@ interface AccessRegexRule {
 
 export const createAccessRules = (accessMatrix: AccessMatrix): AccessRegexRule[] => {
     const accessRules = Object.values(accessMatrix);
+    const maxParts = accessRules.reduce((max, accessRule) => { return Math.max(max, accessRule.path.split('/').length) }, 0);
     const accessRulesWithRegex = accessRules.map((accessRule) => {
         const parts = accessRule.path.split('/');
+        let wildcards = 0
+        let weight = 0;
         const path = parts.map((part, idx) => {
             if (part.startsWith(':')) {
+                weight += 2 ** ((maxParts - idx) * 2 - 1); 
                 return '[^\\/]+';
+            } else {
+                weight += 2 ** ((maxParts - idx) * 2); 
             }
             return part;
         }).join('\\/');
@@ -25,12 +32,14 @@ export const createAccessRules = (accessMatrix: AccessMatrix): AccessRegexRule[]
         const regex = new RegExp(`^${path}`, 'i');
         return {
             ...accessRule,
-            path: regex,
-            parts: parts.length
+            path: accessRule.path.toLowerCase(),
+            regex: regex,
+            weight: weight
         }
     });
-    const rules = accessRulesWithRegex.sort((a, b) => b.parts - a.parts);
+    const rules = accessRulesWithRegex.sort((a, b) => b.weight - a.weight);
     Object.freeze(rules);
+    console.log(rules);
     return rules;
 }
 
@@ -54,13 +63,14 @@ const routeGuard = (accessMatrix: AccessRegexRule[]) => {
  */
 const requestHasRequiredAttributes = (accessMatrix: AccessRegexRule[], path: string, method: string, role: Role) => {
     const accessRules = Object.values(accessMatrix);
-    const accessRule = accessRules.find((accessRule) => accessRule.path.test(path));
+    const accessRule = accessRules.find((accessRule) => accessRule.regex.test(path));
     if (!accessRule) {
         return false;
     }
     const hasRole = accessRule.access.some(
         (rule) => rule.roles.includes(role) && rule.methods.includes(method as 'GET' | 'POST' | 'PUT' | 'DELETE')
     );
+    // console.log('hasRole', hasRole, role, method, path)
     return hasRole;
 };
 
