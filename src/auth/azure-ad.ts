@@ -37,7 +37,7 @@ const BearerVerify: VerifyBearerFunction = async (token, done) => {
         create: userProps(token, true),
         include: { untis: true }
     }).catch((err) => {
-        console.log(err);
+        console.log('Bearer Verify Error', err);
         return false;
     });
     // Send user info using the second argument

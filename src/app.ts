@@ -65,13 +65,11 @@ app.use(passport.session());
 passport.use(strategyForEnvironment());
 
 passport.serializeUser((user, done) => {
-  console.log('ser', user.id);
   done(null, user.id)
 })
 
 
 passport.deserializeUser(async (id, done) => {
-  console.log('deser', id);
   const user = await prisma.user.findUnique({ where: { id: id as string } })
   done(null, user)
 });
@@ -152,8 +150,6 @@ app.use('/api/v1', (req, res, next) => {
   router // the router with all the routes
 );
 
-
-// app.listen(PORT, () => console.log(`Server is running on port ${PORT}`));
 
 server.listen(PORT || 3002, () => {
   console.log(`application is running at: http://localhost:${PORT}`);

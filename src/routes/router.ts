@@ -7,7 +7,7 @@ import { user, users, linkToUntis, find as findUser } from '../controllers/user'
 const router = express.Router();
 
 router.get('/user', user);
-router.put('/user/:id', findUser);
+router.get('/user/:id', findUser);
 router.put('/user/:id/link_to_untis', linkToUntis);
 router.get('/user/all', users);
 
