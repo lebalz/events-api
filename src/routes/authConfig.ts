@@ -61,11 +61,25 @@ const authConfig: Config = {
                 roles: [Role.ADMIN, Role.USER],
             }]
         },
+        userFind: {
+            path: '/user/:id',
+            access: [{
+                methods: ['GET'],
+                roles: [Role.ADMIN, Role.USER],
+            }]
+        },
         userAll: {
             path: '/user/all',
             access: [{
                 methods: ['GET'],
                 roles: [Role.ADMIN, Role.USER, Role.STUDENT],
+            }]
+        },
+        userLinkToUntis: {
+            path: '/user/:id/link_to_untis',
+            access: [{
+                methods: ['PUT'],
+                roles: [Role.ADMIN, Role.USER],
             }]
         },
         event: {

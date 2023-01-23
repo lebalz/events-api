@@ -11,9 +11,11 @@ import passport from "passport";
 import { Server } from "socket.io";
 import http from 'http';
 import router from './routes/router';
-import routeGuard from './auth/guard';
+import routeGuard, { createAccessRules } from './auth/guard';
 import authConfig from './routes/authConfig';
 import EventRouter from './routes/events';
+
+const AccessRules = createAccessRules(authConfig.accessMatrix);
 
 
 /**
@@ -146,7 +148,7 @@ app.use('/api/v1', (req, res, next) => {
     }
   })(req, res, next);
 },
-  routeGuard(authConfig.accessMatrix), // route guard middleware
+  routeGuard(AccessRules), // route guard middleware
   router // the router with all the routes
 );
 

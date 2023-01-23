@@ -1,0 +1,17 @@
+import { Server } from "socket.io";
+import { ChangedRecord, IoEvent } from "./IoEventTypes";
+
+export const notify = (io: Server |undefined, type: IoEvent, payload: Object, to?: string) => {
+    if (!io) {
+        return;
+    }
+    if (to) {
+        io.to(to).emit(type, JSON.stringify(payload));
+    } else {
+        io.emit(type, JSON.stringify(payload));
+    }
+}
+
+export const notifyChangedRecord = (io: Server |undefined, payload: ChangedRecord, to?: string) => {
+    notify(io, IoEvent.CHANGED_RECORD, payload, to);
+}

@@ -3,12 +3,14 @@ export enum IoEvent {
     CHANGED_RECORD = 'CHANGED_RECORD',
 }
 
+type RecordTypes = 'EVENT' | 'USER';
+
 export interface NewRecord {
-    record: 'EVENT';
+    record: RecordTypes;
     id: string;
 }
 
 export interface ChangedRecord {
-    record: 'EVENT';
+    record: RecordTypes;
     id: string;
 }

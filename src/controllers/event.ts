@@ -2,6 +2,7 @@ import { Departements, User } from "@prisma/client";
 import { NextFunction, Request, RequestHandler, Response } from "express";
 import prisma from "../prisma";
 import { ChangedRecord, IoEvent, NewRecord } from "../routes/IoEventTypes";
+import { notifyChangedRecord } from "../routes/notify";
 
 export const find: RequestHandler = async (req, res, next) => {
   try {
@@ -44,16 +45,8 @@ export const update: RequestHandler<{ id: string }, any, { data: any }> = async 
       data: req.body.data,
     });
   
-    /* Notify connected clients */
-    const payload: ChangedRecord = {
-      record: 'EVENT',
-      id: event.id
-    }
-    if (event.state === 'PUBLISHED') {
-      req.io?.emit(IoEvent.CHANGED_RECORD, JSON.stringify(payload));
-    } else {
-      req.io?.to(req.user!.id).emit(IoEvent.CHANGED_RECORD, JSON.stringify(payload));
-    }
+    const to = event.state === 'PUBLISHED' ? undefined : req.user!.id;
+    notifyChangedRecord(req.io, {record: 'EVENT', id: event.id}, to);
     res.status(200).json({ updatedAt: event.updatedAt });
   } catch (error) {
     next(error);

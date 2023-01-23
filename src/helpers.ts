@@ -10,7 +10,6 @@ export const getAuthInfo = (authInfo?: Express.AuthInfo) => {
   if (!name || !preferred_username || !oid) {
     throw 'No valid authorization provided';
   }
-  console.log(name, authInfo);
   const nameParts: string[] = (name?.split(", ") || [])[0]?.split(" ") || [preferred_username.split("@")[0].split(".")[0] || '', preferred_username.split("@")[0].split(".")[1] || ""];
   const firstName = nameParts.pop()!;
   const lastName = nameParts.join(" ");
