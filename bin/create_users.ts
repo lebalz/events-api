@@ -28,7 +28,7 @@ async function main() {
   console.log("us", usrs);
 
   const allUsers = await prisma.user.findMany({
-    include: { events: true, responsibleFor: false },
+    include: { events: true },
   });
   console.log("All users: ", allUsers);
   console.dir(allUsers, { depth: null });

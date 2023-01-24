@@ -33,12 +33,6 @@ export const update: RequestHandler<{ id: string }, any, { data: any }> = async 
       delete req.body.data[field];
     }
   });
-  if (req.body.data.responsibleIds) {
-    req.body.data.responsible = {
-      connect: req.body.data.responsibleIds.map((rid: string) => ({ id: rid })),
-    };
-    delete req.body.data.responsibleIds;
-  }
   try {
     const event = await prisma.event.update({
       where: { id: req.params.id },
