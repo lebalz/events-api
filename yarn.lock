@@ -1251,7 +1251,7 @@ raw-body@2.5.1:
     iconv-lite "0.4.24"
     unpipe "1.0.0"
 
-read-excel-file@^5.5.0:
+read-excel-file@^5.5.3:
   version "5.5.3"
   resolved "https://registry.yarnpkg.com/read-excel-file/-/read-excel-file-5.5.3.tgz#859737f97a1ee0aa845f4515aee43cde9c2875b5"
   integrity sha512-g43pCe+Tyyq1Z40pNnghqAjoKd/ixGZ2qPgatomVrj158jIeLq7Zs874MxLG08RWEsYUQBL3qGSt/PHbaupKKA==
