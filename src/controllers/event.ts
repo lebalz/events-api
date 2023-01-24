@@ -1,23 +1,23 @@
-import { Departements, User } from "@prisma/client";
+import { Departements } from "@prisma/client";
 import { NextFunction, Request, RequestHandler, Response } from "express";
 import prisma from "../prisma";
-import { ChangedRecord, IoEvent, NewRecord } from "../routes/IoEventTypes";
+import { IoEvent, NewRecord } from "../routes/IoEventTypes";
 import { notifyChangedRecord } from "../routes/notify";
+import { importExcel } from "../services/importExcel";
+
 
 export const find: RequestHandler = async (req, res, next) => {
   try {
     const events = await prisma.event
       .findUnique({
         where: { id: req.params.id },
-        include: { responsible: true, author: true },
+        include: { author: true, import: true },
       })
       .then((event) => {
         return {
           ...event,
           author: undefined,
           authorId: event?.author.id,
-          responsible: undefined,
-          responsibleIds: event?.responsible.map((r) => r.id),
         };
       });
     res.json(events);
@@ -44,9 +44,9 @@ export const update: RequestHandler<{ id: string }, any, { data: any }> = async 
       where: { id: req.params.id },
       data: req.body.data,
     });
-  
+
     const to = event.state === 'PUBLISHED' ? undefined : req.user!.id;
-    notifyChangedRecord(req.io, {record: 'EVENT', id: event.id}, to);
+    notifyChangedRecord(req.io, { record: 'EVENT', id: event.id }, to);
     res.status(200).json({ updatedAt: event.updatedAt });
   } catch (error) {
     next(error);
@@ -59,16 +59,14 @@ export const events: RequestHandler = async (req, res, next) => {
   try {
     const events = await prisma.event
       .findMany({
-        include: { responsible: true, author: true },
+        include: { author: true },
       })
       .then((events) => {
         return events.map((event) => {
           return {
             ...event,
             author: undefined,
-            authorId: event.author.id,
-            responsible: undefined,
-            responsibleIds: event.responsible.map((r) => r.id),
+            authorId: event.author.id
           };
         });
       });
@@ -88,12 +86,11 @@ interface CreateEvent {
   description: string,
   descriptionLong: string,
   departemens: Departements[],
-  classes: string[],
-  onlyKLP: boolean
+  classes: string[]
 }
 
 export const create = async (req: Request<{}, CreateEvent>, res: Response, next: NextFunction) => {
-  const { start, end, allDay, location, description, descriptionLong, id, classes, departemens, onlyKLP } = req.body;
+  const { start, end, allDay, location, description, descriptionLong, id, classes, departemens } = req.body;
   try {
     const uid = req.user!.id;
     const d = new Date();
@@ -126,4 +123,33 @@ export const create = async (req: Request<{}, CreateEvent>, res: Response, next:
   } catch (e) {
     next(e)
   }
+}
+
+
+export const importEvents: RequestHandler = async (req, res, next) => {
+  const importJob = await prisma.importJob.create({
+    data: { user: { connect: { id: req.user!.id } } }
+  });
+  if (req.file) {
+    importExcel(req.file!.path, req.user!.id, importJob.id).then(async (events) => {
+      await prisma.importJob.update({
+        where: { id: importJob.id },
+        data: {
+          state: 'DONE',
+        }
+      });
+      notifyChangedRecord(req.io, { record: 'IMPORT_JOB', id: importJob.id });
+    }).catch(async (e) => {
+      console.error(e);
+      await prisma.importJob.update({
+        where: { id: importJob.id },
+        data: {
+          state: 'ERROR',
+          log: JSON.stringify(e)
+        }
+      });
+      notifyChangedRecord(req.io, { record: 'IMPORT_JOB', id: importJob.id });
+    });
+  }
+  res.json(importJob);
 }

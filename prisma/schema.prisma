@@ -8,75 +8,93 @@ generator client {
 }
 
 model User {
-    id         String   @id @default(uuid())
-    email      String   @unique
-    untis      UntisTeacher? @relation(fields: [untisId], references: [id])
-    untisId    Int?     @unique @map("untis_id")
-    firstName  String   @map("first_name")
-    lastName   String   @map("last_name")
-    role       Role     @default(USER)
-    createdAt  DateTime @default(now()) @map("created_at")
-    updatedAt  DateTime @updatedAt @map("updated_at")
-    events     Event[]  @relation("events")
+    id        String        @id @default(uuid())
+    email     String        @unique
+    untis     UntisTeacher? @relation(fields: [untisId], references: [id])
+    untisId   Int?          @unique @map("untis_id")
+    firstName String        @map("first_name")
+    lastName  String        @map("last_name")
+    role      Role          @default(USER)
+    createdAt DateTime      @default(now()) @map("created_at")
+    updatedAt DateTime      @updatedAt @map("updated_at")
+    events    Event[]       @relation("events")
 
-    responsibleFor Event[] @relation("responsible_for")
+    imports ImportJob[]
+
     @@map("users")
 }
 
 model Event {
     id              String         @id @default(uuid())
     author          User           @relation("events", fields: [authorId], references: [id])
-    authorId        String   @map("author_id")
+    authorId        String         @map("author_id")
     start           DateTime
     end             DateTime
-    allDay          Boolean @map("all_day")
+    allDay          Boolean        @map("all_day")
     location        String
     description     String
-    descriptionLong String   @map("description_long")
+    descriptionLong String         @map("description_long")
     departements    Departements[] @default([])
     classes         String[]       @default([])
-    createdAt       DateTime       @default(now()) @map("created_at")
-    updatedAt       DateTime       @updatedAt @map("updated_at")
     state           EventState     @default(DRAFT)
-    onlyKLP         Boolean        @default(false)  @map("only_klp")
+    import          ImportJob?        @relation(fields: [importId], references: [id])
+    importId        String?        @map("import_id")
 
-    responsible User[] @relation("responsible_for")
+    createdAt DateTime @default(now()) @map("created_at")
+    updatedAt DateTime @updatedAt @map("updated_at")
+
     @@map("events")
 }
 
+model ImportJob {
+    id     String      @id @default(uuid())
+    state  ImportState @default(PENDING)
+    user   User        @relation(fields: [userId], references: [id])
+    userId String      @map("user_id")
+    events Event[]
+    log    String      @default("")
+
+    createdAt DateTime @default(now()) @map("created_at")
+    updatedAt DateTime @updatedAt @map("updated_at")
+
+    @@map("imports")
+}
+
 model UntisTeacher {
-    id        Int    @id @default(autoincrement())
-    name      String    @unique
-    longName  String @map("long_name")
-    title     String
-    active    Boolean
-    lessons   UntisLesson[] @relation("_teachers_to_lessons")
-    classes   UntisClass[] @relation("_teachers_to_classes")
-    user      User?
+    id       Int           @id @default(autoincrement())
+    name     String        @unique
+    longName String        @map("long_name")
+    title    String
+    active   Boolean
+    lessons  UntisLesson[] @relation("_teachers_to_lessons")
+    classes  UntisClass[]  @relation("_teachers_to_classes")
+    user     User?
+
     @@map("untis_teachers")
 }
 
 model UntisLesson {
-    id        Int    @id @default(autoincrement())
-    room      String
-    subject   String
+    id          Int            @id @default(autoincrement())
+    room        String
+    subject     String
     description String
-    semester  String
-    weekDay   Int    @map("week_day")
-    startDHHMM Int    @map("start_dhhmm")
-    endDHHMM   Int    @map("end_dhhmm")
-    classes UntisClass[] @relation("_classes_to_lessons")
-    teachers UntisTeacher[] @relation("_teachers_to_lessons")
+    semester    String
+    weekDay     Int            @map("week_day")
+    startDHHMM  Int            @map("start_dhhmm")
+    endDHHMM    Int            @map("end_dhhmm")
+    classes     UntisClass[]   @relation("_classes_to_lessons")
+    teachers    UntisTeacher[] @relation("_teachers_to_lessons")
 
     @@map("untis_lessons")
 }
 
 model UntisClass {
-    id        Int    @id @default(autoincrement())
-    name      String
-    sf        String
-    lessons UntisLesson[]   @relation("_classes_to_lessons")
-    teachers   UntisTeacher[] @relation("_teachers_to_classes")
+    id       Int            @id @default(autoincrement())
+    name     String
+    sf       String
+    lessons  UntisLesson[]  @relation("_classes_to_lessons")
+    teachers UntisTeacher[] @relation("_teachers_to_classes")
+
     @@map("untis_classes")
 }
 
@@ -99,8 +117,12 @@ enum EventState {
     DELETED
 }
 
-
-
+enum ImportState {
+    PENDING
+    ERROR
+    DONE
+    REVERTED
+}
 
 // model UntisSubject {
 //     id        Int    @id @default(autoincrement())

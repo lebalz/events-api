@@ -1,6 +1,7 @@
 import { WebUntisSecretAuth, Base, WebAPITimetable } from 'webuntis';
 import { authenticator as Authenticator } from 'otplib';
 import { PrismaClient, UntisLesson } from "@prisma/client";
+import prisma from '../prisma';
 
 const untis = new WebUntisSecretAuth(
   process.env.UNTIS_SCHOOL!,
@@ -10,10 +11,6 @@ const untis = new WebUntisSecretAuth(
   'custom-identity',
   Authenticator
 );
-
-const DATE = '2023-02-13T00:00:00Z';
-const prisma = new PrismaClient();
-
 
 const all = <S, T>(items: S[], fn: (params: S) => Promise<T>) => {
   const promises = items.map(item => fn(item));

@@ -102,6 +102,13 @@ const authConfig: Config = {
                 roles: [Role.ADMIN, Role.USER, Role.STUDENT],
             }]
         },
+        eventImport: {
+            path: '/event/import',
+            access: [{
+                methods: ['POST'],
+                roles: [Role.ADMIN],
+            }]
+        },
         untis: {
             path: '/untis',
             access: [
