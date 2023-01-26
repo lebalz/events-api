@@ -18,8 +18,7 @@ model User {
     createdAt DateTime      @default(now()) @map("created_at")
     updatedAt DateTime      @updatedAt @map("updated_at")
     events    Event[]       @relation("events")
-
-    imports Job[]
+    jobs Job[]
 
     @@map("users")
 }
@@ -37,8 +36,8 @@ model Event {
     departements    Departements[] @default([])
     classes         String[]       @default([])
     state           EventState     @default(DRAFT)
-    import          Job?        @relation(fields: [importId], references: [id])
-    importId        String?        @map("import_id")
+    job             Job?           @relation(fields: [jobId], references: [id], onDelete: Cascade)
+    jobId           String?        @map("import_id")
 
     createdAt DateTime @default(now()) @map("created_at")
     updatedAt DateTime @updatedAt @map("updated_at")
@@ -47,13 +46,13 @@ model Event {
 }
 
 model Job {
-    id     String      @id @default(uuid())
+    id     String   @id @default(uuid())
     type   JobType
-    state  JobState    @default(PENDING)
-    user   User        @relation(fields: [userId], references: [id])
-    userId String      @map("user_id")
+    state  JobState @default(PENDING)
+    user   User     @relation(fields: [userId], references: [id])
+    userId String   @map("user_id")
     events Event[]
-    log    String      @default("")
+    log    String   @default("")
 
     createdAt DateTime @default(now()) @map("created_at")
     updatedAt DateTime @updatedAt @map("updated_at")

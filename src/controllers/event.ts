@@ -11,7 +11,7 @@ export const find: RequestHandler = async (req, res, next) => {
     const events = await prisma.event
       .findUnique({
         where: { id: req.params.id },
-        include: { author: true, import: true },
+        include: { author: true, job: true },
       })
       .then((event) => {
         return {
@@ -135,7 +135,7 @@ export const importEvents: RequestHandler = async (req, res, next) => {
           state: 'DONE',
         }
       });
-      notifyChangedRecord(req.io, { record: 'IMPORT_JOB', id: importJob.id });
+      notifyChangedRecord(req.io, { record: 'JOB', id: importJob.id });
     }).catch(async (e) => {
       console.error(e);
       await prisma.job.update({
@@ -145,7 +145,7 @@ export const importEvents: RequestHandler = async (req, res, next) => {
           log: JSON.stringify(e)
         }
       });
-      notifyChangedRecord(req.io, { record: 'IMPORT_JOB', id: importJob.id });
+      notifyChangedRecord(req.io, { record: 'JOB', id: importJob.id });
     });
   }
   res.json(importJob);

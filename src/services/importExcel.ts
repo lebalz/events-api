@@ -67,7 +67,7 @@ export const importExcel = async (file: string, userId: string, jobId: string) =
         author: {
           connect: { id: userId }
         },
-        import: {
+        job: {
           connect: { id: jobId }
         }
       }

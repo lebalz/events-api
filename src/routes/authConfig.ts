@@ -121,6 +121,24 @@ const authConfig: Config = {
                     roles: [Role.ADMIN],
                 }
             ]
+        },
+        findJob: {
+            path: '/job/:id',
+            access: [{
+                methods: ['GET'],
+                roles: [Role.ADMIN, Role.USER, Role.STUDENT],
+            },
+            {
+                methods: ['GET', 'POST', 'DELETE'],
+                roles: [Role.ADMIN, Role.USER],
+            }]
+        },
+        allJobs: {
+            path: '/job/all',
+            access: [{
+                methods: ['GET'],
+                roles: [Role.ADMIN, Role.USER, Role.STUDENT],
+            }]
         }
     },
 };

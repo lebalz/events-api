@@ -65,6 +65,7 @@ const requestHasRequiredAttributes = (accessMatrix: AccessRegexRule[], path: str
     const accessRules = Object.values(accessMatrix);
     const accessRule = accessRules.find((accessRule) => accessRule.regex.test(path));
     if (!accessRule) {
+        // console.log('has No Role', role, method, path)
         return false;
     }
     const hasRole = accessRule.access.some(

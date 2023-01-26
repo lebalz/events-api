@@ -3,7 +3,7 @@ export enum IoEvent {
     CHANGED_RECORD = 'CHANGED_RECORD',
 }
 
-type RecordTypes = 'EVENT' | 'USER' | 'IMPORT_JOB';
+type RecordTypes = 'EVENT' | 'USER' | 'JOB';
 
 export interface NewRecord {
     record: RecordTypes;
