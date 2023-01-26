@@ -5,8 +5,8 @@ import UntisTeachers from "../teachers-untis.json";
 const prisma = new PrismaClient();
 
 async function main() {
-  const del = await prisma.user.deleteMany({});
-  console.log(del);
+  // const del = await prisma.user.deleteMany({});
+  // console.log(del);
   const tchs: string[] = []
   const usrs = await prisma.user.createMany({
     data: Teachers.map((t) => {

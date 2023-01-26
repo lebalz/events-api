@@ -1,4 +1,4 @@
-import { Departements, EventState, ImportJob } from "@prisma/client";
+import { Departements, EventState, Job } from "@prisma/client";
 import readXlsxFile from 'read-excel-file/node';
 import prisma from '../prisma';
 

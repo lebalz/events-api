@@ -121,12 +121,15 @@ export const create = async (req: Request<{}, CreateEvent>, res: Response, next:
 
 
 export const importEvents: RequestHandler = async (req, res, next) => {
-  const importJob = await prisma.importJob.create({
-    data: { user: { connect: { id: req.user!.id } } }
+  const importJob = await prisma.job.create({
+    data: {
+      type: "IMPORT", 
+      user: { connect: { id: req.user!.id } } 
+    }
   });
   if (req.file) {
     importExcel(req.file!.path, req.user!.id, importJob.id).then(async (events) => {
-      await prisma.importJob.update({
+      await prisma.job.update({
         where: { id: importJob.id },
         data: {
           state: 'DONE',
@@ -135,7 +138,7 @@ export const importEvents: RequestHandler = async (req, res, next) => {
       notifyChangedRecord(req.io, { record: 'IMPORT_JOB', id: importJob.id });
     }).catch(async (e) => {
       console.error(e);
-      await prisma.importJob.update({
+      await prisma.job.update({
         where: { id: importJob.id },
         data: {
           state: 'ERROR',
