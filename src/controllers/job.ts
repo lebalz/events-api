@@ -23,7 +23,7 @@ export const all: RequestHandler = async (req, res, next) => {
         if (!user){ 
             throw new Error('User not found')
         }
-        res.json(user);
+        res.json(user.jobs);
     } catch (error) {
         next(error);
     }
