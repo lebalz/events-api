@@ -127,6 +127,7 @@ enum JobState {
 enum JobType {
     IMPORT
     CLONE
+    SYNC_UNTIS
 }
 
 // model UntisSubject {

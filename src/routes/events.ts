@@ -7,6 +7,11 @@ const EventRouter = (io: Server) => {
         if (!user) {
             return socket.disconnect();
         }
+        const sid = (socket.request as any).sessionID;
+        if (sid) {
+            socket.join(sid);
+        }
+
         socket.join(user.id);
         socket.on('echo', (msg) => {
             socket.request

@@ -1,13 +1,13 @@
 import { RequestHandler } from "express";
 import prisma from "../prisma";
-import { notifyChangedRecord } from "../routes/notify";
-  
+import { IoEvent } from "../routes/IoEventTypes";
+
 
 export const user: RequestHandler = async (req, res) => {
     res.json(req.user);
 }
 
-export const find: RequestHandler<{id: string}> = async (req, res, next) => {
+export const find: RequestHandler<{ id: string }> = async (req, res, next) => {
     try {
         const user = await prisma.user.findUnique({
             where: { id: req.params.id }
@@ -27,7 +27,7 @@ export const users: RequestHandler = async (req, res, next) => {
     }
 }
 
-export const linkToUntis: RequestHandler<{id: string}, any, { data: { untisId: number } }> = async (req, res, next) => {
+export const linkToUntis: RequestHandler<{ id: string }, any, { data: { untisId: number } }> = async (req, res, next) => {
     if (req.user?.role !== 'ADMIN' && req.user?.id !== req.params.id) {
         throw 'Not authorized'
     }
@@ -39,8 +39,15 @@ export const linkToUntis: RequestHandler<{id: string}, any, { data: { untisId: n
             data: {
                 untisId: req.body.data.untisId || null
             }
-        })
-        notifyChangedRecord(req.io, {record: 'USER', id: user.id});
+        });
+
+
+        res.notifications = [
+            {
+                message: { record: 'USER', id: user.id },
+                event: IoEvent.CHANGED_RECORD
+            }
+        ];
         res.json(user);
     } catch (error) {
         next(error)

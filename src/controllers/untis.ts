@@ -1,5 +1,7 @@
 import { RequestHandler } from "express";
 import prisma from "../prisma";
+import { IoEvent } from "../routes/IoEventTypes";
+import { notifyChangedRecord } from "../routes/notify";
 import { syncUntis2DB } from "../services/syncUntis2DB";
 
 export const teachers: RequestHandler = async (req, res, next) => {
@@ -19,12 +21,39 @@ export const teachers: RequestHandler = async (req, res, next) => {
 
 export const sync: RequestHandler = async (req, res, next) => {
     try {
-        syncUntis2DB().then(() => {
-            req.io?.emit("sync", JSON.stringify({ success: true }));
-        }).catch((error) => {
-            req.io?.emit("sync", JSON.stringify({ success: false, error: error }));
+        const syncJob = await prisma.job.create({
+            data: {
+                type: "SYNC_UNTIS", 
+                user: { connect: { id: req.user!.id } } 
+            }
         });
-        res.json({ message: "Sync started" });
+        syncUntis2DB().then(() => {
+            return prisma.job.update({
+                where: { id: syncJob.id },
+                data: {
+                    state: 'DONE',
+                }
+            });
+        }).catch((error) => {
+            return prisma.job.update({
+                where: { id: syncJob.id },
+                data: {
+                  state: 'ERROR',
+                  log: JSON.stringify(error)
+                }
+              });
+        }).finally(() => {
+            notifyChangedRecord(req.io, { record: 'JOB', id: syncJob.id });
+        });
+
+        res.notifications = [
+            {
+                message: { record: 'JOB', id: syncJob.id },
+                event: IoEvent.NEW_RECORD,
+                to: req.user!.id
+            }
+        ];
+        res.json(syncJob);
     } catch (error) {
         next(error);
     }
