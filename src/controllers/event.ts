@@ -131,7 +131,8 @@ export const importEvents: RequestHandler = async (req, res, next) => {
     const importJob = await prisma.job.create({
       data: {
         type: "IMPORT", 
-        user: { connect: { id: req.user!.id } } 
+        user: { connect: { id: req.user!.id } },
+        filename: req.file!.originalname,
       }
     });
     if (req.file) {
