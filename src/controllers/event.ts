@@ -59,6 +59,16 @@ export const events: RequestHandler = async (req, res, next) => {
     const events = await prisma.event
       .findMany({
         include: { author: true },
+        where: {
+          OR: [
+            {
+              state: 'PUBLISHED'
+            },
+            {
+              authorId: req.user!.id
+            },
+          ]
+        }
       })
       .then((events) => {
         return events.map((event) => {
