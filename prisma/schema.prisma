@@ -33,7 +33,7 @@ model Event {
     location        String
     description     String
     descriptionLong String         @map("description_long")
-    departements    Departements[] @default([])
+    departments     Departments[] @default([])
     classes         String[]       @default([])
     state           EventState     @default(DRAFT)
     job             Job?           @relation(fields: [jobId], references: [id], onDelete: Cascade)
@@ -95,7 +95,7 @@ model UntisClass {
     sf       String
     lessons  UntisLesson[]  @relation("_classes_to_lessons")
     teachers UntisTeacher[] @relation("_teachers_to_classes")
-
+    department Departments?
     @@map("untis_classes")
 }
 
@@ -105,10 +105,16 @@ enum Role {
     ADMIN
 }
 
-enum Departements {
+enum Departments {
     GYM
+    GBSL
+    GBJB
     FMS
+    FMPaed
+    ECG  // FMS
     WMS
+    ESC  // WMS
+    MSOP // FMPäd
 }
 
 enum EventState {
