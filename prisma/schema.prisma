@@ -106,7 +106,6 @@ enum Role {
 }
 
 enum Departments {
-    GYM
     GBSL
     GBJB
     FMS
