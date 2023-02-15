@@ -51,7 +51,7 @@ async function main() {
     
       const categories: Departments[] = [];
       if (e[9]) {
-        categories.push('GYM');
+        categories.push('GBSL');
       }    
       if (e[10]) {
         categories.push('FMS');

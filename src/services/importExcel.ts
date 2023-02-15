@@ -46,7 +46,7 @@ export const importExcel = async (file: string, userId: string, jobId: string) =
 
     const categories: Departments[] = [];
     if (e[9]) {
-      categories.push('GYM');
+      categories.push('GBSL');
     }
     if (e[10]) {
       categories.push('FMS');
