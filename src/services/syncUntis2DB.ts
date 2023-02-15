@@ -1,6 +1,6 @@
-import { WebUntisSecretAuth, Base, WebAPITimetable } from 'webuntis';
+import { WebUntisSecretAuth, Base, WebAPITimetable, Klasse } from 'webuntis';
 import { authenticator as Authenticator } from 'otplib';
-import { PrismaClient, UntisLesson } from "@prisma/client";
+import { Departments, PrismaClient, UntisLesson } from "@prisma/client";
 import prisma from '../prisma';
 
 const untis = new WebUntisSecretAuth(

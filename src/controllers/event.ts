@@ -1,4 +1,4 @@
-import { Departements } from "@prisma/client";
+import { Departments } from "@prisma/client";
 import { NextFunction, Request, RequestHandler, Response } from "express";
 import prisma from "../prisma";
 import { IoEvent, NewRecord } from "../routes/IoEventTypes";
@@ -94,7 +94,7 @@ interface CreateEvent {
   location: string,
   description: string,
   descriptionLong: string,
-  departemens: Departements[],
+  departemens: Departments[],
   classes: string[]
 }
 

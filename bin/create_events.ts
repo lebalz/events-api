@@ -1,4 +1,4 @@
-import { Departements, EventState, PrismaClient, Role } from "@prisma/client";
+import { Departments, EventState, PrismaClient, Role } from "@prisma/client";
 import readXlsxFile from 'read-excel-file/node';
 
 const prisma = new PrismaClient();
@@ -49,7 +49,7 @@ async function main() {
         ende.setUTCMinutes(minutes);
       }
     
-      const categories: Departements[] = [];
+      const categories: Departments[] = [];
       if (e[9]) {
         categories.push('GYM');
       }    
@@ -68,7 +68,7 @@ async function main() {
           end: ende || start,
           allDay: allDay,
           state: EventState.PUBLISHED,
-          departements: categories,
+          Departments: categories,
           author: {
             connect: { id: user!.id }
           }

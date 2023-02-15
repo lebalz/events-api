@@ -1,4 +1,4 @@
-import { Departements, EventState, Job } from "@prisma/client";
+import { Departments, EventState, Job } from "@prisma/client";
 import readXlsxFile from 'read-excel-file/node';
 import prisma from '../prisma';
 
@@ -44,7 +44,7 @@ export const importExcel = async (file: string, userId: string, jobId: string) =
       ende.setUTCMinutes(minutes);
     }
 
-    const categories: Departements[] = [];
+    const categories: Departments[] = [];
     if (e[9]) {
       categories.push('GYM');
     }
@@ -63,7 +63,7 @@ export const importExcel = async (file: string, userId: string, jobId: string) =
         end: ende || start,
         allDay: allDay,
         state: EventState.DRAFT,
-        departements: categories,
+        Departments: categories,
         author: {
           connect: { id: userId }
         },
