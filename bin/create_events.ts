@@ -68,7 +68,7 @@ async function main() {
           end: ende || start,
           allDay: allDay,
           state: EventState.PUBLISHED,
-          Departments: categories,
+          departments: categories,
           author: {
             connect: { id: user!.id }
           }

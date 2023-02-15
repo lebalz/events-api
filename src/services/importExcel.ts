@@ -63,7 +63,7 @@ export const importExcel = async (file: string, userId: string, jobId: string) =
         end: ende || start,
         allDay: allDay,
         state: EventState.DRAFT,
-        Departments: categories,
+        departments: categories,
         author: {
           connect: { id: userId }
         },
