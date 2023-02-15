@@ -23,11 +23,37 @@ export const teacher: RequestHandler = async (req, res, next) => {
     try {
         const tchr = await prisma.untisTeacher.findUnique({
             where: {
-                id: req.params.id as any as number
+                id: Number.parseInt(req.params.id, 10)
              },
             include: {
-                classes: true,
-                lessons: true,
+                classes: {
+                    include: {
+                        teachers: {
+                            select: {
+                                id: true,
+                            }
+                        },
+                        lessons: {
+                            select: {
+                                id: true,
+                            }
+                        }
+                    }
+                },
+                lessons: {
+                    include: {
+                        teachers: {
+                            select: {
+                                id: true,
+                            }
+                        },
+                        classes: {
+                            select: {
+                                id: true,
+                            }
+                        }
+                    }
+                },
             }
         });
         res.json(tchr);
