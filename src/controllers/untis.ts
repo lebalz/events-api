@@ -19,6 +19,23 @@ export const teachers: RequestHandler = async (req, res, next) => {
     }
 }
 
+export const teacher: RequestHandler = async (req, res, next) => {
+    try {
+        const tchr = await prisma.untisTeacher.findUnique({
+            where: {
+                id: req.params.id as any as number
+             },
+            include: {
+                classes: true,
+                lessons: true,
+            }
+        });
+        res.json(tchr);
+    } catch (error) {
+        next(error);
+    }
+}
+
 export const sync: RequestHandler = async (req, res, next) => {
     try {
         const syncJob = await prisma.job.create({

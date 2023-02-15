@@ -122,6 +122,15 @@ const authConfig: Config = {
                 }
             ]
         },
+        untisTeacher: {
+            path: '/untis/teacher',
+            access: [
+                {
+                    methods: ['GET'],
+                    roles: [Role.ADMIN, Role.USER],
+                }
+            ]
+        },
         findJob: {
             path: '/job/:id',
             access: [{

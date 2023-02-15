@@ -1,6 +1,6 @@
 import { WebUntisSecretAuth, Base, WebAPITimetable, Klasse } from 'webuntis';
 import { authenticator as Authenticator } from 'otplib';
-import { Departments, PrismaClient, UntisLesson } from "@prisma/client";
+import { Departments, UntisLesson } from "@prisma/client";
 import prisma from '../prisma';
 
 const untis = new WebUntisSecretAuth(
@@ -173,6 +173,80 @@ const fetchUntis = async () => {
   return data
 }
 
+const LegacyDeparmentMap: {[key: string]: Departments} = {
+  'w': Departments.WMS,
+  'U': Departments.ESC,// WMS
+  'V': Departments.ESC,// WMS
+  'X': Departments.ESC,// WMS
+  '23l': Departments.FMPaed,
+  'r': Departments.FMS,
+  's': Departments.FMS,
+  't': Departments.FMS,
+  'u': Departments.FMS,
+  'R': Departments.ECG,// FMS
+  'S': Departments.ECG,// FMS
+  'T': Departments.ECG,// FMS
+  '23msA': Departments.ECG,// FMS
+  '23msB': Departments.ECG,// FMS
+  '23L': Departments.MSOP, /* FMPäd */
+  '23M': Departments.MSOP, /* FMPäd */
+  '23R': Departments.GBJB
+}
+
+
+
+const mapClass2DEpartment = (kl: Klasse) => {
+  const {name} = kl;
+  const year = Number.parseInt(name.slice(0, 2), 10);
+  if (year < 27) {
+    if (name in LegacyDeparmentMap) {
+      return LegacyDeparmentMap[name]
+    }
+    const kl = name[name.length - 1];
+    if (kl in LegacyDeparmentMap) {
+      return LegacyDeparmentMap[kl]
+    }
+    if (kl < 'a') { // Means it is an upper case letter
+      return Departments.GBJB
+    }
+    return Departments.GBSL
+  }
+  const cluster = name.slice(2, 3);
+  const klass = name.slice(3, 4);
+  switch (cluster) {
+    // GBSL
+    case 'G':
+      return Departments.GBSL;
+    case 'F':
+      if (klass >= 'a' && klass <= 'o') {
+        return Departments.FMS;
+      } else if (klass >= 'p' && klass <= 's') {
+        return Departments.FMPaed;
+      } else if (klass >= 'w' && klass <= 'y') {
+        return Departments.FMS; // FMS/ECG Bilingue
+      }
+    case 'W':
+      return Departments.WMS;
+    // GBJB
+    case 'm':
+      return Departments.GBJB;
+    case 's':
+      if (klass >= 'A' && klass <= 'O') {
+        return Departments.ECG;
+      } else if (klass >= 'P' && klass <= 'S') {
+        return Departments.MSOP;
+      } else if (klass >= 'T' && klass <= 'V') {
+        return Departments.ECG; // FMS/ECG Bilingue
+      }
+    case 'c':
+      return Departments.ESC;
+    case 'p':
+      return Departments.GBJB;
+  }
+  console.log('Unknown Class', name);
+  return Departments.GBJB;
+}
+
 export const syncUntis2DB = async () => {
   const data = await fetchUntis()
   if (data.timetable_s1.length === 0) {
@@ -193,7 +267,8 @@ export const syncUntis2DB = async () => {
       return {
         id: c.id,
         name: c.name,
-        sf: c.longName
+        sf: c.longName,
+        department: mapClass2DEpartment(c),
       }
     })
   });
