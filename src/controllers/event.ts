@@ -1,9 +1,25 @@
-import { Departments } from "@prisma/client";
 import { NextFunction, Request, RequestHandler, Response } from "express";
 import prisma from "../prisma";
-import { IoEvent, NewRecord } from "../routes/IoEventTypes";
+import { IoEvent } from "../routes/socketEventTypes";
 import { notifyChangedRecord } from "../routes/notify";
 import { importExcel } from "../services/importExcel";
+import { Department, Job, User, Event } from "@prisma/client";
+
+export const prepareEvent = (event: (Event & {
+    author: User;
+    job?: Job | null;
+    departments: Department[];
+}) | null) => {
+    return {
+      ...event,
+      job: undefined,
+      jobId: event?.job?.id,
+      author: undefined,
+      authorId: event?.author.id,
+      departments: undefined,
+      departmentIds: event?.departments.map((d) => d.id) || [],
+    };
+}
 
 
 export const find: RequestHandler = async (req, res, next) => {
@@ -11,15 +27,9 @@ export const find: RequestHandler = async (req, res, next) => {
     const events = await prisma.event
       .findUnique({
         where: { id: req.params.id },
-        include: { author: true, job: true },
+        include: { author: true, job: true, departments: true },
       })
-      .then((event) => {
-        return {
-          ...event,
-          author: undefined,
-          authorId: event?.author.id,
-        };
-      });
+      .then(prepareEvent);
     res.json(events);
   } catch (error) {
     next(error);
@@ -58,7 +68,7 @@ export const events: RequestHandler = async (req, res, next) => {
   try {
     const events = await prisma.event
       .findMany({
-        include: { author: true },
+        include: { author: true, departments: true },
         where: {
           OR: [
             {
@@ -71,13 +81,7 @@ export const events: RequestHandler = async (req, res, next) => {
         }
       })
       .then((events) => {
-        return events.map((event) => {
-          return {
-            ...event,
-            author: undefined,
-            authorId: event.author.id
-          };
-        });
+        return events.map(prepareEvent);
       });
     res.json(events);
   } catch (error) {
@@ -89,30 +93,17 @@ export const events: RequestHandler = async (req, res, next) => {
 interface CreateEvent {
   id: string,
   start: string,
-  end: string,
-  allDay: boolean,
-  location: string,
-  description: string,
-  descriptionLong: string,
-  departemens: Departments[],
-  classes: string[]
+  end: string
 }
 
 export const create = async (req: Request<{}, CreateEvent>, res: Response, next: NextFunction) => {
-  const { start, end, allDay, location, description, descriptionLong, id, classes, departemens } = req.body;
+  const { start, end } = req.body;
   try {
     const uid = req.user!.id;
-    const d = new Date();
     const event = await prisma.event.create({
       data: {
-        id: id,
-        start: start,
-        end: end,
-        allDay: allDay || false,
-        description: description || '',
-        descriptionLong: descriptionLong || '',
-        location: location || '',
-        state: 'DRAFT',
+        start,
+        end,
         author: {
           connect: {
             id: uid
@@ -129,7 +120,7 @@ export const create = async (req: Request<{}, CreateEvent>, res: Response, next:
       }
     ]
 
-    res.status(201).json(event);
+    res.status(201).json({...event, departmentIds: []});
   } catch (e) {
     next(e)
   }

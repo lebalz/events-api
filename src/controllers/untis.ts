@@ -1,6 +1,6 @@
 import { RequestHandler } from "express";
 import prisma from "../prisma";
-import { IoEvent } from "../routes/IoEventTypes";
+import { IoEvent } from "../routes/socketEventTypes";
 import { notifyChangedRecord } from "../routes/notify";
 import { syncUntis2DB } from "../services/syncUntis2DB";
 

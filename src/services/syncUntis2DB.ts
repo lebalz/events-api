@@ -1,7 +1,18 @@
 import { WebUntisSecretAuth, Base, WebAPITimetable, Klasse } from 'webuntis';
 import { authenticator as Authenticator } from 'otplib';
-import { Departments, UntisLesson } from "@prisma/client";
+import { UntisLesson } from "@prisma/client";
 import prisma from '../prisma';
+
+const Departments = {
+  WMS: 'WMS',
+  ESC: 'ESC',
+  FMPaed: 'FMPaed',
+  FMS: 'FMS',
+  ECG: 'ECG',
+  MSOP: 'MSOP',
+  GBJB: 'GBJB',
+  GBSL: 'GBSL',
+}
 
 const untis = new WebUntisSecretAuth(
   process.env.UNTIS_SCHOOL!,
@@ -173,7 +184,7 @@ const fetchUntis = async () => {
   return data
 }
 
-const LegacyDeparmentMap: {[key: string]: Departments} = {
+const LegacyDeparmentMap: {[key: string]: string} = {
   'w': Departments.WMS,
   'U': Departments.ESC,// WMS
   'V': Departments.ESC,// WMS
@@ -261,14 +272,27 @@ export const syncUntis2DB = async () => {
   console.log('Dropped', drops.map((d) => d.count).join(', '));
   /** SYNC db */
 
+  /** UPSERT DEPARTMENTS */
+  await Promise.all(Object.values(Departments).map((d) => {
+    return prisma.department.upsert({
+      where: { name: d },
+      update: {},
+      create: { name: d }
+    });
+  }));
+
+  const dbDepartments = await prisma.department.findMany({});
+
+
   /** CREATE CLASSES */
   const dbClasses = await prisma.untisClass.createMany({
     data: data.classes.map((c) => {
+      const kName = mapClass2DEpartment(c);
       return {
         id: c.id,
         name: c.name,
         sf: c.longName,
-        department: mapClass2DEpartment(c),
+        departmentId: dbDepartments.find((d) => d.name === kName)?.id || undefined,
       }
     })
   });

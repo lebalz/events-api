@@ -18,26 +18,34 @@ model User {
     createdAt DateTime      @default(now()) @map("created_at")
     updatedAt DateTime      @updatedAt @map("updated_at")
     events    Event[]       @relation("events")
-    jobs Job[]
+    jobs      Job[]
 
     @@map("users")
 }
 
 model Event {
-    id              String         @id @default(uuid())
-    author          User           @relation("events", fields: [authorId], references: [id])
-    authorId        String         @map("author_id")
-    start           DateTime
-    end             DateTime
-    allDay          Boolean        @map("all_day")
-    location        String
-    description     String
-    descriptionLong String         @map("description_long")
-    departments     Departments[] @default([])
-    classes         String[]       @default([])
-    state           EventState     @default(DRAFT)
-    job             Job?           @relation(fields: [jobId], references: [id], onDelete: Cascade)
-    jobId           String?        @map("import_id")
+    id       String @id @default(uuid())
+    author   User   @relation("events", fields: [authorId], references: [id])
+    authorId String @map("author_id")
+
+    start DateTime
+    end   DateTime
+
+    location        String @default("")
+    description     String @default("")
+    descriptionLong String @default("") @map("description_long")
+
+    state EventState @default(DRAFT)
+
+    job   Job?    @relation(fields: [jobId], references: [id], onDelete: Cascade)
+    jobId String? @map("import_id")
+
+    // Filter Criterias
+    classes String[] @default([])
+    classYears String[] @default([]) @map("class_years")
+    departments Department[] @relation("events_to_departments")
+    teachersOnly Boolean @default(false) @map("teachers_only")
+    klpOnly Boolean @default(false) @map("klp_only")
 
     createdAt DateTime @default(now()) @map("created_at")
     updatedAt DateTime @updatedAt @map("updated_at")
@@ -45,15 +53,56 @@ model Event {
     @@map("events")
 }
 
+model Department {
+    id          String          @id @default(uuid())
+    name        String       @unique
+    description String       @default("")
+    classes     UntisClass[]
+    events      Event[]      @relation("events_to_departments")
+
+    createdAt DateTime @default(now()) @map("created_at")
+    updatedAt DateTime @updatedAt @map("updated_at")
+
+    @@map("departments")
+}
+
+model Semester {
+    id        String @id @default(uuid())
+    name      String
+    start     DateTime
+    end       DateTime
+    createdAt DateTime @default(now()) @map("created_at")
+    updatedAt DateTime @updatedAt @map("updated_at")
+
+    @@map("semesters")
+}
+
+model RegistrationPeriod {
+    id        String @id @default(uuid())
+    name      String
+    start     DateTime
+    end       DateTime
+    createdAt DateTime @default(now()) @map("created_at")
+    updatedAt DateTime @updatedAt @map("updated_at")
+
+    @@map("registration_periods")
+}
+
+
 model Job {
-    id     String   @id @default(uuid())
-    type   JobType
-    state  JobState @default(PENDING)
-    user   User     @relation(fields: [userId], references: [id])
-    userId String   @map("user_id")
-    events Event[]
+    id       String   @id @default(uuid())
+    type     JobType
+    state    JobState @default(PENDING)
+    
+    user     User     @relation(fields: [userId], references: [id])
+    userId   String   @map("user_id")
+    
+    events   Event[]
+
+    description String @default("")
+
     filename String?
-    log    String   @default("")
+    log      String   @default("")
 
     createdAt DateTime @default(now()) @map("created_at")
     updatedAt DateTime @updatedAt @map("updated_at")
@@ -67,8 +116,8 @@ model UntisTeacher {
     longName String        @map("long_name")
     title    String
     active   Boolean
-    lessons  UntisLesson[] @relation("_teachers_to_lessons")
-    classes  UntisClass[]  @relation("_teachers_to_classes")
+    lessons  UntisLesson[] @relation("teachers_to_lessons")
+    classes  UntisClass[]  @relation("teachers_to_classes")
     user     User?
 
     @@map("untis_teachers")
@@ -83,19 +132,21 @@ model UntisLesson {
     weekDay     Int            @map("week_day")
     startDHHMM  Int            @map("start_dhhmm")
     endDHHMM    Int            @map("end_dhhmm")
-    classes     UntisClass[]   @relation("_classes_to_lessons")
-    teachers    UntisTeacher[] @relation("_teachers_to_lessons")
+    classes     UntisClass[]   @relation("classes_to_lessons")
+    teachers    UntisTeacher[] @relation("teachers_to_lessons")
 
     @@map("untis_lessons")
 }
 
 model UntisClass {
-    id       Int            @id @default(autoincrement())
-    name     String
-    sf       String
-    lessons  UntisLesson[]  @relation("_classes_to_lessons")
-    teachers UntisTeacher[] @relation("_teachers_to_classes")
-    department Departments?
+    id           Int            @id @default(autoincrement())
+    name         String         @unique
+    sf           String
+    lessons      UntisLesson[]  @relation("classes_to_lessons")
+    teachers     UntisTeacher[] @relation("teachers_to_classes")
+    department   Department?    @relation(fields: [departmentId], references: [id])
+    departmentId String?        @map("department_id")
+
     @@map("untis_classes")
 }
 
@@ -103,17 +154,6 @@ enum Role {
     STUDENT
     USER
     ADMIN
-}
-
-enum Departments {
-    GBSL
-    GBJB
-    FMS
-    FMPaed
-    ECG  // FMS
-    WMS
-    ESC  // WMS
-    MSOP // FMPäd
 }
 
 enum EventState {
@@ -135,20 +175,3 @@ enum JobType {
     CLONE
     SYNC_UNTIS
 }
-
-// model UntisSubject {
-//     id        Int    @id @default(autoincrement())
-//     name      String
-//     longName  String @map("long_name")
-//     backColor String @map("back_color")
-//     untisLessons UntisLesson[]
-//     @@map("untis_subjects")
-// }
-
-// model UntisRoom {
-//     id        Int    @id @default(autoincrement())
-//     name      String
-//     longName  String @map("long_name")
-//     untisLessons UntisLesson[]
-//     @@map("untis_rooms")
-// }

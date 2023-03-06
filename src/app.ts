@@ -1,4 +1,3 @@
-import { User } from '@prisma/client';
 import { strategyForEnvironment } from "./auth/index";
 import express, { Request, Response, NextFunction } from "express";
 import session from 'express-session';
@@ -13,7 +12,7 @@ import http from 'http';
 import router from './routes/router';
 import routeGuard, { createAccessRules } from './auth/guard';
 import authConfig from './routes/authConfig';
-import EventRouter from './routes/events';
+import EventRouter from './routes/socketEvents';
 
 const AccessRules = createAccessRules(authConfig.accessMatrix);
 

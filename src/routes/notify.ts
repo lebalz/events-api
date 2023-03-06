@@ -1,5 +1,5 @@
 import { Server } from "socket.io";
-import { ChangedRecord, IoEvent } from "./IoEventTypes";
+import { ChangedRecord, IoEvent } from "./socketEventTypes";
 
 export const notify = (io: Server |undefined, type: IoEvent, payload: Object, to?: string) => {
     if (!io) {

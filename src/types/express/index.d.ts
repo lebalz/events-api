@@ -1,6 +1,6 @@
 import { User as pUser } from '@prisma/client';
 import { Server } from "socket.io";
-import { Notification } from '../../routes/IoEventTypes';
+import { Notification } from '../../routes/socketEventTypes';
 
 
 // to make the file a module and avoid the TypeScript error

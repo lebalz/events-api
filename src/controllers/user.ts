@@ -1,6 +1,6 @@
 import { RequestHandler } from "express";
 import prisma from "../prisma";
-import { IoEvent } from "../routes/IoEventTypes";
+import { IoEvent } from "../routes/socketEventTypes";
 
 
 export const user: RequestHandler = async (req, res) => {

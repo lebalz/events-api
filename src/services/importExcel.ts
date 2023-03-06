@@ -1,4 +1,4 @@
-import { Departments, EventState, Job } from "@prisma/client";
+import { EventState, Prisma } from "@prisma/client";
 import readXlsxFile from 'read-excel-file/node';
 import prisma from '../prisma';
 
@@ -44,15 +44,27 @@ export const importExcel = async (file: string, userId: string, jobId: string) =
       ende.setUTCMinutes(minutes);
     }
 
-    const categories: Departments[] = [];
+    const departments: {
+      where: Prisma.DepartmentWhereUniqueInput,
+      create: (Prisma.Without<Prisma.DepartmentCreateWithoutEventsInput, Prisma.DepartmentUncheckedCreateWithoutEventsInput> & Prisma.DepartmentUncheckedCreateWithoutEventsInput)
+    }[] = [];
     if (e[9]) {
-      categories.push('GBSL');
+      departments.push({
+        create: { name: 'GBSL' },
+        where: { name: 'GBSL' }
+      });
     }
     if (e[10]) {
-      categories.push('FMS');
+      departments.push({
+        create: { name: 'FMS' },
+        where: { name: 'FMS' }
+      });
     }
     if (e[11]) {
-      categories.push('WMS');
+      departments.push({
+        create: { name: 'WMS' },
+        where: { name: 'WMS' }
+      });
     }
     return prisma.event.create({
       data: {
@@ -61,15 +73,17 @@ export const importExcel = async (file: string, userId: string, jobId: string) =
         location: e[7] as string || '',
         start: start,
         end: ende || start,
-        allDay: allDay,
         state: EventState.DRAFT,
-        departments: categories,
         author: {
           connect: { id: userId }
         },
         job: {
           connect: { id: jobId }
+        },
+        departments: {
+          connectOrCreate: departments
         }
+
       }
     });
   });
