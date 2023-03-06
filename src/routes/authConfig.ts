@@ -148,6 +148,27 @@ const authConfig: Config = {
                 methods: ['GET'],
                 roles: [Role.ADMIN, Role.USER, Role.STUDENT],
             }]
+        },
+        allDepartments: {
+            path: '/department/all',
+            access: [{
+                methods: ['GET'],
+                roles: [Role.ADMIN, Role.USER, Role.STUDENT],
+            }]
+        },
+        allSemesters: {
+            path: '/semester/all',
+            access: [{
+                methods: ['GET'],
+                roles: [Role.ADMIN, Role.USER, Role.STUDENT],
+            }]
+        },
+        allRegistrationPeriods: {
+            path: '/registration_period/all',
+            access: [{
+                methods: ['GET'],
+                roles: [Role.ADMIN, Role.USER],
+            }]
         }
     },
 };
