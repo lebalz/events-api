@@ -96,6 +96,15 @@
   resolved "https://registry.yarnpkg.com/@prisma/engines/-/engines-4.11.0.tgz#c99749bfe20f58e8f4d2b5e04fee0785eba440e1"
   integrity sha512-0AEBi2HXGV02cf6ASsBPhfsVIbVSDC9nbQed4iiY5eHttW9ZtMxHThuKZE1pnESbr8HRdgmFSa/Kn4OSNYuibg==
 
+"@socket.io/admin-ui@^0.5.1":
+  version "0.5.1"
+  resolved "https://registry.yarnpkg.com/@socket.io/admin-ui/-/admin-ui-0.5.1.tgz#8091ba571a5262de214b58522a3c03541de1f274"
+  integrity sha512-1dlGL2FGm6T+uL1e6iDvbo2eCINwvW7iVbjIblwh5kPPRM1SP8lmZrbFZf4QNJ/cqQ+JLcx49eXGM9WAB4TK7w==
+  dependencies:
+    "@types/bcryptjs" "^2.4.2"
+    bcryptjs "^2.4.3"
+    debug "~4.3.1"
+
 "@socket.io/component-emitter@~3.1.0":
   version "3.1.0"
   resolved "https://registry.yarnpkg.com/@socket.io/component-emitter/-/component-emitter-3.1.0.tgz#96116f2a912e0c02817345b3c10751069920d553"
@@ -120,6 +129,11 @@
   version "1.0.3"
   resolved "https://registry.yarnpkg.com/@tsconfig/node16/-/node16-1.0.3.tgz#472eaab5f15c1ffdd7f8628bd4c4f753995ec79e"
   integrity sha512-yOlFc+7UtL/89t2ZhjPvvB/DeAr3r+Dq58IgzsFkOAvVC6NMJXmCGjbptdXdR9qsX7pKcTL+s87FtYREi2dEEQ==
+
+"@types/bcryptjs@^2.4.2":
+  version "2.4.2"
+  resolved "https://registry.yarnpkg.com/@types/bcryptjs/-/bcryptjs-2.4.2.tgz#e3530eac9dd136bfdfb0e43df2c4c5ce1f77dfae"
+  integrity sha512-LiMQ6EOPob/4yUL66SZzu6Yh77cbzJFYll+ZfaPiPPFswtIlA/Fs1MzdKYA7JApHU49zQTbJGX3PDmCpIdDBRQ==
 
 "@types/body-parser@*":
   version "1.19.2"
@@ -332,6 +346,11 @@ basic-auth@~2.0.1:
   integrity sha512-NF+epuEdnUYVlGuhaxbbq+dvJttwLnGY+YixlXlME5KpQ5W3CnXA5cVTneY3SPbPDRkcjMbifrwmFYcClgOZeg==
   dependencies:
     safe-buffer "5.1.2"
+
+bcryptjs@^2.4.3:
+  version "2.4.3"
+  resolved "https://registry.yarnpkg.com/bcryptjs/-/bcryptjs-2.4.3.tgz#9ab5627b93e60621ff7cdac5da9733027df1d0cb"
+  integrity sha512-V/Hy/X9Vt7f3BbPJEi8BdVFMByHi+jNXrYkW3huaybV/kQ0KJg0Y6PkEMbn+zeT+i+SiKZ/HMqJGIIt4LZDqNQ==
 
 big-integer@^1.6.17:
   version "1.6.51"

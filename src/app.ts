@@ -13,6 +13,7 @@ import router from './routes/router';
 import routeGuard, { createAccessRules } from './auth/guard';
 import authConfig from './routes/authConfig';
 import EventRouter from './routes/socketEvents';
+import {instrument} from '@socket.io/admin-ui';
 
 const AccessRules = createAccessRules(authConfig.accessMatrix);
 
@@ -87,14 +88,28 @@ app.get('/api/v1/checklogin',
 );
 
 
+const corsOrigin = process.env.CORS_ORIGIN ? [process.env.CORS_ORIGIN, 'https://admin.socket.io'] : true;
+
 const io = new Server(server, {
     cors: {
-        origin: process.env.CORS_ORIGIN || true,
+        origin: corsOrigin,
         credentials: true,
         methods: ["GET", "POST", "PUT", "DELETE"],
     },
     transports: ['websocket', /*'polling'*/]
 });
+
+
+instrument(io, {
+    mode: "development",
+    auth: process.env.ADMIN_UI_PASSWORD ? {
+        type: 'basic',
+        username: 'admin',
+        /* generate a bcrypt hashed pw, e.g. with https://bcrypt.online/ */
+        password: process.env.ADMIN_UI_PASSWORD
+    } : false,
+});
+
 
 // convert a connect middleware to a Socket.IO middleware
 io.use((socket, next) => {

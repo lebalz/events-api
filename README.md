@@ -21,6 +21,17 @@ postgres=# CREATE DATABASE events_api;
 postgres=# \list
 postgres=# \c events_api
 ```
+
+## Environment
+
+Copy the `example.env` file to `.env` and fill in the values.
+
+```bash
+cp example.env .env
+```
+
+The `ADMIN_UI_PASSWORD` is used to access the admin UI from https://admin.socket.io. In the example, the password is `password`. **Caution** when this env is not set, the authentication is disabled.
+
 ### Setup DBPrisma JS
 
 ```bash
