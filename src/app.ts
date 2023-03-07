@@ -96,7 +96,7 @@ const io = new Server(server, {
         credentials: true,
         methods: ["GET", "POST", "PUT", "DELETE"],
     },
-    transports: ['websocket', /*'polling'*/]
+    transports: ['websocket', 'polling']
 });
 
 
