@@ -4,6 +4,12 @@ import { IoEvent } from "../routes/socketEventTypes";
 import { notifyChangedRecord } from "../routes/notify";
 import { importExcel } from "../services/importExcel";
 import { Department, Job, User, Event } from "@prisma/client";
+import { createDataExtractor } from "./helpers";
+
+const getData = createDataExtractor<Event>(
+  ['klpOnly', 'classYears', 'classes', 'description', 'state', 'teachersOnly', 'start', 'end', "location", 'description', 'descriptionLong']  
+);
+
 
 export const prepareEvent = (event: (Event & {
     author: User;
@@ -36,17 +42,13 @@ export const find: RequestHandler = async (req, res, next) => {
   }
 }
 
-export const update: RequestHandler<{ id: string }, any, { data: any }> = async (req, res, next) => {
+export const update: RequestHandler<{ id: string }, any, { data: Event }> = async (req, res, next) => {
   /** remove fields not updatable*/
-  ['id', 'authorId', 'author', 'createdAt', 'updatedAt'].forEach((field) => {
-    if (req.body.data[field]) {
-      delete req.body.data[field];
-    }
-  });
+  const data = getData(req.body.data);
   try {
     const event = await prisma.event.update({
       where: { id: req.params.id },
-      data: req.body.data,
+      data
     });
 
     res.notifications = [

@@ -156,6 +156,16 @@ const authConfig: Config = {
                 roles: [Role.ADMIN, Role.USER, Role.STUDENT],
             }]
         },
+        epartment: {
+            path: '/department',
+            access: [{
+                methods: ['GET'],
+                roles: [Role.ADMIN, Role.USER, Role.STUDENT],
+            },{
+                methods: ['GET', 'PUT', 'POST', 'DELETE'],
+                roles: [Role.ADMIN],
+            }]
+        },
         allSemesters: {
             path: '/semester/all',
             access: [{
