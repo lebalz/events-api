@@ -68,7 +68,7 @@ export const events: RequestHandler = async (req, res, next) => {
   try {
     const events = await prisma.event
       .findMany({
-        include: { author: true, departments: true },
+        include: { author: true, departments: true, job: true },
         where: {
           OR: [
             {
