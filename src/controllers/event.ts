@@ -8,24 +8,24 @@ import { createDataExtractor } from "./helpers";
 import { user } from "./user";
 
 const getData = createDataExtractor<Event>(
-  ['klpOnly', 'classYears', 'classes', 'description', 'state', 'teachersOnly', 'start', 'end', "location", 'description', 'descriptionLong']  
+  ['klpOnly', 'classYears', 'classes', 'description', 'state', 'teachersOnly', 'start', 'end', "location", 'description', 'descriptionLong']
 );
 
 
 export const prepareEvent = (event: (Event & {
-    author: User;
-    job?: Job | null;
-    departments: Department[];
+  author: User;
+  job?: Job | null;
+  departments: Department[];
 }) | null) => {
-    return {
-      ...event,
-      job: undefined,
-      jobId: event?.job?.id,
-      author: undefined,
-      authorId: event?.author?.id,
-      departments: undefined,
-      departmentIds: event?.departments.map((d) => d.id) || [],
-    };
+  return {
+    ...event,
+    job: undefined,
+    jobId: event?.job?.id,
+    author: undefined,
+    authorId: event?.author?.id,
+    departments: undefined,
+    departmentIds: event?.departments.map((d) => d.id) || [],
+  };
 }
 
 
@@ -65,6 +65,31 @@ export const update: RequestHandler<{ id: string }, any, { data: Event }> = asyn
   }
 }
 
+export const destroy: RequestHandler = async (req, res, next) => {
+  try {
+    /** check policy - only delete if user is author or admin */
+    const toRemove = await prisma.event
+      .findUnique({
+        where: { id: req.params.id }
+      })
+    if (req.user?.role !== 'ADMIN' && toRemove?.authorId !== req.user!.id) {
+      res.status(403).json({ message: 'You are not allowed to delete this event' });
+      return;
+    }
+    const event = await prisma.event.delete({
+      where: {
+        id: req.params.id,
+      },
+    });
+    res.notifications = [{
+      message: { record: 'EVENT', id: event.id },
+      event: IoEvent.DELETED_RECORD
+    }]
+    res.status(204).send();
+  } catch (error) {
+    next(error);
+  }
+}
 
 
 export const events: RequestHandler = async (req, res, next) => {
@@ -114,7 +139,7 @@ export const create = async (req: Request<{}, CreateEvent>, res: Response, next:
         }
       }
     });
-    
+
     res.notifications = [
       {
         message: { record: 'EVENT', id: event.id },
@@ -123,7 +148,7 @@ export const create = async (req: Request<{}, CreateEvent>, res: Response, next:
       }
     ]
 
-    res.status(201).json({...event, departmentIds: []});
+    res.status(201).json({ ...event, departmentIds: [] });
   } catch (e) {
     next(e)
   }
@@ -134,7 +159,7 @@ export const importEvents: RequestHandler = async (req, res, next) => {
   try {
     const importJob = await prisma.job.create({
       data: {
-        type: "IMPORT", 
+        type: "IMPORT",
         user: { connect: { id: req.user!.id } },
         filename: req.file!.originalname,
       }
@@ -160,8 +185,8 @@ export const importEvents: RequestHandler = async (req, res, next) => {
         notifyChangedRecord(req.io, { record: 'JOB', id: importJob.id });
       });
     }
-    
-        
+
+
     res.notifications = [
       {
         message: { record: 'JOB', id: importJob.id },
