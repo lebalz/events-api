@@ -161,7 +161,7 @@ const authConfig: Config = {
             access: [{
                 methods: ['GET'],
                 roles: [Role.ADMIN, Role.USER, 'PUBLIC'],
-            },{
+            }, {
                 methods: ['GET', 'PUT', 'POST', 'DELETE'],
                 roles: [Role.ADMIN],
             }]
@@ -171,6 +171,16 @@ const authConfig: Config = {
             access: [{
                 methods: ['GET'],
                 roles: [Role.ADMIN, Role.USER, 'PUBLIC'],
+            }]
+        },
+        semester: {
+            path: '/semester',
+            access: [{
+                methods: ['GET'],
+                roles: [Role.ADMIN, Role.USER, 'PUBLIC'],
+            }, {
+                methods: ['GET', 'PUT', 'POST', 'DELETE'],
+                roles: [Role.ADMIN],
             }]
         },
         allRegistrationPeriods: {

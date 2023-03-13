@@ -3,7 +3,7 @@ import { create as createEvent, events, find, update, importEvents, destroy } fr
 import {find as findJob, all as allJobs, destroy as deleteJob} from '../controllers/job';
 import { all as allDepartments, find as findDepartment, update as updateDepartment, create as createDepartment, destroy as deleteDepartment } from '../controllers/department';
 import { all as allRegistrationPeriods } from '../controllers/registrationPeriod';
-import { all as allSemesters } from '../controllers/semester';
+import { all as allSemesters, create as createSemester } from '../controllers/semester';
 import { sync, teachers, teacher } from '../controllers/untis';
 import { user, users, linkToUntis, find as findUser } from '../controllers/user';
 import multer from 'multer';
@@ -44,6 +44,7 @@ router.delete('/department/:id', deleteDepartment);
 
 
 router.get('/semester/all', allSemesters);
+router.post('/semester', createSemester);
 router.get('/registration_period/all', allRegistrationPeriods);
 
 
