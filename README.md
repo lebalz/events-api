@@ -10,16 +10,16 @@ Better error reporting for Azure AD: set `loggingNoPII: false` in `src/auth/azur
 ```bash
 psql postgres # sudo -u postgres psql
 
-postgres=# CREATE ROLE events_api WITH LOGIN PASSWORD 'events_api';
-postgres=# ALTER ROLE events_api CREATEDB;
-postgres=# \du
-postgres=# \q
+postgres=> CREATE ROLE events_api WITH LOGIN PASSWORD 'events_api';
+postgres=> ALTER ROLE events_api CREATEDB;
+postgres=> \du
+postgres=> \q
 
 psql -d postgres -h localhost -U events_api
 
-postgres=# CREATE DATABASE events_api;
-postgres=# \list
-postgres=# \c events_api
+postgres=> CREATE DATABASE events_api;
+postgres=> \list
+postgres=> \c events_api
 ```
 
 ## Environment
@@ -37,6 +37,23 @@ The `ADMIN_UI_PASSWORD` is used to access the admin UI from https://admin.socket
 ```bash
 yarn run prisma migrate dev
 ```
+
+### Drop all migrations and create new DB
+
+```bash
+psql -d postgres -h localhost -U events_api
+
+
+postgres=> DROP DATABASE events_api;
+postgres=> CREATE DATABASE events_api;
+postgres=> \q
+
+yarn run prisma migrate dev
+```
+
+### DB Models: Typings
+
+[node_modules/.prisma/client/index.d.ts](node_modules/.prisma/client/index.d.ts)
 
 ## Start
 

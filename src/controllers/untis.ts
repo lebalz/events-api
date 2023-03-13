@@ -78,11 +78,12 @@ export const sync: RequestHandler = async (req, res, next) => {
                 }
             });
         }).catch((error) => {
+            console.log(error);
             return prisma.job.update({
                 where: { id: syncJob.id },
                 data: {
                   state: 'ERROR',
-                  log: JSON.stringify(error)
+                  log: JSON.stringify(error, Object.getOwnPropertyNames(error))
                 }
               });
         }).finally(() => {

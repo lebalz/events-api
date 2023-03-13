@@ -114,8 +114,8 @@ CREATE TABLE "untis_lessons" (
     "description" TEXT NOT NULL,
     "semester" TEXT NOT NULL,
     "week_day" INTEGER NOT NULL,
-    "start_dhhmm" INTEGER NOT NULL,
-    "end_dhhmm" INTEGER NOT NULL,
+    "start_hhmm" INTEGER NOT NULL,
+    "end_hhmm" INTEGER NOT NULL,
 
     CONSTRAINT "untis_lessons_pkey" PRIMARY KEY ("id")
 );

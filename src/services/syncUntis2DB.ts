@@ -1,6 +1,6 @@
 import { WebUntisSecretAuth, Base, WebAPITimetable, Klasse } from 'webuntis';
 import { authenticator as Authenticator } from 'otplib';
-import { UntisLesson } from "@prisma/client";
+import { Prisma, UntisLesson } from "@prisma/client";
 import prisma from '../prisma';
 
 const Departments = {
@@ -184,7 +184,7 @@ const fetchUntis = async () => {
   return data
 }
 
-const LegacyDeparmentMap: {[key: string]: string} = {
+const LegacyDeparmentMap: { [key: string]: string } = {
   'w': Departments.WMS,
   'U': Departments.ESC,// WMS
   'V': Departments.ESC,// WMS
@@ -206,8 +206,8 @@ const LegacyDeparmentMap: {[key: string]: string} = {
 
 
 
-const mapClass2DEpartment = (kl: Klasse) => {
-  const {name} = kl;
+const mapClass2Department = (kl: Klasse) => {
+  const { name } = kl;
   const year = Number.parseInt(name.slice(0, 2), 10);
   if (year < 27) {
     if (name in LegacyDeparmentMap) {
@@ -264,41 +264,64 @@ export const syncUntis2DB = async () => {
     console.log('No Data');
     return
   }
+  const User2Teacher = await prisma.user.findMany({
+    where: {
+      untisId: {
+        not: null
+      }
+    },
+    select: {
+      untisId: true,
+      id: true
+    }
+  });
+  const dbTransactions: Prisma.PrismaPromise<any>[] = [];
   /** DELETE CURRENT DB STATE */
-  const dropLessons = await prisma.untisLesson.deleteMany({});
+  const dropLessons = prisma.untisLesson.deleteMany({});
   const dropClasses = prisma.untisClass.deleteMany({});
   const dropTeachers = prisma.untisTeacher.deleteMany({});
-  const drops = await prisma.$transaction([dropClasses, dropTeachers]);
-  console.log('Dropped', drops.map((d) => d.count).join(', '));
+  dbTransactions.push(dropLessons, dropClasses, dropTeachers);
+
   /** SYNC db */
 
   /** UPSERT DEPARTMENTS */
-  await Promise.all(Object.values(Departments).map((d) => {
-    return prisma.department.upsert({
+  Object.values(Departments).forEach((d) => {
+    dbTransactions.push(prisma.department.upsert({
       where: { name: d },
       update: {},
       create: { name: d }
-    });
-  }));
-
-  const dbDepartments = await prisma.department.findMany({});
-
+    }))
+  }
+  )
 
   /** CREATE CLASSES */
-  const dbClasses = await prisma.untisClass.createMany({
-    data: data.classes.map((c) => {
-      const kName = mapClass2DEpartment(c);
-      return {
+  data.classes.forEach((c) => {
+    const klass = prisma.untisClass.create({
+      data: {
         id: c.id,
         name: c.name,
-        sf: c.longName,
-        departmentId: dbDepartments.find((d) => d.name === kName)?.id || undefined,
+        sf: c.longName
       }
-    })
+    });
+    dbTransactions.push(klass);
+  });
+
+  /** CONNECT CLASSES TO DEPARTMENTS */
+  data.classes.forEach((c) => {
+    const kName = mapClass2Department(c);
+    const update = prisma.untisClass.update({
+      where: { id: c.id },
+      data: {
+        department: {
+          connect: { name: kName }
+        }
+      }
+    });
+    dbTransactions.push(update);
   });
 
   /** CREATE TEACHERS */
-  const dbTeachers = await prisma.untisTeacher.createMany({
+  const dbTeachers = prisma.untisTeacher.createMany({
     data: data.teachers.map((t) => {
       return {
         id: t.id,
@@ -308,6 +331,21 @@ export const syncUntis2DB = async () => {
         active: (t as any).active as boolean || false,
       }
     })
+  });
+  dbTransactions.push(dbTeachers);
+
+  /** CONNECT DB USERS TO TEACHERS  */
+  data.teachers.forEach((t) => {
+    const user = User2Teacher.find((u) => u.untisId === t.id);
+    if (user) {
+      const update = prisma.user.update({
+        where: { id: user.id },
+        data: {
+          untisId: t.id,
+        }
+      });
+      dbTransactions.push(update);
+    }
   });
 
   let nextId = Math.max(...data.timetable_s1.map((t) => t.id), ...data.timetable_s2.map((t) => t.id), ...data.timetable_s3.map((t) => t.id)) + 1;
@@ -322,7 +360,10 @@ export const syncUntis2DB = async () => {
   }
   console.log('Next ID', nextId);
   const extractLesson = (lesson: WebAPITimetable, semester: string): UntisLesson | undefined => {
-    const date = new Date(lesson.date);
+    const year = lesson.date / 10000;
+    const month = (lesson.date % 10000) / 100;
+    const day = lesson.date % 100;
+    const date = new Date(year, month - 1, day, 0, 0, 0, 0);
     if (lessonIdSet.has(lesson.id)) {
       return;
     }
@@ -333,22 +374,24 @@ export const syncUntis2DB = async () => {
       ...findSubject(lesson.subjects[0].id), /** there is always only one subject */
       semester: semester,
       weekDay: date.getUTCDay(),
-      startDHHMM: untisDMMHH(lesson.startTime, date),
-      endDHHMM: untisDMMHH(lesson.endTime, date)
+      startHHMM: lesson.startTime,
+      endHHMM: lesson.endTime
     }
   }
 
   const tt1 = data.timetable_s1.map((t) => extractLesson(t, `${data.schoolyear.startDate.getFullYear()}HS`)).filter(l => l) as UntisLesson[];
   const tt2 = data.timetable_s2.map((t) => extractLesson(t, `${data.schoolyear.endDate.getFullYear()}FS`)).filter(l => l) as UntisLesson[];
   const tt3 = data.timetable_s3.map((t) => extractLesson(t, `${data.schoolyear.endDate.getFullYear()}HS`)).filter(l => l) as UntisLesson[];
-  
-  const dbLessons = await prisma.untisLesson.createMany({
+
+  const dbLessons = prisma.untisLesson.createMany({
     data: [
       ...tt1,
       ...tt2,
       ...tt3
     ]
   });
+
+  dbTransactions.push(dbLessons);
 
 
 
@@ -387,8 +430,8 @@ export const syncUntis2DB = async () => {
     })
   });
 
-  const connectClasses = data.classes.map((cls) => {
-    return prisma.untisClass.update({
+  data.classes.forEach((cls) => {
+    const update = prisma.untisClass.update({
       where: {
         id: cls.id
       },
@@ -400,13 +443,14 @@ export const syncUntis2DB = async () => {
           connect: classes[cls.id]!.teachers.length > 0 ? classes[cls.id]!.teachers : undefined
         }
       }
-    })
+    });
+    dbTransactions.push(update);
   });
-  const connectTeachers = data.teachers.map((tchr) => {
+  data.teachers.forEach((tchr) => {
     if (!teachers[tchr.id] || teachers[tchr.id].length === 0) {
       return;
     }
-    return prisma.untisTeacher.update({
+    const update = prisma.untisTeacher.update({
       where: {
         id: tchr.id
       },
@@ -416,6 +460,8 @@ export const syncUntis2DB = async () => {
         }
       }
     });
+    dbTransactions.push(update);
   });
-  await Promise.all(connectClasses.concat(connectTeachers.filter(t => t) as any[]));
+  console.log('TRANSACTION COUNT', dbTransactions.length);
+  await prisma.$transaction(dbTransactions);
 }

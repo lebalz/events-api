@@ -130,8 +130,8 @@ model UntisLesson {
     description String
     semester    String
     weekDay     Int            @map("week_day")
-    startDHHMM  Int            @map("start_dhhmm")
-    endDHHMM    Int            @map("end_dhhmm")
+    startHHMM   Int            @map("start_hhmm")
+    endHHMM     Int            @map("end_hhmm")
     classes     UntisClass[]   @relation("classes_to_lessons")
     teachers    UntisTeacher[] @relation("teachers_to_lessons")
 
