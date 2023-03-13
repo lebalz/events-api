@@ -10,7 +10,7 @@ import passport from "passport";
 import { Server } from "socket.io";
 import http from 'http';
 import router from './routes/router';
-import routeGuard, { createAccessRules } from './auth/guard';
+import routeGuard, { createAccessRules, PublicRoutes } from './auth/guard';
 import authConfig from './routes/authConfig';
 import EventRouter from './routes/socketEvents';
 import {instrument} from '@socket.io/admin-ui';
@@ -124,7 +124,7 @@ io.use((socket, next) => {
 
 EventRouter(io);
 
-// only allow authenticated users
+// only allow authenticated users in socketio
 io.use((socket, next) => {
     if ((socket.request as any).user) {
         next();
@@ -180,7 +180,7 @@ app.use('/api/v1', (req, res, next) => {
             return res.status(401).json({ error: err.message });
         }
 
-        if (!user) {
+        if (!user && !PublicRoutes.has(req.path.toLowerCase())) {
             // If no user object found, send a 401 response.
             return res.status(401).json({ error: 'Unauthorized' });
         }

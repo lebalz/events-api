@@ -19,7 +19,7 @@ export interface AccessMatrix {
         path: string;
         access: {
             methods: ('GET' | 'POST' | 'PUT' | 'DELETE')[];
-            roles: Role[]
+            roles: (Role | 'PUBLIC')[]
         }[]
     }
 };
@@ -51,7 +51,7 @@ const authConfig: Config = {
             path: '/checklogin',
             access: [{
                 methods: ['GET'],
-                roles: [Role.ADMIN, Role.USER, Role.STUDENT],
+                roles: [Role.ADMIN, Role.USER],
             }]
         },
         user: {
@@ -72,7 +72,7 @@ const authConfig: Config = {
             path: '/user/all',
             access: [{
                 methods: ['GET'],
-                roles: [Role.ADMIN, Role.USER, Role.STUDENT],
+                roles: [Role.ADMIN, Role.USER],
             }]
         },
         userLinkToUntis: {
@@ -87,7 +87,7 @@ const authConfig: Config = {
             access: [
                 {
                     methods: ['GET'],
-                    roles: [Role.ADMIN, Role.USER, Role.STUDENT],
+                    roles: [Role.ADMIN, Role.USER, 'PUBLIC'],
                 },
                 {
                     methods: ['POST', 'PUT', 'DELETE'],
@@ -99,7 +99,7 @@ const authConfig: Config = {
             path: '/event/all',
             access: [{
                 methods: ['GET'],
-                roles: [Role.ADMIN, Role.USER, Role.STUDENT],
+                roles: [Role.ADMIN, Role.USER, 'PUBLIC'],
             }]
         },
         eventImport: {
@@ -114,7 +114,7 @@ const authConfig: Config = {
             access: [
                 {
                     methods: ['GET'],
-                    roles: [Role.ADMIN, Role.USER, Role.STUDENT],
+                    roles: [Role.ADMIN, Role.USER],
                 },
                 {
                     methods: ['GET', 'POST'],
@@ -135,7 +135,7 @@ const authConfig: Config = {
             path: '/job/:id',
             access: [{
                 methods: ['GET'],
-                roles: [Role.ADMIN, Role.USER, Role.STUDENT],
+                roles: [Role.ADMIN, Role.USER],
             },
             {
                 methods: ['GET', 'POST', 'DELETE'],
@@ -146,21 +146,21 @@ const authConfig: Config = {
             path: '/job/all',
             access: [{
                 methods: ['GET'],
-                roles: [Role.ADMIN, Role.USER, Role.STUDENT],
+                roles: [Role.ADMIN, Role.USER],
             }]
         },
         allDepartments: {
             path: '/department/all',
             access: [{
                 methods: ['GET'],
-                roles: [Role.ADMIN, Role.USER, Role.STUDENT],
+                roles: [Role.ADMIN, Role.USER, 'PUBLIC'],
             }]
         },
-        epartment: {
+        department: {
             path: '/department',
             access: [{
                 methods: ['GET'],
-                roles: [Role.ADMIN, Role.USER, Role.STUDENT],
+                roles: [Role.ADMIN, Role.USER, 'PUBLIC'],
             },{
                 methods: ['GET', 'PUT', 'POST', 'DELETE'],
                 roles: [Role.ADMIN],
@@ -170,7 +170,7 @@ const authConfig: Config = {
             path: '/semester/all',
             access: [{
                 methods: ['GET'],
-                roles: [Role.ADMIN, Role.USER, Role.STUDENT],
+                roles: [Role.ADMIN, Role.USER, 'PUBLIC'],
             }]
         },
         allRegistrationPeriods: {

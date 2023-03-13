@@ -29,7 +29,10 @@ const options: IBearerStrategyOptionWithRequest = {
 };
 
 const BearerVerify: VerifyBearerFunction = async (token, done) => {
-    const { oid } = getAuthInfo(token);
+    const { oid, email } = getAuthInfo(token);
+    if (/@edu\./.test(email)) {
+        return done(null, false, token);
+    }
     // @link https://medium.com/@prashantramnyc/node-js-with-passport-authentication-simplified-76ca65ee91e5
     const user = await prisma.user.upsert({
         where: { id: oid },

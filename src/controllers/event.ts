@@ -5,6 +5,7 @@ import { notifyChangedRecord } from "../routes/notify";
 import { importExcel } from "../services/importExcel";
 import { Department, Job, User, Event } from "@prisma/client";
 import { createDataExtractor } from "./helpers";
+import { user } from "./user";
 
 const getData = createDataExtractor<Event>(
   ['klpOnly', 'classYears', 'classes', 'description', 'state', 'teachersOnly', 'start', 'end', "location", 'description', 'descriptionLong']  
@@ -21,7 +22,7 @@ export const prepareEvent = (event: (Event & {
       job: undefined,
       jobId: event?.job?.id,
       author: undefined,
-      authorId: event?.author.id,
+      authorId: event?.author?.id,
       departments: undefined,
       departmentIds: event?.departments.map((d) => d.id) || [],
     };
@@ -58,7 +59,7 @@ export const update: RequestHandler<{ id: string }, any, { data: Event }> = asyn
         to: event.state === 'PUBLISHED' ? undefined : req.user!.id
       }
     ]
-    res.status(200).json({ updatedAt: event.updatedAt });
+    res.status(200).json(event);
   } catch (error) {
     next(error);
   }
@@ -70,14 +71,14 @@ export const events: RequestHandler = async (req, res, next) => {
   try {
     const events = await prisma.event
       .findMany({
-        include: { author: true, departments: true, job: true },
+        include: { author: !!req.user, departments: true, job: !!req.user },
         where: {
           OR: [
             {
               state: 'PUBLISHED'
             },
             {
-              authorId: req.user!.id
+              authorId: !!req.user ? req.user.id : '-1'
             },
           ]
         }

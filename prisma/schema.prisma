@@ -151,7 +151,6 @@ model UntisClass {
 }
 
 enum Role {
-    STUDENT
     USER
     ADMIN
 }

@@ -4,8 +4,9 @@
     "outDir": "dist",
     "strict": true,
     "lib": ["esnext"],
-    "target": "ES5",
+    "target": "ES6",
     "esModuleInterop": true,
+    "moduleResolution": "node",
     "resolveJsonModule": true,
     "typeRoots": ["./src/types"]
   },
