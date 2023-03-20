@@ -1,15 +1,17 @@
-import { Department, Prisma } from "@prisma/client";
+import { Department } from "@prisma/client";
 import { RequestHandler } from "express";
 import prisma from "../prisma";
 import { IoEvent } from "../routes/socketEventTypes";
 import { createDataExtractor } from "./helpers";
 
+const NAME = 'DEPARTMENT';
 const getData = createDataExtractor<Department>(['name', 'description']);
+const db = prisma.department;
 
 export const all: RequestHandler = async (req, res, next) => {
   try {
-    const departments = await prisma.department.findMany({});
-    res.json(departments);
+    const models = await db.findMany({});
+    res.json(models);
   } catch (error) {
     next(error);
   }
@@ -17,12 +19,12 @@ export const all: RequestHandler = async (req, res, next) => {
 
 export const find: RequestHandler = async (req, res, next) => {
   try {
-    const department = await prisma.department.findUnique({
+    const model = await db.findUnique({
       where: {
         id: req.params.id,
       },
     });
-    res.json(department);
+    res.json(model);
   } catch (error) {
     next(error);
   }
@@ -31,52 +33,53 @@ export const find: RequestHandler = async (req, res, next) => {
 export const update: RequestHandler<{ id: string }, any, { data: Department }> = async (req, res, next) => {
   const data = getData(req.body.data);
   try {
-    const department = await prisma.department.update({
+    const model = await db.update({
       where: {
         id: req.params.id,
       },
       data
     });
     res.notifications = [{
-      message: { record: 'DEPARTMENT', id: department.id },
+      message: { record: NAME, id: model.id },
       event: IoEvent.CHANGED_RECORD
     }]
-    res.json(department);
+    res.json(model);
   } catch (error) {
     next(error);
   }
 }
 
-export const create: RequestHandler = async (req, res, next) => {
+export const create: RequestHandler<any, any, Department> = async (req, res, next) => {
   try {
-    const data = getData(req.body.data) as Prisma.DepartmentCreateInput;
-    const department = await prisma.department.create({
+    const {name, description} = req.body;
+    const model = await db.create({
       data: {
-        ...data,
+        name,
+        description
       },
     });
     res.notifications = [{
-      message: { record: 'DEPARTMENT', id: department.id },
+      message: { record: NAME, id: model.id },
       event: IoEvent.NEW_RECORD
     }]
-    res.json(department);
+    res.json(model);
   } catch (error) {
     next(error);
   }
 }
 
-export const destroy: RequestHandler = async (req, res, next) => {
+export const destroy: RequestHandler<{id: string}, any, any> = async (req, res, next) => {
   try {
-    const department = await prisma.department.delete({
+    const department = await db.delete({
       where: {
         id: req.params.id,
       },
     });
     res.notifications = [{
-      message: { record: 'DEPARTMENT', id: department.id },
+      message: { record: NAME, id: department.id },
       event: IoEvent.DELETED_RECORD
     }]
-    res.status(204);
+    res.status(204).send();
   } catch (error) {
     next(error);
   }

@@ -26,7 +26,7 @@ export const find: RequestHandler<{ id: string }> = async (req, res, next) => {
     }
 }
 
-export const users: RequestHandler = async (req, res, next) => {
+export const all: RequestHandler = async (req, res, next) => {
     try {
         const users = await db.findMany({});
         res.json(users);
