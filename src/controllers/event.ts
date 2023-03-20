@@ -45,7 +45,7 @@ export const find: RequestHandler = async (req, res, next) => {
   }
 }
 
-export const update: RequestHandler<{ id: string }, any, { data: Event }> = async (req, res, next) => {
+export const update: RequestHandler<{ id: string }, any, { data: Event & { departmentIds?: string[] } }> = async (req, res, next) => {
   try {
     const record = await db.findUnique({ where: { id: req.params.id } });
     if (record?.authorId !== req.user!.id) {
@@ -53,9 +53,16 @@ export const update: RequestHandler<{ id: string }, any, { data: Event }> = asyn
     }
     /** remove fields not updatable*/
     const data = getData(req.body.data);
+    const departmentIds = req.body.data.departmentIds || [];
     const model = await db.update({
       where: { id: req.params.id },
-      data
+      data: {
+        ...data,
+        departments: {
+          set: departmentIds.map((id) => ({ id }))
+        }
+      },
+      include: { author: true, job: true, departments: true },
     });
 
     res.notifications = [
@@ -65,7 +72,7 @@ export const update: RequestHandler<{ id: string }, any, { data: Event }> = asyn
         to: model.state === EventState.PUBLISHED ? undefined : req.user!.id
       }
     ]
-    res.status(200).json(model);
+    res.status(200).json(prepareEvent(model));
   } catch (error) {
     next(error);
   }
