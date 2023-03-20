@@ -4,7 +4,7 @@ export enum IoEvent {
     DELETED_RECORD = 'DELETED_RECORD',
 }
 
-type RecordTypes = 'EVENT' | 'USER' | 'JOB' | 'DEPARTMENT' | 'SEMESTER';
+type RecordTypes = 'EVENT' | 'USER' | 'JOB' | 'DEPARTMENT' | 'SEMESTER' | 'REGISTRATION_PERIOD';
 
 export interface NewRecord {
     record: RecordTypes;

@@ -1,5 +1,5 @@
 import express from 'express';
-import { create as createEvent, events, find, update, importEvents, destroy } from '../controllers/event';
+import { create as createEvent, all, find, update, importEvents, destroy } from '../controllers/event';
 import {find as findJob, all as allJobs, destroy as deleteJob} from '../controllers/job';
 import { all as allDepartments, find as findDepartment, update as updateDepartment, create as createDepartment, destroy as deleteDepartment } from '../controllers/department';
 import { all as allRegistrationPeriods } from '../controllers/registrationPeriod';
@@ -18,7 +18,7 @@ router.get('/user/:id', findUser);
 router.put('/user/:id/link_to_untis', linkToUntis);
 
 
-router.get('/event/all', events);
+router.get('/event/all', all);
 router.get('/event/:id', find);
 router.put('/event/:id', update);
 router.delete('/event/:id', destroy);

@@ -1,6 +1,14 @@
+import { Role, User } from "@prisma/client";
 import { RequestHandler } from "express";
 import prisma from "../prisma";
 import { IoEvent } from "../routes/socketEventTypes";
+import { createDataExtractor } from "./helpers";
+
+const NAME = 'USER';
+const getData = createDataExtractor<User>(
+    []
+);
+const db = prisma.user;
 
 
 export const user: RequestHandler = async (req, res) => {
@@ -9,7 +17,7 @@ export const user: RequestHandler = async (req, res) => {
 
 export const find: RequestHandler<{ id: string }> = async (req, res, next) => {
     try {
-        const user = await prisma.user.findUnique({
+        const user = await db.findUnique({
             where: { id: req.params.id }
         });
         res.json(user);
@@ -20,7 +28,7 @@ export const find: RequestHandler<{ id: string }> = async (req, res, next) => {
 
 export const users: RequestHandler = async (req, res, next) => {
     try {
-        const users = await prisma.user.findMany({});
+        const users = await db.findMany({});
         res.json(users);
     } catch (error) {
         next(error)
@@ -28,11 +36,11 @@ export const users: RequestHandler = async (req, res, next) => {
 }
 
 export const linkToUntis: RequestHandler<{ id: string }, any, { data: { untisId: number } }> = async (req, res, next) => {
-    if (req.user?.role !== 'ADMIN' && req.user?.id !== req.params.id) {
+    if (req.user?.role !== Role.ADMIN && req.user?.id !== req.params.id) {
         throw 'Not authorized'
     }
     try {
-        const user = await prisma.user.update({
+        const user = await db.update({
             where: {
                 id: req.params.id
             },
@@ -41,10 +49,9 @@ export const linkToUntis: RequestHandler<{ id: string }, any, { data: { untisId:
             }
         });
 
-
         res.notifications = [
             {
-                message: { record: 'USER', id: user.id },
+                message: { record: NAME, id: user.id },
                 event: IoEvent.CHANGED_RECORD
             }
         ];
