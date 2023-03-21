@@ -88,6 +88,13 @@ const authConfig: Config = {
                 roles: [Role.ADMIN, Role.USER],
             }]
         },
+        userIcs: {
+            path: '/user/:id/create_ics',
+            access: [{
+                methods: ['POST'],
+                roles: [Role.ADMIN, Role.USER],
+            }]
+        },
         event: {
             path: '/event',
             access: [

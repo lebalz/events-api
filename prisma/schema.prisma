@@ -8,17 +8,18 @@ generator client {
 }
 
 model User {
-    id        String        @id @default(uuid())
-    email     String        @unique
-    untis     UntisTeacher? @relation(fields: [untisId], references: [id])
-    untisId   Int?          @unique @map("untis_id")
-    firstName String        @map("first_name")
-    lastName  String        @map("last_name")
-    role      Role          @default(USER)
-    createdAt DateTime      @default(now()) @map("created_at")
-    updatedAt DateTime      @updatedAt @map("updated_at")
-    events    Event[]       @relation("events")
-    jobs      Job[]
+    id         String        @id @default(uuid())
+    email      String        @unique
+    untis      UntisTeacher? @relation(fields: [untisId], references: [id])
+    untisId    Int?          @unique @map("untis_id")
+    firstName  String        @map("first_name")
+    lastName   String        @map("last_name")
+    role       Role          @default(USER)
+    createdAt  DateTime      @default(now()) @map("created_at")
+    updatedAt  DateTime      @updatedAt @map("updated_at")
+    events     Event[]       @relation("events")
+    icsLocator String?       @map("ics_locator")
+    jobs       Job[]
 
     @@map("users")
 }
@@ -41,11 +42,11 @@ model Event {
     jobId String? @map("import_id")
 
     // Filter Criterias
-    classes String[] @default([])
-    classYears String[] @default([]) @map("class_years")
-    departments Department[] @relation("events_to_departments")
-    teachersOnly Boolean @default(false) @map("teachers_only")
-    klpOnly Boolean @default(false) @map("klp_only")
+    classes      String[]     @default([])
+    classYears   String[]     @default([]) @map("class_years")
+    departments  Department[] @relation("events_to_departments")
+    teachersOnly Boolean      @default(false) @map("teachers_only")
+    klpOnly      Boolean      @default(false) @map("klp_only")
 
     createdAt DateTime @default(now()) @map("created_at")
     updatedAt DateTime @updatedAt @map("updated_at")
@@ -54,7 +55,7 @@ model Event {
 }
 
 model Department {
-    id          String          @id @default(uuid())
+    id          String       @id @default(uuid())
     name        String       @unique
     description String       @default("")
     classes     UntisClass[]
@@ -67,7 +68,7 @@ model Department {
 }
 
 model Semester {
-    id        String @id @default(uuid())
+    id        String   @id @default(uuid())
     name      String
     start     DateTime
     end       DateTime
@@ -78,7 +79,7 @@ model Semester {
 }
 
 model RegistrationPeriod {
-    id        String @id @default(uuid())
+    id        String   @id @default(uuid())
     name      String
     start     DateTime
     end       DateTime
@@ -88,21 +89,20 @@ model RegistrationPeriod {
     @@map("registration_periods")
 }
 
-
 model Job {
-    id       String   @id @default(uuid())
-    type     JobType
-    state    JobState @default(PENDING)
-    
-    user     User     @relation(fields: [userId], references: [id])
-    userId   String   @map("user_id")
-    
-    events   Event[]
+    id    String   @id @default(uuid())
+    type  JobType
+    state JobState @default(PENDING)
+
+    user   User   @relation(fields: [userId], references: [id])
+    userId String @map("user_id")
+
+    events Event[]
 
     description String @default("")
 
     filename String?
-    log      String   @default("")
+    log      String  @default("")
 
     createdAt DateTime @default(now()) @map("created_at")
     updatedAt DateTime @updatedAt @map("updated_at")

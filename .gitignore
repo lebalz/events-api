@@ -12,3 +12,4 @@ yarn-error.log
 /dist
 dokku.sh
 uploads/
+ical/*.ics

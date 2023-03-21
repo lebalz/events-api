@@ -5,7 +5,7 @@ import { all as allDepartments, find as findDepartment, update as updateDepartme
 import { find as findRegistrationPeriod, all as allRegistrationPeriods, update as updateRegistrationPeriod, destroy as deleteRegistrationPeriod, create as createRegistrationPeriod } from '../controllers/registrationPeriod';
 import { find as findSemester, update as updateSemester, all as allSemesters, create as createSemester, destroy as deleteSemester } from '../controllers/semester';
 import { sync, teachers, teacher, classes } from '../controllers/untis';
-import { user, all as allUsers, linkToUntis, find as findUser } from '../controllers/user';
+import { user, all as allUsers, linkToUntis, find as findUser, createIcs } from '../controllers/user';
 import multer from 'multer';
 
 
@@ -16,6 +16,7 @@ router.get('/user', user);
 router.get('/user/all', allUsers);
 router.get('/user/:id', findUser);
 router.put('/user/:id/link_to_untis', linkToUntis);
+router.post('/user/:id/create_ics', createIcs);
 
 
 router.get('/event/all', allEvents);

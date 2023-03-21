@@ -3,6 +3,7 @@ import { RequestHandler } from "express";
 import prisma from "../prisma";
 import { IoEvent } from "../routes/socketEventTypes";
 import { createDataExtractor } from "./helpers";
+import {default as createIcsFile} from '../services/createIcs';
 
 const NAME = 'USER';
 const getData = createDataExtractor<User>(
@@ -56,6 +57,19 @@ export const linkToUntis: RequestHandler<{ id: string }, any, { data: { untisId:
             }
         ];
         res.json(user);
+    } catch (error) {
+        next(error)
+    }
+}
+
+export const createIcs: RequestHandler<{ id: string }, any, any> = async (req, res, next) => {
+    try {
+        if (req.user!.id !== req.params.id) {
+            throw 'Not authorized'
+        }
+        createIcsFile(req.user!.id,'').then((user) => {
+            res.json(user);
+        })
     } catch (error) {
         next(error)
     }

@@ -75,6 +75,8 @@ passport.deserializeUser(async (id, done) => {
     done(null, user)
 });
 
+app.use('/ical', express.static(path.join(__dirname, 'ical')));
+
 // Public Endpoints
 app.get("/api/v1", (req, res) => {
     return res.status(200).send("Welcome to the EVENTES-API V1.0");
