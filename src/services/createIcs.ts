@@ -31,6 +31,11 @@ export default async function createIcs(userId: string, jobId: string) {
             end: end,
             description: event.descriptionLong,
             location: event.location,
+            uid: event.id,
+            startInputType: 'utc',
+            startOutputType: 'local',
+            endInputType: 'utc',
+            endOutputType: 'local',
             categories: event.classes,
             lastModified: updatedAt,
             created: createdAt 
