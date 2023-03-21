@@ -26,20 +26,6 @@ export const teacher: RequestHandler = async (req, res, next) => {
                 id: Number.parseInt(req.params.id, 10)
              },
             include: {
-                classes: {
-                    include: {
-                        teachers: {
-                            select: {
-                                id: true,
-                            }
-                        },
-                        lessons: {
-                            select: {
-                                id: true,
-                            }
-                        }
-                    }
-                },
                 lessons: {
                     include: {
                         teachers: {
@@ -57,6 +43,28 @@ export const teacher: RequestHandler = async (req, res, next) => {
             }
         });
         res.json(tchr);
+    } catch (error) {
+        next(error);
+    }
+}
+
+export const classes: RequestHandler = async (req, res, next) => {
+    try {
+        const clsx = await prisma.untisClass.findMany({
+            include: {
+                teachers: {
+                    select: {
+                        id: true,
+                    }
+                },
+                lessons: {
+                    select: {
+                        id: true,
+                    }
+                }
+            }
+        });
+        res.json(clsx);
     } catch (error) {
         next(error);
     }

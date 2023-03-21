@@ -5,7 +5,6 @@ import { notifyChangedRecord } from "../routes/notify";
 import { importExcel } from "../services/importExcel";
 import { Department, Job, User, Event, Role, EventState, JobState, JobType } from "@prisma/client";
 import { createDataExtractor } from "./helpers";
-import { user } from "./user";
 
 const getData = createDataExtractor<Event>(
   ['klpOnly', 'classYears', 'classes', 'description', 'state', 'teachersOnly', 'start', 'end', "location", 'description', 'descriptionLong']

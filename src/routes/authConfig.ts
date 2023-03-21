@@ -108,6 +108,15 @@ const authConfig: Config = {
                 }
             ]
         },
+        untisSync: {
+            path: '/untis/sync',
+            access: [
+                {
+                    methods: ['POST'],
+                    roles: [Role.ADMIN],
+                }
+            ]
+        },
         job: {
             path: '/job',
             access: [{
