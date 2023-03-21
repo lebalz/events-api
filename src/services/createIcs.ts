@@ -8,7 +8,7 @@ export const SEC_2_MS = 1000;
 export const MINUTE_2_MS = 60 * SEC_2_MS;
 
 export const toLocalDate = (date: Date) => {   
-    return new Date(date.getTime() + date.getTimezoneOffset() * MINUTE_2_MS)
+    return date;
 }
 
 export default async function createIcs(userId: string, jobId: string) {
@@ -18,7 +18,7 @@ export default async function createIcs(userId: string, jobId: string) {
             events: true
         }
     });
-    const fileName = `${uuidv4()}.ics`;
+    const fileName = user?.icsLocator || `${uuidv4()}.ics`;
     const events: EventAttributes[] = [];
     user?.events.forEach(event => {
         const start = toLocalDate(new Date(event.start));
@@ -41,7 +41,7 @@ export default async function createIcs(userId: string, jobId: string) {
             if (error) {
                 return resolve(false);
             }            
-            writeFileSync(`${__dirname}/../../ical/${fileName}`, value)
+            writeFileSync(`${__dirname}/../../ical/${fileName}`, value, { encoding: 'utf8', flag: 'w' })
             resolve(true);
         }
     )});
