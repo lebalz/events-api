@@ -88,6 +88,15 @@ const authConfig: Config = {
                 }
             ]
         },
+        eventAll: {
+            path: '/event/all',
+            access: [
+                {
+                    methods: ['GET'],
+                    roles: [Role.ADMIN, Role.USER, 'PUBLIC'],
+                }
+            ]
+        },
         eventImport: {
             path: '/event/import',
             access: [{
@@ -141,6 +150,13 @@ const authConfig: Config = {
                 roles: [Role.ADMIN],
             }]
         },
+        departmentAll: {
+            path: '/department/all',
+            access: [{
+                methods: ['GET'],
+                roles: [Role.ADMIN, Role.USER, 'PUBLIC'],
+            }]
+        },
         semester: {
             path: '/semester',
             access: [{
@@ -149,6 +165,13 @@ const authConfig: Config = {
             }, {
                 methods: ['GET', 'PUT', 'POST', 'DELETE'],
                 roles: [Role.ADMIN],
+            }]
+        },
+        semesterAll: {
+            path: '/semester/all',
+            access: [{
+                methods: ['GET'],
+                roles: [Role.ADMIN, Role.USER, 'PUBLIC'],
             }]
         },
         registrationPeriods: {
