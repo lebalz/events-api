@@ -13,10 +13,6 @@ const EventRouter = (io: Server) => {
         }
 
         socket.join(user.id);
-        socket.on('echo', (msg) => {
-            socket.request
-            socket.emit('echo', `Echo: ${msg}`);
-        });
     });
 
     io.on('disconnect', (socket) => {

@@ -82,7 +82,7 @@ export const update: RequestHandler<{ id: string }, any, { data: Semester }> = a
         res.notifications = [
             {
                 message: { record: NAME, id: model.id },
-                event: IoEvent.NEW_RECORD
+                event: IoEvent.CHANGED_RECORD
             }
         ]
         res.status(200).json(model);
