@@ -75,7 +75,7 @@ passport.deserializeUser(async (id, done) => {
     done(null, user)
 });
 
-app.use('/ical', express.static(path.join(__dirname, 'ical')));
+app.use('/ical', express.static(path.join(__dirname, '..', 'ical')));
 
 // Public Endpoints
 app.get("/api/v1", (req, res) => {
