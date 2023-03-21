@@ -19,7 +19,7 @@ export interface AccessMatrix {
         path: string;
         access: {
             methods: ('GET' | 'POST' | 'PUT' | 'DELETE')[];
-            roles: (Role | 'PUBLIC')[]
+            roles: Role[]
         }[]
     }
 };
@@ -30,6 +30,19 @@ interface Config {
     settings: Settings;
     accessMatrix: AccessMatrix;
 }
+
+/**
+ * Routes that are accessible without authentication
+ * only for GET requests
+ */
+export const PUBLIC_ROUTES = [
+    '/event',
+    '/event/all',
+    '/department',
+    '/department/all',
+    '/semester',
+    '/semester/all',
+];
 
 const authConfig: Config = {
     credentials: {
@@ -80,20 +93,11 @@ const authConfig: Config = {
             access: [
                 {
                     methods: ['GET'],
-                    roles: [Role.ADMIN, Role.USER, 'PUBLIC'],
+                    roles: [Role.ADMIN, Role.USER],
                 },
                 {
                     methods: ['POST', 'PUT', 'DELETE'],
                     roles: [Role.ADMIN, Role.USER],
-                }
-            ]
-        },
-        eventAll: {
-            path: '/event/all',
-            access: [
-                {
-                    methods: ['GET'],
-                    roles: [Role.ADMIN, Role.USER, 'PUBLIC'],
                 }
             ]
         },
@@ -144,34 +148,20 @@ const authConfig: Config = {
             path: '/department',
             access: [{
                 methods: ['GET'],
-                roles: [Role.ADMIN, Role.USER, 'PUBLIC'],
+                roles: [Role.ADMIN, Role.USER],
             }, {
                 methods: ['GET', 'PUT', 'POST', 'DELETE'],
                 roles: [Role.ADMIN],
-            }]
-        },
-        departmentAll: {
-            path: '/department/all',
-            access: [{
-                methods: ['GET'],
-                roles: [Role.ADMIN, Role.USER, 'PUBLIC'],
             }]
         },
         semester: {
             path: '/semester',
             access: [{
                 methods: ['GET'],
-                roles: [Role.ADMIN, Role.USER, 'PUBLIC'],
+                roles: [Role.ADMIN, Role.USER],
             }, {
                 methods: ['GET', 'PUT', 'POST', 'DELETE'],
                 roles: [Role.ADMIN],
-            }]
-        },
-        semesterAll: {
-            path: '/semester/all',
-            access: [{
-                methods: ['GET'],
-                roles: [Role.ADMIN, Role.USER, 'PUBLIC'],
             }]
         },
         registrationPeriods: {

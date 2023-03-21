@@ -10,8 +10,8 @@ import passport from "passport";
 import { Server } from "socket.io";
 import http from 'http';
 import router from './routes/router';
-import routeGuard, { createAccessRules, PublicRoutes } from './auth/guard';
-import authConfig from './routes/authConfig';
+import routeGuard, { createAccessRules } from './auth/guard';
+import authConfig, { PUBLIC_ROUTES } from './routes/authConfig';
 import EventRouter from './routes/socketEvents';
 import {instrument} from '@socket.io/admin-ui';
 
@@ -180,7 +180,7 @@ app.use('/api/v1', (req, res, next) => {
             return res.status(401).json({ error: err.message });
         }
 
-        if (!user && !PublicRoutes.has(req.path.toLowerCase())) {
+        if (!user && !PUBLIC_ROUTES.includes(req.path.toLowerCase())) {
             // If no user object found, send a 401 response.
             return res.status(401).json({ error: 'Unauthorized' });
         }

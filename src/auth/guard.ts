@@ -1,6 +1,6 @@
-import { Role, User } from "@prisma/client";
-import express, { Request, Response, NextFunction } from "express";
-import { default as AuthConfig, AccessMatrix } from "../routes/authConfig";
+import { Role } from "@prisma/client";
+import { Request, Response, NextFunction } from "express";
+import { AccessMatrix, PUBLIC_ROUTES } from "../routes/authConfig";
 
 interface AccessRegexRule {
     path: string;
@@ -8,11 +8,9 @@ interface AccessRegexRule {
     weight: number;
     access: {
         methods: ("GET" | "POST" | "PUT" | "DELETE")[];
-        roles: (Role | 'PUBLIC')[];
+        roles: Role[];
     }[];
 }
-
-export const PublicRoutes = new Set<string>(Object.values(AuthConfig.accessMatrix).filter((accessRule) => accessRule.access.some((access) => access.roles.includes('PUBLIC'))).map((accessRule) => accessRule.path.toLowerCase()));
 
 export const createAccessRules = (accessMatrix: AccessMatrix): AccessRegexRule[] => {
     const accessRules = Object.values(accessMatrix);
@@ -47,7 +45,7 @@ export const createAccessRules = (accessMatrix: AccessMatrix): AccessRegexRule[]
 
 const routeGuard = (accessMatrix: AccessRegexRule[]) => {
     return (req: Request, res: Response, next: NextFunction) => {
-        if (!req.user && !PublicRoutes.has(req.path.toLowerCase())) {
+        if (!req.user && !PUBLIC_ROUTES.includes(req.path.toLowerCase())) {
             return res.status(403).json({ error: 'No roles claim found!' });
         }
 
@@ -63,7 +61,10 @@ const routeGuard = (accessMatrix: AccessRegexRule[]) => {
 /**
  * This method checks if the request has the correct roles, paths and methods
  */
-const requestHasRequiredAttributes = (accessMatrix: AccessRegexRule[], path: string, method: string, role: Role |'PUBLIC') => {
+const requestHasRequiredAttributes = (accessMatrix: AccessRegexRule[], path: string, method: string, role: Role | 'PUBLIC') => {
+    if (role === 'PUBLIC') {
+        return method === 'GET';
+    }
     const accessRules = Object.values(accessMatrix);
     const accessRule = accessRules.find((accessRule) => accessRule.regex.test(path));
     if (!accessRule) {
