@@ -1,14 +1,14 @@
 import prisma from '../prisma';
 import { v4 as uuidv4 } from 'uuid';
-import { createEvents, EventAttributes } from 'ics';
+import { createEvents, DateArray, EventAttributes } from 'ics';
 import { start } from 'repl';
 import { writeFileSync } from 'fs';
 
 export const SEC_2_MS = 1000;
 export const MINUTE_2_MS = 60 * SEC_2_MS;
 
-export const toLocalDate = (date: Date) => {   
-    return date;
+export const toDateArray = (date: Date): DateArray => {   
+    return [date.getUTCFullYear(), date.getUTCMonth() + 1, date.getUTCDate(), date.getUTCHours(), date.getUTCMinutes()];
 }
 
 export default async function createIcs(userId: string, jobId: string) {
@@ -21,19 +21,19 @@ export default async function createIcs(userId: string, jobId: string) {
     const fileName = user?.icsLocator || `${uuidv4()}.ics`;
     const events: EventAttributes[] = [];
     user?.events.forEach(event => {
-        const start = toLocalDate(new Date(event.start));
-        const end = toLocalDate(new Date(event.end));
-        const createdAt = toLocalDate(new Date(event.createdAt));
-        const updatedAt = toLocalDate(new Date(event.updatedAt));
+        const start = toDateArray(new Date(event.start));
+        const end = toDateArray(new Date(event.end));
+        const createdAt = toDateArray(new Date(event.createdAt));
+        const updatedAt = toDateArray(new Date(event.updatedAt));
         events.push({
             title: event.description,
-            start: [start.getFullYear(), start.getMonth() + 1, start.getDate(), start.getHours(), start.getMinutes()],
-            end: [end.getFullYear(), end.getMonth() + 1, end.getDate(), end.getHours(), end.getMinutes()],
+            start: start,
+            end: end,
             description: event.descriptionLong,
             location: event.location,
             categories: event.classes,
-            lastModified: [updatedAt.getFullYear(), updatedAt.getMonth() + 1, updatedAt.getDate(), updatedAt.getHours(), updatedAt.getMinutes()],
-            created: [createdAt.getFullYear(), createdAt.getMonth() + 1, createdAt.getDate(), createdAt.getHours(), createdAt.getMinutes()]            
+            lastModified: updatedAt,
+            created: createdAt 
         });
     });
     const fileCreated: boolean = await new Promise((resolve, reject) => {
