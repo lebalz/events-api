@@ -82,6 +82,9 @@ dokku config:set hfr-events-api UNTIS_SECRET="XYZXZXYZ"
 dokku config:set hfr-events-api UNTIS_BASE_URL="xyz.webuntis.com"
 dokku config:set hfr-events-api SESSION_SECRET="asdfg"
 
+dokku storage:ensure-directory hfr-events-api
+dokku storage:mount hfr-events-api /var/lib/dokku/data/storage/hfr-events-api/ical:/ical
+
 dokku nginx:set events-api client-max-body-size 5mb
 
 # deploy the app
