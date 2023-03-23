@@ -26,11 +26,6 @@ const AccessRules = createAccessRules(authConfig.accessMatrix);
 
 const PORT = process.env.PORT || 3002;
 
-interface ErrorResponse {
-    message: string,
-    error: any
-}
-
 const app = express();
 const server = http.createServer(app);
 

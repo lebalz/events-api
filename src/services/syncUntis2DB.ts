@@ -57,11 +57,14 @@ const chunks = <S, T>(items: S[], fn: (props: S) => Promise<T>, chunkSize = 50) 
     .then(() => result);
 }
 
-const login = async () => {
+const login = async (rethrow?: boolean) => {
   let success = await untis.login()
     .then(() => !!untis.sessionInformation?.sessionId)
     .catch((err) => {
       console.log(err);
+      if (rethrow) {
+        throw err;
+      }
       return false
     });
   if (success) {
@@ -77,8 +80,8 @@ const ensureLogin = async () => {
   while (!loggedIn) {
     tries += 1;
     await new Promise(resolve => setTimeout(resolve, 2000));
-    loggedIn = await login();
-    console.log('Login Try', tries)
+    loggedIn = await login(tries > 20);
+    console.log('Login Try', tries);
   }
   if (tries > 1) {
     console.log('Login Tries', tries);

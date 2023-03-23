@@ -180,7 +180,7 @@ export const importEvents: RequestHandler = async (req, res, next) => {
           where: { id: importJob.id },
           data: {
             state: 'ERROR',
-            log: JSON.stringify(e)
+            log: JSON.stringify(e, Object.getOwnPropertyNames(e))
           }
         });
       }).finally(() => {
