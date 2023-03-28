@@ -13,3 +13,4 @@ yarn-error.log
 dokku.sh
 uploads/
 ical/*.ics
+**.example.sql

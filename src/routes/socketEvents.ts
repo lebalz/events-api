@@ -1,5 +1,6 @@
 import { User } from "@prisma/client";
 import { Server } from "socket.io";
+import { checkEvent } from "../services/eventChecker";
 
 const EventRouter = (io: Server) => {
     io.on("connection", (socket) => {
@@ -13,6 +14,16 @@ const EventRouter = (io: Server) => {
         }
 
         socket.join(user.id);
+
+        socket.on('checkEvent', async ({ event_id }: { event_id: string }) => {
+            try {
+                const result = await checkEvent(event_id, user.id);
+                socket.emit('checkEvent', { state: 'success', result });
+            } catch (error) {
+                console.error(error);
+                socket.emit('checkEvent', { state: 'error', result: {} });
+            }
+        })
     });
 
     io.on('disconnect', (socket) => {
