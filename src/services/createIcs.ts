@@ -25,11 +25,12 @@ export default async function createIcs(userId: string, jobId: string) {
         const end = toDateArray(new Date(event.end));
         const createdAt = toDateArray(new Date(event.createdAt));
         const updatedAt = toDateArray(new Date(event.updatedAt));
+        const descriptionLong = `${event.descriptionLong} \n\n👉 ${process.env.EVENTS_APP_URL}/event?id=${event.id}`
         events.push({
             title: event.description,
             start: start,
             end: end,
-            description: event.descriptionLong,
+            description: descriptionLong,
             location: event.location,
             uid: event.id,
             startInputType: 'utc',
