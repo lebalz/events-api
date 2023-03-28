@@ -207,7 +207,11 @@ const LegacyDeparmentMap: { [key: string]: string } = {
   '23R': Departments.GBJB
 }
 
-
+const getClassYear = (kl: Klasse) => {
+  const { name } = kl;
+  const year = Number.parseInt(name.slice(0, 2), 10);
+  return 2000 + year;
+}
 
 const mapClass2Department = (kl: Klasse) => {
   const { name } = kl;
@@ -303,6 +307,7 @@ export const syncUntis2DB = async () => {
       data: {
         id: c.id,
         name: c.name,
+        year: getClassYear(c),
         sf: c.longName
       }
     });
@@ -362,7 +367,7 @@ export const syncUntis2DB = async () => {
     }
   }
   console.log('Next ID', nextId);
-  const extractLesson = (lesson: WebAPITimetable, semester: string): UntisLesson | undefined => {
+  const extractLesson = (lesson: WebAPITimetable, semester_year: number, semester: number): UntisLesson | undefined => {
     const year = lesson.date / 10000;
     const month = (lesson.date % 10000) / 100;
     const day = lesson.date % 100;
@@ -376,15 +381,16 @@ export const syncUntis2DB = async () => {
       room: lesson.rooms.map((r) => r.element.name).join(', '),
       ...findSubject(lesson.subjects[0].id), /** there is always only one subject */
       semester: semester,
+      year: semester_year,
       weekDay: date.getUTCDay(),
       startHHMM: lesson.startTime,
       endHHMM: lesson.endTime
     }
   }
 
-  const tt1 = data.timetable_s1.map((t) => extractLesson(t, `${data.schoolyear.startDate.getFullYear()}HS`)).filter(l => l) as UntisLesson[];
-  const tt2 = data.timetable_s2.map((t) => extractLesson(t, `${data.schoolyear.endDate.getFullYear()}FS`)).filter(l => l) as UntisLesson[];
-  const tt3 = data.timetable_s3.map((t) => extractLesson(t, `${data.schoolyear.endDate.getFullYear()}HS`)).filter(l => l) as UntisLesson[];
+  const tt1 = data.timetable_s1.map((t) => extractLesson(t, data.schoolyear.startDate.getFullYear(), 1)).filter(l => l) as UntisLesson[];
+  const tt2 = data.timetable_s2.map((t) => extractLesson(t, data.schoolyear.endDate.getFullYear(), 2)).filter(l => l) as UntisLesson[];
+  const tt3 = data.timetable_s3.map((t) => extractLesson(t, data.schoolyear.endDate.getFullYear(), 1)).filter(l => l) as UntisLesson[];
 
   const dbLessons = prisma.untisLesson.createMany({
     data: [

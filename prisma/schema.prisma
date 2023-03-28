@@ -129,7 +129,8 @@ model UntisLesson {
     room        String
     subject     String
     description String
-    semester    String
+    semester    Int
+    year        Int
     weekDay     Int            @map("week_day")
     startHHMM   Int            @map("start_hhmm")
     endHHMM     Int            @map("end_hhmm")
@@ -142,6 +143,7 @@ model UntisLesson {
 model UntisClass {
     id           Int            @id @default(autoincrement())
     name         String         @unique
+    year         Int
     sf           String
     lessons      UntisLesson[]  @relation("classes_to_lessons")
     teachers     UntisTeacher[] @relation("teachers_to_classes")
