@@ -30,7 +30,16 @@ Copy the `example.env` file to `.env` and fill in the values.
 cp example.env .env
 ```
 
-The `ADMIN_UI_PASSWORD` is used to access the admin UI from https://admin.socket.io. In the example, the password is `password`. **Caution** when this env is not set, the authentication is disabled.
+The `ADMIN_UI_PASSWORD` is used to access the admin UI from https://admin.socket.io. 
+
+```
+password ---bcrypt---> $2y$10$EDCixge1.O2YaBVq44CgJeNjRSA3a.x7vSkwegyjASlMhmWmF7Azm
+```
+In the example, the password is `password`. 
+
+**Caution** when this env is not set, the authentication is disabled.
+
+👉 https://socket.io/docs/v4/admin-ui/#available-options
 
 ### Setup DBPrisma JS
 
