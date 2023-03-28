@@ -8,9 +8,9 @@ WITH drange AS (
         extract(hour  FROM  events.start) * 60 + extract(MINUTE  FROM  events.start) AS start_offset_m,
         CEIL(extract(EPOCH  FROM  age(events.end, events.start)) / 60) AS duration_m,
         CEIL(extract(EPOCH  FROM  age(events.end, events.start)) / 60 / 60 / 24 / 7) AS duration_w
-        FROM events WHERE id=${eventId} AND (events.state='PUBLISHED' OR events.author_id=${userId} OR 'ADMIN' = (SELECT role FROM users WHERE id=${userId}))
+        FROM events WHERE id=${eventId} AND (events.state='PUBLISHED' OR events.author_id=${userId} OR 'ADMIN' = (SELECT users.role FROM users WHERE id=${userId}))
 ) 
-SELECT untis_lessons.*, untis_teachers.name as teacher
+SELECT untis_lessons.*, untis_teachers.name as teacher_name, untis_classes.name as class_name
 FROM  untis_lessons
     INNER JOIN _classes_to_lessons ON untis_lessons.id=_classes_to_lessons."B"
     INNER JOIN untis_classes ON _classes_to_lessons."A" = untis_classes.id
