@@ -41,7 +41,17 @@ In the example, the password is `password`.
 
 👉 https://socket.io/docs/v4/admin-ui/#available-options
 
-### Setup DBPrisma JS
+
+
+#### Use unauthorized backend (e.g. when developping offline)
+
+Start the dev server with
+
+```bash
+NODE_ENV=test yarn run dev
+```
+
+This will use the [mock strategy](src/auth/mock.ts) for authentication. To work as intended, you need to set the env-variable `TEST_USER_ID` containing the id of the test user (e.g. in the [.env](.env) file).
 
 ```bash
 yarn run prisma migrate dev
