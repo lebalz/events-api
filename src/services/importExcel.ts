@@ -1,6 +1,8 @@
 import { EventState, Prisma } from "@prisma/client";
 import readXlsxFile from 'read-excel-file/node';
 import prisma from '../prisma';
+import { toDepartmentName } from "./helpers/departmentNames";
+import { KlassName } from "./helpers/klassNames";
 
 const COLUMNS = {
   KW: 0,
@@ -62,28 +64,7 @@ export const importExcel = async (file: string, userId: string, jobId: string) =
       ende.setUTCMinutes(minutes);
     }
 
-    const departments: {
-      where: Prisma.DepartmentWhereUniqueInput,
-      create: (Prisma.Without<Prisma.DepartmentCreateWithoutEventsInput, Prisma.DepartmentUncheckedCreateWithoutEventsInput> & Prisma.DepartmentUncheckedCreateWithoutEventsInput)
-    }[] = [];
-    if (e[COLUMNS.gbsl]) {
-      departments.push({
-        create: { name: 'GBSL' },
-        where: { name: 'GBSL' }
-      });
-    }
-    if (e[COLUMNS.fms]) {
-      departments.push({
-        create: { name: 'FMS' },
-        where: { name: 'FMS' }
-      });
-    }
-    if (e[COLUMNS.wms]) {
-      departments.push({
-        create: { name: 'WMS' },
-        where: { name: 'WMS' }
-      });
-    }
+    
     const classesRaw = e[COLUMNS.classes] as string || '';
 
     /**
@@ -91,10 +72,29 @@ export const importExcel = async (file: string, userId: string, jobId: string) =
      * \d matches a digit (equivalent to [0-9])
      * \S matches any non-whitespace character
      */
-    const classes = classesRaw.match(/(\d\d\S)/g)?.map((c) => c);
+    const singleClasses = classesRaw.match(/(\d\d\S)/g)?.map((c) => c);
+    const groupedClasses = classesRaw.match(/(\d\d)\S\S+/g)?.map((c) => c)?.map((c) => {
+      const yr = c.substring(0, 2);
+      const cls = c.substring(2).split('').map((c) => `${yr}${c}`);
+      return cls;
+    }).reduce((a, b) => a.concat(b), []);
+    const classes = [...new Set((singleClasses || []).concat(groupedClasses || []))];
 
     const classYearsRaw = (e[COLUMNS.classYears] as string || '').match(/(GYM|FMS|WMS)\d/g)?.map((c) => c) || [];
     const classYears = classYearsRaw.map((c) => Number.parseInt(c.charAt(3), 10));
+
+    const departments: {
+      where: Prisma.DepartmentWhereUniqueInput,
+      create: (Prisma.Without<Prisma.DepartmentCreateWithoutEventsInput, Prisma.DepartmentUncheckedCreateWithoutEventsInput> & Prisma.DepartmentUncheckedCreateWithoutEventsInput)
+    }[] = [];
+
+    const depRaw = classes.map(c => toDepartmentName(c as KlassName)).filter(c => !!c);
+    depRaw.forEach((d) => {
+      departments.push({
+        where: { name: d },
+        create: { name: d }
+      });
+    });
 
     return prisma.event.create({
       data: {

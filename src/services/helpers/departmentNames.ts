@@ -58,6 +58,9 @@ export const Departments = {
 }
 
 export const toDepartmentName = (name: KlassName) => {
+    if (!name || name.length < 3) {
+        '';
+    }
     const [department, letter] = name.slice(2).split('') as [DepartmentLetter, Letter];
     switch (department) {
         case DepartmentLetter.WMS:
