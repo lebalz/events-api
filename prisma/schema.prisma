@@ -163,6 +163,7 @@ enum EventState {
     REVIEW
     PUBLISHED
     DELETED
+    REFUSED
 }
 
 enum JobState {

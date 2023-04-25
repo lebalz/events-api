@@ -2,6 +2,11 @@ import { User } from "@prisma/client";
 import { Server } from "socket.io";
 import { checkEvent } from "../services/eventChecker";
 
+export enum IoRoom {
+    ADMIN = 'admin',
+    ALL = 'all'
+}
+
 const EventRouter = (io: Server) => {
     io.on("connection", (socket) => {
         const { user } = (socket.request as { user?: User });
@@ -12,6 +17,10 @@ const EventRouter = (io: Server) => {
         if (sid) {
             socket.join(sid);
         }
+        if (user.role === 'ADMIN') {
+            socket.join(IoRoom.ADMIN);
+        }
+        socket.join(IoRoom.ALL);
 
         socket.join(user.id);
 

@@ -5,9 +5,10 @@ import { notifyChangedRecord } from "../routes/notify";
 import { importExcel } from "../services/importExcel";
 import { Department, Job, User, Event, Role, EventState, JobState, JobType } from "@prisma/client";
 import { createDataExtractor } from "./helpers";
+import { IoRoom } from "../routes/socketEvents";
 
 const getData = createDataExtractor<Event>(
-  ['klpOnly', 'classYears', 'classes', 'description', 'state', 'teachersOnly', 'start', 'end', "location", 'description', 'descriptionLong']
+  ['klpOnly', 'classYears', 'classes', 'description', 'teachersOnly', 'start', 'end', "location", 'description', 'descriptionLong']
 );
 const NAME = 'EVENT';
 const db = prisma.event;
@@ -71,6 +72,88 @@ export const update: RequestHandler<{ id: string }, any, { data: Event & { depar
         to: model.state === EventState.PUBLISHED ? undefined : req.user!.id
       }
     ]
+    res.status(200).json(prepareEvent(model));
+  } catch (error) {
+    next(error);
+  }
+}
+
+
+export const setState: RequestHandler<{ id: string }, any, { data: { state: EventState } }> = async (req, res, next) => {
+  try {
+    const isAdmin = req.user!.role === Role.ADMIN;
+    const record = await db.findUnique({ where: { id: req.params.id } });
+    if (!record || (record?.authorId !== req.user!.id && !isAdmin)) {
+      return res.status(403).json({ message: 'You are not allowed to update this record' });
+    }
+    const initState = record.state;
+    let newState: EventState = record.state;
+    const requested = req.body.data.state;
+    res.notifications = [];
+    switch (record.state) {
+      case EventState.DRAFT:
+        if (([EventState.REVIEW, EventState.DELETED] as EventState[]).includes(requested)) {
+          newState = requested;
+        }
+      case EventState.REVIEW:
+        if (([EventState.DELETED, EventState.DRAFT] as EventState[]).includes(requested)) {
+          newState = requested;
+        }
+        if (isAdmin && EventState.PUBLISHED === requested) {
+          newState = requested;
+        }
+        if (isAdmin && EventState.REFUSED === requested) {
+          newState = requested;
+        }
+        break;
+      case EventState.PUBLISHED:
+        if (EventState.DELETED === requested) {
+          newState = requested;
+        }
+        break;
+      case EventState.DELETED:
+        /** can't do anything with it */
+        break;
+
+    }
+    const model = await db.update({
+      where: { id: req.params.id },
+      data: {
+        state: newState
+      },
+      include: { author: true, job: true, departments: true },
+    });
+
+    const audience = new Set<IoRoom>();
+
+    /** NOTIFICATIONS */
+    switch (newState) {
+      case EventState.DRAFT:
+        if (initState === EventState.REVIEW) {
+          audience.add(IoRoom.ADMIN);
+        }
+        break;
+      case EventState.REVIEW:
+      case EventState.REFUSED:
+        audience.add(IoRoom.ADMIN);
+        break;
+      case EventState.PUBLISHED:
+      case EventState.DELETED:
+        audience.add(IoRoom.ALL);
+        break;
+    }
+    [...audience].forEach((room) => {
+      res.notifications?.push({
+        message: { record: NAME, id: record.id },
+        event: IoEvent.CHANGED_RECORD,
+        to: room
+      })
+    });
+    res.notifications?.push({
+      message: { record: NAME, id: record.id },
+      event: IoEvent.CHANGED_RECORD,
+      to: record.authorId
+    });
     res.status(200).json(prepareEvent(model));
   } catch (error) {
     next(error);

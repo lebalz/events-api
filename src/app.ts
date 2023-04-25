@@ -143,7 +143,6 @@ app.use((req: Request, res, next) => {
  */
 app.use((req: Request, res, next) => {
     res.on('finish', async () => {
-        console.log('user', req.user?.id, '->', req.sessionID);
         const io = req.io;
         if (res.notifications && io) {
             res.notifications.forEach((notification) => {
