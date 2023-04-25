@@ -24,6 +24,9 @@ type ESC = `${Digit}${Digit}${DepartmentLetter.ESC}${ESC_Letter}`;
 export type KlassName = GYM | GYMBilingual | FMS | FMPaed | FMSBilingual | WMS | Maturite | MaturiteBilingual | ECG | ECGBilingual | MSOP | Passerelle | ESC;
 
 export const mapLegacyClassName: (name: string) => `${number}${DepartmentLetter}${string}` = (name: string) => {
+    if (!name || name.length < 3) {
+        return name as `${number}${DepartmentLetter}${string}`;
+    }
     const year = Number.parseInt(name.slice(0, 2), 10);
     if (year > 26) {
         return name as `${number}${DepartmentLetter}${string}`;

@@ -2,7 +2,7 @@ import { EventState, Prisma } from "@prisma/client";
 import readXlsxFile from 'read-excel-file/node';
 import prisma from '../prisma';
 import { toDepartmentName } from "./helpers/departmentNames";
-import { KlassName } from "./helpers/klassNames";
+import { KlassName, mapLegacyClassName } from "./helpers/klassNames";
 
 const COLUMNS = {
   KW: 0,
@@ -74,10 +74,13 @@ export const importExcel = async (file: string, userId: string, jobId: string) =
      */
     const singleClasses = classesRaw.match(/(\d\d\S)/g)?.map((c) => c);
     const groupedClasses = classesRaw.match(/(\d\d)\S\S+/g)?.map((c) => c)?.map((c) => {
+      if (!c || c.length < 3) {
+        return;
+      }
       const yr = c.substring(0, 2);
       const cls = c.substring(2).split('').map((c) => `${yr}${c}`);
       return cls;
-    }).reduce((a, b) => a.concat(b), []);
+    }).filter(c => !!c).reduce((a, b) => a!.concat(b!), []);
     const classes = [...new Set((singleClasses || []).concat(groupedClasses || []))];
 
     const classYearsRaw = (e[COLUMNS.classYears] as string || '').match(/(GYM|FMS|WMS)\d/g)?.map((c) => c) || [];
@@ -88,7 +91,7 @@ export const importExcel = async (file: string, userId: string, jobId: string) =
       create: (Prisma.Without<Prisma.DepartmentCreateWithoutEventsInput, Prisma.DepartmentUncheckedCreateWithoutEventsInput> & Prisma.DepartmentUncheckedCreateWithoutEventsInput)
     }[] = [];
 
-    const depRaw = classes.map(c => toDepartmentName(c as KlassName)).filter(c => !!c);
+    const depRaw = classes.map(c => toDepartmentName(mapLegacyClassName(c) as KlassName)).filter(c => !!c);
     depRaw.forEach((d) => {
       departments.push({
         where: { name: d },
