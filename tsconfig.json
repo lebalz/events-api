@@ -5,6 +5,7 @@
     "strict": true,
     "lib": ["esnext"],
     "moduleResolution": "node",
+    "module": "commonjs",
     "target": "ES2016",
     "esModuleInterop": true,
     "resolveJsonModule": true,
