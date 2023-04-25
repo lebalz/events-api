@@ -79,60 +79,58 @@ export const update: RequestHandler<{ id: string }, any, { data: Event & { depar
 }
 
 
-export const setState: RequestHandler<{ id: string }, any, { data: { state: EventState } }> = async (req, res, next) => {
+export const setState: RequestHandler<{}, any, { data: { ids: string[], state: EventState } }> = async (req, res, next) => {
   try {
     const isAdmin = req.user!.role === Role.ADMIN;
-    const record = await db.findUnique({ where: { id: req.params.id } });
-    if (!record || (record?.authorId !== req.user!.id && !isAdmin)) {
-      return res.status(403).json({ message: 'You are not allowed to update this record' });
-    }
-    const initState = record.state;
-    let newState: EventState = record.state;
+    const records = await db.findMany({ where: { id: { in: req.body.data.ids }, authorId: isAdmin ? undefined : req.user!.id } });
+    const allowedEventIds: string[] = [];
     const requested = req.body.data.state;
     res.notifications = [];
-    switch (record.state) {
-      case EventState.DRAFT:
-        if (([EventState.REVIEW, EventState.DELETED] as EventState[]).includes(requested)) {
-          newState = requested;
-        }
-      case EventState.REVIEW:
-        if (([EventState.DELETED, EventState.DRAFT] as EventState[]).includes(requested)) {
-          newState = requested;
-        }
-        if (isAdmin && EventState.PUBLISHED === requested) {
-          newState = requested;
-        }
-        if (isAdmin && EventState.REFUSED === requested) {
-          newState = requested;
-        }
-        break;
-      case EventState.PUBLISHED:
-        if (EventState.DELETED === requested) {
-          newState = requested;
-        }
-        break;
-      case EventState.DELETED:
-        /** can't do anything with it */
-        break;
-
-    }
-    const model = await db.update({
-      where: { id: req.params.id },
+    records.forEach((record) => {
+      switch (record.state) {
+        case EventState.DRAFT:
+          if (([EventState.REVIEW, EventState.DELETED] as EventState[]).includes(requested)) {
+            allowedEventIds.push(record.id);
+          }
+        case EventState.REVIEW:
+          if (([EventState.DELETED, EventState.DRAFT] as EventState[]).includes(requested)) {
+            allowedEventIds.push(record.id);
+          }
+          if (isAdmin && EventState.PUBLISHED === requested) {
+            allowedEventIds.push(record.id);
+          }
+          if (isAdmin && EventState.REFUSED === requested) {
+            allowedEventIds.push(record.id);
+          }
+          break;
+        case EventState.PUBLISHED:
+          if (EventState.DELETED === requested) {
+            allowedEventIds.push(record.id);
+          }
+          break;
+        case EventState.DELETED:
+          /** can't do anything with it */
+          break;
+      }
+    });
+    await db.updateMany({
+      where: { id: { in: allowedEventIds } },
       data: {
-        state: newState
-      },
+        state: requested
+      }
+    });
+    const updated = await db.findMany({
+      where: { id: { in: allowedEventIds } },
       include: { author: true, job: true, departments: true },
+    }).then((events) => {
+      return events.map(prepareEvent);
     });
 
     const audience = new Set<IoRoom>();
 
     /** NOTIFICATIONS */
-    switch (newState) {
+    switch (requested) {
       case EventState.DRAFT:
-        if (initState === EventState.REVIEW) {
-          audience.add(IoRoom.ADMIN);
-        }
-        break;
       case EventState.REVIEW:
       case EventState.REFUSED:
         audience.add(IoRoom.ADMIN);
@@ -144,17 +142,19 @@ export const setState: RequestHandler<{ id: string }, any, { data: { state: Even
     }
     [...audience].forEach((room) => {
       res.notifications?.push({
-        message: { record: NAME, id: record.id },
-        event: IoEvent.CHANGED_RECORD,
+        message: { state: requested, ids: allowedEventIds },
+        event: IoEvent.CHANGED_STATE,
         to: room
       })
     });
-    res.notifications?.push({
-      message: { record: NAME, id: record.id },
-      event: IoEvent.CHANGED_RECORD,
-      to: record.authorId
+    updated.forEach((record) => {
+      res.notifications?.push({
+        message: { state: requested, ids: allowedEventIds },
+        event: IoEvent.CHANGED_STATE,
+        to: record.authorId
+      });
     });
-    res.status(200).json(prepareEvent(model));
+    res.status(200).json(updated);
   } catch (error) {
     next(error);
   }

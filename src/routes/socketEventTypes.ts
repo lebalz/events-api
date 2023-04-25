@@ -1,6 +1,9 @@
+import { EventState } from "@prisma/client";
+
 export enum IoEvent {
     NEW_RECORD = 'NEW_RECORD',
     CHANGED_RECORD = 'CHANGED_RECORD',
+    CHANGED_STATE = 'CHANGED_STATE',
     DELETED_RECORD = 'DELETED_RECORD',
 }
 
@@ -15,9 +18,13 @@ export interface ChangedRecord {
     record: RecordTypes;
     id: string;
 }
+export interface ChangedState {
+    state: EventState;
+    ids: string[];
+}
 
 export interface Notification {
-    message: NewRecord | ChangedRecord;
+    message: NewRecord | ChangedRecord | ChangedState;
     event: IoEvent;
     to?: string;
     toSelf?: boolean;

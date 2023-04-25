@@ -22,7 +22,7 @@ router.post('/user/:id/create_ics', createIcs);
 router.get('/event/all', allEvents);
 router.get('/event/:id', findEvent);
 router.put('/event/:id', updateEvent);
-router.put('/event/:id/change_state', setEventState);
+router.post('/event/change_state', setEventState);
 router.delete('/event/:id', deleteEvent);
 router.post('/event', createEvent);
 
