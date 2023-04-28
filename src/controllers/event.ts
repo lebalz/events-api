@@ -30,16 +30,24 @@ export const prepareEvent = (event: (Event & {
   };
 }
 
-
 export const find: RequestHandler = async (req, res, next) => {
   try {
-    const events = await db
+
+    const event = await db
       .findUnique({
         where: { id: req.params.id },
         include: { author: true, job: true, departments: true },
       })
-      .then(prepareEvent);
-    res.status(200).json(events);
+    if (!event) {
+      return res.status(404).json({ message: 'Not found' });
+    }
+    if (event.state === EventState.PUBLISHED) {
+      return res.status(200).json(event);
+    }
+    if (req.user?.role === Role.ADMIN && ([EventState.REVIEW, EventState.REFUSED] as string[]).includes(event.state)) {
+      return res.status(200).json(event);
+    }
+    res.status(404).json({ message: 'Not found' });
   } catch (error) {
     next(error);
   }
@@ -48,7 +56,7 @@ export const find: RequestHandler = async (req, res, next) => {
 export const update: RequestHandler<{ id: string }, any, { data: Event & { departmentIds?: string[] } }> = async (req, res, next) => {
   try {
     const record = await db.findUnique({ where: { id: req.params.id } });
-    if (record?.authorId !== req.user!.id) {
+    if (!req.user || record?.authorId !== req.user!.id) {
       return res.status(403).json({ message: 'You are not allowed to update this record' });
     }
     /** remove fields not updatable*/
