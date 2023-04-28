@@ -184,21 +184,23 @@ export const destroy: RequestHandler = async (req, res, next) => {
   }
 }
 
+type AllEventQueryCondition = ({state: EventState} | {authorId: string})[];
 
 export const all: RequestHandler = async (req, res, next) => {
   try {
+    const condition: AllEventQueryCondition = [{state: EventState.PUBLISHED}];
+    if (req.user) {
+      condition.push({authorId: req.user.id});
+    }
+    if (req.user?.role === Role.ADMIN) {
+      condition.push({state: EventState.REVIEW});
+      condition.push({state: EventState.REFUSED});
+    }
     const events = await db
       .findMany({
         include: { author: !!req.user, departments: true, job: !!req.user },
         where: {
-          OR: [
-            {
-              state: EventState.PUBLISHED
-            },
-            {
-              authorId: !!req.user ? req.user.id : '-1'
-            },
-          ]
+          OR: condition
         }
       })
       .then((events) => {

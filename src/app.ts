@@ -147,9 +147,9 @@ app.use((req: Request, res, next) => {
         if (res.notifications && io) {
             res.notifications.forEach((notification) => {
                 const except: string[] = [];
+                /** ignore this socket */
                 if (!notification.toSelf) {
                     const socketID = req.headers['x-metadata-socketid'] as string;
-                    console.log('socketID', socketID);
                     if (socketID) {
                         except.push(socketID);
                     }
