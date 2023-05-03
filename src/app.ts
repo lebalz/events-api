@@ -98,7 +98,7 @@ const io = new Server(server, {
 
 
 instrument(io, {
-    readonly: true,
+    readonly: false,
     auth: process.env.ADMIN_UI_PASSWORD ? {
         type: 'basic',
         username: 'admin',
