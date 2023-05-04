@@ -280,7 +280,7 @@ export const syncUntis2DB = async () => {
     const year = lesson.date / 10000;
     const month = (lesson.date % 10000) / 100;
     const day = lesson.date % 100;
-    const date = new Date(year, month - 1, day, 0, 0, 0, 0);
+    const date = new Date(Date.UTC(year, month - 1, day, 0, 0, 0, 0));
     if (lessonIdSet.has(lesson.id)) {
       return;
     }
@@ -291,7 +291,7 @@ export const syncUntis2DB = async () => {
       ...findSubject(lesson.subjects[0].id), /** there is always only one subject */
       semester: semester,
       year: semester_year,
-      weekDay: date.getDay(),
+      weekDay: date.getUTCDay(),
       startHHMM: lesson.startTime,
       endHHMM: lesson.endTime
     }
