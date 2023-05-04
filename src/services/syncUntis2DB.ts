@@ -80,17 +80,6 @@ const ensureLogin = async () => {
   return loggedIn;
 }
 
-const untisDMMHH = (hhmm: number, date: Date) => {
-  return date.getUTCDay() * 10000 + hhmm;
-}
-const getWeekdayOffsetMS = (date: Date) => {
-  const days = date.getUTCDay() - 1;
-  const hours = date.getUTCHours();
-  const minutes = date.getUTCMinutes();
-  const seconds = date.getUTCSeconds();
-  return days * 86400000 + hours * 3600000 + minutes * 60000 + seconds * 1000;
-}
-
 const fetchUntis = async () => {
   const data = await ensureLogin()
     .then(async (loggedIn) => {
@@ -302,7 +291,7 @@ export const syncUntis2DB = async () => {
       ...findSubject(lesson.subjects[0].id), /** there is always only one subject */
       semester: semester,
       year: semester_year,
-      weekDay: date.getUTCDay(),
+      weekDay: date.getDay(),
       startHHMM: lesson.startTime,
       endHHMM: lesson.endTime
     }
