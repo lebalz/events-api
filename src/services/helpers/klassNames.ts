@@ -33,12 +33,12 @@ export const mapLegacyClassName: (name: string) => `${number}${DepartmentLetter}
     }
     const id = name.slice(2);
     if (id.charAt(id.length - 1) < 'a') { // Means it is an upper case letter
-        if (['M', 'L'].includes(id)) {
-            // MSOP french --> 27sP (P-S)
-            // M = P, L = Q
-            const newLetter = String.fromCharCode(id.charCodeAt(0) + 3);
-            return `${year}${DepartmentLetter.ECG}${newLetter}`;
-        }
+        // if (year === ['M', 'L'].includes(id)) {
+        //     // MSOP french --> 27sP (P-S)
+        //     // M = P, L = Q
+        //     const newLetter = String.fromCharCode(id.charCodeAt(0) + 3);
+        //     return `${year}${DepartmentLetter.ECG}${newLetter}`;
+        // }
         if (['U', 'V', 'X'].includes(id)) {
             // ESC/WMS --> 27wD (D, E...)
             // U = D, V = E, X = F...
