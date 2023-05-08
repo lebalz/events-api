@@ -22,7 +22,8 @@ type Passerelle = `${Digit}${Digit}${DepartmentLetter.PASSERELLE}${PASSERELLE_Le
 type ESC = `${Digit}${Digit}${DepartmentLetter.ESC}${ESC_Letter}`;
 
 export type KlassName = GYM | GYMBilingual | FMS | FMPaed | FMSBilingual | WMS | Maturite | MaturiteBilingual | ECG | ECGBilingual | MSOP | Passerelle | ESC;
-
+const today = new Date();
+const currentGraduationYear = (today.getFullYear() % 100) + today.getMonth() > 7 ? 1 : 0;
 export const mapLegacyClassName: (name: string) => `${number}${DepartmentLetter}${string}` = (name: string) => {
     if (!name || name.length < 3) {
         return name as `${number}${DepartmentLetter}${string}`;
@@ -33,12 +34,12 @@ export const mapLegacyClassName: (name: string) => `${number}${DepartmentLetter}
     }
     const id = name.slice(2);
     if (id.charAt(id.length - 1) < 'a') { // Means it is an upper case letter
-        // if (year === ['M', 'L'].includes(id)) {
-        //     // MSOP french --> 27sP (P-S)
-        //     // M = P, L = Q
-        //     const newLetter = String.fromCharCode(id.charCodeAt(0) + 3);
-        //     return `${year}${DepartmentLetter.ECG}${newLetter}`;
-        // }
+        if (year === currentGraduationYear && ['M', 'L'].includes(id)) {
+            // MSOP french --> 27sP (P-S)
+            // L = P M = Q
+            const newLetter = String.fromCharCode(id.charCodeAt(0) + 4);
+            return `${year}${DepartmentLetter.ECG}${newLetter}`;
+        }
         if (['U', 'V', 'X'].includes(id)) {
             // ESC/WMS --> 27wD (D, E...)
             // U = D, V = E, X = F...
@@ -69,9 +70,9 @@ export const mapLegacyClassName: (name: string) => `${number}${DepartmentLetter}
 
         return `${year}${DepartmentLetter.GYMF}${id}`;
     }
-    if (['m', 'l'].includes(id)) {
-        // FMS german --> 27Fp (p-s)
-        const newLetter = String.fromCharCode(id.charCodeAt(0) - 4);
+    if (['l', 'm'].includes(id)) {
+        // FM Päd german --> 27Fp (p-s)
+        const newLetter = String.fromCharCode(id.charCodeAt(0) + 4);
         return `${year}${DepartmentLetter.FMS}${newLetter}`;
     }
     if (['n', 'o'].includes(id)) {
