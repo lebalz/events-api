@@ -50,7 +50,7 @@ export const find: RequestHandler = async (req, res, next) => {
     if (req.user?.role === Role.ADMIN && ([EventState.REVIEW, EventState.REFUSED] as string[]).includes(event.state)) {
       return res.status(200).json(event);
     }
-    res.status(404).json({ message: 'Not found' });
+    res.status(404).json({ message: 'You are not allowed to fetch this event' });
   } catch (error) {
     next(error);
   }
