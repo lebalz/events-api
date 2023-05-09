@@ -43,7 +43,7 @@ model Event {
 
     // Filter Criterias
     classes      String[]     @default([])
-    // 1, 2, 3, 4
+    // graduation years
     classYears   Int[]        @default([]) @map("class_years")
     departments  Department[] @relation("events_to_departments")
     teachersOnly Boolean      @default(false) @map("teachers_only")

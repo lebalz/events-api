@@ -8,7 +8,19 @@ import { createDataExtractor } from "./helpers";
 import { IoRoom } from "../routes/socketEvents";
 
 const getData = createDataExtractor<Event>(
-  ['klpOnly', 'classYears', 'classes', 'description', 'teachersOnly', 'start', 'end', "location", 'description', 'descriptionLong']
+  [
+    'klpOnly',
+    'classYears',
+    'classes',
+    'description',
+    'teachersOnly',
+    'start',
+    'end',
+    'location',
+    'description',
+    'classYears',
+    'descriptionLong'
+  ]
 );
 const NAME = 'EVENT';
 const db = prisma.event;
