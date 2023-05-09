@@ -41,6 +41,9 @@ export const find: RequestHandler = async (req, res, next) => {
     if (!event) {
       return res.status(404).json({ message: 'Not found' });
     }
+    if (event.authorId === req.user?.id) {
+      return res.status(200).json(event);
+    }
     if (event.state === EventState.PUBLISHED) {
       return res.status(200).json(event);
     }
