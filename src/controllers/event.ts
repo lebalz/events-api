@@ -10,7 +10,6 @@ import { IoRoom } from "../routes/socketEvents";
 const getData = createDataExtractor<Event>(
   [
     'klpOnly',
-    'classYears',
     'classes',
     'description',
     'teachersOnly',
@@ -18,7 +17,7 @@ const getData = createDataExtractor<Event>(
     'end',
     'location',
     'description',
-    'classYears',
+    'classGroups',
     'descriptionLong'
   ]
 );
