@@ -43,8 +43,8 @@ model Event {
 
     // Filter Criterias
     classes      String[]     @default([])
-    // graduation years
-    classYears   Int[]        @default([]) @map("class_years")
+    // wildcard class names
+    classGroups   String[]    @default([]) @map("class_groups")
     departments  Department[] @relation("events_to_departments")
     teachersOnly Boolean      @default(false) @map("teachers_only")
     klpOnly      Boolean      @default(false) @map("klp_only")
@@ -143,6 +143,7 @@ model UntisLesson {
 model UntisClass {
     id           Int            @id @default(autoincrement())
     name         String         @unique
+    legacyName   String?        @map("legacy_name") @unique
     year         Int
     sf           String
     lessons      UntisLesson[]  @relation("classes_to_lessons")

@@ -211,10 +211,12 @@ export const syncUntis2DB = async () => {
 
   /** CREATE CLASSES */
   data.classes.forEach((c) => {
+    const isoName = mapLegacyClassName(c.name) as KlassName;
     const klass = prisma.untisClass.create({
       data: {
         id: c.id,
-        name: c.name,
+        name: isoName,
+        legacyName: c.name === isoName ? null : c.name,
         year: getClassYear(c),
         sf: c.longName
       }
