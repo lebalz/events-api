@@ -81,7 +81,7 @@ export const importExcel = async (file: string, userId: string, jobId: string) =
       const cls = c.substring(2).split('').map((c) => `${yr}${c}`);
       return cls;
     }).filter(c => !!c).reduce((a, b) => a!.concat(b!), []);
-    const classes = [...new Set((singleClasses || []).concat(groupedClasses || []))];
+    const classes = [...new Set((singleClasses || []).concat(groupedClasses || []))].map(c => mapLegacyClassName(c)).filter(c => !!c) as KlassName[];
 
     // const classYearsRaw = (e[COLUMNS.classYears] as string || '').match(/(GYM|FMS|WMS)\d/g)?.map((c) => c) || [];
     // const classYears = classYearsRaw.map((c) => Number.parseInt(c.charAt(3), 10));
@@ -91,7 +91,7 @@ export const importExcel = async (file: string, userId: string, jobId: string) =
       create: (Prisma.Without<Prisma.DepartmentCreateWithoutEventsInput, Prisma.DepartmentUncheckedCreateWithoutEventsInput> & Prisma.DepartmentUncheckedCreateWithoutEventsInput)
     }[] = [];
 
-    const depRaw = classes.map(c => toDepartmentName(mapLegacyClassName(c) as KlassName)).filter(c => !!c);
+    const depRaw = classes.map(c => toDepartmentName(c)).filter(c => !!c);
     depRaw.forEach((d) => {
       departments.push({
         where: { name: d },
