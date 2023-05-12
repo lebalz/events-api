@@ -61,6 +61,7 @@ model Department {
     description String       @default("")
     classes     UntisClass[]
     events      Event[]      @relation("events_to_departments")
+    color       String       @default("#ebedf0")
 
     createdAt DateTime @default(now()) @map("created_at")
     updatedAt DateTime @updatedAt @map("updated_at")
