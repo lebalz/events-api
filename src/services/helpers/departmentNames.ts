@@ -50,10 +50,10 @@ export const Departments = {
   FMSBilingual: 'FMS/ECG',
   ECG: 'ECG',
   ECGBilingual: 'ECG/FMS',
-  GYMF: 'GYM-F',
-  GYMFBilingual: 'GYM-F/GYM-D',
-  GYMD: 'GYM-D',
-  GYMDBilingual: 'GYM-D/GYM-F',
+  GYMF: 'GBJB',
+  GYMFBilingual: 'GBJB/GBSL',
+  GYMD: 'GBSL',
+  GYMDBilingual: 'GBSL/GBJB',
   PASSERELLE: 'Passerelle',
 }
 
