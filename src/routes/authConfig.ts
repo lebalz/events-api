@@ -88,6 +88,13 @@ const authConfig: Config = {
                 roles: [Role.ADMIN, Role.USER],
             }]
         },
+        userSetRole: {
+            path: '/user/:id/set_role',
+            access: [{
+                methods: ['PUT'],
+                roles: [Role.ADMIN],
+            }]
+        },
         userIcs: {
             path: '/user/:id/create_ics',
             access: [{

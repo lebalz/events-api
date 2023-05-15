@@ -1,4 +1,5 @@
 import { EventState } from "@prisma/client";
+import { IoRoom } from "./socketEvents";
 
 export enum IoEvent {
     NEW_RECORD = 'NEW_RECORD',
@@ -26,6 +27,6 @@ export interface ChangedState {
 export interface Notification {
     message: NewRecord | ChangedRecord | ChangedState;
     event: IoEvent;
-    to?: string;
-    toSelf?: boolean;
+    to?: IoRoom | string;
+    toSelf?: true | boolean;
 }

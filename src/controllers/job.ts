@@ -45,7 +45,7 @@ export const all: RequestHandler = async (req, res, next) => {
             include: { jobs: true }
         });
         if (!user) {
-            throw new Error('User not found')
+            return  res.status(404).json({ message: 'User not found' });
         }
         res.json(user.jobs);
     } catch (error) {
