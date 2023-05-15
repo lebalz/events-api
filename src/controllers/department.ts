@@ -51,7 +51,7 @@ export const update: RequestHandler<{ id: string }, any, { data: Department }> =
 
 export const create: RequestHandler<any, any, Department> = async (req, res, next) => {
   try {
-    const {name, description} = req.body;
+    const { name, description } = req.body;
     const model = await db.create({
       data: {
         name,
@@ -68,8 +68,13 @@ export const create: RequestHandler<any, any, Department> = async (req, res, nex
   }
 }
 
-export const destroy: RequestHandler<{id: string}, any, any> = async (req, res, next) => {
+export const destroy: RequestHandler<{ id: string }, any, any> = async (req, res, next) => {
   try {
+    const toDestroy = await prisma.department.findUnique({ where: { id: req.params.id }, include: { classes: true, events: true } });
+    if (toDestroy && (toDestroy.classes.length > 0 || toDestroy.events.length > 0)) {
+      return res.status(400).json({ error: 'Cannot delete department with classes or events' });
+    }
+
     const department = await db.delete({
       where: {
         id: req.params.id,
