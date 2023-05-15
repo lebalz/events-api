@@ -226,7 +226,12 @@ export const syncUntis2DB = async () => {
 
   /** CONNECT CLASSES TO DEPARTMENTS */
   data.classes.forEach((c) => {
-    const kName = toDepartmentName(c.name as KlassName);
+    const isoName = mapLegacyClassName(c.name) as KlassName;
+    const kName = toDepartmentName(isoName);
+    if (!kName) {
+      console.log('No Department found for ', c.name);
+      return;
+    };
     const update = prisma.untisClass.update({
       where: { id: c.id },
       data: {
