@@ -83,22 +83,6 @@ export const importExcel = async (file: string, userId: string, jobId: string) =
     }).filter(c => !!c).reduce((a, b) => a!.concat(b!), []);
     const classes = [...new Set((singleClasses || []).concat(groupedClasses || []))].map(c => mapLegacyClassName(c)).filter(c => !!c) as KlassName[];
 
-    // const classYearsRaw = (e[COLUMNS.classYears] as string || '').match(/(GYM|FMS|WMS)\d/g)?.map((c) => c) || [];
-    // const classYears = classYearsRaw.map((c) => Number.parseInt(c.charAt(3), 10));
-
-    const departments: {
-      where: Prisma.DepartmentWhereUniqueInput,
-      create: (Prisma.Without<Prisma.DepartmentCreateWithoutEventsInput, Prisma.DepartmentUncheckedCreateWithoutEventsInput> & Prisma.DepartmentUncheckedCreateWithoutEventsInput)
-    }[] = [];
-
-    const depRaw = classes.map(c => toDepartmentName(c)).filter(c => !!c);
-    depRaw.forEach((d) => {
-      departments.push({
-        where: { name: d },
-        create: { name: d }
-      });
-    });
-
     return prisma.event.create({
       data: {
         description: e[COLUMNS.description] as string || '',
@@ -113,11 +97,7 @@ export const importExcel = async (file: string, userId: string, jobId: string) =
         },
         job: {
           connect: { id: jobId }
-        },
-        departments: {
-          connectOrCreate: departments
         }
-
       }
     });
   });

@@ -66,28 +66,28 @@ export const toDepartmentName = (name: KlassName) => {
         case DepartmentLetter.WMS:
             return Departments.WMS;
         case DepartmentLetter.FMS:
-            if (letter in FMPaed) {
+            if (FMPaed.includes(letter as any)) {
                 return Departments.FMPaed;
             }
-            if (letter in FMSBilingual) {
+            if (FMSBilingual.includes(letter as any)) {
                 return Departments.FMSBilingual;
             }
             return Departments.FMS;
         case DepartmentLetter.GYMD:
-            if (letter in GYMDBilingual) {
+            if (GYMDBilingual.includes(letter as any)) {
                 return Departments.GYMDBilingual;
             }
             return Departments.GYMD;
         case DepartmentLetter.GYMF:
-            if (letter in GYMFBilingual) {
+            if (GYMFBilingual.includes(letter as any)) {
                 return Departments.GYMFBilingual;
             }
             return Departments.GYMF;
         case DepartmentLetter.ECG:
-            if (letter in ECGBilingual) {
+            if (ECGBilingual.includes(letter as any)) {
                 return Departments.ECGBilingual;
             }
-            if (letter in MSOP) {
+            if (MSOP.includes(letter as any)) {
                 return Departments.MSOP;
             }
             return Departments.ECG;
