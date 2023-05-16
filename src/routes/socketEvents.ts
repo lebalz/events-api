@@ -1,6 +1,7 @@
-import { User } from "@prisma/client";
+import { Event, User } from "@prisma/client";
 import { Server } from "socket.io";
 import { checkEvent } from "../services/eventChecker";
+import { checkEvent as checkUnpersisted } from "../services/eventCheckUnpersisted";
 
 export enum IoRoom {
     ADMIN = 'admin',
@@ -27,6 +28,15 @@ const EventRouter = (io: Server) => {
         socket.on('checkEvent', async ({ event_id }: { event_id: string }) => {
             try {
                 const result = await checkEvent(event_id, user.id);
+                socket.emit('checkEvent', { state: 'success', result });
+            } catch (error) {
+                console.error(error);
+                socket.emit('checkEvent', { state: 'error', result: {} });
+            }
+        })
+        socket.on('checkUnpersistedEvent', async ({ event }: { event: Event }) => {
+            try {
+                const result = await checkUnpersisted(event, user.id);
                 socket.emit('checkEvent', { state: 'success', result });
             } catch (error) {
                 console.error(error);
