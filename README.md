@@ -80,6 +80,20 @@ yarn run prisma migrate dev
 yarn run dev
 ```
 
+## Generate Documentation
+
+run
+
+```bash
+npx prisma generate
+```
+
+this will generate
+- [docs](public/prisma-docs/index.html) with the [prisma-docs-generator](https://github.com/pantharshit00/prisma-docs-generator)
+- [schema.dbml](prisma/dbml/schema.dbml) with the [prisma-dbml-generator](https://notiz.dev/blog/prisma-dbml-generator)
+
+the docs will be publically available under `/docs/prisma/index.html`.
+
 ## Dokku
 
 

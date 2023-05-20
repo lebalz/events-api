@@ -1,4 +1,4 @@
-import { Event, User } from "@prisma/client";
+import type { Event, User } from "@prisma/client";
 import { Server } from "socket.io";
 import { checkEvent } from "../services/eventChecker";
 import { checkEvent as checkUnpersisted } from "../services/eventCheckUnpersisted";

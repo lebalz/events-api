@@ -14,6 +14,7 @@ import routeGuard, { createAccessRules } from './auth/guard';
 import authConfig, { PUBLIC_ROUTES } from './routes/authConfig';
 import EventRouter from './routes/socketEvents';
 import {instrument} from '@socket.io/admin-ui';
+import type { User } from "@prisma/client";
 
 const AccessRules = createAccessRules(authConfig.accessMatrix);
 
@@ -30,8 +31,6 @@ const app = express();
 const server = http.createServer(app);
 
 app.use(compression(), express.json({ limit: "5mb" }));
-// Serve the static files from the React app
-app.use(express.static(path.join(__dirname, "client/build")));
 
 // ensure the server can call other domains: enable cross origin resource sharing (cors)
 app.use(cors({
@@ -70,7 +69,10 @@ passport.deserializeUser(async (id, done) => {
     done(null, user)
 });
 
+/** Static folders */
 app.use('/ical', express.static(path.join(__dirname, '..', 'ical')));
+// Serve the static files from the React app
+app.use(express.static(path.join(__dirname,'..', 'docs')));
 
 // Public Endpoints
 app.get("/api/v1", (req, res) => {
@@ -169,7 +171,7 @@ app.use((req: Request, res, next) => {
 
 
 app.use('/api/v1', (req, res, next) => {
-    passport.authenticate('oauth-bearer', { session: true }, (err, user, info) => {
+    passport.authenticate('oauth-bearer', { session: true }, (err: Error, user: User, info: any) => {
         if (err) {
             /**
              * An error occurred during authorization. Send a Not Autohrized 

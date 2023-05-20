@@ -1,4 +1,4 @@
-import { Prisma, UntisLesson, Event } from "@prisma/client";
+import { Prisma, Event } from "@prisma/client";
 import prisma from "../prisma";
 
 

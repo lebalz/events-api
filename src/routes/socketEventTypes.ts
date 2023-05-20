@@ -1,4 +1,4 @@
-import { EventState } from "@prisma/client";
+import type { EventState } from "@prisma/client";
 import { IoRoom } from "./socketEvents";
 
 export enum IoEvent {

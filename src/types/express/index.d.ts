@@ -1,4 +1,4 @@
-import { User as pUser } from '@prisma/client';
+import type { User as pUser } from '@prisma/client';
 import { Server } from "socket.io";
 import { Notification } from '../../routes/socketEventTypes';
 

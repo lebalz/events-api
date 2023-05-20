@@ -7,6 +7,15 @@ generator client {
     provider = "prisma-client-js"
 }
 
+generator docs {
+  provider = "node node_modules/prisma-docs-generator"
+  output = "../docs/prisma"
+}
+
+generator dbml {
+  provider = "prisma-dbml-generator"
+}
+
 model User {
     id         String        @id @default(uuid())
     email      String        @unique
@@ -51,6 +60,7 @@ model Event {
 
     createdAt DateTime @default(now()) @map("created_at")
     updatedAt DateTime @updatedAt @map("updated_at")
+    deletedAt DateTime? @map("deleted_at")
 
     @@map("events")
 }
@@ -164,7 +174,6 @@ enum EventState {
     DRAFT
     REVIEW
     PUBLISHED
-    DELETED
     REFUSED
 }
 

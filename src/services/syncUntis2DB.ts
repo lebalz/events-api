@@ -1,10 +1,14 @@
 import { WebUntisSecretAuth, Base, WebAPITimetable, Klasse } from 'webuntis';
 import { authenticator as Authenticator } from 'otplib';
-import { Prisma, UntisLesson } from "@prisma/client";
+import type { Prisma, UntisLesson } from "@prisma/client";
 import prisma from '../prisma';
 import { Departments, toDepartmentName } from './helpers/departmentNames';
 import { KlassName, mapLegacyClassName } from './helpers/klassNames';
 
+/**
+ * @docs https://webuntis.noim.me/
+ * @url https://www.npmjs.com/package/webuntis
+ */
 const untis = new WebUntisSecretAuth(
   process.env.UNTIS_SCHOOL!,
   process.env.UNTIS_USER!,
@@ -100,9 +104,9 @@ const fetchUntis = async () => {
       const semester1 = holidays.find((h) => h.name.toLowerCase().includes('herbst'));
       const semester2 = holidays.find((h) => h.name.toLowerCase().includes('frühling'));
       const sj = new Date(data.schoolyear.startDate);
-      const dateSem1Raw = `${semester1?.endDate || sj.getFullYear() * 10000 + 1101}`
-      const dateSem2Raw = `${semester2?.endDate || (sj.getFullYear() + 1) * 10000 + 415}`
-      const dateSem3Raw = `${(sj.getFullYear() + 1) * 10000 + 830}`
+      const dateSem1Raw = `${semester1?.endDate || sj.getFullYear() * 10000 + 1101}` // 2023-11-01
+      const dateSem2Raw = `${semester2?.endDate || (sj.getFullYear() + 1) * 10000 + 415}` // 2024-04-15
+      const dateSem3Raw = `${(sj.getFullYear() + 1) * 10000 + 830}` // 2024-08-30
       const dateSem1 = new Date(`${dateSem1Raw.slice(0, 4)}-${dateSem1Raw.slice(4, 6)}-${dateSem1Raw.slice(6, 8)}T00:00:00.000Z`);
       const dateSem2 = new Date(`${dateSem2Raw.slice(0, 4)}-${dateSem2Raw.slice(4, 6)}-${dateSem2Raw.slice(6, 8)}T00:00:00.000Z`);
       const dateSem3 = new Date(`${dateSem3Raw.slice(0, 4)}-${dateSem3Raw.slice(4, 6)}-${dateSem3Raw.slice(6, 8)}T00:00:00.000Z`);

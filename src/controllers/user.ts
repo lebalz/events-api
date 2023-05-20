@@ -1,4 +1,5 @@
-import { Role, User } from "@prisma/client";
+import type { User } from "@prisma/client";
+import {Role} from '@prisma/client';
 import { RequestHandler } from "express";
 import prisma from "../prisma";
 import { IoEvent } from "../routes/socketEventTypes";

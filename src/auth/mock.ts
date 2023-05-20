@@ -1,4 +1,3 @@
-import { User } from '@prisma/client';
 import { Request } from 'express';
 import { ParamsDictionary } from 'express-serve-static-core';
 import { Strategy, StrategyCreated, StrategyCreatedStatic } from 'passport';

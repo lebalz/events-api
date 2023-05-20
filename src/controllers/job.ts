@@ -1,4 +1,4 @@
-import { Job } from "@prisma/client";
+import type { Job } from "@prisma/client";
 import { RequestHandler } from "express";
 import prisma from "../prisma";
 import { IoEvent } from "../routes/socketEventTypes";

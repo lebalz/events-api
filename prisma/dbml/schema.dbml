@@ -1,0 +1,155 @@
+//// ------------------------------------------------------
+//// THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
+//// ------------------------------------------------------
+
+Table users {
+  id String [pk]
+  email String [unique, not null]
+  untis untis_teachers
+  untisId Int [unique]
+  firstName String [not null]
+  lastName String [not null]
+  role Role [not null, default: 'USER']
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+  events events [not null]
+  icsLocator String
+  jobs jobs [not null]
+}
+
+Table events {
+  id String [pk]
+  author users [not null]
+  authorId String [not null]
+  start DateTime [not null]
+  end DateTime [not null]
+  location String [not null, default: '']
+  description String [not null, default: '']
+  descriptionLong String [not null, default: '']
+  state EventState [not null, default: 'DRAFT']
+  job jobs
+  jobId String
+  classes String[] [not null]
+  classGroups String[] [not null]
+  departments departments [not null]
+  teachersOnly Boolean [not null, default: false]
+  klpOnly Boolean [not null, default: false]
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+  deletedAt DateTime
+}
+
+Table departments {
+  id String [pk]
+  name String [unique, not null]
+  description String [not null, default: '']
+  classes untis_classes [not null]
+  events events [not null]
+  color String [not null, default: '#ebedf0']
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+}
+
+Table semesters {
+  id String [pk]
+  name String [not null]
+  start DateTime [not null]
+  end DateTime [not null]
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+}
+
+Table registration_periods {
+  id String [pk]
+  name String [not null]
+  start DateTime [not null]
+  end DateTime [not null]
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+}
+
+Table jobs {
+  id String [pk]
+  type JobType [not null]
+  state JobState [not null, default: 'PENDING']
+  user users [not null]
+  userId String [not null]
+  events events [not null]
+  description String [not null, default: '']
+  filename String
+  log String [not null, default: '']
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
+}
+
+Table untis_teachers {
+  id Int [pk, increment]
+  name String [unique, not null]
+  longName String [not null]
+  title String [not null]
+  active Boolean [not null]
+  lessons untis_lessons [not null]
+  classes untis_classes [not null]
+  user users
+}
+
+Table untis_lessons {
+  id Int [pk, increment]
+  room String [not null]
+  subject String [not null]
+  description String [not null]
+  semester Int [not null]
+  year Int [not null]
+  weekDay Int [not null]
+  startHHMM Int [not null]
+  endHHMM Int [not null]
+  classes untis_classes [not null]
+  teachers untis_teachers [not null]
+}
+
+Table untis_classes {
+  id Int [pk, increment]
+  name String [unique, not null]
+  legacyName String [unique]
+  year Int [not null]
+  sf String [not null]
+  lessons untis_lessons [not null]
+  teachers untis_teachers [not null]
+  department departments
+  departmentId String
+}
+
+Enum Role {
+  USER
+  ADMIN
+}
+
+Enum EventState {
+  DRAFT
+  REVIEW
+  PUBLISHED
+  REFUSED
+}
+
+Enum JobState {
+  PENDING
+  ERROR
+  DONE
+  REVERTED
+}
+
+Enum JobType {
+  IMPORT
+  CLONE
+  SYNC_UNTIS
+}
+
+Ref: users.untisId - untis_teachers.id
+
+Ref: events.authorId > users.id
+
+Ref: events.jobId > jobs.id [delete: Cascade]
+
+Ref: jobs.userId > users.id
+
+Ref: untis_classes.departmentId > departments.id

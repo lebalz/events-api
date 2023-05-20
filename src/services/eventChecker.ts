@@ -1,4 +1,5 @@
-import { Prisma, UntisLesson, Event } from "@prisma/client";
+import { Prisma } from "@prisma/client";
+import type { Event } from "@prisma/client";
 import prisma from "../prisma";
 
 export const checkEvent = async (eventId: string, userId?: string) => {

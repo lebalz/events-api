@@ -1,4 +1,4 @@
-import { Role } from "@prisma/client";
+import type { Role } from "@prisma/client";
 import { Request, Response, NextFunction } from "express";
 import { AccessMatrix, PUBLIC_ROUTES } from "../routes/authConfig";
 

@@ -1,4 +1,4 @@
-import { EventState, Prisma } from "@prisma/client";
+import { EventState } from "@prisma/client";
 import readXlsxFile from 'read-excel-file/node';
 import prisma from '../prisma';
 import { toDepartmentName } from "./helpers/departmentNames";
