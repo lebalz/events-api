@@ -32,6 +32,9 @@ export const mapLegacyClassName: (name: string) => `${number}${DepartmentLetter}
     if (year > 26) {
         return name as `${number}${DepartmentLetter}${string}`;
     }
+    if (name === '23R') {
+        return `23mT`; // speacial case
+    }
     const id = name.slice(2);
     if (id.charAt(id.length - 1) < 'a') { // Means it is an upper case letter
         if (year === currentGraduationYear && ['M', 'L'].includes(id)) {
