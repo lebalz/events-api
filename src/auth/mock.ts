@@ -18,7 +18,7 @@ class MockStrat extends Strategy {
             where: {
                 id: process.env.TEST_USER_ID || '-1'
             }
-        }).catch((err) => {
+        }).catch((err: any) => {
             console.log('Bearer Verify Error', err);
             return this.fail(`No User found for ${process.env.TEST_USER_ID}`);
         });

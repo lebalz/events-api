@@ -14,3 +14,4 @@ dokku.sh
 uploads/
 ical/*.ics
 **.example.sql
+docs/prisma/**/*
