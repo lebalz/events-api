@@ -74,12 +74,13 @@ export const classes: RequestHandler = async (req, res, next) => {
 
 export const subjects: RequestHandler = async (req, res, next) => {
     try {
-        const result = await prisma.$queryRaw<{name: string, description: string, departmentName: string}[]>(
-            Prisma.sql`SELECT DISTINCT l.subject AS name, l.description AS description, SPLIT_PART(d.name, '/', 1) AS "departmentName"
+        const result = await prisma.$queryRaw<{name: string, description: string, departmentNames: string}[]>(
+            Prisma.sql`SELECT l.subject AS name, l.description AS description, STRING_AGG(DISTINCT SPLIT_PART(d.name, '/', 1), '/') AS "departmentNames"
                         FROM untis_lessons AS l 
                         INNER JOIN _classes_to_lessons AS cl ON l.id=cl."B"
                         INNER JOIN untis_classes AS c ON cl."A"=c.id
-                        INNER JOIN departments AS d ON d.id=c.department_id;`
+                        INNER JOIN departments AS d ON d.id=c.department_id
+                        GROUP BY l.subject, l.description;`
         );
 
         res.json(result);
