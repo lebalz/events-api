@@ -19,7 +19,8 @@ const getData = createDataExtractor<Event>(
         'location',
         'description',
         'classGroups',
-        'descriptionLong'
+        'descriptionLong',
+        'subjects'
     ]
 );
 const NAME = 'EVENT';

@@ -57,6 +57,7 @@ model Event {
     departments  Department[] @relation("events_to_departments")
     teachersOnly Boolean      @default(false) @map("teachers_only")
     klpOnly      Boolean      @default(false) @map("klp_only")
+    subjects    String[]        @default([])
 
     createdAt DateTime @default(now()) @map("created_at")
     updatedAt DateTime @updatedAt @map("updated_at")
