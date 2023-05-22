@@ -3,6 +3,8 @@ import prisma from "../prisma";
 import { IoEvent } from "../routes/socketEventTypes";
 import { notifyChangedRecord } from "../routes/notify";
 import { syncUntis2DB } from "../services/syncUntis2DB";
+import { Subject } from "webuntis";
+import { Prisma } from "@prisma/client";
 
 export const teachers: RequestHandler = async (req, res, next) => {
     try {
@@ -65,6 +67,22 @@ export const classes: RequestHandler = async (req, res, next) => {
             }
         });
         res.json(clsx);
+    } catch (error) {
+        next(error);
+    }
+}
+
+export const subjects: RequestHandler = async (req, res, next) => {
+    try {
+        const result = await prisma.$queryRaw<{name: string, description: string, departmentName: string}[]>(
+            Prisma.sql`SELECT DISTINCT l.subject AS name, l.description AS description, SPLIT_PART(d.name, '/', 1) AS "departmentName"
+                        FROM untis_lessons AS l 
+                        INNER JOIN _classes_to_lessons AS cl ON l.id=cl."B"
+                        INNER JOIN untis_classes AS c ON cl."A"=c.id
+                        INNER JOIN departments AS d ON d.id=c.department_id;`
+        );
+
+        res.json(result);
     } catch (error) {
         next(error);
     }

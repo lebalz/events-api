@@ -4,7 +4,7 @@ import { find as findJob, all as allJobs, destroy as deleteJob, update as update
 import { all as allDepartments, find as findDepartment, update as updateDepartment, create as createDepartment, destroy as deleteDepartment } from '../controllers/department';
 import { find as findRegistrationPeriod, all as allRegistrationPeriods, update as updateRegistrationPeriod, destroy as deleteRegistrationPeriod, create as createRegistrationPeriod } from '../controllers/registrationPeriod';
 import { find as findSemester, update as updateSemester, all as allSemesters, create as createSemester, destroy as deleteSemester } from '../controllers/semester';
-import { sync, teachers, teacher, classes } from '../controllers/untis';
+import { sync, teachers, teacher, classes, subjects } from '../controllers/untis';
 import { user, all as allUsers, linkToUntis, find as findUser, createIcs, setRole } from '../controllers/user';
 import multer from 'multer';
 
@@ -39,6 +39,7 @@ router.delete('/job/:id', deleteJob);
 router.get('/untis/teacher/all', teachers);
 router.get('/untis/teacher/:id', teacher);
 router.get('/untis/class/all', classes);
+router.get('/untis/subjects', subjects);
 router.post('/untis/sync', sync);
 
 router.get('/department/all', allDepartments);
