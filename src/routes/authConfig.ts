@@ -115,6 +115,15 @@ const authConfig: Config = {
                 }
             ]
         },
+        affectingEvents: {
+            path: '/event/affecting',
+            access: [
+                {
+                    methods: ['GET'],
+                    roles: [Role.ADMIN, Role.USER],
+                }
+            ]
+        },
         eventImport: {
             path: '/event/import',
             access: [{

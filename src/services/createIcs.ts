@@ -1,11 +1,11 @@
 import prisma from '../prisma';
 import { v4 as uuidv4 } from 'uuid';
 import { createEvents, DateArray, EventAttributes } from 'ics';
-import { start } from 'repl';
-import { writeFileSync } from 'fs';
-import { EventState, Prisma } from '@prisma/client';
 import query from './assets/query.eventsAffectingUser';
 import { Event } from '@prisma/client';
+import { writeFileSync } from 'fs';
+import _ from 'lodash';
+import { toCamelCase } from './helpers/rawQueryKeys';
 
 export const SEC_2_MS = 1000;
 export const MINUTE_2_MS = 60 * SEC_2_MS;
@@ -18,16 +18,18 @@ export default async function createIcs(userId: string, jobId: string) {
     const user = await prisma.user.findUnique({
         where: { id: userId }
     });
-    const publicEvents = await prisma.$queryRaw<Event[]>(query(userId, {monthForward: 15, monthBackward: 1}));
+    const publicEventsRaw = await prisma.$queryRaw<Event[]>(query(userId, {type: 'relative', monthForward: 15, monthBackward: 1}));
+    const publicEvents = toCamelCase(publicEventsRaw);
     const fileName = user?.icsLocator || `${uuidv4()}.ics`;
     if (fileName && publicEvents.length > 0) {
         const events: EventAttributes[] = [];
         publicEvents.forEach(event => {
             const start = toDateArray(new Date(event.start));
             const end = toDateArray(new Date(event.end));
+            console.log(event, event.createdAt, event.updatedAt);
             const createdAt = toDateArray(new Date(event.createdAt));
             const updatedAt = toDateArray(new Date(event.updatedAt));
-            const descriptionLong = `${event.descriptionLong}
+            const descriptionLong = `${event.descriptionLong || ''}
 
             ${event.classes.length > 0 ? 'Klassen: ' + event.classes.join(', ') : ''}
             ${event.deletedAt ? 'Gelöscht am: ' + event.deletedAt : ''}
@@ -53,6 +55,7 @@ export default async function createIcs(userId: string, jobId: string) {
         const fileCreated: boolean = await new Promise((resolve, reject) => {
             createEvents(events, (error, value) => {
                 if (error) {
+                    console.log('error', error);
                     return resolve(false);
                 }            
                 writeFileSync(`${__dirname}/../../ical/${fileName}`, value, { encoding: 'utf8', flag: 'w' })
@@ -68,6 +71,8 @@ export default async function createIcs(userId: string, jobId: string) {
             });
             return updated;
         }
+    } else {
+        writeFileSync(`${__dirname}/../../ical/${fileName}`, 'Nöö', { encoding: 'utf8', flag: 'w' })
     }
-    return user;
+    throw new Error('Could not create ics file');
 }

@@ -41,6 +41,5 @@ export const checkEvent = async (eventId: string, userId?: string) => {
                 )
         ORDER BY untis_lessons.start_hhmm ASC;`
     );
-    console.log(result, eventId, userId);
     return result;
 }

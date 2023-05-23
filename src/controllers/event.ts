@@ -7,6 +7,8 @@ import type { Department, Job, User, Event } from "@prisma/client";
 import { Role, EventState, JobType } from "@prisma/client";
 import { createDataExtractor } from "./helpers";
 import { IoRoom } from "../routes/socketEvents";
+import {default as queryAffectedEvents} from "../services/assets/query.eventsAffectingUser";
+import { v1 } from "uuid";
 
 const getData = createDataExtractor<Event>(
     [
@@ -246,6 +248,25 @@ export const all: RequestHandler = async (req, res, next) => {
                 return events.map(prepareEvent);
             });
         res.json(events);
+    } catch (error) {
+        next(error);
+    }
+}
+
+export const affectingEvents: RequestHandler<any, string[] | {message: string}, any, {semesterId?: string}> = async (req, res, next) => {
+    try {
+        const semesterId = req.query.semesterId as string;
+        const semester = semesterId ? 
+            await prisma.semester.findUnique({ where: { id: semesterId } }) :
+            await prisma.semester.findFirst({ where: {
+                start: { lte: new Date() }, 
+                end: { gte: new Date() }
+            }});
+        if (!semester) {
+            return res.status(404).json({ message: 'Not found' });
+        }
+        const events = await prisma.$queryRaw<Event[]>(queryAffectedEvents(req.user!.id, { type: "absolute", from: semester.start, to: semester.end}));
+        res.status(200).json(events.map((e) => e.id));
     } catch (error) {
         next(error);
     }

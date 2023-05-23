@@ -1,6 +1,19 @@
 import { Prisma } from "@prisma/client"
 
-const query = (userId: string, timerange: { monthForward: number, monthBackward: number }) => {
+interface RelTR { 
+    type: 'relative', 
+    monthForward: number, 
+    monthBackward: number 
+}
+interface AbsTR { 
+    type: 'absolute', 
+    from: Date, 
+    to: Date 
+}
+const query = (userId: string, timerange: RelTR | AbsTR) => {
+    const start = timerange.type === 'relative' ? Prisma.sql`(current_timestamp - interval '${timerange.monthBackward} month')` : timerange.from
+    const end = timerange.type === 'relative' ? Prisma.sql`(current_timestamp + interval '${timerange.monthForward} month')` : timerange.to
+    console.log(start, end);
     return Prisma.sql`WITH this as (
         select users.id as uid, users.email, classes.id as cid, classes.name as cname, classes.legacy_name as cname_legacy, lessons.id as lid, lessons.subject, lessons.start_hhmm, lessons.end_hhmm, lessons.week_day, lessons.year, lessons.semester, departments.id as did, departments.name as dname
         FROM users
@@ -37,9 +50,9 @@ const query = (userId: string, timerange: { monthForward: number, monthBackward:
                 left join _events_to_departments as e2d on events.id=e2d."B"
             WHERE events.state = 'PUBLISHED'
                 AND (
-                    events.start < (current_timestamp + interval '${timerange.monthForward} month')
+                    events.start < ${end}
                     AND
-                    events.end > (current_timestamp - interval '${timerange.monthBackward} month')
+                    events.end > ${start}
                 )
             /* group by everything except department_ids... */
             group by semester_year, semester_nr, eid, classes, class_groups, teachers_only, klp_only, subjects, year_s, year_e, start_week_day, start_offset_m, duration_m, description
