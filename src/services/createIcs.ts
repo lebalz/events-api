@@ -26,7 +26,6 @@ export default async function createIcs(userId: string, jobId: string) {
         publicEvents.forEach(event => {
             const start = toDateArray(new Date(event.start));
             const end = toDateArray(new Date(event.end));
-            console.log(event, event.createdAt, event.updatedAt);
             const createdAt = toDateArray(new Date(event.createdAt));
             const updatedAt = toDateArray(new Date(event.updatedAt));
             const descriptionLong = `${event.descriptionLong || ''}

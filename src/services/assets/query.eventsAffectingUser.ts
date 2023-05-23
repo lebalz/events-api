@@ -13,7 +13,6 @@ interface AbsTR {
 const query = (userId: string, timerange: RelTR | AbsTR) => {
     const start = timerange.type === 'relative' ? Prisma.sql`(current_timestamp - interval '${timerange.monthBackward} month')` : timerange.from
     const end = timerange.type === 'relative' ? Prisma.sql`(current_timestamp + interval '${timerange.monthForward} month')` : timerange.to
-    console.log(start, end);
     return Prisma.sql`WITH this as (
         select users.id as uid, users.email, classes.id as cid, classes.name as cname, classes.legacy_name as cname_legacy, lessons.id as lid, lessons.subject, lessons.start_hhmm, lessons.end_hhmm, lessons.week_day, lessons.year, lessons.semester, departments.id as did, departments.name as dname
         FROM users
