@@ -1,4 +1,4 @@
-import type { User } from "@prisma/client";
+import type { User, Event } from "@prisma/client";
 import {Role} from '@prisma/client';
 import { RequestHandler } from "express";
 import prisma from "../prisma";
@@ -6,6 +6,7 @@ import { IoEvent } from "../routes/socketEventTypes";
 import { createDataExtractor } from "./helpers";
 import {default as createIcsFile} from '../services/createIcs';
 import { IoRoom } from "../routes/socketEvents";
+import {default as queryAffectedEvents} from "../services/assets/query.eventsAffectingUser";
 
 const NAME = 'USER';
 const getData = createDataExtractor<User>(
@@ -107,3 +108,32 @@ export const createIcs: RequestHandler<{ id: string }, any, any> = async (req, r
     }
 }
 
+
+
+export const affectedEvents: RequestHandler<{ id: string }, string[] | {message: string}, any, {semesterId?: string}> = async (req, res, next) => {
+    try {
+        const userId = req.params.id;
+        const user = await prisma.user.findUnique({ where: { id: userId } });
+        if (req.user!.id !== userId && req.user!.role !== Role.ADMIN) {
+            return res.status(403).json({ message: 'Not authorized' });
+        }
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        const semesterId = req.query.semesterId as string;
+        const semester = semesterId ? 
+            await prisma.semester.findUnique({ where: { id: semesterId } }) :
+            await prisma.semester.findFirst({ where: {
+                start: { lte: new Date() }, 
+                end: { gte: new Date() }
+            }});
+        if (!semester) {
+            return res.status(404).json({ message: 'No Semester found' });
+        }
+        const events = await prisma.$queryRaw<Event[]>(queryAffectedEvents(user.id, { type: "absolute", from: semester.start, to: semester.end}));
+        res.status(200).json(events.map((e) => e.id));
+    } catch (error) {
+        next(error);
+    }
+}

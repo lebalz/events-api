@@ -102,6 +102,13 @@ const authConfig: Config = {
                 roles: [Role.ADMIN, Role.USER],
             }]
         },
+        userAffectedEventIds: {
+            path: '/user/:id/affected-event-ids',
+            access: [{
+                methods: ['GET'],
+                roles: [Role.ADMIN, Role.USER],
+            }]
+        },
         event: {
             path: '/event',
             access: [
@@ -111,15 +118,6 @@ const authConfig: Config = {
                 },
                 {
                     methods: ['POST', 'PUT', 'DELETE'],
-                    roles: [Role.ADMIN, Role.USER],
-                }
-            ]
-        },
-        affectingEvents: {
-            path: '/event/affecting',
-            access: [
-                {
-                    methods: ['GET'],
                     roles: [Role.ADMIN, Role.USER],
                 }
             ]

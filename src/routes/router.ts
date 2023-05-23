@@ -1,11 +1,11 @@
 import express from 'express';
-import { create as createEvent, all as allEvents, find as findEvent, affectingEvents, update as updateEvent, importEvents, destroy as deleteEvent, setState as setEventState } from '../controllers/event';
+import { create as createEvent, all as allEvents, find as findEvent, update as updateEvent, importEvents, destroy as deleteEvent, setState as setEventState } from '../controllers/event';
 import { find as findJob, all as allJobs, destroy as deleteJob, update as updateJob } from '../controllers/job';
 import { all as allDepartments, find as findDepartment, update as updateDepartment, create as createDepartment, destroy as deleteDepartment } from '../controllers/department';
 import { find as findRegistrationPeriod, all as allRegistrationPeriods, update as updateRegistrationPeriod, destroy as deleteRegistrationPeriod, create as createRegistrationPeriod } from '../controllers/registrationPeriod';
 import { find as findSemester, update as updateSemester, all as allSemesters, create as createSemester, destroy as deleteSemester } from '../controllers/semester';
 import { sync, teachers, teacher, classes, subjects } from '../controllers/untis';
-import { user, all as allUsers, linkToUntis, find as findUser, createIcs, setRole } from '../controllers/user';
+import { user, all as allUsers, linkToUntis, find as findUser, createIcs, setRole, affectedEvents } from '../controllers/user';
 import multer from 'multer';
 
 
@@ -18,10 +18,10 @@ router.get('/user/:id', findUser);
 router.put('/user/:id/link_to_untis', linkToUntis);
 router.put('/user/:id/set_role', setRole);
 router.post('/user/:id/create_ics', createIcs);
+router.get('/user/:id/affected-event-ids', affectedEvents);
 
 
 router.get('/event/all', allEvents);
-router.get('/event/affecting', affectingEvents);
 router.get('/event/:id', findEvent);
 router.put('/event/:id', updateEvent);
 router.post('/event/change_state', setEventState);
