@@ -49,9 +49,9 @@ const query = (userId: string, timerange: RelTR | AbsTR) => {
                 left join _events_to_departments as e2d on events.id=e2d."B"
             WHERE events.state = 'PUBLISHED'
                 AND (
-                    events.start < ${end}
+                    events.start < ${end} /* (current_timestamp + interval '6 month') */
                     AND
-                    events.end > ${start}
+                    events.end > ${start} /* (current_timestamp - interval '1 month') */
                 )
             /* group by everything except department_ids... */
             group by semester_year, semester_nr, eid, classes, class_groups, teachers_only, klp_only, subjects, year_s, year_e, start_week_day, start_offset_m, duration_m, description
@@ -84,15 +84,14 @@ const query = (userId: string, timerange: RelTR | AbsTR) => {
                     AND
                     (
                         /* & klp ba*/
-                        (erange.klp_only and Array['KS', 'MC']::text[] && this_aggr.subjects)
+                        (erange.klp_only AND Array['KS', 'MC']::text[] && this_aggr.subjects)
                         OR 
                         /* & only teachers bb*/
-                        (not erange.klp_only and erange.teachers_only)
+                        (NOT erange.klp_only AND erange.teachers_only)
                         OR
                         /* & only overlapping lessons of class bc */
                         (
-                            not erange.teachers_only
-                            AND this.cname in (select unnest(erange.classes))
+                            NOT (erange.teachers_only OR erange.klp_only)
                             AND (MOD((this.week_day - erange.start_week_day + 7)::INTEGER, 7) * 24 * 60 + FLOOR(this.start_hhmm / 100) * 60 + MOD(this.start_hhmm, 100)) < erange.start_offset_m + erange.duration_m
                             AND (MOD((this.week_day - erange.start_week_day + 7)::INTEGER, 7) * 24 * 60 + FLOOR(this.end_hhmm / 100) * 60 + MOD(this.end_hhmm, 100)) > erange.start_offset_m
                         )
