@@ -92,6 +92,11 @@ const query = (userId: string, timerange: RelTR | AbsTR) => {
                         /* & only overlapping lessons of class bc */
                         (
                             NOT (erange.teachers_only OR erange.klp_only)
+                            AND (
+                                this.cname in (select unnest(erange.classes))
+                                OR
+                                this.cname LIKE ANY (SELECT CONCAT(unnest(erange.class_groups), '%'))
+                            )
                             AND (MOD((this.week_day - erange.start_week_day + 7)::INTEGER, 7) * 24 * 60 + FLOOR(this.start_hhmm / 100) * 60 + MOD(this.start_hhmm, 100)) < erange.start_offset_m + erange.duration_m
                             AND (MOD((this.week_day - erange.start_week_day + 7)::INTEGER, 7) * 24 * 60 + FLOOR(this.end_hhmm / 100) * 60 + MOD(this.end_hhmm, 100)) > erange.start_offset_m
                         )
