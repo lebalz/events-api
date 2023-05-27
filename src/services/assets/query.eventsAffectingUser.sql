@@ -1,37 +1,70 @@
-WITH this as (
-        select users.id as uid, users.email, classes.id as cid, classes.name as cname, classes.legacy_name as cname_legacy, lessons.id as lid, lessons.subject, lessons.start_hhmm, lessons.end_hhmm, lessons.week_day, lessons.year, lessons.semester, departments.id as did, departments.name as dname
+WITH this AS (
+        SELECT
+            users.id AS uid,
+            users.email, classes.id AS cid,
+            classes.name AS cname,
+            classes.legacy_name AS cname_legacy,
+            lessons.id AS lid,
+            lessons.subject,
+            lessons.start_hhmm,
+            lessons.end_hhmm,
+            lessons.week_day,
+            lessons.year as semester_year,
+            lessons.semester as semester_nr,
+            departments.id AS did,
+            departments.name AS dname
         FROM users
-            inner join _teachers_to_classes as t2c ON users.untis_id=t2c."B"
-            inner join untis_classes AS classes ON t2c."A"=classes.id
-            inner join _classes_to_lessons as c2l ON classes.id=c2l."A"
-            inner join _teachers_to_lessons as t2l ON users.untis_id=t2l."B"
-            inner join untis_lessons AS lessons ON c2l."B"=lessons.id AND t2l."A"=lessons.id
-            inner join departments on classes.department_id=departments.id
+            INNER JOIN _teachers_to_classes AS t2c ON users.untis_id=t2c."B"
+            INNER JOIN untis_classes AS classes ON t2c."A"=classes.id
+            INNER JOIN _classes_to_lessons AS c2l ON classes.id=c2l."A"
+            INNER JOIN _teachers_to_lessons AS t2l ON users.untis_id=t2l."B"
+            INNER JOIN untis_lessons AS lessons ON c2l."B"=lessons.id AND t2l."A"=lessons.id
+            INNER JOIN departments ON classes.department_id=departments.id
         WHERE users.id=${userId}
-    ), erange AS (
+    ),
+    /* prepared semesters */
+    psemesters AS (
+        SELECT
+            extract(YEAR FROM semesters.start) AS semester_year, 
+            CASE WHEN (extract(month from semesters.start) < 6) 
+                THEN 2 
+                ELSE 1 
+            END AS semester_nr,
+            semesters.start,
+            semesters.end,
+            (
+                SELECT COUNT(*) > 0 
+                FROM untis_lessons 
+                WHERE 
+                    untis_lessons.year = extract(YEAR FROM semesters.start) 
+                    AND 
+                    untis_lessons.semester = CASE WHEN (extract(MONTH FROM semesters.start) < 6) THEN 2 ELSE 1 END
+            ) AS is_active
+        FROM semesters
+    ),
+    erange AS (
         SELECT 
-            extract(year from semesters.start) as semester_year, 
-            case when (extract(month from semesters.start) < 6) 
-                then 2 
-                else 1 
-            end as semester_nr, 
+            psemesters.semester_year AS semester_year,
+            psemesters.semester_nr AS semester_nr,
+            psemesters.is_active AS semester_active,
+            (CASE WHEN psemesters.is_active THEN psemesters.semester_year ELSE extract(YEAR FROM CURRENT_TIMESTAMP) END) AS join_semester_year,
+            (CASE WHEN psemesters.is_active THEN psemesters.semester_nr ELSE CASE WHEN (extract(MONTH FROM CURRENT_TIMESTAMP) < 6) THEN 2 ELSE 1 END END) AS join_semester_nr,
             events.id AS eid, 
             events.classes AS classes,
             events.description,
             events.class_groups AS class_groups,
-            events.teachers_only as teachers_only,
-            events.klp_only as klp_only,
-            events.subjects as subjects,
-            array_agg(distinct e2d."A") as department_ids,
-            extract(year FROM events.start) AS year_s,
-            extract(year FROM events.end) AS year_e,
-            extract(dow  FROM events.start) AS start_week_day,
-            extract(hour FROM events.start) * 60 + extract(MINUTE FROM events.start) AS start_offset_m,
+            events.teachers_only AS teachers_only,
+            events.klp_only AS klp_only,
+            events.subjects AS subjects,
+            array_agg(DISTINCT e2d."A") as department_ids,
+            extract(YEAR FROM events.start) AS year_s,
+            extract(YEAR FROM events.end) AS year_e,
+            extract(DOW  FROM events.start) AS start_week_day,
+            extract(HOUR FROM events.start) * 60 + extract(MINUTE FROM events.start) AS start_offset_m,
             CEIL(extract(EPOCH FROM AGE(events.end, events.start)) / 60) AS duration_m
-            /* day of week                  +       event duration in full days  */
             FROM events 
-                inner join semesters on events.start < semesters.end and events.end > semesters.start
-                left join _events_to_departments as e2d on events.id=e2d."B"
+                INNER JOIN psemesters ON events.start < psemesters.end AND events.end > psemesters.start
+                LEFT JOIN _events_to_departments AS e2d ON events.id=e2d."B"
             WHERE events.state = 'PUBLISHED'
                 AND (
                     events.start < ${end} /* (current_timestamp + interval '6 month') */
@@ -39,20 +72,42 @@ WITH this as (
                     events.end > ${start} /* (current_timestamp - interval '1 month') */
                 )
             /* group by everything except department_ids... */
-            group by semester_year, semester_nr, eid, classes, class_groups, teachers_only, klp_only, subjects, year_s, year_e, start_week_day, start_offset_m, duration_m, description
+            GROUP BY 
+                semester_year,
+                semester_nr,
+                is_active,
+                eid,
+                classes,
+                class_groups,
+                teachers_only,
+                klp_only,
+                subjects,
+                year_s,
+                year_e,
+                start_week_day,
+                start_offset_m,
+                duration_m,
+                description
     ), this_aggr AS (
-        select year, semester, array_agg(distinct cname) as my_classes, array_agg(distinct cname_legacy) as legacy_classes, array_agg(distinct subject) as subjects, array_agg(distinct did) as department_ids
-        from this 
-        group by year, semester
+        SELECT
+            semester_year,
+            semester_nr,
+            array_agg(DISTINCT cname) AS my_classes,
+            array_agg(DISTINCT cname_legacy) AS legacy_classes,
+            array_agg(DISTINCT subject) AS subjects,
+            array_agg(DISTINCT did) AS department_ids
+        FROM this
+        GROUP BY
+            semester_year,
+            semester_nr
     )
-    select * from events
-    where id in (
-            select distinct eid 
-                from erange 
-                    inner join this_aggr on erange.semester_year = this_aggr.year and erange.semester_nr = this_aggr.semester
-                    inner join this on erange.semester_year = this.year and erange.semester_nr = this.semester
-            where
-                
+    SELECT * FROM events
+    WHERE id IN (
+            SELECT DISTINCT eid
+            FROM erange
+                INNER JOIN this_aggr ON erange.join_semester_year = this_aggr.semester_year AND erange.join_semester_nr = this_aggr.semester_nr
+                INNER JOIN this ON erange.join_semester_year = this.semester_year AND erange.join_semester_nr = this.semester_nr
+            WHERE
                 /* departments ac*/
                 (erange.department_ids && this_aggr.department_ids)
                 OR (
@@ -76,7 +131,7 @@ WITH this as (
                         OR
                         /* & only overlapping lessons of class bc */
                         (
-                            NOT (erange.teachers_only OR erange.klp_only)
+                            NOT (erange.teachers_only OR erange.klp_only OR NOT erange.semester_active)
                             AND (
                                 this.cname in (select unnest(erange.classes))
                                 OR
