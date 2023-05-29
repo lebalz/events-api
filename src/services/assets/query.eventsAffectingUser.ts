@@ -36,7 +36,7 @@ const query = (userId: string, timerange: RelTR | AbsTR) => {
             INNER JOIN _teachers_to_lessons AS t2l ON users.untis_id=t2l."B"
             INNER JOIN untis_lessons AS lessons ON c2l."B"=lessons.id AND t2l."A"=lessons.id
             INNER JOIN departments ON classes.department_id=departments.id
-        WHERE users.id=${userId}
+        WHERE users.id=${userId}::uuid
     ),
     /* prepared semesters */
     psemesters AS (

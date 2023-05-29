@@ -15,10 +15,10 @@ export const checkEvent = async (eventId: string, userId?: string) => {
                 extract(hour FROM events.start) * 60 + extract(MINUTE  FROM  events.start) AS start_offset_m,
                 CEIL(extract(EPOCH  FROM  age(events.end, events.start)) / 60) AS duration_m,
                 CEIL(extract(EPOCH  FROM  age(events.end, events.start)) / 60 / 60 / 24 / 7) AS duration_w
-                FROM events WHERE events.id=${eventId} AND (
+                FROM events WHERE events.id=${eventId}::uuid AND (
                     events.state='PUBLISHED'
-                    OR events.author_id=${userId} 
-                    OR 'ADMIN' = (SELECT users.role FROM users WHERE id=${userId})
+                    OR events.author_id=${userId}::uuid
+                    OR 'ADMIN' = (SELECT users.role FROM users WHERE id=${userId}::uuid)
                 )
         ) 
         SELECT untis_lessons.*, untis_teachers.name as teacher_name, untis_classes.name as class_name

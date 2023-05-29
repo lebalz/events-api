@@ -21,7 +21,7 @@ export const checkEvent = async (event: Event, userId?: string) => {
     const result = await prisma.$queryRaw<Event>(
         Prisma.sql`WITH drange AS (
             SELECT 
-                ${event.id} AS id,
+                ${event.id}::uuid AS id,
                 extract(year FROM ${start}::TimeStamp) AS year_s,
                 extract(year FROM ${end}::TimeStamp) AS year_e,
                 extract(dow  FROM ${start}::TimeStamp) AS week_day,
