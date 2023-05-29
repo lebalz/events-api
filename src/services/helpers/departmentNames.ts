@@ -1,6 +1,7 @@
 /**
  * MUST BE IN SYNC WITH THE CLIENT SIDE
  */
+import { Department } from "webuntis";
 import { KlassName } from "./klassNames";
 
 const GYMD = ['a' , 'b' , 'c' , 'd' , 'e' , 'f' , 'g' , 'h' , 'i' , 'j' , 'k' , 'l' , 'm' , 'n' , 'o' , 'p' , 'q' , 'r' , 's'] as const;
@@ -55,6 +56,22 @@ export const Departments = {
   GYMD: 'GBSL',
   GYMDBilingual: 'GBSL/GBJB',
   PASSERELLE: 'Passerelle',
+}
+
+export const Colors: {[key in keyof typeof Departments]: string} = {
+    WMS: '#0c88a7',
+    GYMD: '#1cf2c7',
+    FMPaed: '#297eff',
+    ECGBilingual: '6488be',
+    FMS: '#043797',
+    GYMF:'#0dbf19',
+    GYMFBilingual:'#14a800',
+    GYMDBilingual:'#34dfb5',
+    FMSBilingual:'#002266',
+    MSOP: '#4de042',
+    PASSERELLE: '#5676f5',
+    ECG: '#043797',
+    ESC: '#c4b403'
 }
 
 export const toDepartmentName = (name: KlassName) => {
