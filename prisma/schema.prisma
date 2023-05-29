@@ -70,6 +70,7 @@ model Department {
     id          String       @id @db.Uuid @default(uuid())
     name        String       @unique
     description String       @default("")
+    letter      String       @default("")
 
     classes     UntisClass[]
     events      Event[]      @relation("events_to_departments")

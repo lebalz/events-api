@@ -2,7 +2,7 @@ import { WebUntisSecretAuth, Base, WebAPITimetable, Klasse } from 'webuntis';
 import { authenticator as Authenticator } from 'otplib';
 import type { Prisma, UntisLesson } from "@prisma/client";
 import prisma from '../prisma';
-import { Colors, Departments, toDepartmentName } from './helpers/departmentNames';
+import { Colors, DepartmentLetterMap, Departments, toDepartmentName } from './helpers/departmentNames';
 import { KlassName, mapLegacyClassName } from './helpers/klassNames';
 
 /**
@@ -207,10 +207,11 @@ export const syncUntis2DB = async () => {
   Object.keys(Departments).forEach((d) => {
     const name = Departments[d as keyof typeof Departments];
     const color = Colors[name as keyof typeof Departments];
+    const letter = DepartmentLetterMap[name as keyof typeof Departments];
     dbTransactions.push(prisma.department.upsert({
       where: { name: name },
-      update: {},
-      create: { name: name, color: color }
+      update: { letter: letter },
+      create: { name: name, color: color, letter: letter }
     }))
   }
   )

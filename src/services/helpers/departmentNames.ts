@@ -74,6 +74,31 @@ export const Colors: {[key in keyof typeof Departments]: string} = {
     ESC: '#c4b403'
 }
 
+export const DepartmentLetterMap: {[key in keyof typeof Departments]: DepartmentLetter} = {
+    GYMD: DepartmentLetter.GYMD,
+    GYMDBilingual: DepartmentLetter.GYMD,
+    
+    FMS: DepartmentLetter.FMS,
+    FMSBilingual: DepartmentLetter.FMS,
+    FMPaed: DepartmentLetter.FMS,
+    
+    WMS: DepartmentLetter.WMS,
+
+    /** GBJB */
+    GYMF: DepartmentLetter.GYMF,
+    GYMFBilingual: DepartmentLetter.GYMF,
+
+    /** FMS */
+    ECG: DepartmentLetter.ECG,
+    ECGBilingual: DepartmentLetter.ECG,
+    MSOP: DepartmentLetter.ECG, // FMPäd
+    
+    /** WMS */
+    ESC: DepartmentLetter.ESC,
+
+    PASSERELLE: DepartmentLetter.PASSERELLE,
+}
+
 export const toDepartmentName = (name: KlassName) => {
     if (!name || name.length < 3) {
         '';

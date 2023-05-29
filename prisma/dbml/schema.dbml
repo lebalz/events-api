@@ -44,6 +44,7 @@ Table departments {
   id String [pk]
   name String [unique, not null]
   description String [not null, default: '']
+  letter String [not null, default: '']
   classes untis_classes [not null]
   events events [not null]
   color String [not null, default: '#306cce']
