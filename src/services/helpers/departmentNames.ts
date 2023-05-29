@@ -5,7 +5,7 @@ import { KlassName } from "./klassNames";
 
 const GYMD = ['a' , 'b' , 'c' , 'd' , 'e' , 'f' , 'g' , 'h' , 'i' , 'j' , 'k' , 'l' , 'm' , 'n' , 'o' , 'p' , 'q' , 'r' , 's'] as const;
 export type GYMD_Letter = typeof GYMD[number];
-const GYMDBilingual = ['t' , 'u' , 'v'] as const;
+const GYMDBilingual = ['w' , 'x' , 'y'] as const;
 export type GYMDBilingual_Letter = typeof GYMDBilingual[number];
 const FMS = ['a' , 'b' , 'c' , 'd' , 'e' , 'f' , 'g' , 'h' , 'i' , 'j' , 'k' , 'l' , 'm' , 'n' , 'o'] as const;
 export type FMS_Letter = typeof FMS[number];
