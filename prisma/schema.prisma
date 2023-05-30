@@ -183,6 +183,7 @@ view SemesterView {
   end           DateTime @map("end")
   hasLessons   Boolean @map("has_lessons")
   isCurrent    Boolean @map("is_current")
+  @@map("semester_view")
 }
 
 /// The underlying view does not contain a valid unique identifier and can therefore currently not be handled by the Prisma Client.
@@ -210,6 +211,21 @@ view EventView {
   duration_m         Decimal @map("duration_m") @db.Decimal
 
   @@unique([s_id, e_id])
+  @@map("event_view")
+}
+
+view UserTeachingView {
+  lSemesterYear     Int @map("l_semester_year")
+  lSemesterNr       Int @map("l_semester_nr")
+  classIds          Int[] @map("class_ids")
+  classNames        String[] @map("class_names")
+  legacyClassNames  String[] @map("legacy_class_names")
+  subjects          String[] @map("subjects")
+  departmentIds     String[] @db.Uuid @map("department_ids")
+  departmentNames   String[] @map("department_names")
+
+  @@unique([lSemesterYear, lSemesterNr])
+  @@map("user_teaching_view")
 }
 
 enum Role {

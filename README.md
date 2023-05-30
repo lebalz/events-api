@@ -80,6 +80,34 @@ yarn run prisma migrate dev
 yarn run dev
 ```
 
+### Create new view
+
+```bash
+yarn run prisma migrate dev --create-only
+# add your view definition
+yarn run prisma migrate dev
+# pull the model definitions to your schema
+yarn run prisma db pull
+```
+
+### Undo last migration (dev mode only!!!!)
+
+```bash
+# connect to current db
+psql -d postgres -h localhost -U events_api -d events_api
+
+# check if migration exists and only delete if it does
+select * from _prisma_migrations where migration_name ilike '%{migration_name}%'
+# delete migration record from db
+delete from _prisma_migrations where migration_name ilike '%{migration_name}%'
+
+# undo your migration, e.g. drop a view
+drop view view_name;
+
+# disconnect
+\q
+```
+
 ## Generate Documentation
 
 run
