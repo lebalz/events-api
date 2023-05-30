@@ -3,85 +3,85 @@
 //// ------------------------------------------------------
 
 Table users {
+  id String [pk]
   email String [unique, not null]
+  untis untis_teachers
   untisId Int [unique]
   firstName String [not null]
   lastName String [not null]
   role Role [not null, default: 'USER']
   createdAt DateTime [default: `now()`, not null]
   updatedAt DateTime [not null]
-  icsLocator String
-  id String [pk]
   events events [not null]
+  icsLocator String
   jobs jobs [not null]
-  untis untis_teachers
 }
 
 Table events {
+  id String [pk]
+  author users [not null]
+  authorId String [not null]
   start DateTime [not null]
   end DateTime [not null]
   location String [not null, default: '']
   description String [not null, default: '']
   descriptionLong String [not null, default: '']
   state EventState [not null, default: 'DRAFT']
+  job jobs
+  jobId String
   classes String[] [not null]
+  classGroups String[] [not null]
+  departments departments [not null]
   teachersOnly Boolean [not null, default: false]
   klpOnly Boolean [not null, default: false]
+  subjects String[] [not null]
   createdAt DateTime [default: `now()`, not null]
   updatedAt DateTime [not null]
-  classGroups String[] [not null]
   deletedAt DateTime
-  subjects String[] [not null]
-  id String [pk]
-  authorId String [not null]
-  jobId String
-  author users [not null]
-  job jobs
-  departments departments [not null]
 }
 
 Table departments {
+  id String [pk]
   name String [unique, not null]
   description String [not null, default: '']
-  createdAt DateTime [default: `now()`, not null]
-  updatedAt DateTime [not null]
-  color String [not null, default: '#306cce']
-  id String [pk]
   letter String [not null, default: '']
   classes untis_classes [not null]
   events events [not null]
+  color String [not null, default: '#306cce']
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [not null]
 }
 
 Table semesters {
+  id String [pk]
   name String [not null]
   start DateTime [not null]
   end DateTime [not null]
   createdAt DateTime [default: `now()`, not null]
   updatedAt DateTime [not null]
-  id String [pk]
 }
 
 Table registration_periods {
+  id String [pk]
   name String [not null]
   start DateTime [not null]
   end DateTime [not null]
   createdAt DateTime [default: `now()`, not null]
   updatedAt DateTime [not null]
-  id String [pk]
 }
 
 Table jobs {
+  id String [pk]
   type JobType [not null]
   state JobState [not null, default: 'PENDING']
+  user users [not null]
+  userId String [not null]
+  events events [not null]
   description String [not null, default: '']
   filename String
   log String [not null, default: '']
   createdAt DateTime [default: `now()`, not null]
   updatedAt DateTime [not null]
-  id String [pk]
-  userId String [not null]
-  events events [not null]
-  user users [not null]
 }
 
 Table untis_teachers {
@@ -90,9 +90,9 @@ Table untis_teachers {
   longName String [not null]
   title String [not null]
   active Boolean [not null]
-  user users
-  classes untis_classes [not null]
   lessons untis_lessons [not null]
+  classes untis_classes [not null]
+  user users
 }
 
 Table untis_lessons {
@@ -100,11 +100,11 @@ Table untis_lessons {
   room String [not null]
   subject String [not null]
   description String [not null]
+  semester Int [not null]
+  year Int [not null]
   weekDay Int [not null]
   startHHMM Int [not null]
   endHHMM Int [not null]
-  year Int [not null]
-  semester Int [not null]
   classes untis_classes [not null]
   teachers untis_teachers [not null]
 }
@@ -112,13 +112,13 @@ Table untis_lessons {
 Table untis_classes {
   id Int [pk, increment]
   name String [unique, not null]
-  sf String [not null]
-  year Int [not null]
   legacyName String [unique]
-  departmentId String
-  department departments
+  year Int [not null]
+  sf String [not null]
   lessons untis_lessons [not null]
   teachers untis_teachers [not null]
+  department departments
+  departmentId String
 }
 
 Table user_untis_view {
@@ -142,7 +142,7 @@ Table user_untis_view {
   }
 }
 
-Table SemesterView {
+Table semester_view {
   id String [unique, not null]
   name String [not null]
   semesterYear Decimal [not null]
@@ -153,7 +153,7 @@ Table SemesterView {
   isCurrent Boolean [not null]
 }
 
-Table EventView {
+Table event_view {
   s_id String [not null]
   s_year Decimal [not null]
   s_nr Int [not null]
@@ -181,6 +181,21 @@ Table EventView {
   }
 
   Note: 'The underlying view does not contain a valid unique identifier and can therefore currently not be handled by the Prisma Client.'
+}
+
+Table user_teaching_view {
+  lSemesterYear Int [not null]
+  lSemesterNr Int [not null]
+  classIds Int[] [not null]
+  classNames String[] [not null]
+  legacyClassNames String[] [not null]
+  subjects String[] [not null]
+  departmentIds String[] [not null]
+  departmentNames String[] [not null]
+
+  indexes {
+    (lSemesterYear, lSemesterNr) [unique]
+  }
 }
 
 Enum Role {
