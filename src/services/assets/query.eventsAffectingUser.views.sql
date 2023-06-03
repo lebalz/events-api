@@ -1,37 +1,13 @@
-import { Prisma } from "@prisma/client"
-import { readFileSync } from 'fs';
-import prisma from "../../prisma";
-
-interface RelTR { 
-    type: 'relative', 
-    monthForward: number, 
-    monthBackward: number 
-}
-interface AbsTR { 
-    type: 'absolute', 
-    from: Date, 
-    to: Date 
-}
-const query = (userId: string, timerange: RelTR | AbsTR) => {
-    const start = timerange.type === 'relative' ? Prisma.sql`(current_timestamp - interval '${timerange.monthBackward} month')` : timerange.from
-    const end = timerange.type === 'relative' ? Prisma.sql`(current_timestamp + interval '${timerange.monthForward} month')` : timerange.to
-    return Prisma.sql`
-    SELECT * FROM events
+SELECT * FROM events
     WHERE id IN (
         SELECT DISTINCT e_id
         FROM events_view
             INNER JOIN users_teaching_view ON events_view.s_id = users_teaching_view.l_semester_id
             INNER JOIN users_untis_view ON events_view.s_id = users_untis_view.l_semester_id
         WHERE
-            users_untis_view.u_id=${userId}::uuid
-        AND
-            events.state = 'PUBLISHED'
-        AND (
-                events.start < ${end} /* (current_timestamp + interval '6 month') */
-                AND
-                events.end > ${start} /* (current_timestamp - interval '1 month') */
-        )
-        AND (
+            users_untis_view.u_id='efc2c061-fe5d-4784-9f8b-aefe19b85522'
+            AND 
+            (
                 /* departments ac*/
                 (events_view.department_ids && users_teaching_view.department_ids)
                 OR (
@@ -45,7 +21,8 @@ const query = (userId: string, timerange: RelTR | AbsTR) => {
                         /* subjects ad*/
                         array_to_string(users_teaching_view.subjects, ':::') SIMILAR TO CONCAT('(', array_to_string(array_cat(ARRAY[NULL], events_view.subjects), '|','--'), ')')
                     )
-                    AND (
+                    AND
+                    (
                         /* & klp ba*/
                         (events_view.klp_only AND Array['KS', 'MC']::text[] && users_teaching_view.subjects)
                         OR 
@@ -66,7 +43,4 @@ const query = (userId: string, timerange: RelTR | AbsTR) => {
                     )
                 )
             )
-    )`
-}
-
-export default query;
+    )

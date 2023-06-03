@@ -59,19 +59,19 @@ export const Departments = {
 }
 
 export const Colors: {[key in keyof typeof Departments]: string} = {
-    WMS: '#0c88a7',
-    GYMD: '#1cf2c7',
-    FMPaed: '#297eff',
-    ECGBilingual: '6488be',
-    FMS: '#043797',
+    WMS: '#31a555',
+    GYMD: '#41b9bc',
+    FMPaed: '#805cdd',
+    FMS: '#5f34f3',
     GYMF:'#0dbf19',
-    GYMFBilingual:'#14a800',
-    GYMDBilingual:'#34dfb5',
-    FMSBilingual:'#002266',
-    MSOP: '#4de042',
-    PASSERELLE: '#5676f5',
-    ECG: '#043797',
-    ESC: '#c4b403'
+    GYMFBilingual:'#5989d9',
+    GYMDBilingual:'#5cd5d9',
+    FMSBilingual:'#86b033',
+    MSOP: '#d0cb4c',
+    PASSERELLE: '#c968b5',
+    ECG: '#b3a62d',
+    ECGBilingual: '#86b033',
+    ESC: '#3ac22c'
 }
 
 export const DepartmentLetterMap: {[key in keyof typeof Departments]: DepartmentLetter} = {
@@ -97,6 +97,32 @@ export const DepartmentLetterMap: {[key in keyof typeof Departments]: Department
     ESC: DepartmentLetter.ESC,
 
     PASSERELLE: DepartmentLetter.PASSERELLE,
+}
+
+
+export const ClassLetterMap: {[key in keyof typeof Departments]: readonly string[]} = {
+    GYMD: GYMD,
+    GYMDBilingual: GYMDBilingual,
+    
+    FMS: FMS,
+    FMSBilingual: FMSBilingual,
+    FMPaed: FMPaed,
+    
+    WMS: WMS,
+
+    /** GBJB */
+    GYMF: GYMF,
+    GYMFBilingual: GYMFBilingual,
+
+    /** FMS */
+    ECG: ECG,
+    ECGBilingual: ECGBilingual,
+    MSOP: MSOP, // FMPäd
+    
+    /** WMS */
+    ESC: ESC,
+
+    PASSERELLE: PASSERELLE
 }
 
 export const toDepartmentName = (name: KlassName) => {

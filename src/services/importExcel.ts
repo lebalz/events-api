@@ -103,5 +103,3 @@ export const importExcel = async (file: string, userId: string, jobId: string) =
   });
   return await Promise.all(imports);
 }
-
-//!  put a dollar-sign between "." and "disconnect"

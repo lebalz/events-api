@@ -5,7 +5,7 @@ import { IoEvent } from "../routes/socketEventTypes";
 import { createDataExtractor } from "./helpers";
 
 const NAME = 'DEPARTMENT';
-const getData = createDataExtractor<Department>(['name', 'description', 'color', 'letter']);
+const getData = createDataExtractor<Department>(['name', 'description', 'color', 'letter', 'classLetters']);
 const db = prisma.department;
 
 export const all: RequestHandler = async (req, res, next) => {

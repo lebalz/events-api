@@ -3,8 +3,8 @@ import { create as createEvent, all as allEvents, find as findEvent, update as u
 import { find as findJob, all as allJobs, destroy as deleteJob, update as updateJob } from '../controllers/job';
 import { all as allDepartments, find as findDepartment, update as updateDepartment, create as createDepartment, destroy as deleteDepartment } from '../controllers/department';
 import { find as findRegistrationPeriod, all as allRegistrationPeriods, update as updateRegistrationPeriod, destroy as deleteRegistrationPeriod, create as createRegistrationPeriod } from '../controllers/registrationPeriod';
-import { find as findSemester, update as updateSemester, all as allSemesters, create as createSemester, destroy as deleteSemester } from '../controllers/semester';
-import { sync, teachers, teacher, classes, subjects } from '../controllers/untis';
+import { find as findSemester, update as updateSemester, all as allSemesters, create as createSemester, destroy as deleteSemester, sync } from '../controllers/semester';
+import { teachers, teacher, classes, subjects } from '../controllers/untis';
 import { user, all as allUsers, linkToUntis, find as findUser, createIcs, setRole, affectedEvents } from '../controllers/user';
 import multer from 'multer';
 
@@ -41,7 +41,6 @@ router.get('/untis/teacher/all', teachers);
 router.get('/untis/teacher/:id', teacher);
 router.get('/untis/class/all', classes);
 router.get('/untis/subjects', subjects);
-router.post('/untis/sync', sync);
 
 router.get('/department/all', allDepartments);
 router.get('/department/:id', findDepartment);
@@ -52,6 +51,7 @@ router.delete('/department/:id', deleteDepartment);
 
 router.get('/semester/all', allSemesters);
 router.get('/semester/:id', findSemester);
+router.get('/semester/:id/sync_untis', sync);
 router.put('/semester/:id', updateSemester);
 router.delete('/semester/:id', deleteSemester);
 router.post('/semester', createSemester);

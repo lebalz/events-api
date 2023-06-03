@@ -2,7 +2,7 @@
 CREATE TYPE "Role" AS ENUM ('USER', 'ADMIN');
 
 -- CreateEnum
-CREATE TYPE "EventState" AS ENUM ('DRAFT', 'REVIEW', 'PUBLISHED', 'DELETED');
+CREATE TYPE "EventState" AS ENUM ('DRAFT', 'REVIEW', 'PUBLISHED', 'REFUSED');
 
 -- CreateEnum
 CREATE TYPE "JobState" AS ENUM ('PENDING', 'ERROR', 'DONE', 'REVERTED');
@@ -12,7 +12,7 @@ CREATE TYPE "JobType" AS ENUM ('IMPORT', 'CLONE', 'SYNC_UNTIS');
 
 -- CreateTable
 CREATE TABLE "users" (
-    "id" TEXT NOT NULL,
+    "id" UUID NOT NULL,
     "email" TEXT NOT NULL,
     "untis_id" INTEGER,
     "first_name" TEXT NOT NULL,
@@ -20,36 +20,42 @@ CREATE TABLE "users" (
     "role" "Role" NOT NULL DEFAULT 'USER',
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMP(3) NOT NULL,
+    "ics_locator" TEXT,
 
     CONSTRAINT "users_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
 CREATE TABLE "events" (
-    "id" TEXT NOT NULL,
-    "author_id" TEXT NOT NULL,
+    "id" UUID NOT NULL,
+    "author_id" UUID NOT NULL,
     "start" TIMESTAMP(3) NOT NULL,
     "end" TIMESTAMP(3) NOT NULL,
     "location" TEXT NOT NULL DEFAULT '',
     "description" TEXT NOT NULL DEFAULT '',
     "description_long" TEXT NOT NULL DEFAULT '',
     "state" "EventState" NOT NULL DEFAULT 'DRAFT',
-    "import_id" TEXT,
+    "import_id" UUID,
     "classes" TEXT[] DEFAULT ARRAY[]::TEXT[],
-    "class_years" TEXT[] DEFAULT ARRAY[]::TEXT[],
+    "class_groups" TEXT[] DEFAULT ARRAY[]::TEXT[],
     "teachers_only" BOOLEAN NOT NULL DEFAULT false,
     "klp_only" BOOLEAN NOT NULL DEFAULT false,
+    "subjects" TEXT[] DEFAULT ARRAY[]::TEXT[],
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMP(3) NOT NULL,
+    "deleted_at" TIMESTAMP(3),
 
     CONSTRAINT "events_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
 CREATE TABLE "departments" (
-    "id" TEXT NOT NULL,
+    "id" UUID NOT NULL,
     "name" TEXT NOT NULL,
     "description" TEXT NOT NULL DEFAULT '',
+    "letter" TEXT NOT NULL DEFAULT '',
+    "classLetters" TEXT[] DEFAULT ARRAY[]::TEXT[],
+    "color" TEXT NOT NULL DEFAULT '#306cce',
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMP(3) NOT NULL,
 
@@ -58,10 +64,11 @@ CREATE TABLE "departments" (
 
 -- CreateTable
 CREATE TABLE "semesters" (
-    "id" TEXT NOT NULL,
+    "id" UUID NOT NULL,
     "name" TEXT NOT NULL,
     "start" TIMESTAMP(3) NOT NULL,
     "end" TIMESTAMP(3) NOT NULL,
+    "untisSyncDate" TIMESTAMP(3) NOT NULL,
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMP(3) NOT NULL,
 
@@ -70,7 +77,7 @@ CREATE TABLE "semesters" (
 
 -- CreateTable
 CREATE TABLE "registration_periods" (
-    "id" TEXT NOT NULL,
+    "id" UUID NOT NULL,
     "name" TEXT NOT NULL,
     "start" TIMESTAMP(3) NOT NULL,
     "end" TIMESTAMP(3) NOT NULL,
@@ -82,10 +89,10 @@ CREATE TABLE "registration_periods" (
 
 -- CreateTable
 CREATE TABLE "jobs" (
-    "id" TEXT NOT NULL,
+    "id" UUID NOT NULL,
     "type" "JobType" NOT NULL,
     "state" "JobState" NOT NULL DEFAULT 'PENDING',
-    "user_id" TEXT NOT NULL,
+    "user_id" UUID NOT NULL,
     "description" TEXT NOT NULL DEFAULT '',
     "filename" TEXT,
     "log" TEXT NOT NULL DEFAULT '',
@@ -112,10 +119,12 @@ CREATE TABLE "untis_lessons" (
     "room" TEXT NOT NULL,
     "subject" TEXT NOT NULL,
     "description" TEXT NOT NULL,
-    "semester" TEXT NOT NULL,
+    "semester_nr" INTEGER NOT NULL,
+    "year" INTEGER NOT NULL,
     "week_day" INTEGER NOT NULL,
     "start_hhmm" INTEGER NOT NULL,
     "end_hhmm" INTEGER NOT NULL,
+    "semester_id" UUID NOT NULL,
 
     CONSTRAINT "untis_lessons_pkey" PRIMARY KEY ("id")
 );
@@ -124,16 +133,18 @@ CREATE TABLE "untis_lessons" (
 CREATE TABLE "untis_classes" (
     "id" SERIAL NOT NULL,
     "name" TEXT NOT NULL,
+    "legacy_name" TEXT,
+    "year" INTEGER NOT NULL,
     "sf" TEXT NOT NULL,
-    "department_id" TEXT,
+    "department_id" UUID,
 
     CONSTRAINT "untis_classes_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
 CREATE TABLE "_events_to_departments" (
-    "A" TEXT NOT NULL,
-    "B" TEXT NOT NULL
+    "A" UUID NOT NULL,
+    "B" UUID NOT NULL
 );
 
 -- CreateTable
@@ -170,6 +181,9 @@ CREATE UNIQUE INDEX "untis_teachers_name_key" ON "untis_teachers"("name");
 CREATE UNIQUE INDEX "untis_classes_name_key" ON "untis_classes"("name");
 
 -- CreateIndex
+CREATE UNIQUE INDEX "untis_classes_legacy_name_key" ON "untis_classes"("legacy_name");
+
+-- CreateIndex
 CREATE UNIQUE INDEX "_events_to_departments_AB_unique" ON "_events_to_departments"("A", "B");
 
 -- CreateIndex
@@ -204,6 +218,9 @@ ALTER TABLE "events" ADD CONSTRAINT "events_import_id_fkey" FOREIGN KEY ("import
 
 -- AddForeignKey
 ALTER TABLE "jobs" ADD CONSTRAINT "jobs_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "users"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "untis_lessons" ADD CONSTRAINT "untis_lessons_semester_id_fkey" FOREIGN KEY ("semester_id") REFERENCES "semesters"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "untis_classes" ADD CONSTRAINT "untis_classes_department_id_fkey" FOREIGN KEY ("department_id") REFERENCES "departments"("id") ON DELETE SET NULL ON UPDATE CASCADE;

@@ -5,7 +5,7 @@ datasource db {
 
 generator client {
     provider = "prisma-client-js"
-  previewFeatures = ["views"]
+    previewFeatures = ["views"]
 }
 
 generator docs {
@@ -68,17 +68,18 @@ model Event {
 }
 
 model Department {
-    id          String       @id @db.Uuid @default(uuid())
-    name        String       @unique
-    description String       @default("")
-    letter      String       @default("")
+    id                String       @id @db.Uuid @default(uuid())
+    name              String       @unique
+    description       String       @default("")
+    letter            String       @default("")
+    classLetters      String[]      @default([])
 
-    classes     UntisClass[]
-    events      Event[]      @relation("events_to_departments")
-    color       String       @default("#306cce")
+    classes           UntisClass[]
+    events            Event[]      @relation("events_to_departments")
+    color             String       @default("#306cce")
 
-    createdAt DateTime @default(now()) @map("created_at")
-    updatedAt DateTime @updatedAt @map("updated_at")
+    createdAt         DateTime @default(now()) @map("created_at")
+    updatedAt         DateTime @updatedAt @map("updated_at")
 
     @@map("departments")
 }
@@ -88,6 +89,8 @@ model Semester {
     name      String
     start     DateTime
     end       DateTime
+    untisSyncDate DateTime
+    lessons   UntisLesson[]
     createdAt DateTime @default(now()) @map("created_at")
     updatedAt DateTime @updatedAt @map("updated_at")
 
@@ -144,13 +147,16 @@ model UntisLesson {
     room        String
     subject     String
     description String
-    semester    Int
+    semesterNr  Int            @map("semester_nr")
     year        Int
     weekDay     Int            @map("week_day")
     startHHMM   Int            @map("start_hhmm")
     endHHMM     Int            @map("end_hhmm")
     classes     UntisClass[]   @relation("classes_to_lessons")
     teachers    UntisTeacher[] @relation("teachers_to_lessons")
+    
+    semester    Semester        @relation(fields: [semesterId], references: [id])
+    semesterId  String          @db.Uuid @map("semester_id")
 
     @@map("untis_lessons")
 }
@@ -169,7 +175,7 @@ model UntisClass {
     @@map("untis_classes")
 }
 
-view UserUntisView {
+view UsersUntisView {
   uId           String @map("u_id") @db.Uuid
   uEmail        String @map("u_email")
   cId           Int    @map("c_id")
@@ -180,35 +186,17 @@ view UserUntisView {
   lStartHHMM    Int    @map("l_start_hhmm")
   lEndHHMM      Int    @map("l_end_hhmm")
   lWeekDay      Int    @map("l_week_day")
-  lSemesterYear Int    @map("l_semester_year")
-  lSemesterNr   Int    @map("l_semester_nr")
+  lSemesterId   Int    @map("l_semester_id")
   dId           String @map("d_id") @db.Uuid
   dName         String @map("d_name")
 
   @@unique([uId, cId, lId, dId])
-  @@map("user_untis_view")
+  @@map("users_untis_view")
 }
 
-view SemesterView {
-  id            String @map("id") @unique @db.Uuid
-  name          String @map("name")
-  semesterYear Decimal @map("semester_year")  @db.Decimal
-  semesterNr   Int @map("semester_nr")
-  start         DateTime @map("start")
-  end           DateTime @map("end")
-  hasLessons   Boolean @map("has_lessons")
-  isCurrent    Boolean @map("is_current")
-  @@map("semester_view")
-}
 
 /// The underlying view does not contain a valid unique identifier and can therefore currently not be handled by the Prisma Client.
-view EventView {
-  s_id               String @map("s_id")  @db.Uuid
-  s_year             Decimal @map("s_year") @db.Decimal
-  s_nr               Int @map("s_nr")
-  s_active           Boolean @map("s_active")
-  join_semester_year Decimal @map("join_semester_year") @db.Decimal
-  join_semester_nr   Int @map("join_semester_nr")
+view EventsView {
   e_id               String @map("e_id")  @db.Uuid
   classes            String[] @map("classes")
   description        String @map("description")
@@ -224,14 +212,14 @@ view EventView {
   start_offset_m     Decimal @map("start_offset_m") @db.Decimal
   end_offset_m       Decimal @map("end_offset_m") @db.Decimal
   duration_m         Decimal @map("duration_m") @db.Decimal
+  s_id               String @map("s_id")  @db.Uuid
 
   @@unique([s_id, e_id])
-  @@map("event_view")
+  @@map("events_view")
 }
 
-view UserTeachingView {
-  lSemesterYear     Int @map("l_semester_year")
-  lSemesterNr       Int @map("l_semester_nr")
+view UsersTeachingView {
+  lSemesterId     Int @map("l_semester_id")
   classIds          Int[] @map("class_ids")
   classNames        String[] @map("class_names")
   legacyClassNames  String[] @map("legacy_class_names")
@@ -239,8 +227,8 @@ view UserTeachingView {
   departmentIds     String[] @db.Uuid @map("department_ids")
   departmentNames   String[] @map("department_names")
 
-  @@unique([lSemesterYear, lSemesterNr])
-  @@map("user_teaching_view")
+  @@unique([lSemesterId])
+  @@map("users_teaching_view")
 }
 
 enum Role {

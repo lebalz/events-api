@@ -9,10 +9,9 @@
     "build": "npx prisma generate && tsc --build ./tsconfig.json",
     "start": "node -r dotenv/config ./dist/src/app.js",
     "dev": "ts-node -r dotenv/config ./src/app.ts",
-    "db_users": "ts-node -r dotenv/config ./bin/create_users.ts",
-    "db_events": "ts-node -r dotenv/config ./bin/create_events.ts",
-    "db_drop": "ts-node -r dotenv/config ./bin/db_drop.ts",
-    "untis": "ts-node -r dotenv/config ./bin/fetch_untis_db.ts"
+    "db_seed": "ts-node -r dotenv/config ./bin/db_seed.ts",
+    "db_cleanup": "ts-node -r dotenv/config ./bin/db_reset.ts",
+    "db_reset": "yarn run db_cleanup && npx prisma migrate reset --force && yarn run db_seed"
   },
   "dependencies": {
     "@azure/msal-node": "^1.14.0",
