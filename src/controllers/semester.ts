@@ -34,9 +34,11 @@ export const find: RequestHandler<{ id: string }, any, any> = async (req, res, n
 }
 
 export const create: RequestHandler<any, any, Semester> = async (req, res, next) => {
-    const { start, end, name } = req.body;
-    const syncDate = new Date(start.getTime() + (end.getTime() - start.getTime()) / 2);
     try {
+        const { name } = req.body;
+        const start = new Date(req.body.start);
+        const end = new Date(req.body.end);
+        const syncDate = new Date(start.getTime() + (end.getTime() - start.getTime()) / 2);
         const model = await db.create({
             data: {
                 start: start,
