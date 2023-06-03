@@ -51,7 +51,7 @@ router.delete('/department/:id', deleteDepartment);
 
 router.get('/semester/all', allSemesters);
 router.get('/semester/:id', findSemester);
-router.get('/semester/:id/sync_untis', sync);
+router.post('/semester/:id/sync_untis', sync);
 router.put('/semester/:id', updateSemester);
 router.delete('/semester/:id', deleteSemester);
 router.post('/semester', createSemester);
