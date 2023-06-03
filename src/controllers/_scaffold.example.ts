@@ -38,7 +38,8 @@ export const create: RequestHandler<any, any, Semester> = async (req, res, next)
             data: {
                 start,
                 end,
-                name
+                name,
+                untisSyncDate: new Date()
             }
         });
 
