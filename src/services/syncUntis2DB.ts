@@ -2,7 +2,7 @@ import { WebUntisSecretAuth, Base, WebAPITimetable, Klasse } from 'webuntis';
 import { authenticator as Authenticator } from 'otplib';
 import type { Department, Prisma, Semester, UntisLesson } from "@prisma/client";
 import prisma from '../prisma';
-import { ClassLetterMap, Colors, DepartmentLetterMap, Departments, toDepartmentName } from './helpers/departmentNames';
+import { ClassLetterMap, Colors, DepartmentLetterMap, Departments } from './helpers/departmentNames';
 import { KlassName, mapLegacyClassName } from './helpers/klassNames';
 import { chunks } from './helpers/splitInChunks';
 
@@ -176,9 +176,6 @@ export const syncUntis2DB = async (semesterId: string) => {
     /** DELETE CURRENT DB STATE */
     const lessonIds = semester.lessons.map(l => l.id);
     const dropLessons = prisma.untisLesson.deleteMany({ where: { id: { in: lessonIds } } });
-    const classIds = [... new Set(semester.lessons.map(l => l.classes.map(c => c.id)).flat())];
-    // const dropClasses = prisma.untisClass.deleteMany({ where: { id: { in: classIds } } });
-    // dbTransactions.push(dropClasses);
     dbTransactions.push(dropLessons);
 
     /** SYNC db */

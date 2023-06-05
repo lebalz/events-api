@@ -54,9 +54,9 @@ export const mapLegacyClassName: (name: string) => `${number}${DepartmentLetter}
             return `${year}${DepartmentLetter.ECG}${newLetter}`;
         }
         if (['U', 'V', 'X'].includes(id)) {
-            // ESC/WMS --> 27wD (D, E...)
-            // U = D, V = E, X = F...
-            const newLetter = String.fromCharCode(id.charCodeAt(0) - 17);
+            // ESC/WMS --> 27wD (A, B, C...)
+            // U = A, V = B, X = C...
+            const newLetter = String.fromCharCode(id.charCodeAt(0) - 20);
             return `${year}${DepartmentLetter.ESC}${newLetter}`;
         }
         if (['Y', 'Z'].includes(id)) {
