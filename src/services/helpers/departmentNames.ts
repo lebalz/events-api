@@ -28,7 +28,7 @@ const ECGBilingual = ['T' , 'U' , 'V'] as const;
 export type ECGBilingual_Letter = typeof ECGBilingual[number];
 const PASSERELLE = ['A' , 'B' , 'C' , 'D' , 'E' , 'F' , 'G' , 'H' , 'I' , 'J' , 'K' , 'L' , 'M' , 'N' , 'O' , 'P' , 'Q' , 'R' , 'S' , 'T' , 'U' , 'V' , 'W' , 'X' , 'Y' , 'Z'] as const;
 export type PASSERELLE_Letter = typeof PASSERELLE[number];
-const ESC = ['D' , 'E' , 'F' , 'G'] as const;
+const ESC = ['A' , 'B' , 'C' , 'D'] as const;
 export type ESC_Letter = typeof ESC[number];
 
 type Letter = GYMD_Letter | GYMDBilingual_Letter | FMS_Letter | FMSBilingual_Letter | FMPaed_Letter | WMS_Letter | GYMF_Letter | GYMFBilingual_Letter | ECG_Letter | MSOP_Letter | ECGBilingual_Letter | PASSERELLE_Letter | ESC_Letter;
