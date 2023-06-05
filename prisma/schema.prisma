@@ -91,6 +91,7 @@ model Semester {
     end       DateTime
     untisSyncDate DateTime
     lessons   UntisLesson[]
+    jobs      Job[]
     createdAt DateTime @default(now()) @map("created_at")
     updatedAt DateTime @updatedAt @map("updated_at")
 
@@ -115,7 +116,13 @@ model Job {
 
     user   User   @relation(fields: [userId], references: [id])
     userId String @db.Uuid @map("user_id")
+    
+    // Sync Job Only
+    semester   Semester?   @relation(fields: [semesterId], references: [id])
+    semesterId String? @db.Uuid @map("semester_id")
+    syncDate   DateTime? @map("sync_date")
 
+    // Import Job Only
     events Event[]
 
     description String @default("")

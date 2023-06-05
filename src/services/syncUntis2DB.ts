@@ -108,7 +108,7 @@ const fetchUntis = async (semester: Semester) => {
             Object.keys(data).forEach((key) => {
                 const len = (data as any)[key].length;
                 if (len) {
-                    console.log(key, );
+                    console.log(key,);
                 }
             });
             console.log('Fetched School Year: ', data.schoolyear);
@@ -131,14 +131,13 @@ const getClassYear = (kl: Klasse) => {
 export const syncUntis2DB = async (semesterId: string) => {
     const semester = await prisma.semester.findUnique({ where: { id: semesterId }, include: { lessons: { include: { classes: true } } } });
     if (!semester) {
-        console.log('No Semester found');
-        return;
+        throw new Error('No Semester found');
     }
     const data = await fetchUntis(semester)
 
     if (data.timetable.length === 0) {
         console.log('No Data');
-        return
+        throw new Error(`No timetable data for semester "${semester.name}" in the Week of ${semester.untisSyncDate.toISOString().slice(0, 10)} found`)
     }
     const User2Teacher = await prisma.user.findMany({
         where: {
@@ -151,7 +150,7 @@ export const syncUntis2DB = async (semesterId: string) => {
             id: true
         }
     });
-    
+
 
     /** UPSERT DEPARTMENTS */
     const upsertDepPromise: Prisma.PrismaPromise<Department>[] = [];
@@ -163,7 +162,7 @@ export const syncUntis2DB = async (semesterId: string) => {
         upsertDepPromise.push(prisma.department.upsert({
             where: { name: name },
             update: {},
-            create: { 
+            create: {
                 name: name,
                 color: color,
                 letter: letter,
@@ -178,14 +177,30 @@ export const syncUntis2DB = async (semesterId: string) => {
     const lessonIds = semester.lessons.map(l => l.id);
     const dropLessons = prisma.untisLesson.deleteMany({ where: { id: { in: lessonIds } } });
     const classIds = [... new Set(semester.lessons.map(l => l.classes.map(c => c.id)).flat())];
-    const dropClasses = prisma.untisClass.deleteMany({ where: { id: { in: classIds } } });
-    dbTransactions.push(dropLessons, dropClasses);
+    // const dropClasses = prisma.untisClass.deleteMany({ where: { id: { in: classIds } } });
+    // dbTransactions.push(dropClasses);
+    dbTransactions.push(dropLessons);
 
     /** SYNC db */
 
-    /** UPSERT CLASSES */
+    /** UPSERT CLASSES - class names might show up multiple time - normalize them here... */
+    const currentClasses = await prisma.untisClass.findMany({});
+    const classIdMap = new Map<number, number>();
     data.classes.forEach((c) => {
         const isoName = mapLegacyClassName(c.name) as KlassName;
+        const currentClass = currentClasses.find((cc) => cc.name === isoName);
+        if (currentClass) {
+            classIdMap.set(c.id, currentClass.id);
+            dbTransactions.push(
+                prisma.untisClass.update({
+                    where: { name: isoName },
+                    data: {
+                        sf: c.longName
+                    }
+                })
+            );
+            return;
+        }
         const data = {
             name: isoName,
             legacyName: c.name === isoName ? null : c.name,
@@ -202,6 +217,9 @@ export const syncUntis2DB = async (semesterId: string) => {
         });
         dbTransactions.push(klass);
     });
+    console.log('idMap', { ...classIdMap });
+
+    const unknownClassDepartments: { [key: string]: any } = {};
 
     /** CONNECT CLASSES TO DEPARTMENTS */
     data.classes.forEach((c) => {
@@ -210,11 +228,21 @@ export const syncUntis2DB = async (semesterId: string) => {
         const cLetter = isoName.slice(3, 4); /** fourth letter, e.g. 26gA --> A */
         const department = departments.find(d => d.letter === dLetter && d.classLetters.includes(cLetter));
         if (!department) {
-            console.log('No Department found for ', c.name, isoName, departments);
+            console.log('No Department found for ', dLetter, c.id, c.longName, c.active, c.name, isoName);
+            unknownClassDepartments[c.name] = {
+                classId: c.id,
+                className: c.name,
+                description: c.longName,
+                classDepartmentLetter: dLetter,
+                classLetter: cLetter
+            };
+            if (c.name !== isoName) {
+                unknownClassDepartments[c.name].isoClassName = isoName;
+            }
             return;
         };
         const update = prisma.untisClass.update({
-            where: { id: c.id },
+            where: { id: classIdMap.get(c.id) || c.id },
             data: {
                 department: {
                     connect: { id: department.id }
@@ -315,19 +343,20 @@ export const syncUntis2DB = async (semesterId: string) => {
     const teachers: { [key: number]: { id: number }[] } = {};
     [...data.timetable].forEach((lesson) => {
         lesson.classes.forEach((cls) => {
-            if (!classes[cls.id]) {
-                classes[cls.id] = {
+            const cid = classIdMap.get(cls.id) || cls.id;
+            if (!classes[cid]) {
+                classes[cid] = {
                     lessons: [],
                     teachers: []
                 }
             }
             if (lessonIdSet.has(lesson.id)) {
-                classes[cls.id].lessons.push({ id: lesson.id });
+                classes[cid].lessons.push({ id: lesson.id });
             } else {
                 console.log('Lesson not found', lesson.id, findSubject(lesson.subjects[0].id), lesson.classes.map((c) => c.element.name).join(', '));
             }
             if (lesson.teachers.length > 0) {
-                classes[cls.id].teachers.push(...lesson.teachers.map((t) => ({ id: t.id })).filter(t => t.id));
+                classes[cid].teachers.push(...lesson.teachers.map((t) => ({ id: t.id })).filter(t => t.id));
             }
         });
         lesson.teachers.forEach((tchr) => {
@@ -343,16 +372,17 @@ export const syncUntis2DB = async (semesterId: string) => {
     });
 
     data.classes.forEach((cls) => {
+        const cid = classIdMap.get(cls.id) || cls.id;
         const update = prisma.untisClass.update({
             where: {
-                id: cls.id
+                id: cid
             },
             data: {
                 lessons: {
-                    connect: classes[cls.id]?.lessons || undefined
+                    connect: classes[cid]?.lessons || undefined
                 },
                 teachers: {
-                    connect: classes[cls.id]!.teachers.length > 0 ? classes[cls.id]!.teachers : undefined
+                    connect: classes[cid]!.teachers.length > 0 ? classes[cid]!.teachers : undefined
                 }
             }
         });
@@ -376,4 +406,19 @@ export const syncUntis2DB = async (semesterId: string) => {
     });
     console.log('TRANSACTION COUNT', dbTransactions.length);
     await prisma.$transaction(dbTransactions);
+    const summary: { [key: string]: number | string | Object } = {
+        schoolyear: `${data.schoolyear.name} [${data.schoolyear.startDate.toISOString().slice(0, 10)} - ${data.schoolyear.endDate.toISOString().slice(0, 10)}]`,
+        syncedWeek: semester.untisSyncDate.toISOString().slice(0, 10)
+    };
+    Object.keys(data).forEach((key) => {
+        const len = (data as any)[key].length;
+        if (len) {
+            summary[`#${key}`] = len;
+        }
+    });
+    console.log('UNKNOWN CD', unknownClassDepartments)
+    if (Object.keys(unknownClassDepartments).length > 0) {
+        summary['unknownClassDepartments'] = unknownClassDepartments;
+    }
+    return summary;
 }

@@ -36,6 +36,16 @@ export const mapLegacyClassName: (name: string) => `${number}${DepartmentLetter}
         return `23mT`; // speacial case
     }
     const id = name.slice(2);
+    if (['msA', 'msB'].includes(id)) {
+        // spécialisé??
+        const newLetter = id.charAt(2);
+        return `${year}${DepartmentLetter.ECG}${newLetter}`;
+    }
+    /** when id has more than one letter, the new format is expected */
+    if (id.length > 1) {
+        return name as `${number}${DepartmentLetter}${string}`;
+    }
+
     if (id.charAt(id.length - 1) < 'a') { // Means it is an upper case letter
         if (year === currentGraduationYear && ['M', 'L'].includes(id)) {
             // MSOP french --> 27sP (P-S)
@@ -60,11 +70,11 @@ export const mapLegacyClassName: (name: string) => `${number}${DepartmentLetter}
             const newLetter = String.fromCharCode(id.charCodeAt(0) + 9);
             return `${year}${DepartmentLetter.GYMF}${newLetter}`;
         }
-        if (['msA', 'msB'].includes(id)) {
-            // spécialisé??
-            const newLetter = id.charAt(2);
-            return `${year}${DepartmentLetter.ECG}${newLetter}`;
-        }
+        // if (['msA', 'msB'].includes(id)) {
+        //     // spécialisé??
+        //     const newLetter = id.charAt(2);
+        //     return `${year}${DepartmentLetter.ECG}${newLetter}`;
+        // }
         if (['R', 'S', 'T'].includes(id)) {
             // FMS/ECG
             const newLetter = String.fromCharCode(id.charCodeAt(0) + 2);

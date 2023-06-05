@@ -1,4 +1,4 @@
-import type { Semester } from "@prisma/client";
+import { JobType, Semester } from "@prisma/client";
 import { RequestHandler } from "express";
 import prisma from "../prisma";
 import { IoEvent } from "../routes/socketEventTypes";
@@ -101,17 +101,22 @@ export const destroy: RequestHandler<{ id: string }, any, any> = async (req, res
 
 export const sync: RequestHandler<{ id: string }, any, any> = async (req, res, next) => {
     try {
+        const semester = await prisma.semester.findUnique({where: {id: req.params.id}});            
+        console.log(semester?.untisSyncDate);
         const syncJob = await prisma.job.create({
             data: {
-                type: "SYNC_UNTIS", 
-                user: { connect: { id: req.user!.id } } 
+                type: JobType.SYNC_UNTIS,
+                user: { connect: { id: req.user!.id } },
+                syncDate: new Date(semester?.untisSyncDate ?? new Date()),
+                semester: { connect: { id: req.params.id } },
             }
         });
-        syncUntis2DB(req.params.id).then(() => {
+        syncUntis2DB(req.params.id).then((summary) => {
             return prisma.job.update({
                 where: { id: syncJob.id },
                 data: {
                     state: 'DONE',
+                    log: JSON.stringify(summary)
                 }
             });
         }).catch((error) => {
