@@ -100,9 +100,8 @@ export const createIcs: RequestHandler<{ id: string }, any, any> = async (req, r
         if (req.user!.id !== req.params.id) {
             return res.status(404).json({ message: 'Not authorized' });
         }
-        createIcsFile(req.user!.id,'').then((user) => {
-            res.json(user);
-        })
+        const user = await createIcsFile(req.user!.id, '');
+        res.json(user);
     } catch (error) {
         next(error)
     }

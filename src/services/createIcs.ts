@@ -71,7 +71,14 @@ export default async function createIcs(userId: string, jobId: string) {
             return updated;
         }
     } else {
-        writeFileSync(`${__dirname}/../../ical/${fileName}`, 'Nöö', { encoding: 'utf8', flag: 'w' })
+        // no events found - delete the ics file, since empty ics files are not valid
+        const updated = await prisma.user.update({
+            where: { id: userId },
+            data: {
+                icsLocator: null
+            }
+        });
+        return updated;
     }
     throw new Error('Could not create ics file');
 }
