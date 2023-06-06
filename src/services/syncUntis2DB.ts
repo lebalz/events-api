@@ -174,8 +174,7 @@ export const syncUntis2DB = async (semesterId: string) => {
     const departments = await prisma.department.findMany({});
     const dbTransactions: Prisma.PrismaPromise<any>[] = [];
     /** DELETE CURRENT DB STATE */
-    const lessonIds = semester.lessons.map(l => l.id);
-    const dropLessons = prisma.untisLesson.deleteMany({ where: { id: { in: lessonIds } } });
+    const dropLessons = prisma.untisLesson.deleteMany({ where: { semesterId: semesterId } });
     dbTransactions.push(dropLessons);
 
     /** SYNC db */
@@ -185,7 +184,7 @@ export const syncUntis2DB = async (semesterId: string) => {
     const classIdMap = new Map<number, number>();
     data.classes.forEach((c) => {
         const isoName = mapLegacyClassName(c.name) as KlassName;
-        const currentClass = currentClasses.find((cc) => cc.name === isoName);
+        const currentClass = currentClasses.find((cc) => cc.name === isoName && cc.id !== c.id);
         if (currentClass) {
             classIdMap.set(c.id, currentClass.id);
             dbTransactions.push(
@@ -214,7 +213,7 @@ export const syncUntis2DB = async (semesterId: string) => {
         });
         dbTransactions.push(klass);
     });
-    console.log('idMap', { ...classIdMap });
+    console.log('Classes: idMap', classIdMap);
 
     const unknownClassDepartments: { [key: string]: any } = {};
 
@@ -379,7 +378,7 @@ export const syncUntis2DB = async (semesterId: string) => {
                     connect: classes[cid]?.lessons || undefined
                 },
                 teachers: {
-                    connect: classes[cid]!.teachers.length > 0 ? classes[cid]!.teachers : undefined
+                    connect: classes[cid]?.teachers?.length > 0 ? classes[cid]!.teachers : undefined
                 }
             }
         });
