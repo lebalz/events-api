@@ -1,51 +1,49 @@
-SELECT * FROM events
-WHERE id IN (
-    SELECT DISTINCT e_id
-    FROM events_view
-        INNER JOIN users_teaching_view ON events_view.s_id = users_teaching_view.l_semester_id
-        INNER JOIN users_untis_view ON events_view.s_id = users_untis_view.l_semester_id
-    WHERE
-        users_untis_view.u_id='efc2c061-fe5d-4784-9f8b-aefe19b85522'::uuid
+SELECT DISTINCT events.*
+FROM events_view
+    INNER JOIN users_teaching_view ON events_view.s_id = users_teaching_view.l_semester_id
+    INNER JOIN users_untis_view ON events_view.s_id = users_untis_view.l_semester_id
+    INNER JOIN events ON events.id = events_view.e_id
+WHERE
+    users_untis_view.u_id='efc2c061-fe5d-4784-9f8b-aefe19b85522'::uuid
+AND
+    events_view.state = 'PUBLISHED'
+AND (
+    events_view.start < ${end} /* (current_timestamp + interval '6 month') */
     AND
-        events_view.state = 'PUBLISHED'
-    AND (
-        events_view.start < ${end} /* (current_timestamp + interval '6 month') */
-        AND
-        events_view.end > ${start} /* (current_timestamp - interval '1 month') */
-    )
-    AND (
-            /* departments ac*/
-            (events_view.department_ids && users_teaching_view.department_ids)
-            OR (
-                (
-                    /* overlapping exact class names aa*/
-                    ((events_view.classes && users_teaching_view.class_names) OR (events_view.classes && users_teaching_view.legacy_class_names))
-                    OR
-                    /* class name in class_group ab*/
-                    array_to_string(users_teaching_view.class_names, ':::') SIMILAR TO CONCAT('(', array_to_string(array_cat(ARRAY[NULL], events_view.class_groups), '|','--'), ')%')
-                    OR
-                    /* subjects ad*/
-                    array_to_string(users_teaching_view.subjects, ':::') SIMILAR TO CONCAT('(', array_to_string(array_cat(ARRAY[NULL], events_view.subjects), '|','--'), ')')
-                )
+    events_view.end > ${start} /* (current_timestamp - interval '1 month') */
+)
+AND (
+    /* departments ac*/
+    (events_view.department_ids && users_teaching_view.department_ids)
+    OR (
+        (
+            /* overlapping exact class names aa*/
+            ((events_view.classes && users_teaching_view.class_names) OR (events_view.classes && users_teaching_view.legacy_class_names))
+            OR
+            /* class name in class_group ab*/
+            array_to_string(users_teaching_view.class_names, ':::') SIMILAR TO CONCAT('(', array_to_string(array_cat(ARRAY[NULL], events_view.class_groups), '|','--'), ')%')
+            OR
+            /* subjects ad*/
+            array_to_string(users_teaching_view.subjects, ':::') SIMILAR TO CONCAT('(', array_to_string(array_cat(ARRAY[NULL], events_view.subjects), '|','--'), ')')
+        )
+        AND (
+            /* & klp ba*/
+            (events_view.klp_only AND Array['KS', 'MC']::text[] && users_teaching_view.subjects)
+            OR 
+            /* & only teachers bb*/
+            (NOT events_view.klp_only AND events_view.teachers_only)
+            OR
+            /* & only overlapping lessons of class bc */
+            (
+                NOT (events_view.teachers_only OR events_view.klp_only)
                 AND (
-                    /* & klp ba*/
-                    (events_view.klp_only AND Array['KS', 'MC']::text[] && users_teaching_view.subjects)
-                    OR 
-                    /* & only teachers bb*/
-                    (NOT events_view.klp_only AND events_view.teachers_only)
+                    users_untis_view.c_name in (select unnest(events_view.classes))
                     OR
-                    /* & only overlapping lessons of class bc */
-                    (
-                        NOT (events_view.teachers_only OR events_view.klp_only)
-                        AND (
-                            users_untis_view.c_name in (select unnest(events_view.classes))
-                            OR
-                            users_untis_view.c_name LIKE ANY (SELECT CONCAT(unnest(events_view.class_groups), '%'))
-                        )
-                        AND (MOD((users_untis_view.l_week_day - events_view.start_week_day + 7)::INTEGER, 7) * 24 * 60 + FLOOR(users_untis_view.l_start_hhmm / 100) * 60 + MOD(users_untis_view.l_start_hhmm, 100)) < events_view.start_offset_m + events_view.duration_m
-                        AND (MOD((users_untis_view.l_week_day - events_view.start_week_day + 7)::INTEGER, 7) * 24 * 60 + FLOOR(users_untis_view.l_end_hhmm / 100) * 60 + MOD(users_untis_view.l_end_hhmm, 100)) > events_view.start_offset_m
-                    )
+                    users_untis_view.c_name LIKE ANY (SELECT CONCAT(unnest(events_view.class_groups), '%'))
                 )
+                AND (MOD((users_untis_view.l_week_day - events_view.start_week_day + 7)::INTEGER, 7) * 24 * 60 + FLOOR(users_untis_view.l_start_hhmm / 100) * 60 + MOD(users_untis_view.l_start_hhmm, 100)) < events_view.start_offset_m + events_view.duration_m
+                AND (MOD((users_untis_view.l_week_day - events_view.start_week_day + 7)::INTEGER, 7) * 24 * 60 + FLOOR(users_untis_view.l_end_hhmm / 100) * 60 + MOD(users_untis_view.l_end_hhmm, 100)) > events_view.start_offset_m
             )
         )
+    )
 )
