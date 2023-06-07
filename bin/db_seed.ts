@@ -1,5 +1,5 @@
 
-import { Department, JobType, Prisma, Semester, UntisLesson } from "@prisma/client";
+import { Department, JobState, JobType, Prisma, Semester, UntisLesson } from "@prisma/client";
 import prisma from '../src/prisma';
 import { syncUntis2DB } from '../src/services/syncUntis2DB';
 import { importExcel } from '../src/services/importExcel';
@@ -44,14 +44,15 @@ async function main() {
     const seedFiles = fs.readdirSync('./bin/excel');
     const promises = seedFiles.filter(file => file.endsWith('.xlsx')).map(async xlsx => {
         const fname = `./bin/excel/${xlsx}`;
-        const importJob1 = await prisma.job.create({
+        const importJob = await prisma.job.create({
             data: {
                 type: JobType.IMPORT,
                 user: { connect: { id: user.id } },
                 filename: xlsx,
+                state: JobState.DONE
             }
         });
-        return importExcel(fname, user.id, importJob1.id);
+        return importExcel(fname, user.id, importJob.id);
     });
     await Promise.all(promises);
 }
