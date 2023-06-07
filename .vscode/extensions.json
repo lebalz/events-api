@@ -1,0 +1,9 @@
+{
+	"recommendations": [
+		"qufiwefefwoyn.inline-sql-syntax",
+        "dbaeumer.vscode-eslint",
+        "mhutchie.git-graph",
+        "Prisma.prisma",
+        "lukas-tr.materialdesignicons-intellisense"
+	]
+}
