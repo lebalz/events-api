@@ -25,11 +25,11 @@ const query = (userId: string, timerange: RelTR | AbsTR) => {
         WHERE
             users_untis_view.u_id=${userId}::uuid
         AND
-            events.state = 'PUBLISHED'
+            events_view.state = 'PUBLISHED'
         AND (
-                events.start < ${end} /* (current_timestamp + interval '6 month') */
-                AND
-                events.end > ${start} /* (current_timestamp - interval '1 month') */
+            events_view.start < ${end} /* (current_timestamp + interval '6 month') */
+            AND
+            events_view.end > ${start} /* (current_timestamp - interval '1 month') */
         )
         AND (
                 /* departments ac*/

@@ -152,6 +152,9 @@ Table users_untis_view {
 
 Table events_view {
   e_id String [not null]
+  start DateTime [not null]
+  end DateTime [not null]
+  state EventState [not null]
   classes String[] [not null]
   description String [not null]
   class_groups String[] [not null]

@@ -205,6 +205,9 @@ view UsersUntisView {
 /// The underlying view does not contain a valid unique identifier and can therefore currently not be handled by the Prisma Client.
 view EventsView {
   e_id               String @map("e_id")  @db.Uuid
+  start              DateTime @map("start")
+  end                DateTime @map("end")
+  state              EventState @map("state")
   classes            String[] @map("classes")
   description        String @map("description")
   class_groups       String[] @map("class_groups")
