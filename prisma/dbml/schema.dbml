@@ -35,6 +35,7 @@ Table events {
   teachersOnly Boolean [not null, default: false]
   klpOnly Boolean [not null, default: false]
   subjects String[] [not null]
+  teachingAffected TeachingAffected [not null, default: 'YES']
   createdAt DateTime [default: `now()`, not null]
   updatedAt DateTime [not null]
   deletedAt DateTime
@@ -198,6 +199,12 @@ Enum EventState {
   REVIEW
   PUBLISHED
   REFUSED
+}
+
+Enum TeachingAffected {
+  YES
+  PARTIAL
+  NO
 }
 
 Enum JobState {

@@ -60,6 +60,8 @@ model Event {
     klpOnly      Boolean      @default(false) @map("klp_only")
     subjects    String[]        @default([])
 
+    teachingAffected TeachingAffected @default(YES) @map("teaching_affected")
+
     createdAt DateTime @default(now()) @map("created_at")
     updatedAt DateTime @updatedAt @map("updated_at")
     deletedAt DateTime? @map("deleted_at")
@@ -251,6 +253,12 @@ enum EventState {
   REVIEW
   PUBLISHED
   REFUSED
+}
+
+enum TeachingAffected {
+  YES
+  PARTIAL
+  NO
 }
 
 enum JobState {
