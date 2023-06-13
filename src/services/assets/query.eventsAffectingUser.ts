@@ -45,23 +45,26 @@ const query = (userId: string, timerange: RelTR | AbsTR) => {
                     array_to_string(users_teaching_view.subjects, ':::') SIMILAR TO CONCAT('(', array_to_string(array_cat(ARRAY[NULL], events_view.subjects), '|','--'), ')')
                 )
                 AND (
-                    /* & klp ba*/
-                    (events_view.klp_only AND Array['KS', 'MC']::text[] && users_teaching_view.subjects)
+                        /* & klp ba*/
+                        (events_view.klp_only AND Array['KS', 'MC']::text[] && users_teaching_view.subjects)
                     OR 
-                    /* & only teachers bb*/
-                    (NOT events_view.klp_only AND events_view.teachers_only)
+                        /* & only teachers bb*/
+                        (NOT events_view.klp_only AND events_view.teachers_only)
                     OR
-                    /* & only overlapping lessons of class bc */
-                    (
-                        NOT (events_view.teachers_only OR events_view.klp_only)
-                        AND (
-                            users_untis_view.c_name in (select unnest(events_view.classes))
-                            OR
-                            users_untis_view.c_name LIKE ANY (SELECT CONCAT(unnest(events_view.class_groups), '%'))
+                        /* & only overlapping lessons of class bc */
+                        (
+                            NOT (events_view.teachers_only OR events_view.klp_only)
+                            AND (
+                                users_untis_view.c_name in (select unnest(events_view.classes))
+                                OR
+                                users_untis_view.c_name LIKE ANY (SELECT CONCAT(unnest(events_view.class_groups), '%'))
+                            )
+                            AND (MOD((users_untis_view.l_week_day - events_view.start_week_day + 7)::INTEGER, 7) * 24 * 60 + FLOOR(users_untis_view.l_start_hhmm / 100) * 60 + MOD(users_untis_view.l_start_hhmm, 100)) < events_view.start_offset_m + events_view.duration_m
+                            AND (MOD((users_untis_view.l_week_day - events_view.start_week_day + 7)::INTEGER, 7) * 24 * 60 + FLOOR(users_untis_view.l_end_hhmm / 100) * 60 + MOD(users_untis_view.l_end_hhmm, 100)) > events_view.start_offset_m
                         )
-                        AND (MOD((users_untis_view.l_week_day - events_view.start_week_day + 7)::INTEGER, 7) * 24 * 60 + FLOOR(users_untis_view.l_start_hhmm / 100) * 60 + MOD(users_untis_view.l_start_hhmm, 100)) < events_view.start_offset_m + events_view.duration_m
-                        AND (MOD((users_untis_view.l_week_day - events_view.start_week_day + 7)::INTEGER, 7) * 24 * 60 + FLOOR(users_untis_view.l_end_hhmm / 100) * 60 + MOD(users_untis_view.l_end_hhmm, 100)) > events_view.start_offset_m
-                    )
+                    OR
+                        /* & overlpaaing subjects */
+                        events_view.subjects && users_teaching_view.subjects
                 )
             )
         )

@@ -58,6 +58,7 @@ model Event {
     departments  Department[] @relation("events_to_departments")
     teachersOnly Boolean      @default(false) @map("teachers_only")
     klpOnly      Boolean      @default(false) @map("klp_only")
+    // teachers eith this subject
     subjects    String[]        @default([])
 
     teachingAffected TeachingAffected @default(YES) @map("teaching_affected")
