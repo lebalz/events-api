@@ -53,6 +53,7 @@ const ensureLogin = async () => {
 }
 
 const fetchUntis = async (semester: Semester) => {
+    console.log('Start fetching untis')
     const data = await ensureLogin()
         .then(async (loggedIn) => {
             if (!loggedIn) {
@@ -412,7 +413,6 @@ export const syncUntis2DB = async (semesterId: string) => {
             summary[`#${key}`] = len;
         }
     });
-    console.log('UNKNOWN CD', unknownClassDepartments)
     if (Object.keys(unknownClassDepartments).length > 0) {
         summary['unknownClassDepartments'] = unknownClassDepartments;
     }
