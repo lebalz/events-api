@@ -29,6 +29,9 @@ Table events {
   state EventState [not null, default: 'DRAFT']
   job jobs
   jobId String
+  parent events
+  parentId String [unique]
+  child events
   classes String[] [not null]
   classGroups String[] [not null]
   departments departments [not null]
@@ -225,6 +228,8 @@ Ref: users.untisId - untis_teachers.id
 Ref: events.authorId > users.id
 
 Ref: events.jobId > jobs.id [delete: Cascade]
+
+Ref: events.parentId - events.id [delete: Cascade]
 
 Ref: jobs.userId > users.id
 

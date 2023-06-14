@@ -50,6 +50,10 @@ model Event {
 
     job   Job?    @relation(fields: [jobId], references: [id], onDelete: Cascade)
     jobId String? @db.Uuid() @map("import_id")
+    
+    parent        Event?    @relation("event_history", fields: [parentId], references: [id], onDelete: Cascade)
+    parentId      String?   @db.Uuid() @unique @map("parent_id")
+    child         Event?    @relation("event_history")
 
     // Filter Criterias
     classes      String[]     @default([])
