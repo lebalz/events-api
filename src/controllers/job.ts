@@ -1,4 +1,4 @@
-import type { Job } from "@prisma/client";
+import { EventState, type Job, type Prisma } from "@prisma/client";
 import { RequestHandler } from "express";
 import prisma from "../prisma";
 import { IoEvent } from "../routes/socketEventTypes";
@@ -87,18 +87,43 @@ export const update: RequestHandler<{ id: string }, any, { data: Job }> = async 
 
 export const destroy: RequestHandler = async (req, res, next) => {
     try {
-        const model = await db.findUnique({
-            where: { id: req.params.id },
+        const job = await db.findUnique({
+            where: { 
+                id: req.params.id 
+            },
+            include: {
+                events: true
+            }
         });
-        if (!model) {
+        if (!job) {
             return res.status(204).send();
         }
-        if (model.userId !== req.user!.id) {
+        if (job.userId !== req.user!.id) {
             return res.status(403).json({ message: 'You are not allowed to delete this job' });
         }
-        await prisma.job.delete({
-            where: { id: req.params.id },
-        });
+        const canDestroy = job.events.length === 0 || job.events.every(e => e.state !== EventState.PUBLISHED);
+        if (canDestroy) {
+            await prisma.job.delete({
+                where: { id: req.params.id },
+            });
+        } else {
+             const updatePromises = job.events.map(e => {
+                if (e.state === EventState.PUBLISHED) {
+                    return prisma.event.update({
+                        where: { id: e.id },
+                        data: {
+                            deletedAt: new Date()
+                        }
+                    });
+                } else {
+                    return prisma.event.delete({
+                        where: { id: e.id }
+                    });
+                }
+
+            });
+            await Promise.all(updatePromises);
+        }
 
         res.notifications = [
             {

@@ -243,7 +243,10 @@ export const all: RequestHandler = async (req, res, next) => {
             .findMany({
                 include: { author: !!req.user, departments: true, job: !!req.user },
                 where: {
-                    OR: condition
+                    AND: {
+                        parentId: null,
+                        OR: condition
+                    }
                 }
             })
             .then((events) => {
@@ -275,7 +278,6 @@ export const exportExcel: RequestHandler = async (req, res, next) => {
                     console.error(err);
                 }
             });
-            // res.download(fpath).send();
         } else {
             res.status(400).json({message: 'No semester found'});
         }

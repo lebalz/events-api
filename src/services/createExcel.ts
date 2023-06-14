@@ -63,6 +63,7 @@ const createExcel = async (semesterId: string) => {
         where: {
             AND: {
                 state: EventState.PUBLISHED,
+                parentId: null,
                 start: {
                     lte: semester.end
                 },

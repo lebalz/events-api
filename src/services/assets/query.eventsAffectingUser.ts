@@ -1,7 +1,4 @@
 import { Prisma } from "@prisma/client"
-import { readFileSync } from 'fs';
-import prisma from "../../prisma";
-
 interface RelTR { 
     type: 'relative', 
     monthForward: number, 
@@ -25,6 +22,8 @@ const query = (userId: string, timerange: RelTR | AbsTR) => {
             users_untis_view.u_id=${userId}::uuid
         AND
             events_view.state = 'PUBLISHED'
+        AND
+            events_view.parent_id IS NULL
         AND (
             events_view.start < ${end} /* (current_timestamp + interval '6 month') */
             AND
