@@ -33,11 +33,12 @@ interface Config {
 
 /**
  * Routes that are accessible without authentication
- * only for GET requests
+ * only for GET/POST requests
  */
 export const PUBLIC_ROUTES = [
     '/event',
     '/event/all',
+    '/event/excel',
     '/department',
     '/department/all',
     '/semester',

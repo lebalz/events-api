@@ -7,6 +7,9 @@ import type { Department, Job, User, Event } from "@prisma/client";
 import { Role, EventState, JobType } from "@prisma/client";
 import { createDataExtractor } from "./helpers";
 import { IoRoom } from "../routes/socketEvents";
+import createExcel from "../services/createExcel";
+import { existsSync } from "fs";
+import path from "path";
 
 const getData = createDataExtractor<Event>(
     [
@@ -247,6 +250,35 @@ export const all: RequestHandler = async (req, res, next) => {
                 return events.map(prepareEvent);
             });
         res.json(events);
+    } catch (error) {
+        next(error);
+    }
+}
+
+export const exportExcel: RequestHandler = async (req, res, next) => {
+    try {
+        const currentSemester = await prisma.semester.findFirst({where: {
+            AND: {
+                start: {
+                    lte: new Date()
+                },
+                end: {
+                    gte: new Date()
+                }
+            }
+        }});
+        const file = await createExcel(currentSemester?.id || '-1');
+        if (file) {
+            const fpath = path.resolve(file);
+            res.download(fpath, (err) => {
+                if (err) {
+                    console.error(err);
+                }
+            });
+            // res.download(fpath).send();
+        } else {
+            res.status(400).json({message: 'No semester found'});
+        }
     } catch (error) {
         next(error);
     }
