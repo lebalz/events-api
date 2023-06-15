@@ -130,6 +130,13 @@ const authConfig: Config = {
                 roles: [Role.ADMIN],
             }]
         },
+        userEventGroup: {
+            path: '/user_event_group',
+            access: [{
+                methods: ['GET', 'POST', 'PUT', 'DELETE'],
+                roles: [Role.USER, Role.ADMIN],
+            }]
+        },
         untis: {
             path: '/untis',
             access: [
