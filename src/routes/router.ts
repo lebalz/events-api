@@ -1,5 +1,5 @@
 import express from 'express';
-import { create as createEvent, all as allEvents, find as findEvent, update as updateEvent, importEvents, destroy as deleteEvent, setState as setEventState, exportExcel } from '../controllers/event';
+import { create as createEvent, all as allEvents, find as findEvent, update as updateEvent, importEvents, clone as cloneEvent, destroy as deleteEvent, setState as setEventState, exportExcel } from '../controllers/event';
 import { find as findJob, all as allJobs, destroy as deleteJob, update as updateJob } from '../controllers/job';
 import { all as allDepartments, find as findDepartment, update as updateDepartment, create as createDepartment, destroy as deleteDepartment } from '../controllers/department';
 import { find as findRegistrationPeriod, all as allRegistrationPeriods, update as updateRegistrationPeriod, destroy as deleteRegistrationPeriod, create as createRegistrationPeriod } from '../controllers/registrationPeriod';
@@ -25,6 +25,7 @@ router.get('/event/all', allEvents);
 router.post('/event/excel', exportExcel);
 router.get('/event/:id', findEvent);
 router.put('/event/:id', updateEvent);
+router.post('/event/:id/clone', cloneEvent);
 router.post('/event/change_state', setEventState);
 router.delete('/event/:id', deleteEvent);
 router.post('/event', createEvent);

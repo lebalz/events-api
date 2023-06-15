@@ -32,16 +32,16 @@ const db = prisma.event;
 
 
 export const prepareEvent = (event: (Event & {
-    author: User;
+    author?: User;
     job?: Job | null;
     departments: Department[];
 }) | null) => {
     return {
         ...event,
         job: undefined,
-        jobId: event?.job?.id,
+        jobId: event?.jobId || event?.job?.id,
         author: undefined,
-        authorId: event?.author?.id,
+        authorId: event?.authorId || event?.author?.id,
         departments: undefined,
         departmentIds: event?.departments.map((d) => d.id) || [],
     };
@@ -53,19 +53,19 @@ export const find: RequestHandler = async (req, res, next) => {
         const event = await db
             .findUnique({
                 where: { id: req.params.id },
-                include: { author: true, job: true, departments: true },
+                include: { departments: true },
             })
         if (!event) {
             return res.status(404).json({ message: 'Not found' });
         }
         if (event.authorId === req.user?.id) {
-            return res.status(200).json(event);
+            return res.status(200).json(prepareEvent(event));
         }
         if (event.state === EventState.PUBLISHED) {
-            return res.status(200).json(event);
+            return res.status(200).json(prepareEvent(event));
         }
         if (req.user?.role === Role.ADMIN && ([EventState.REVIEW, EventState.REFUSED] as string[]).includes(event.state)) {
-            return res.status(200).json(event);
+            return res.status(200).json(prepareEvent(event));
         }
         res.status(404).json({ message: 'You are not allowed to fetch this event' });
     } catch (error) {
@@ -241,7 +241,7 @@ export const all: RequestHandler = async (req, res, next) => {
         }
         const events = await db
             .findMany({
-                include: { author: !!req.user, departments: true, job: !!req.user },
+                include: { departments: true },
                 where: {
                     AND: {
                         parentId: null,
@@ -310,6 +310,53 @@ export const create: RequestHandler<any, any, Event> = async (req, res, next) =>
             }
         ];
         res.status(201).json({ ...event, departmentIds: [] });
+    } catch (e) {
+        next(e)
+    }
+}
+
+export const clone: RequestHandler<{ id: string }, any, any> = async (req, res, next) => {
+    try {
+        const uid = req.user!.id;
+        const eid = req.params.id;
+        const event = await db.findUnique({ where: { id: eid }, include: { departments: true } });
+        if (!event) {
+            return res.status(404).json({ message: 'Not found' });
+        }
+        const newEvent = await db.create({
+            data: {
+                start: event.start,
+                end: event.end,
+                klpOnly: event.klpOnly,
+                classes: event.classes,
+                description: `📌 ${event.description}`,
+                teachersOnly: event.teachersOnly,
+                location: event.location,
+                descriptionLong: event.descriptionLong,
+                teachingAffected: event.teachingAffected,
+                subjects: event.subjects,
+                classGroups: event.classGroups,
+                state: EventState.DRAFT,
+                departments: {
+                    connect: event.departments.map((d) => ({ id: d.id }))
+                },
+                author: {
+                    connect: {
+                        id: uid
+                    }
+                }
+            },
+            include: { departments: true }
+        });
+
+        res.notifications = [
+            {
+                message: { record: NAME, id: event.id },
+                event: IoEvent.NEW_RECORD,
+                to: newEvent.id
+            }
+        ];
+        res.status(201).json(prepareEvent(newEvent));
     } catch (e) {
         next(e)
     }
