@@ -4,40 +4,41 @@ datasource db {
 }
 
 generator client {
-    provider = "prisma-client-js"
+    provider        = "prisma-client-js"
     previewFeatures = ["views"]
 }
 
 generator docs {
-  provider = "node node_modules/prisma-docs-generator"
-  output = "../docs/prisma"
+    provider = "node node_modules/prisma-docs-generator"
+    output   = "../docs/prisma"
 }
 
 generator dbml {
-  provider = "prisma-dbml-generator"
+    provider = "prisma-dbml-generator"
 }
 
 model User {
-    id         String        @id @db.Uuid @default(uuid())
-    email      String        @unique
-    untis      UntisTeacher? @relation(fields: [untisId], references: [id])
-    untisId    Int?          @unique @map("untis_id")
-    firstName  String        @map("first_name")
-    lastName   String        @map("last_name")
-    role       Role          @default(USER)
-    createdAt  DateTime      @default(now()) @map("created_at")
-    updatedAt  DateTime      @updatedAt @map("updated_at")
-    events     Event[]       @relation("events")
-    icsLocator String?       @map("ics_locator")
-    jobs       Job[]
+    id          String            @id @default(uuid()) @db.Uuid
+    email       String            @unique
+    untis       UntisTeacher?     @relation(fields: [untisId], references: [id])
+    untisId     Int?              @unique @map("untis_id")
+    firstName   String            @map("first_name")
+    lastName    String            @map("last_name")
+    role        Role              @default(USER)
+    createdAt   DateTime          @default(now()) @map("created_at")
+    updatedAt   DateTime          @updatedAt @map("updated_at")
+    events      Event[]           @relation("events")
+    icsLocator  String?           @map("ics_locator")
+    jobs        Job[]
+    eventGroups UserEventGroup[]
 
     @@map("users")
 }
 
 model Event {
-    id       String @id @db.Uuid @default(uuid())
+    id       String @id @default(uuid()) @db.Uuid
     author   User   @relation("events", fields: [authorId], references: [id])
-    authorId String @db.Uuid() @map("author_id")
+    authorId String @map("author_id") @db.Uuid()
 
     start DateTime
     end   DateTime
@@ -49,64 +50,81 @@ model Event {
     state EventState @default(DRAFT)
 
     job   Job?    @relation(fields: [jobId], references: [id], onDelete: Cascade)
-    jobId String? @db.Uuid() @map("import_id")
-    
-    parent        Event?    @relation("event_history", fields: [parentId], references: [id], onDelete: Cascade)
-    parentId      String?   @db.Uuid() @unique @map("parent_id")
-    child         Event?    @relation("event_history")
+    jobId String? @map("import_id") @db.Uuid()
+
+    parent   Event?  @relation("event_history", fields: [parentId], references: [id], onDelete: Cascade)
+    parentId String? @unique @map("parent_id") @db.Uuid()
+    child    Event?  @relation("event_history")
+
+    userGroup   UserEventGroup? @relation(fields: [userGroupId], references: [id])
+    userGroupId String?          @map("user_group_id") @db.Uuid
 
     // Filter Criterias
     classes      String[]     @default([])
     // wildcard class names
-    classGroups   String[]    @default([]) @map("class_groups")
+    classGroups  String[]     @default([]) @map("class_groups")
     departments  Department[] @relation("events_to_departments")
     teachersOnly Boolean      @default(false) @map("teachers_only")
     klpOnly      Boolean      @default(false) @map("klp_only")
     // teachers eith this subject
-    subjects    String[]        @default([])
+    subjects     String[]     @default([])
 
     teachingAffected TeachingAffected @default(YES) @map("teaching_affected")
 
-    createdAt DateTime @default(now()) @map("created_at")
-    updatedAt DateTime @updatedAt @map("updated_at")
+    createdAt DateTime  @default(now()) @map("created_at")
+    updatedAt DateTime  @updatedAt @map("updated_at")
     deletedAt DateTime? @map("deleted_at")
 
     @@map("events")
 }
 
+model UserEventGroup {
+    id          String  @id @default(uuid()) @db.Uuid
+    name        String  @default("")
+    description String  @default("")
+    user        User    @relation(fields: [userId], references: [id])
+    userId      String  @map("user_id") @db.Uuid
+    events      Event[]
+
+    createdAt DateTime @default(now()) @map("created_at")
+    updatedAt DateTime @updatedAt @map("updated_at")
+
+    @@map("user_event_groups")
+}
+
 model Department {
-    id                String       @id @db.Uuid @default(uuid())
-    name              String       @unique
-    description       String       @default("")
-    letter            String       @default("")
-    classLetters      String[]      @default([])
+    id           String   @id @default(uuid()) @db.Uuid
+    name         String   @unique
+    description  String   @default("")
+    letter       String   @default("")
+    classLetters String[] @default([])
 
-    classes           UntisClass[]
-    events            Event[]      @relation("events_to_departments")
-    color             String       @default("#306cce")
+    classes UntisClass[]
+    events  Event[]      @relation("events_to_departments")
+    color   String       @default("#306cce")
 
-    createdAt         DateTime @default(now()) @map("created_at")
-    updatedAt         DateTime @updatedAt @map("updated_at")
+    createdAt DateTime @default(now()) @map("created_at")
+    updatedAt DateTime @updatedAt @map("updated_at")
 
     @@map("departments")
 }
 
 model Semester {
-    id        String   @id @db.Uuid @default(uuid())
-    name      String
-    start     DateTime
-    end       DateTime
+    id            String        @id @default(uuid()) @db.Uuid
+    name          String
+    start         DateTime
+    end           DateTime
     untisSyncDate DateTime
-    lessons   UntisLesson[]
-    jobs      Job[]
-    createdAt DateTime @default(now()) @map("created_at")
-    updatedAt DateTime @updatedAt @map("updated_at")
+    lessons       UntisLesson[]
+    jobs          Job[]
+    createdAt     DateTime      @default(now()) @map("created_at")
+    updatedAt     DateTime      @updatedAt @map("updated_at")
 
     @@map("semesters")
 }
 
 model RegistrationPeriod {
-    id        String   @id @db.Uuid @default(uuid())
+    id        String   @id @default(uuid()) @db.Uuid
     name      String
     start     DateTime
     end       DateTime
@@ -117,16 +135,16 @@ model RegistrationPeriod {
 }
 
 model Job {
-    id    String   @id @db.Uuid @default(uuid())
+    id    String   @id @default(uuid()) @db.Uuid
     type  JobType
     state JobState @default(PENDING)
 
     user   User   @relation(fields: [userId], references: [id])
-    userId String @db.Uuid @map("user_id")
-    
+    userId String @map("user_id") @db.Uuid
+
     // Sync Job Only
-    semester   Semester?   @relation(fields: [semesterId], references: [id])
-    semesterId String? @db.Uuid @map("semester_id")
+    semester   Semester? @relation(fields: [semesterId], references: [id])
+    semesterId String?   @map("semester_id") @db.Uuid
     syncDate   DateTime? @map("sync_date")
 
     // Import Job Only
@@ -168,9 +186,9 @@ model UntisLesson {
     endHHMM     Int            @map("end_hhmm")
     classes     UntisClass[]   @relation("classes_to_lessons")
     teachers    UntisTeacher[] @relation("teachers_to_lessons")
-    
-    semester    Semester        @relation(fields: [semesterId], references: [id])
-    semesterId  String          @db.Uuid @map("semester_id")
+
+    semester   Semester @relation(fields: [semesterId], references: [id])
+    semesterId String   @map("semester_id") @db.Uuid
 
     @@map("untis_lessons")
 }
@@ -178,103 +196,102 @@ model UntisLesson {
 model UntisClass {
     id           Int            @id @default(autoincrement())
     name         String         @unique
-    legacyName   String?        @map("legacy_name") @unique
+    legacyName   String?        @unique @map("legacy_name")
     year         Int
     sf           String
     lessons      UntisLesson[]  @relation("classes_to_lessons")
     teachers     UntisTeacher[] @relation("teachers_to_classes")
     department   Department?    @relation(fields: [departmentId], references: [id])
-    departmentId String?        @db.Uuid @map("department_id")
+    departmentId String?        @map("department_id") @db.Uuid
 
     @@map("untis_classes")
 }
 
 view UsersUntisView {
-  uId           String @map("u_id") @db.Uuid
-  uEmail        String @map("u_email")
-  cId           Int    @map("c_id")
-  cName         String @map("c_name")
-  cNameLegacy   String @map("c_name_legacy")
-  lId           Int    @map("l_id")
-  lSubject      String @map("l_subject")
-  lStartHHMM    Int    @map("l_start_hhmm")
-  lEndHHMM      Int    @map("l_end_hhmm")
-  lWeekDay      Int    @map("l_week_day")
-  lSemesterId   Int    @map("l_semester_id")
-  dId           String @map("d_id") @db.Uuid
-  dName         String @map("d_name")
+    uId         String @map("u_id") @db.Uuid
+    uEmail      String @map("u_email")
+    cId         Int    @map("c_id")
+    cName       String @map("c_name")
+    cNameLegacy String @map("c_name_legacy")
+    lId         Int    @map("l_id")
+    lSubject    String @map("l_subject")
+    lStartHHMM  Int    @map("l_start_hhmm")
+    lEndHHMM    Int    @map("l_end_hhmm")
+    lWeekDay    Int    @map("l_week_day")
+    lSemesterId Int    @map("l_semester_id")
+    dId         String @map("d_id") @db.Uuid
+    dName       String @map("d_name")
 
-  @@unique([uId, cId, lId, dId])
-  @@map("users_untis_view")
+    @@unique([uId, cId, lId, dId])
+    @@map("users_untis_view")
 }
-
 
 /// The underlying view does not contain a valid unique identifier and can therefore currently not be handled by the Prisma Client.
 view EventsView {
-  e_id               String @map("e_id")  @db.Uuid
-  start              DateTime @map("start")
-  end                DateTime @map("end")
-  state              EventState @map("state")
-  classes            String[] @map("classes")
-  description        String @map("description")
-  class_groups       String[] @map("class_groups")
-  teachers_only      Boolean @map("teachers_only")
-  klp_only           Boolean @map("klp_only")
-  subjects           String[] @map("subjects")
-  department_ids     String[] @map("department_ids") @db.Uuid
-  year_s             Decimal @map("year_s") @db.Decimal
-  year_e             Decimal @map("year_e") @db.Decimal
-  start_week_day     Decimal @map("start_week_day") @db.Decimal
-  end_week_day       Decimal @map("end_week_day") @db.Decimal
-  start_offset_m     Decimal @map("start_offset_m") @db.Decimal
-  end_offset_m       Decimal @map("end_offset_m") @db.Decimal
-  duration_m         Decimal @map("duration_m") @db.Decimal
-  s_id               String @map("s_id")  @db.Uuid
+    e_id           String     @map("e_id") @db.Uuid
+    start          DateTime   @map("start")
+    end            DateTime   @map("end")
+    state          EventState @map("state")
+    classes        String[]   @map("classes")
+    description    String     @map("description")
+    class_groups   String[]   @map("class_groups")
+    teachers_only  Boolean    @map("teachers_only")
+    klp_only       Boolean    @map("klp_only")
+    subjects       String[]   @map("subjects")
+    department_ids String[]   @map("department_ids") @db.Uuid
+    year_s         Decimal    @map("year_s") @db.Decimal
+    year_e         Decimal    @map("year_e") @db.Decimal
+    start_week_day Decimal    @map("start_week_day") @db.Decimal
+    end_week_day   Decimal    @map("end_week_day") @db.Decimal
+    start_offset_m Decimal    @map("start_offset_m") @db.Decimal
+    end_offset_m   Decimal    @map("end_offset_m") @db.Decimal
+    duration_m     Decimal    @map("duration_m") @db.Decimal
+    s_id           String     @map("s_id") @db.Uuid
 
-  @@unique([s_id, e_id])
-  @@map("events_view")
+    @@unique([s_id, e_id])
+    @@map("events_view")
 }
 
 view UsersTeachingView {
-  lSemesterId     Int @map("l_semester_id")
-  classIds          Int[] @map("class_ids")
-  classNames        String[] @map("class_names")
-  legacyClassNames  String[] @map("legacy_class_names")
-  subjects          String[] @map("subjects")
-  departmentIds     String[] @db.Uuid @map("department_ids")
-  departmentNames   String[] @map("department_names")
+    lSemesterId      Int      @map("l_semester_id")
+    classIds         Int[]    @map("class_ids")
+    classNames       String[] @map("class_names")
+    legacyClassNames String[] @map("legacy_class_names")
+    subjects         String[] @map("subjects")
+    departmentIds    String[] @map("department_ids") @db.Uuid
+    departmentNames  String[] @map("department_names")
 
-  @@unique([lSemesterId])
-  @@map("users_teaching_view")
+    @@unique([lSemesterId])
+    @@map("users_teaching_view")
 }
 
 enum Role {
-  USER
-  ADMIN
+    USER
+    ADMIN
 }
 
 enum EventState {
-  DRAFT
-  REVIEW
-  PUBLISHED
-  REFUSED
+    DRAFT
+    REVIEW
+    PUBLISHED
+    REFUSED
 }
 
 enum TeachingAffected {
-  YES
-  PARTIAL
-  NO
+    YES
+    PARTIAL
+    NO
 }
 
 enum JobState {
-  PENDING
-  ERROR
-  DONE
-  REVERTED
+    PENDING
+    ERROR
+    DONE
+    REVERTED
 }
 
 enum JobType {
-  IMPORT
-  CLONE
-  SYNC_UNTIS
+    IMPORT
+    CLONE
+    SYNC_UNTIS
 }
