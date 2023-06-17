@@ -28,7 +28,7 @@ export const find: RequestHandler<{ id: string }, any, any> = async (req, res, n
     try {
         const model = await db
             .findUnique({
-                where: {id: req.params.id}
+                where: { id: req.params.id }
             });
         if (!model) {
             res.status(404).send();
@@ -44,7 +44,7 @@ export const find: RequestHandler<{ id: string }, any, any> = async (req, res, n
     }
 }
 
-export const create: RequestHandler<any, any, UserEventGroup & {event_ids: string[]}> = async (req, res, next) => {
+export const create: RequestHandler<any, any, UserEventGroup & { event_ids: string[] }> = async (req, res, next) => {
     const { name, description, event_ids } = req.body;
     try {
         const model = await db.create({
@@ -57,7 +57,7 @@ export const create: RequestHandler<any, any, UserEventGroup & {event_ids: strin
                     }
                 },
                 events: {
-                    connect: [...new Set(event_ids)].map(id => ({id}))
+                    connect: [...new Set(event_ids)].map(id => ({ id }))
                 }
             }
         });
@@ -143,7 +143,7 @@ export const clone: RequestHandler<{ id: string }, any, any> = async (req, res, 
     try {
         const uid = req.user!.id;
         const gid = req.params.id;
-        const current = await db.findFirst({where: {id: gid, userId: uid}, include: {events: { include: {departments: true} }}});
+        const current = await db.findFirst({ where: { id: gid, userId: uid }, include: { events: { include: { departments: true } } } });
         if (!current) {
             res.status(403).send();
             return;
@@ -177,14 +177,14 @@ export const events: RequestHandler<{ id: string }, any, any> = async (req, res,
         const gid = req.params.id;
         const current = await db.findFirst({
             where: {
-                id: gid, 
+                id: gid,
                 userId: uid
-            }, 
+            },
             include: {
-                events: { 
+                events: {
                     include: {
                         departments: true
-                    } 
+                    }
                 }
             }
         });

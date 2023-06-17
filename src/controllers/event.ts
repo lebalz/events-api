@@ -22,6 +22,7 @@ const getData = createDataExtractor<Event>(
         'location',
         'description',
         'classGroups',
+        'userGroupId',
         'descriptionLong',
         'teachingAffected',
         'subjects'
