@@ -28,6 +28,7 @@ Table events {
   description String [not null, default: '']
   descriptionLong String [not null, default: '']
   state EventState [not null, default: 'DRAFT']
+  cloned Boolean [not null, default: false]
   job jobs
   jobId String
   parent events

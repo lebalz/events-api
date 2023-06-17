@@ -3,6 +3,7 @@ import { RequestHandler } from "express";
 import prisma from "../prisma";
 import { IoEvent } from "../routes/socketEventTypes";
 import { createDataExtractor } from "./helpers";
+import { clonedProps as clonedEventProps, prepareEvent } from "./event";
 
 const NAME = 'USER_EVENT_GROUP';
 const getData = createDataExtractor<UserEventGroup>(
@@ -29,6 +30,10 @@ export const find: RequestHandler<{ id: string }, any, any> = async (req, res, n
             .findUnique({
                 where: {id: req.params.id}
             });
+        if (!model) {
+            res.status(404).send();
+            return;
+        }
         if (model?.userId !== req.user!.id) {
             res.status(403).send();
             return;
@@ -82,6 +87,7 @@ export const update: RequestHandler<{ id: string }, any, { data: UserEventGroup 
             }
         });
         if (!current) {
+            console.log('current', current);
             res.status(403).send();
             return;
         }
@@ -129,5 +135,66 @@ export const destroy: RequestHandler<{ id: string }, any, any> = async (req, res
         res.status(204).send();
     } catch (error) {
         next(error);
+    }
+}
+
+
+export const clone: RequestHandler<{ id: string }, any, any> = async (req, res, next) => {
+    try {
+        const uid = req.user!.id;
+        const gid = req.params.id;
+        const current = await db.findFirst({where: {id: gid, userId: uid}, include: {events: { include: {departments: true} }}});
+        if (!current) {
+            res.status(403).send();
+            return;
+        }
+        const newGroup = await db.create({
+            data: {
+                name: `📋 ${current.name}`,
+                description: current.description,
+                userId: uid,
+                events: {
+                    create: current.events.map(event => clonedEventProps(event))
+                }
+            }
+        });
+        res.notifications = [
+            {
+                message: { record: NAME, id: newGroup.id },
+                event: IoEvent.NEW_RECORD,
+                to: uid
+            }
+        ];
+        res.status(201).json(newGroup);
+    } catch (e) {
+        next(e)
+    }
+}
+
+export const events: RequestHandler<{ id: string }, any, any> = async (req, res, next) => {
+    try {
+        const uid = req.user!.id;
+        const gid = req.params.id;
+        const current = await db.findFirst({
+            where: {
+                id: gid, 
+                userId: uid
+            }, 
+            include: {
+                events: { 
+                    include: {
+                        departments: true
+                    } 
+                }
+            }
+        });
+        if (!current) {
+            res.status(403).send();
+            return;
+        }
+        const events = current.events.map(e => prepareEvent(e));
+        res.status(200).json(events);
+    } catch (e) {
+        next(e)
     }
 }

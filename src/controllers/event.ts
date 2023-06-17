@@ -86,6 +86,7 @@ export const update: RequestHandler<{ id: string }, any, { data: Event & { depar
             where: { id: req.params.id },
             data: {
                 ...data,
+                cloned: false,
                 departments: {
                     set: departmentIds.map((id) => ({ id }))
                 }
@@ -315,45 +316,55 @@ export const create: RequestHandler<any, any, Event> = async (req, res, next) =>
     }
 }
 
+export const clonedProps = (event: Event & {departments: Department[]}) => {
+    return {
+        start: event.start,
+        end: event.end,
+        klpOnly: event.klpOnly,
+        classes: event.classes,
+        description: event.description,
+        cloned: true,
+        teachersOnly: event.teachersOnly,
+        location: event.location,
+        descriptionLong: event.descriptionLong,
+        teachingAffected: event.teachingAffected,
+        subjects: event.subjects,
+        classGroups: event.classGroups,
+        state: EventState.DRAFT,
+        departments: {
+            connect: event.departments.map((d) => ({ id: d.id }))
+        },
+        authorId: event.authorId
+    }
+}
+
+export const cloneEvent = async (id: string, uid: string) => {
+    const event = await db.findUnique({ where: { id }, include: { departments: true } });
+    if (!event) {
+        return Promise.resolve(null);
+    }
+    const newEvent = await db.create({
+        data: clonedProps(event),
+        include: { departments: true }
+    });
+    return newEvent;
+}
+
+
 export const clone: RequestHandler<{ id: string }, any, any> = async (req, res, next) => {
     try {
         const uid = req.user!.id;
         const eid = req.params.id;
-        const event = await db.findUnique({ where: { id: eid }, include: { departments: true } });
-        if (!event) {
+        const newEvent = await cloneEvent(eid, uid);
+        if (!newEvent) {
             return res.status(404).json({ message: 'Not found' });
         }
-        const newEvent = await db.create({
-            data: {
-                start: event.start,
-                end: event.end,
-                klpOnly: event.klpOnly,
-                classes: event.classes,
-                description: `📌 ${event.description}`,
-                teachersOnly: event.teachersOnly,
-                location: event.location,
-                descriptionLong: event.descriptionLong,
-                teachingAffected: event.teachingAffected,
-                subjects: event.subjects,
-                classGroups: event.classGroups,
-                state: EventState.DRAFT,
-                departments: {
-                    connect: event.departments.map((d) => ({ id: d.id }))
-                },
-                author: {
-                    connect: {
-                        id: uid
-                    }
-                }
-            },
-            include: { departments: true }
-        });
 
         res.notifications = [
             {
-                message: { record: NAME, id: event.id },
+                message: { record: NAME, id: newEvent.id },
                 event: IoEvent.NEW_RECORD,
-                to: newEvent.id
+                to: uid
             }
         ];
         res.status(201).json(prepareEvent(newEvent));

@@ -66,11 +66,12 @@ const requestHasRequiredAttributes = (accessMatrix: AccessRegexRule[], path: str
         return method === 'GET';
     }
     const accessRules = Object.values(accessMatrix);
-    const accessRule = accessRules.find((accessRule) => accessRule.regex.test(path));
+    const accessRule = accessRules.filter((accessRule) => accessRule.regex.test(path)).sort((a, b) => b.path.length - a.path.length)[0];
     if (!accessRule) {
         // console.log('has No Role', role, method, path)
         return false;
     }
+    // console.log(accessRule);
     const hasRole = accessRule.access.some(
         (rule) => rule.roles.includes(role) && rule.methods.includes(method as 'GET' | 'POST' | 'PUT' | 'DELETE')
     );

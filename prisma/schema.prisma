@@ -48,6 +48,7 @@ model Event {
     descriptionLong String @default("") @map("description_long")
 
     state EventState @default(DRAFT)
+    cloned Boolean    @default(false)
 
     job   Job?    @relation(fields: [jobId], references: [id], onDelete: Cascade)
     jobId String? @map("import_id") @db.Uuid()
