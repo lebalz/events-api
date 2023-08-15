@@ -72,8 +72,8 @@ export const importExcel = async (file: string, userId: string, jobId: string) =
      * \d matches a digit (equivalent to [0-9])
      * [a-zA-Z] matches any alphabetical character
      */
-    const singleClasses = classesRaw.match(/(\d\d[a-zA-Z])/g)?.map((c) => c);
-    const groupedClasses = classesRaw.match(/(\d\d)[a-zA-Z][a-zA-Z]+/g)?.map((c) => c)?.map((c) => {
+    const singleClasses = classesRaw.match(/(\d\d[a-zA-Z][a-zA-Z]?)($|\W+)/g)?.map((c) => c).map(c => c.replace(/\W+/g, ''));
+    const groupedClasses = classesRaw.match(/(\d\d)[a-zA-Z][a-zA-Z][a-zA-Z]+/g)?.map((c) => c)?.map((c) => {
       if (!c || c.length < 3) {
         return;
       }
