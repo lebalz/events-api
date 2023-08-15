@@ -90,7 +90,7 @@ const fetchUntis = async (semester: Semester) => {
             return { ...data, teachers }
         }).then(async (data) => {
             console.log('Fetch Classes');
-            const classes = await untis.getClasses(true, data.schoolyear.id);
+            const classes = (await untis.getClasses(true, data.schoolyear.id)).filter((c) => !Number.isNaN(getClassYear(c)));
             return { ...data, classes }
         }).then(async (data) => {
             console.log('Fetch Timetables');
@@ -204,10 +204,6 @@ export const syncUntis2DB = async (semesterId: string) => {
             year: getClassYear(c),
             sf: c.longName
         };
-        if (Number.isNaN(data.year)) {
-            console.log('Unknown Class Year for', data.name, data);
-            return;
-        }
         const klass = prisma.untisClass.upsert({
             where: { id: c.id },
             update: data,
