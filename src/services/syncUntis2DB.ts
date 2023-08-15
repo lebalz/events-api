@@ -204,6 +204,10 @@ export const syncUntis2DB = async (semesterId: string) => {
             year: getClassYear(c),
             sf: c.longName
         };
+        if (Number.isNaN(data.year)) {
+            console.log('Unknown Class Year for', data.name, data);
+            return;
+        }
         const klass = prisma.untisClass.upsert({
             where: { id: c.id },
             update: data,
