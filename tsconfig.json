@@ -9,7 +9,17 @@
     "target": "ES2016",
     "esModuleInterop": true,
     "resolveJsonModule": true,
-    "typeRoots": ["./src/types"]
+    "typeRoots": [
+      "./src/types",
+      "./node_modules/@types/",
+      "./src/@types/"
+    ],
+    "types": [
+      "node",
+      "jest",
+      "@types/jest",
+      "express"
+    ]                           
   },
-  "exclude": ["bin"]
+  "exclude": ["bin"],
 }
