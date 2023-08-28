@@ -154,7 +154,7 @@ export const clone: RequestHandler<{ id: string }, any, any> = async (req, res, 
                 description: current.description,
                 userId: uid,
                 events: {
-                    create: current.events.map(event => clonedEventProps(event))
+                    create: current.events.map(event => clonedEventProps(event, uid))
                 }
             }
         });
@@ -183,7 +183,8 @@ export const events: RequestHandler<{ id: string }, any, any> = async (req, res,
             include: {
                 events: {
                     include: {
-                        departments: true
+                        departments: true,
+                        children: true,
                     }
                 }
             }

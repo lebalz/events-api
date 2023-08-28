@@ -53,9 +53,9 @@ model Event {
     job   Job?    @relation(fields: [jobId], references: [id], onDelete: Cascade)
     jobId String? @map("import_id") @db.Uuid()
 
-    parent   Event?  @relation("event_history", fields: [parentId], references: [id], onDelete: Cascade)
-    parentId String? @unique @map("parent_id") @db.Uuid()
-    child    Event?  @relation("event_history")
+    parent   Event?     @relation("event_history", fields: [parentId], references: [id], onDelete: Cascade)
+    parentId String?    @map("parent_id") @db.Uuid()
+    children Event[]    @relation("event_history")
 
     userGroup   UserEventGroup? @relation(fields: [userGroupId], references: [id])
     userGroupId String?          @map("user_group_id") @db.Uuid
@@ -67,7 +67,7 @@ model Event {
     departments  Department[] @relation("events_to_departments")
     teachersOnly Boolean      @default(false) @map("teachers_only")
     klpOnly      Boolean      @default(false) @map("klp_only")
-    // teachers eith this subject
+    // teachers with this subject
     subjects     String[]     @default([])
 
     teachingAffected TeachingAffected @default(YES) @map("teaching_affected")

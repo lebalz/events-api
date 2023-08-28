@@ -21,7 +21,8 @@ export const find: RequestHandler = async (req, res, next) => {
                     include: {
                         departments: true,
                         author: true,
-                        job: true
+                        job: true,
+                        children: true,
                     }
                 }
             },

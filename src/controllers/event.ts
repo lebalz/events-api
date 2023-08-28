@@ -3,7 +3,7 @@ import prisma from "../prisma";
 import { IoEvent } from "../routes/socketEventTypes";
 import { notifyChangedRecord } from "../routes/notify";
 import { importExcel } from "../services/importExcel";
-import type { Department, Job, User, Event } from "@prisma/client";
+import type { Department, Job, User, Event, Prisma } from "@prisma/client";
 import { Role, EventState, JobType } from "@prisma/client";
 import { createDataExtractor } from "./helpers";
 import { IoRoom } from "../routes/socketEvents";
@@ -35,6 +35,7 @@ const db = prisma.event;
 export const prepareEvent = (event: (Event & {
     author?: User;
     job?: Job | null;
+    children: Event[];
     departments: Department[];
 }) | null) => {
     return {
@@ -45,6 +46,7 @@ export const prepareEvent = (event: (Event & {
         authorId: event?.authorId || event?.author?.id,
         departments: undefined,
         departmentIds: event?.departments.map((d) => d.id) || [],
+        versionIds: event?.children.sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime()).map((c) => c.id) || [],
     };
 }
 
@@ -54,7 +56,7 @@ export const find: RequestHandler = async (req, res, next) => {
         const event = await db
             .findUnique({
                 where: { id: req.params.id },
-                include: { departments: true },
+                include: { departments: true, children: true },
             })
         if (!event) {
             return res.status(404).json({ message: 'Not found' });
@@ -76,24 +78,48 @@ export const find: RequestHandler = async (req, res, next) => {
 
 export const update: RequestHandler<{ id: string }, any, { data: Event & { departmentIds?: string[] } }> = async (req, res, next) => {
     try {
-        const record = await db.findUnique({ where: { id: req.params.id } });
-        if (!req.user || record?.authorId !== req.user!.id) {
+        const record = await db.findUnique({ where: { id: req.params.id }, include: {departments: true} });
+        const { user } = req;
+        if (!record || !user || (record?.authorId !== user.id && user.role !== Role.ADMIN)) {
             return res.status(403).json({ message: 'You are not allowed to update this record' });
         }
         /** remove fields not updatable*/
         const data = getData(req.body.data);
         const departmentIds = req.body.data.departmentIds || [];
-        const model = await db.update({
-            where: { id: req.params.id },
-            data: {
-                ...data,
-                cloned: false,
-                departments: {
-                    set: departmentIds.map((id) => ({ id }))
-                }
-            },
-            include: { author: true, job: true, departments: true },
-        });
+        let model: Event & {
+            author: User;
+            job: Job | null;
+            departments: Department[];
+            children: Event[];
+        };
+        /* DRAFT     --> update the fields */
+        /* OTHERWIES --> create a linked clone and update the props there */
+        if (record?.state === EventState.DRAFT) {
+            model = await db.update({
+                where: { id: req.params.id },
+                data: {
+                    ...data,
+                    cloned: false,
+                    departments: {
+                        set: departmentIds.map((id) => ({ id }))
+                    }
+                },
+                include: { author: true, job: true, departments: true, children: true },
+            });
+        } else {
+            model = await db.create({
+                data: {
+                    ...clonedProps(record, user.id, {cloneUserGroup: true}),
+                    ...data,
+                    parentId: record.id,
+                    state: EventState.DRAFT,
+                    departments: {
+                        connect: departmentIds.map((id) => ({ id }))
+                    }
+                },
+                include: { author: true, job: true, departments: true, children: true },
+            });
+        }
 
         res.notifications = [
             {
@@ -112,25 +138,71 @@ export const update: RequestHandler<{ id: string }, any, { data: Event & { depar
 export const setState: RequestHandler<{}, any, { data: { ids: string[], state: EventState } }> = async (req, res, next) => {
     try {
         const isAdmin = req.user!.role === Role.ADMIN;
-        const records = await db.findMany({ where: { id: { in: req.body.data.ids }, authorId: isAdmin ? undefined : req.user!.id } });
+        const records = await db.findMany({ where: { id: { in: req.body.data.ids }, authorId: isAdmin ? undefined : req.user!.id }, include: { departments: true } });
         const allowedEventIds: string[] = [];
+        const changedEventIds: string[] = [];
         const requested = req.body.data.state;
         res.notifications = [];
+        const swapEventPromises: Promise<Event | null>[] = [];
         records.forEach((record) => {
             switch (record.state) {
                 case EventState.DRAFT:
                     if (EventState.REVIEW === requested) {
                         allowedEventIds.push(record.id);
                     }
+                    break;
                 case EventState.REVIEW:
-                    if (EventState.DRAFT === requested) {
-                        allowedEventIds.push(record.id);
+                    if (!isAdmin) {
+                        return;
                     }
-                    if (isAdmin && EventState.PUBLISHED === requested) {
-                        allowedEventIds.push(record.id);
-                    }
-                    if (isAdmin && EventState.REFUSED === requested) {
-                        allowedEventIds.push(record.id);
+                    if (record.parentId && EventState.PUBLISHED === requested) {
+                        const swap = db.findUnique({ where: { id: record.parentId }, include: { departments: true } }).then((parent) => {
+                            if (!parent) {
+                                return null;
+                            }
+                            return db.findMany({ where: { AND: [{parentId: parent.id}, {NOT: {id: record.id}}] } }).then((siblings) => {
+                                changedEventIds.push(...siblings.map((s) => s.id));
+                                return prisma.$transaction([
+                                    /** swap the child and the parent - ensures that the uuid for the ical stays the same  */
+                                    db.update({
+                                        where: { id: parent.id },
+                                        data: {
+                                            ...clonedProps(record, record.authorId, {full: true}),                                        
+                                        }
+                                    }),
+                                    db.update({
+                                        where: { id: record.id },
+                                        data: {
+                                            ...clonedProps(parent, record.authorId, {full: true}),
+                                        }
+                                    }),
+                                    /** ensure the all pending reviews with this parent are refused... */
+                                    db.updateMany({
+                                        where: { AND: [{ id: { in: siblings.map((s) => s.id) }}, { state: EventState.REVIEW }] },
+                                        data: {
+                                            state: EventState.REFUSED
+                                        }
+                                    })
+                                ]);
+                            });
+                        }).then((result) => {
+                            return result && result[0]
+                        }).catch((e) => {
+                            changedEventIds.splice(0, changedEventIds.length);
+                            console.error(e);
+                            return null;
+                        });
+                        changedEventIds.push(record.id);
+                        swapEventPromises.push(swap);
+                        allowedEventIds.push(record.parentId);
+                        break;
+                    } else {
+                        if (EventState.PUBLISHED === requested) {
+                            allowedEventIds.push(record.id);
+                        }
+                        if (EventState.REFUSED === requested) {
+                            allowedEventIds.push(record.id);
+                        }
                     }
                     break;
                 case EventState.PUBLISHED:
@@ -138,6 +210,7 @@ export const setState: RequestHandler<{}, any, { data: { ids: string[], state: E
                     break;
             }
         });
+        await Promise.all(swapEventPromises);
         await db.updateMany({
             where: { id: { in: allowedEventIds } },
             data: {
@@ -146,7 +219,7 @@ export const setState: RequestHandler<{}, any, { data: { ids: string[], state: E
         });
         const updated = await db.findMany({
             where: { id: { in: allowedEventIds } },
-            include: { author: true, job: true, departments: true },
+            include: { author: true, job: true, departments: true, children: true },
         }).then((events) => {
             return events.map(prepareEvent);
         });
@@ -166,14 +239,14 @@ export const setState: RequestHandler<{}, any, { data: { ids: string[], state: E
         }
         [...audience].forEach((room) => {
             res.notifications?.push({
-                message: { state: requested, ids: allowedEventIds },
+                message: { state: requested, ids: [...allowedEventIds, ...changedEventIds] },
                 event: IoEvent.CHANGED_STATE,
                 to: room
             })
         });
         updated.forEach((record) => {
             res.notifications?.push({
-                message: { state: requested, ids: allowedEventIds },
+                message: { state: requested, ids: [...allowedEventIds, ...changedEventIds] },
                 event: IoEvent.CHANGED_STATE,
                 to: record.authorId
             });
@@ -233,7 +306,7 @@ type AllEventQueryCondition = ({ state: EventState } | { authorId: string })[];
 
 export const all: RequestHandler = async (req, res, next) => {
     try {
-        const condition: AllEventQueryCondition = [{ state: EventState.PUBLISHED }];
+        const condition: AllEventQueryCondition = [];
         if (req.user) {
             condition.push({ authorId: req.user.id });
         }
@@ -243,12 +316,17 @@ export const all: RequestHandler = async (req, res, next) => {
         }
         const events = await db
             .findMany({
-                include: { departments: true },
+                include: { departments: true, children: true },
                 where: {
-                    AND: {
-                        parentId: null,
-                        OR: condition
-                    }
+                    OR: [
+                        {
+                            AND: [
+                                {state: EventState.PUBLISHED},
+                                {deletedAt: null}
+                            ]
+                        },
+                        ...condition
+                    ]
                 }
             })
             .then((events) => {
@@ -317,14 +395,14 @@ export const create: RequestHandler<any, any, Event> = async (req, res, next) =>
     }
 }
 
-export const clonedProps = (event: Event & {departments: Department[]}) => {
-    return {
+export const clonedProps = (event: Event & {departments: Department[]}, uid: string, options: {full?: boolean, cloneUserGroup?: boolean} = {}): Prisma.EventUncheckedCreateInput => {
+    const props: Prisma.EventUncheckedCreateInput = {
         start: event.start,
         end: event.end,
         klpOnly: event.klpOnly,
         classes: event.classes,
         description: event.description,
-        cloned: true,
+        cloned: event.cloned,
         teachersOnly: event.teachersOnly,
         location: event.location,
         descriptionLong: event.descriptionLong,
@@ -335,8 +413,21 @@ export const clonedProps = (event: Event & {departments: Department[]}) => {
         departments: {
             connect: event.departments.map((d) => ({ id: d.id }))
         },
-        authorId: event.authorId
+        authorId: uid
     }
+    if (options.full || options.cloneUserGroup) {
+        props.userGroupId = event.userGroupId;
+    }
+    if (options.full) {
+        props.jobId = event.jobId;
+        props.state = event.state;
+        props.createdAt = event.createdAt;
+        props.updatedAt = event.updatedAt;
+        props.deletedAt = event.deletedAt;
+        props.cloned = event.cloned;
+    }
+
+    return props;
 }
 
 export const cloneEvent = async (id: string, uid: string) => {
@@ -345,8 +436,8 @@ export const cloneEvent = async (id: string, uid: string) => {
         return Promise.resolve(null);
     }
     const newEvent = await db.create({
-        data: clonedProps(event),
-        include: { departments: true }
+        data: {...clonedProps(event, uid), cloned: true},
+        include: { departments: true, children: true }
     });
     return newEvent;
 }

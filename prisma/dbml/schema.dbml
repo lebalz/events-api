@@ -32,8 +32,8 @@ Table events {
   job jobs
   jobId String
   parent events
-  parentId String [unique]
-  child events
+  parentId String
+  children events [not null]
   userGroup user_event_groups
   userGroupId String
   classes String[] [not null]
