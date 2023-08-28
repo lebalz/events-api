@@ -35,7 +35,7 @@
     "path": "^0.12.7",
     "read-excel-file": "^5.5.3",
     "socket.io": "^4.6.2",
-    "typescript": "^5.0.4",
+    "typescript": "^5.2",
     "uuid": "^9.0.0",
     "webuntis": "2.0.2"
   },
