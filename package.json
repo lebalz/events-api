@@ -34,7 +34,7 @@
     "passport-azure-ad": "^4.3.4",
     "path": "^0.12.7",
     "read-excel-file": "^5.5.3",
-    "socket.io": "^4.6.2",
+    "socket.io": "^4.7.2",
     "typescript": "^5.2",
     "uuid": "^9.0.0",
     "webuntis": "^2.0.3"
