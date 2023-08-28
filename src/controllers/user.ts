@@ -6,7 +6,8 @@ import { IoEvent } from "../routes/socketEventTypes";
 import { createDataExtractor } from "./helpers";
 import {default as createIcsFile} from '../services/createIcs';
 import { IoRoom } from "../routes/socketEvents";
-import {default as queryAffectedEvents} from "../services/assets/query.eventsAffectingUser";
+import { default as queryAffectedEvents} from "../services/assets/query.eventsAffectingUser";
+import { default as Users } from '../models/users';
 
 const NAME = 'USER';
 const getData = createDataExtractor<User>(
@@ -21,9 +22,7 @@ export const user: RequestHandler = async (req, res) => {
 
 export const find: RequestHandler<{ id: string }> = async (req, res, next) => {
     try {
-        const user = await db.findUnique({
-            where: { id: req.params.id }
-        });
+        const user = await Users.find(req.params.id);
         res.json(user);
     } catch (error) {
         next(error)
@@ -32,7 +31,7 @@ export const find: RequestHandler<{ id: string }> = async (req, res, next) => {
 
 export const all: RequestHandler = async (req, res, next) => {
     try {
-        const users = await db.findMany({});
+        const users = await Users.all();
         res.json(users);
     } catch (error) {
         next(error)
@@ -40,18 +39,8 @@ export const all: RequestHandler = async (req, res, next) => {
 }
 
 export const linkToUntis: RequestHandler<{ id: string }, any, { data: { untisId: number } }> = async (req, res, next) => {
-    if (req.user?.role !== Role.ADMIN && req.user?.id !== req.params.id) {
-        return res.status(404).json({ message: 'Not authorized' });
-    }
     try {
-        const user = await db.update({
-            where: {
-                id: req.params.id
-            },
-            data: {
-                untisId: req.body.data.untisId || null
-            }
-        });
+        const user = await Users.linkToUntis(req.user!, req.params.id, req.body.data.untisId || null);
 
         res.notifications = [
             {
@@ -67,20 +56,8 @@ export const linkToUntis: RequestHandler<{ id: string }, any, { data: { untisId:
 }
 
 export const setRole: RequestHandler<{ id: string }, any, { data: { role: Role } }> = async (req, res, next) => {
-    if (req.user?.role !== Role.ADMIN) {
-        return res.status(404).json({ message: 'Not authorized' });
-    }
-
-    try {
-        const user = await db.update({
-            where: {
-                id: req.params.id
-            },
-            data: {
-                role: req.body.data.role
-            }
-        });
-
+   try {
+        const user = await Users.setRole(req.user!, req.params.id, req.body.data.role);
         res.notifications = [
             {
                 message: { record: NAME, id: user.id },
@@ -97,10 +74,7 @@ export const setRole: RequestHandler<{ id: string }, any, { data: { role: Role }
 
 export const createIcs: RequestHandler<{ id: string }, any, any> = async (req, res, next) => {
     try {
-        if (req.user!.id !== req.params.id) {
-            return res.status(404).json({ message: 'Not authorized' });
-        }
-        const user = await createIcsFile(req.user!.id, '');
+        const user = await Users.createIcs(req.user!, req.params.id);
         res.json(user);
     } catch (error) {
         next(error)
@@ -111,26 +85,7 @@ export const createIcs: RequestHandler<{ id: string }, any, any> = async (req, r
 
 export const affectedEvents: RequestHandler<{ id: string }, string[] | {message: string}, any, {semesterId?: string}> = async (req, res, next) => {
     try {
-        const userId = req.params.id;
-        const user = await prisma.user.findUnique({ where: { id: userId } });
-        if (req.user!.id !== userId && req.user!.role !== Role.ADMIN) {
-            return res.status(403).json({ message: 'Not authorized' });
-        }
-        if (!user) {
-            return res.status(404).json({ message: 'User not found' });
-        }
-
-        const semesterId = req.query.semesterId as string;
-        const semester = semesterId ? 
-            await prisma.semester.findUnique({ where: { id: semesterId } }) :
-            await prisma.semester.findFirst({ where: {
-                start: { lte: new Date() }, 
-                end: { gte: new Date() }
-            }});
-        if (!semester) {
-            return res.status(404).json({ message: 'No Semester found' });
-        }
-        const events = await prisma.$queryRaw<Event[]>(queryAffectedEvents(user.id, { type: "absolute", from: semester.start, to: semester.end}));
+        const events = await Users.affectedEvents(req.user!, req.params.id, req.query.semesterId);
         res.status(200).json(events.map((e) => e.id));
     } catch (error) {
         next(error);
