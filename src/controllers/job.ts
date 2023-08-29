@@ -2,8 +2,8 @@ import { EventState, type Job, type Prisma } from "@prisma/client";
 import { RequestHandler } from "express";
 import prisma from "../prisma";
 import { IoEvent } from "../routes/socketEventTypes";
-import { prepareEvent } from "./event";
 import { createDataExtractor } from "./helpers";
+import { prepareEvent } from "../models/event.helpers";
 
 const NAME = 'JOB';
 const getData = createDataExtractor<Job>(

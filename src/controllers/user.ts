@@ -22,7 +22,7 @@ export const user: RequestHandler = async (req, res) => {
 
 export const find: RequestHandler<{ id: string }> = async (req, res, next) => {
     try {
-        const user = await Users.find(req.params.id);
+        const user = await Users.findUser(req.params.id);
         res.json(user);
     } catch (error) {
         next(error)

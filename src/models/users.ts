@@ -9,7 +9,7 @@ function Users(prismaUser: PrismaClient['user']) {
          * Signup the first user and create a new team of one. Return the User with
          * a full name and without a password
          */
-        async find(id: string): Promise<User | null> {
+        async findUser(id: string): Promise<User | null> {
             return prismaUser.findUnique({ where: { id } });
         },
         async all(): Promise<User[]> {
@@ -51,7 +51,7 @@ function Users(prismaUser: PrismaClient['user']) {
             if (actor.role !== userId && actor.role !== Role.ADMIN) {
                 throw new Error('Not authorized');
             }
-            const user = await this.find(userId);
+            const user = await this.findUser(userId);
             if (!user) {
                 throw new Error('User not found');
             }

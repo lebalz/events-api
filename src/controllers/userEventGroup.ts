@@ -3,7 +3,7 @@ import { RequestHandler } from "express";
 import prisma from "../prisma";
 import { IoEvent } from "../routes/socketEventTypes";
 import { createDataExtractor } from "./helpers";
-import { clonedProps as clonedEventProps, prepareEvent } from "./event";
+import { prepareEvent, clonedProps as clonedEventProps } from "../models/event.helpers";
 
 const NAME = 'USER_EVENT_GROUP';
 const getData = createDataExtractor<UserEventGroup>(

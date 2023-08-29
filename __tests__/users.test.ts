@@ -2,7 +2,7 @@ import { Prisma, Role } from "@prisma/client"
 import _ from "lodash";
 import { v4 as uuidv4 } from 'uuid';
 import { prismaMock } from "../src/singleton";
-import { default as Users } from "../src/models/users";
+import Users from "../src/models/users";
 import prisma from "../src/prisma";
 import { DefaultArgs } from "@prisma/client/runtime/library";
 
@@ -33,7 +33,7 @@ test('returns user', async () => {
     }) as unknown as typeof prisma.user.findUnique);
 
 
-    await expect(Users.find('user-1')).resolves.toEqual({
+    await expect(Users.findUser('user-1')).resolves.toEqual({
         ...user
     });
 })
