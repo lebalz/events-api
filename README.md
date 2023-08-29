@@ -1,5 +1,7 @@
 # Events
 
+[![Node CI](https://github.com/lebalz/events-api/actions/workflows/main.yml/badge.svg)](https://github.com/lebalz/events-api/actions/workflows/main.yml)
+
 ## Development
 
 Better error reporting for Azure AD: set `loggingNoPII: false` in `src/auth/azure-ad.ts`.
