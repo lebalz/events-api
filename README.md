@@ -1,6 +1,6 @@
 # Events
 
-[![Node CI](https://github.com/lebalz/events-api/actions/workflows/main.yml/badge.svg)](https://github.com/lebalz/events-api/actions/workflows/main.yml)
+[![Node CI](https://github.com/lebalz/events-api/actions/workflows/main.yml/badge.svg)](https://github.com/lebalz/events-api/actions/workflows/main.yml) [![codecov](https://codecov.io/gh/lebalz/events-api/graph/badge.svg?token=O9E8JNGEHN)](https://codecov.io/gh/lebalz/events-api)
 
 ## Development
 
