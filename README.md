@@ -6,7 +6,6 @@
 
 Better error reporting for Azure AD: set `loggingNoPII: false` in `src/auth/azure-ad.ts`.
 
-```bash
 ## Setup
 
 ```bash
