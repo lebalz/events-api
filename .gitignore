@@ -16,3 +16,4 @@ ical/*.ics
 **.example.sql
 docs/prisma/**/*
 **/helpers/*.pdf
+/coverage
