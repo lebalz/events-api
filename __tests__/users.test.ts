@@ -1,7 +1,7 @@
 import { Prisma, Role } from "@prisma/client"
 import _ from "lodash";
 import { v4 as uuidv4 } from 'uuid';
-import { prismaMock } from "../src/singleton";
+import { prismaMock } from "../__mocks__/singleton";
 import Users from "../src/models/users";
 import prisma from "../src/prisma";
 import { DefaultArgs } from "@prisma/client/runtime/library";

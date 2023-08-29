@@ -16,9 +16,7 @@
     ],
     "types": [
       "node",
-      "jest",
-      "@types/jest",
-      "express"
+      "jest"
     ]                           
   },
   "exclude": ["bin"],

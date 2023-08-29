@@ -1,4 +1,4 @@
-import { prismaMock } from '../src/singleton'
+import { prismaMock } from '../__mocks__/singleton'
 import { Department, Event, EventState, Prisma, Role, TeachingAffected } from '@prisma/client'
 import { getMockProps as getMockedUser } from './users.test';
 import Events from '../src/models/event'
