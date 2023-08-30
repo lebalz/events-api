@@ -13,23 +13,6 @@ import {default as Events } from "../models/event";
 import path from "path";
 import { clonedProps, prepareEvent } from "../models/event.helpers";
 
-const getData = createDataExtractor<Event>(
-    [
-        'klpOnly',
-        'classes',
-        'description',
-        'teachersOnly',
-        'start',
-        'end',
-        'location',
-        'description',
-        'classGroups',
-        'userGroupId',
-        'descriptionLong',
-        'teachingAffected',
-        'subjects'
-    ]
-);
 const NAME = 'EVENT';
 const db = prisma.event;
 
@@ -45,7 +28,6 @@ export const find: RequestHandler = async (req, res, next) => {
 
 export const update: RequestHandler<{ id: string }, any, { data: Event & { departmentIds?: string[] } }> = async (req, res, next) => {
     try {
-        console.log(req.params.id, req.params);
         const model = await Events.updateEvent(req.user!, req.params.id, req.body.data);
 
         res.notifications = [
@@ -60,7 +42,6 @@ export const update: RequestHandler<{ id: string }, any, { data: Event & { depar
         next(error);
     }
 }
-
 
 export const setState: RequestHandler<{}, any, { data: { ids: string[], state: EventState } }> = async (req, res, next) => {
     try {
@@ -106,43 +87,20 @@ export const setState: RequestHandler<{}, any, { data: { ids: string[], state: E
 
 export const destroy: RequestHandler = async (req, res, next) => {
     try {
-        /** check policy - only delete if user is author or admin */
-        const record = await db.findUnique({ where: { id: req.params.id } });
-        if (req.user?.role !== Role.ADMIN && record?.authorId !== req.user!.id) {
-            return res.status(403).json({ message: 'You are not allowed to delete this event' });
-        }
-
-        if (!record) {
-            return res.status(200).send();
-        }
-        let model: Event;
-        if (record.state === EventState.DRAFT) {
-            model = await db.delete({
-                where: {
-                    id: req.params.id,
-                },
-            });
+        const event = await Events.destroy(req.user!, req.params.id);
+        if (event.state === EventState.DRAFT) {
             res.notifications = [{
-                message: { record: NAME, id: model.id },
+                message: { record: NAME, id: event.id },
                 event: IoEvent.DELETED_RECORD,
-                to: req.user!.id
+                to: event.authorId
             }]
         } else {
-            model = await db.update({
-                where: {
-                    id: req.params.id,
-                },
-                data: {
-                    deletedAt: new Date()
-                },
-            });
             res.notifications = [{
-                message: { record: NAME, id: model.id },
+                message: { record: NAME, id: event.id },
                 event: IoEvent.CHANGED_RECORD,
                 to: IoRoom.ALL
             }]
         }
-
         res.status(204).send();
     } catch (error) {
         next(error);

@@ -56,7 +56,6 @@ function Events(prismaEvent: PrismaClient['event']) {
             const departmentIds = data.departmentIds || [];
 
             let model: Event & {
-                job: Job | null;
                 departments: Department[];
                 children: Event[];
             };
@@ -72,7 +71,7 @@ function Events(prismaEvent: PrismaClient['event']) {
                             set: departmentIds.map((id) => ({ id }))
                         }
                     },
-                    include: { job: true, departments: true, children: true },
+                    include: { departments: true, children: true },
                 });
             } else {
                 const cProps = clonedProps(record, actor.id, { cloneUserGroup: true });
@@ -87,7 +86,7 @@ function Events(prismaEvent: PrismaClient['event']) {
                             connect: departmentIds.map((id) => ({ id }))
                         }
                     },
-                    include: { job: true, departments: true, children: true },
+                    include: { departments: true, children: true },
                 });
             }
             return prepareEvent(model);
@@ -196,6 +195,36 @@ function Events(prismaEvent: PrismaClient['event']) {
                     throw new Error(`${record.state} state is immutable`);
             }
             throw new Error(`Unknown state "${requested}" requested`);
+        },
+        async destroy(actor: User, id: string): Promise<ApiEvent> {
+            const record = await prismaEvent.findUnique({ where: { id: id } });
+            /** check policy - only delete if user is author or admin */
+            if (!record) {        
+                throw new Error('Event not found');
+            }
+            if (record.authorId !== actor.id && actor.role !== Role.ADMIN) {
+                throw new Error('Not authorized');
+            }
+            /** only drafts are allowed to be hard deleted */
+            if (record.state === EventState.DRAFT) {
+                const model = await prismaEvent.delete({
+                    where: {
+                        id: record.id,
+                    },
+                    include: { departments: true, children: true },
+                });
+                return prepareEvent(model);
+            }
+            const model = await prismaEvent.update({
+                where: {
+                    id: record.id,
+                },
+                data: {
+                    deletedAt: new Date()
+                },
+                include: { departments: true, children: true },
+            });
+            return prepareEvent(model);
         }
     });
 }

@@ -67,13 +67,22 @@ const createMocks = (_events: Event[]) => {
     }
     return null;
   }) as unknown as typeof prisma.event.findUnique);
+  /** mock delete event */
+  prismaMock.event.delete.mockImplementation(((args: Prisma.EventDeleteArgs) => {
+    const idx = events.findIndex(e => e.id === args.where.id);
+    if (idx >= 0) {
+      const event = events.splice(idx, 1)[0];
+      return handleRelations(event, args.include);
+    }
+    return null;
+  }) as unknown as typeof prisma.event.delete);
   /** mock create event */
   prismaMock.event.create.mockImplementation(((args: Prisma.EventCreateArgs) => {
     const event = events.find(e => e.id === args.data.id);
     if (event) {
       throw new Error('Event already exists');
     }
-    const newEvent = getMockProps(args.data.authorId || 'unknown', {...args.data, id: `event-${events.length + 1}`});
+    const newEvent = getMockProps(args.data.authorId || 'unknown', { ...args.data, id: `event-${events.length + 1}` });
     events.push(newEvent);
     return handleRelations(newEvent, args.include);
   }) as unknown as typeof prisma.event.create);
@@ -83,14 +92,14 @@ describe('find event', () => {
   test('returns event', async () => {
     const user = getMockedUser({ id: 'user-1' })
     const event = getMockProps('user-1', { id: 'event-1' })
-  
+
     prismaMock.event.findUnique.mockImplementation(((args: { where: { id: string } }) => {
       if (args.where.id === event.id) {
         return event;
       }
       return null;
     }) as unknown as typeof prisma.event.findUnique);
-  
+
     await expect(Events.findEvent(user, 'event-1')).resolves.toEqual({
       /** expect the prepared event to be returned
        * @see event.helpers.ts#prepareEvent 
@@ -121,7 +130,7 @@ describe('updateEvent', () => {
   test('can not update not existant event', async () => {
     const user = getMockedUser({ id: 'user-1' })
 
-    await expect(Events.updateEvent(user, 'event-1', { })).rejects.toEqual(
+    await expect(Events.updateEvent(user, 'event-1', {})).rejects.toEqual(
       new Error('Event not found')
     );
   });
@@ -291,6 +300,63 @@ describe('setState transitions', () => {
       parentId: ancestor1.id,
       versionIds: []
     });
+  });
+
+});
+
+describe('destroyEvent', () => {
+  test('destroy DRAFT', async () => {
+    const user = getMockedUser({ id: 'user-1' })
+    const event = getMockProps(user.id, { id: 'event-1', state: EventState.DRAFT })
+    createMocks([event]);
+    await expect(Events.destroy(user, event.id)).resolves.toEqual(prepareEvent(event));
+  });
+  test('destroy REVIEW', async () => {
+    const user = getMockedUser({ id: 'user-1' })
+    const event = getMockProps(user.id, { id: 'event-1', state: EventState.REVIEW })
+    createMocks([event]);
+    await expect(Events.destroy(user, event.id)).resolves.toEqual(prepareEvent({
+      ...event,
+      deletedAt: expect.any(Date)
+    }));
+  });
+  test('destroy REFUSED', async () => {
+    const user = getMockedUser({ id: 'user-1' })
+    const event = getMockProps(user.id, { id: 'event-1', state: EventState.REFUSED })
+    createMocks([event]);
+    await expect(Events.destroy(user, event.id)).resolves.toEqual(prepareEvent({
+      ...event,
+      deletedAt: expect.any(Date)
+    }));
+  });
+  test('destroy PUBLISHED', async () => {
+    const user = getMockedUser({ id: 'user-1' })
+    const event = getMockProps(user.id, { id: 'event-1', state: EventState.PUBLISHED })
+    createMocks([event]);
+    await expect(Events.destroy(user, event.id)).resolves.toEqual(prepareEvent({
+      ...event,
+      deletedAt: expect.any(Date)
+    }));
+  });
+
+  test('user can not delete other users event', async () => {
+    const user = getMockedUser({ id: 'user-1' })
+    const malory = getMockedUser({ id: 'malory' })
+    const event = getMockProps(user.id, { id: 'event-1', state: EventState.PUBLISHED })
+    createMocks([event]);
+    await expect(Events.destroy(malory, event.id)).rejects.toEqual(
+      new Error('Not authorized')
+    );
+  });
+  test('admin can delete users event', async () => {
+    const user = getMockedUser({ id: 'user-1' })
+    const admin = getMockedUser({ id: 'malory', role: Role.ADMIN })
+    const event = getMockProps(user.id, { id: 'event-1', state: EventState.PUBLISHED })
+    createMocks([event]);
+    await expect(Events.destroy(admin, event.id)).resolves.toEqual(prepareEvent({
+      ...event,
+      deletedAt: expect.any(Date)
+    }));
   });
 
 });
