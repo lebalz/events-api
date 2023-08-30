@@ -48,7 +48,7 @@ function Users(prismaUser: PrismaClient['user']) {
             return createIcsFile(userId, '');
         },
         async affectedEvents(actor: User, userId: string, semesterId?: string): Promise<Event[]> {
-            if (actor.role !== userId && actor.role !== Role.ADMIN) {
+            if (actor.id !== userId && actor.role !== Role.ADMIN) {
                 throw new Error('Not authorized');
             }
             const user = await this.findUser(userId);
