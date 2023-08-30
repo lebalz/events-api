@@ -4,6 +4,7 @@ import { getMockProps as getMockedUser } from './users.test';
 import Events from '../src/models/event'
 import { v4 as uuidv4 } from 'uuid';
 import prisma from '../src/prisma';
+import { prepareEvent } from '../src/models/event.helpers';
 
 export const getMockProps = (authorId: string, props: Partial<Prisma.EventUncheckedCreateInput>) => {
   return {
@@ -32,69 +33,126 @@ export const getMockProps = (authorId: string, props: Partial<Prisma.EventUnchec
     children: props.children as Event[] || [],
   }
 }
-test('returns event', async () => {
-  const user = getMockedUser({ id: 'user-1' })
-  const event = getMockProps('user-1', { id: 'event-1' })
 
-  prismaMock.event.findUnique.mockImplementation(((args: { where: { id: string } }) => {
-    if (args.where.id === event.id) {
-      return event;
+const createMocks = (_events: Event[]) => {
+  const events = _events.map(e => ({ ...e }));
+
+  const handleRelations = (event: Event, include?: Prisma.EventInclude | null) => {
+    const ret = { ...event }
+    if (!include) {
+      return ret
+    };
+    if (include.departments) {
+      (ret as any).departments = [];
+    }
+    if (include.children) {
+      (ret as any).children = events.filter(e => e.parentId === ret.id).map(e => ({ ...e }));
+    }
+    return ret;
+  }
+  /** mock update */
+  prismaMock.event.update.mockImplementation(((args: Prisma.EventUpdateArgs) => {
+    const idx = events.findIndex(e => e.id === args.where.id);
+    Object.keys(args.data).forEach((key) => {
+      (events[idx] as any)[key] = (args.data as any)[key];
+    });
+    return handleRelations(events[idx], args.include);
+  }) as unknown as typeof prisma.event.update);
+
+  /** mock find event */
+  prismaMock.event.findUnique.mockImplementation(((args: Prisma.EventFindUniqueArgs) => {
+    const event = events.find(e => e.id === args.where.id);
+    if (event) {
+      return handleRelations(event, args.include);
     }
     return null;
   }) as unknown as typeof prisma.event.findUnique);
-
-  await expect(Events.findEvent(user, 'event-1')).resolves.toEqual({
-    /** expect the prepared event to be returned
-     * @see event.helpers.ts#prepareEvent 
-     */
-    ...event,
-    author: undefined,
-    departments: undefined,
-    departmentIds: [],
-    jobId: null,
-    job: undefined,
-    children: undefined,
-    versionIds: []
-  });
-});
-
-
-describe('setState transitions', () => {
-  const user = getMockedUser({ id: 'user-1' })
-  const createMocks = (_events: Event[]) => {
-    const events = _events.map(e => ({ ...e }));
-
-    const handleRelations = (event: Event, include?: Prisma.EventInclude | null) => {
-      const ret = { ...event }
-      if (!include) {
-        return ret
-      };
-      if (include.departments) {
-        (ret as any).departments = [];
-      }
-      if (include.children) {
-        (ret as any).children = events.filter(e => e.parentId === ret.id).map(e => ({ ...e }));
-      }
-      return ret;
+  /** mock create event */
+  prismaMock.event.create.mockImplementation(((args: Prisma.EventCreateArgs) => {
+    const event = events.find(e => e.id === args.data.id);
+    if (event) {
+      throw new Error('Event already exists');
     }
-    /** mock update */
-    prismaMock.event.update.mockImplementation(((args: Prisma.EventUpdateArgs) => {
-      const idx = events.findIndex(e => e.id === args.where.id);
-      Object.keys(args.data).forEach((key) => {
-        (events[idx] as any)[key] = (args.data as any)[key];
-      });
-      return handleRelations(events[idx], args.include);
-    }) as unknown as typeof prisma.event.update);
+    const newEvent = getMockProps(args.data.authorId || 'unknown', {...args.data, id: `event-${events.length + 1}`});
+    events.push(newEvent);
+    return handleRelations(newEvent, args.include);
+  }) as unknown as typeof prisma.event.create);
+}
 
-    /** mock find event */
-    prismaMock.event.findUnique.mockImplementation(((args: Prisma.EventFindUniqueArgs) => {
-      const event = events.find(e => e.id === args.where.id);
-      if (event) {
-        return handleRelations(event, args.include);
+describe('find event', () => {
+  test('returns event', async () => {
+    const user = getMockedUser({ id: 'user-1' })
+    const event = getMockProps('user-1', { id: 'event-1' })
+  
+    prismaMock.event.findUnique.mockImplementation(((args: { where: { id: string } }) => {
+      if (args.where.id === event.id) {
+        return event;
       }
       return null;
     }) as unknown as typeof prisma.event.findUnique);
-  }
+  
+    await expect(Events.findEvent(user, 'event-1')).resolves.toEqual({
+      /** expect the prepared event to be returned
+       * @see event.helpers.ts#prepareEvent 
+       */
+      ...event,
+      author: undefined,
+      departments: undefined,
+      departmentIds: [],
+      jobId: null,
+      job: undefined,
+      children: undefined,
+      versionIds: []
+    });
+  });
+});
+
+describe('updateEvent', () => {
+  test('update DRAFT', async () => {
+    const user = getMockedUser({ id: 'user-1' })
+    const event = getMockProps(user.id, { id: 'event-1', state: EventState.DRAFT })
+    createMocks([event]);
+
+    await expect(Events.updateEvent(user, 'event-1', { description: 'hello' })).resolves.toEqual(prepareEvent({
+      ...event,
+      description: 'hello'
+    }));
+  });
+  test('can not update not existant event', async () => {
+    const user = getMockedUser({ id: 'user-1' })
+
+    await expect(Events.updateEvent(user, 'event-1', { })).rejects.toEqual(
+      new Error('Event not found')
+    );
+  });
+  test('can not update another users events', async () => {
+    const user = getMockedUser({ id: 'user-1' })
+    const event = getMockProps('felix', { id: 'event-1', state: EventState.DRAFT })
+    createMocks([event]);
+
+    await expect(Events.updateEvent(user, 'event-1', { description: 'hello' })).rejects.toEqual(
+      new Error('Not authorized')
+    );
+  });
+  test('update PUBLISHED creates a version', async () => {
+    const user = getMockedUser({ id: 'user-1' })
+    const event = getMockProps(user.id, { id: 'event-1', state: EventState.PUBLISHED, description: 'published' })
+    createMocks([event]);
+
+    await expect(Events.updateEvent(user, 'event-1', { description: 'hello' })).resolves.toEqual(prepareEvent({
+      ...event,
+      id: 'event-2',
+      state: EventState.DRAFT,
+      createdAt: expect.any(Date),
+      updatedAt: expect.any(Date),
+      parentId: 'event-1',
+      description: 'hello'
+    }));
+  });
+});
+
+describe('setState transitions', () => {
+  const user = getMockedUser({ id: 'user-1' })
 
   test('DRAFT -> REVIEW', async () => {
     const event = getMockProps('user-1', { id: 'event-1', state: EventState.DRAFT })
@@ -235,4 +293,4 @@ describe('setState transitions', () => {
     });
   });
 
-})
+});

@@ -45,7 +45,10 @@ function Events(prismaEvent: PrismaClient['event']) {
         },
         async updateEvent(actor: User, id: string, data: Prisma.EventUncheckedUpdateInput & { departmentIds?: string[]}): Promise<ApiEvent> {
             const record = await prismaEvent.findUnique({ where: { id: id }, include: { departments: true } });
-            if (!record || (record.authorId !== actor.id && actor.role !== Role.ADMIN)) {
+            if (!record) {
+                throw new Error('Event not found');
+            }
+            if (record.authorId !== actor.id && actor.role !== Role.ADMIN) {
                 throw new Error('Not authorized');
             }
             /** remove fields not updatable*/
@@ -73,7 +76,6 @@ function Events(prismaEvent: PrismaClient['event']) {
                 });
             } else {
                 const cProps = clonedProps(record, actor.id, { cloneUserGroup: true });
-                prismaEvent.create({data: {...cProps}});
 
                 model = await prismaEvent.create({
                     data: {
