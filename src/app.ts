@@ -5,7 +5,7 @@ import compression from "compression";
 import prisma from "./prisma";
 import path from "path";
 import cors from "cors";
-import morgan from "morgan";
+import morganMiddleware from './middlewares/morgan.middleware'
 import passport from "passport";
 import { Server } from "socket.io";
 import http from 'http';
@@ -15,6 +15,7 @@ import authConfig, { PUBLIC_ROUTES } from './routes/authConfig';
 import EventRouter from './routes/socketEvents';
 import {instrument} from '@socket.io/admin-ui';
 import type { User } from "@prisma/client";
+import Logger from "./utils/logger";
 
 const AccessRules = createAccessRules(authConfig.accessMatrix);
 
@@ -42,8 +43,7 @@ app.use(cors({
 // received packages should be presented in the JSON format
 app.use(express.json());
 
-// show some helpful logs in the commandline
-app.use(morgan("combined"));
+app.use(morganMiddleware);
 
 const sessionMiddleware = session({
     secret: process.env.SESSION_SECRET || 'secret',
@@ -198,5 +198,6 @@ app.use('/api/v1', (req, res, next) => {
 
 
 server.listen(PORT || 3002, () => {
-    console.log(`application is running at: http://localhost:${PORT}`);
+    Logger.info(`application is running at: http://localhost:${PORT}`);
+    Logger.info('Press Ctrl+C to quit.')
 });

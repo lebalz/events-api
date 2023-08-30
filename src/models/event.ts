@@ -2,7 +2,7 @@ import { Department, Event, EventState, Job, Prisma, PrismaClient, Role, User } 
 import prisma from "../prisma";
 import { createDataExtractor } from "../controllers/helpers";
 import { ApiEvent, clonedProps, prepareEvent } from "./event.helpers";
-import { HTTP400Error, HTTP403Error, HTTP404Error } from "../errors/Errors";
+import { HTTP400Error, HTTP403Error, HTTP404Error } from "../utils/errors/Errors";
 const getData = createDataExtractor<Prisma.EventUncheckedUpdateInput>(
     [
         'klpOnly',

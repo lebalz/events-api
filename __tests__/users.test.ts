@@ -5,7 +5,7 @@ import { prismaMock } from "../__mocks__/singleton";
 import Users from "../src/models/users";
 import prisma from "../src/prisma";
 import { DefaultArgs } from "@prisma/client/runtime/library";
-import { HTTP403Error, HTTP404Error } from "../src/errors/Errors";
+import { HTTP403Error, HTTP404Error } from "../src/utils/errors/Errors";
 
 export const getMockProps = (props: Partial<Prisma.UserUncheckedCreateInput>) => {
     const mail = props.email || 'foo@bar.ch';

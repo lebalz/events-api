@@ -2,6 +2,7 @@ import type { Event, User } from "@prisma/client";
 import { Server } from "socket.io";
 import { checkEvent } from "../services/eventChecker";
 import { checkEvent as checkUnpersisted } from "../services/eventCheckUnpersisted";
+import Logger from "../utils/logger";
 
 export enum IoRoom {
     ADMIN = 'admin',
@@ -47,16 +48,16 @@ const EventRouter = (io: Server) => {
 
     io.on('disconnect', (socket) => {
         const { user } = (socket.request as { user?: User });
-        console.log('Socket.io disconnect');
+        Logger.info('Socket.io disconnect');
     });
 
     io.on('error', (socket) => {
-        console.log('Socket.io error');
+        Logger.error(`Socket.io error`);
     })
 
     io.on('reconnect', (socket) => {
         const { user } = (socket.request as { user?: User });
-        console.log('Socket.io reconnect');
+        Logger.info('Socket.io reconnect');
     })
 }
 

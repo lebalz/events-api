@@ -2,6 +2,7 @@ import prisma from '../prisma';
 import { BearerStrategy, IBearerStrategyOptionWithRequest, VerifyBearerFunction } from 'passport-azure-ad';
 import { getAuthInfo, userProps } from '../helpers';
 import authConfig from '../routes/authConfig';
+import Logger from '../utils/logger';
 // Set the Azure AD B2C options
 const auth = {
     tenantID: authConfig.credentials.tenantID,
@@ -40,7 +41,7 @@ const BearerVerify: VerifyBearerFunction = async (token, done) => {
         create: userProps(token, true),
         include: { untis: true }
     }).catch((err) => {
-        console.log('Bearer Verify Error', err);
+        Logger.error('Bearer Verify Error', err);
         return false;
     });
     // Send user info using the second argument

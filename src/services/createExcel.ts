@@ -2,6 +2,7 @@ import { EventState } from "@prisma/client";
 import prisma from "../prisma"
 import Excel from 'exceljs';
 import {existsSync, readdir, readdirSync, rmSync} from 'fs';
+import Logger from "../utils/logger";
 
 
 export const SEC_2_MS = 1000;
@@ -56,7 +57,7 @@ const createExcel = async (semesterId: string) => {
             rmSync(file);
         });
     } catch (error) {
-        console.log(error);
+        Logger.error(error);
     }
     
     const events = await prisma.event.findMany({

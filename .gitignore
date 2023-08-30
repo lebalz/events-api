@@ -17,3 +17,5 @@ ical/*.ics
 docs/prisma/**/*
 **/helpers/*.pdf
 /coverage
+/dist
+/logs

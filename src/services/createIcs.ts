@@ -6,6 +6,7 @@ import { Event } from '@prisma/client';
 import { writeFileSync } from 'fs';
 import _ from 'lodash';
 import { toCamelCase } from './helpers/rawQueryKeys';
+import Logger from '../utils/logger';
 
 export const SEC_2_MS = 1000;
 export const MINUTE_2_MS = 60 * SEC_2_MS;
@@ -54,7 +55,7 @@ export default async function createIcs(userId: string, jobId: string) {
         const fileCreated: boolean = await new Promise((resolve, reject) => {
             createEvents(events, (error, value) => {
                 if (error) {
-                    console.log('error', error);
+                    Logger.error(error);
                     return resolve(false);
                 }            
                 writeFileSync(`${__dirname}/../../ical/${fileName}`, value, { encoding: 'utf8', flag: 'w' })

@@ -5,6 +5,7 @@ import prisma from '../prisma';
 import { ClassLetterMap, Colors, DepartmentLetterMap, Departments } from './helpers/departmentNames';
 import { KlassName, mapLegacyClassName } from './helpers/klassNames';
 import { chunks } from './helpers/splitInChunks';
+import Logger from '../utils/logger';
 
 /**
  * @docs https://webuntis.noim.me/
@@ -24,7 +25,7 @@ const login = async (rethrow?: boolean) => {
     let success = await untis.login()
         .then(() => !!untis.sessionInformation?.sessionId)
         .catch((err) => {
-            console.log(err);
+            Logger.error(err);
             if (rethrow) {
                 throw err;
             }
@@ -44,24 +45,24 @@ const ensureLogin = async () => {
         tries += 1;
         await new Promise(resolve => setTimeout(resolve, 2000));
         loggedIn = await login(tries > 20);
-        console.log('Login Try', tries);
+        Logger.info('Login Try', tries);
     }
     if (tries > 1) {
-        console.log('Login Tries', tries);
+        Logger.info('Login Tries', tries);
     }
     return loggedIn;
 }
 
 const fetchUntis = async (semester: Semester) => {
-    console.log('Start fetching untis')
+    Logger.info('Start fetching untis')
     const data = await ensureLogin()
         .then(async (loggedIn) => {
             if (!loggedIn) {
-                console.log('Login not successful');
+                Logger.info('Login not successful');
                 throw new Error('Login not successful');
             }
             const sjs = await untis.getSchoolyears(true);
-            console.log('Fetch Schoolyears', sjs);
+            Logger.info('Fetch Schoolyears', sjs);
             /** find the school year for the events-app semester
              * expectation: the middle of start-end from the events semester
              *              lies within the start-end of the untis year
@@ -76,30 +77,30 @@ const fetchUntis = async (semester: Semester) => {
                 return false;
             })
             if (!sj) {
-                console.log('No Schoolyear found for this period');
+                Logger.info('No Schoolyear found for this period');
                 throw new Error('No Schoolyear found');
             }
             return { schoolyear: sj }
         }).then(async (data) => {
-            console.log('Fetch Subjects');
+            Logger.info('Fetch Subjects');
             const subjects = await untis.getSubjects();
             return { ...data, subjects }
         }).then(async (data) => {
-            console.log('Fetch Teachers');
+            Logger.info('Fetch Teachers');
             const teachers = await untis.getTeachers();
             return { ...data, teachers }
         }).then(async (data) => {
-            console.log('Fetch Classes');
+            Logger.info('Fetch Classes');
             const classes = (await untis.getClasses(true, data.schoolyear.id)).filter((c) => !Number.isNaN(getClassYear(c)));
             return { ...data, classes }
         }).then(async (data) => {
-            console.log('Fetch Timetables');
+            Logger.info('Fetch Timetables');
             const s1 = chunks(
                 data.classes.map((kl) => kl.id),
                 (id) => untis.getTimetableForWeek(semester.untisSyncDate, id, Base.TYPES.CLASS, 2, true),
                 50
             ).catch((e) => {
-                console.log('Error fetching Untis Timetables', e);
+                Logger.error('Error fetching Untis Timetables', e);
                 return [] as WebAPITimetable[][];
             });
             const [tt] = await Promise.all([s1]);
@@ -109,16 +110,15 @@ const fetchUntis = async (semester: Semester) => {
             Object.keys(data).forEach((key) => {
                 const len = (data as any)[key].length;
                 if (len) {
-                    console.log(key,);
+                    Logger.info(key,);
                 }
             });
-            console.log('Fetched School Year: ', data.schoolyear);
-            console.log('Synced Week: ', semester.untisSyncDate);
+            Logger.info('Fetched School Year: ', data.schoolyear);
+            Logger.info('Synced Week: ', semester.untisSyncDate);
             return data;
         }).finally(async () => {
-            console.log('logout untis')
+            Logger.info('logout untis')
             return untis.logout()
-            // return data
         });
     return data
 }
@@ -137,7 +137,7 @@ export const syncUntis2DB = async (semesterId: string) => {
     const data = await fetchUntis(semester)
 
     if (data.timetable.length === 0) {
-        console.log('No Data');
+        Logger.info('No Data');
         throw new Error(`No timetable data for semester "${semester.name}" in the Week of ${semester.untisSyncDate.toISOString().slice(0, 10)} found`)
     }
     const User2Teacher = await prisma.user.findMany({
@@ -214,7 +214,7 @@ export const syncUntis2DB = async (semesterId: string) => {
         });
         dbTransactions.push(klass);
     });
-    console.log('Classes: idMap', classIdMap);
+    Logger.info('Classes: idMap', classIdMap);
 
     const unknownClassDepartments: { [key: string]: any } = {};
 
@@ -225,7 +225,7 @@ export const syncUntis2DB = async (semesterId: string) => {
         const cLetter = isoName.slice(3, 4); /** fourth letter, e.g. 26gA --> A */
         const department = departments.find(d => d.letter === dLetter && d.classLetters.includes(cLetter));
         if (!department) {
-            console.log('No Department found for ', dLetter, c.id, c.longName, c.active, c.name, isoName);
+            Logger.info('No Department found for ', dLetter, c.id, c.longName, c.active, c.name, isoName);
             unknownClassDepartments[c.name] = {
                 classId: c.id,
                 className: c.name,
@@ -294,7 +294,7 @@ export const syncUntis2DB = async (semesterId: string) => {
             description: sub?.longName || 'Unbekannt',
         }
     }
-    console.log('Next ID', nextId);
+    Logger.info('Next ID', nextId);
     const extractLesson = (lesson: WebAPITimetable): UntisLesson | undefined => {
         const year = lesson.date / 10000;
         const month = (lesson.date % 10000) / 100;
@@ -350,7 +350,7 @@ export const syncUntis2DB = async (semesterId: string) => {
             if (lessonIdSet.has(lesson.id)) {
                 classes[cid].lessons.push({ id: lesson.id });
             } else {
-                console.log('Lesson not found', lesson.id, findSubject(lesson.subjects[0].id), lesson.classes.map((c) => c.element.name).join(', '));
+                Logger.info('Lesson not found', lesson.id, findSubject(lesson.subjects[0].id), lesson.classes.map((c) => c.element.name).join(', '));
             }
             if (lesson.teachers.length > 0) {
                 classes[cid].teachers.push(...lesson.teachers.map((t) => ({ id: t.id })).filter(t => t.id));
@@ -363,7 +363,7 @@ export const syncUntis2DB = async (semesterId: string) => {
             if (lessonIdSet.has(lesson.id)) {
                 teachers[tchr.id].push({ id: lesson.id });
             } else {
-                console.log('Lesson not found', lesson.id, findSubject(lesson.subjects[0].id), lesson.classes.map((c) => c.element.name).join(', '));
+                Logger.info('Lesson not found', lesson.id, findSubject(lesson.subjects[0].id), lesson.classes.map((c) => c.element.name).join(', '));
             }
         })
     });
@@ -401,7 +401,7 @@ export const syncUntis2DB = async (semesterId: string) => {
         });
         dbTransactions.push(update);
     });
-    console.log('TRANSACTION COUNT', dbTransactions.length);
+    Logger.info('TRANSACTION COUNT', dbTransactions.length);
     await prisma.$transaction(dbTransactions);
     const summary: { [key: string]: number | string | Object } = {
         schoolyear: `${data.schoolyear.name} [${data.schoolyear.startDate.toISOString().slice(0, 10)} - ${data.schoolyear.endDate.toISOString().slice(0, 10)}]`,

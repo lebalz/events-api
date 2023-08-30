@@ -5,7 +5,7 @@ import Events from '../src/models/event'
 import { v4 as uuidv4 } from 'uuid';
 import prisma from '../src/prisma';
 import { prepareEvent } from '../src/models/event.helpers';
-import { HTTP400Error, HTTP403Error, HTTP404Error } from '../src/errors/Errors';
+import { HTTP400Error, HTTP403Error, HTTP404Error } from '../src/utils/errors/Errors';
 
 export const getMockProps = (authorId: string, props: Partial<Prisma.EventUncheckedCreateInput>) => {
   return {

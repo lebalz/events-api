@@ -16,7 +16,8 @@
     ],
     "types": [
       "node",
-      "jest"
+      "jest",
+      "express"
     ]                           
   },
   "exclude": ["bin"],

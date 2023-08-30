@@ -5,6 +5,7 @@ import { IoEvent } from "../routes/socketEventTypes";
 import { createDataExtractor } from "./helpers";
 import { syncUntis2DB } from "../services/syncUntis2DB";
 import { notifyChangedRecord } from "../routes/notify";
+import Logger from "../utils/logger";
 
 const NAME = 'SEMESTER';
 const getData = createDataExtractor<Semester>(
@@ -102,7 +103,7 @@ export const destroy: RequestHandler<{ id: string }, any, any> = async (req, res
 export const sync: RequestHandler<{ id: string }, any, any> = async (req, res, next) => {
     try {
         const semester = await prisma.semester.findUnique({where: {id: req.params.id}});            
-        console.log(semester?.untisSyncDate);
+        Logger.info(semester?.untisSyncDate);
         const syncJob = await prisma.job.create({
             data: {
                 type: JobType.SYNC_UNTIS,
@@ -120,7 +121,7 @@ export const sync: RequestHandler<{ id: string }, any, any> = async (req, res, n
                 }
             });
         }).catch((error) => {
-            console.log(error);
+            Logger.error(error);
             return prisma.job.update({
                 where: { id: syncJob.id },
                 data: {

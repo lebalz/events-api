@@ -1,6 +1,7 @@
 import type { Role } from "@prisma/client";
 import { Request, Response, NextFunction } from "express";
 import { AccessMatrix, PUBLIC_ROUTES } from "../routes/authConfig";
+import Logger from "../utils/logger";
 
 interface AccessRegexRule {
     path: string;
@@ -39,7 +40,7 @@ export const createAccessRules = (accessMatrix: AccessMatrix): AccessRegexRule[]
     });
     const rules = accessRulesWithRegex.sort((a, b) => b.weight - a.weight);
     Object.freeze(rules);
-    console.log(rules);
+    Logger.info('Access Rules created');
     return rules;
 }
 
@@ -68,14 +69,11 @@ const requestHasRequiredAttributes = (accessMatrix: AccessRegexRule[], path: str
     const accessRules = Object.values(accessMatrix);
     const accessRule = accessRules.filter((accessRule) => accessRule.regex.test(path)).sort((a, b) => b.path.length - a.path.length)[0];
     if (!accessRule) {
-        // console.log('has No Role', role, method, path)
         return false;
     }
-    // console.log(accessRule);
     const hasRole = accessRule.access.some(
         (rule) => rule.roles.includes(role) && rule.methods.includes(method as 'GET' | 'POST' | 'PUT' | 'DELETE')
     );
-    // console.log('hasRole', hasRole, role, method, path)
     return hasRole;
 };
 

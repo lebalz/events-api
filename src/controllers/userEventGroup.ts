@@ -4,6 +4,7 @@ import prisma from "../prisma";
 import { IoEvent } from "../routes/socketEventTypes";
 import { createDataExtractor } from "./helpers";
 import { prepareEvent, clonedProps as clonedEventProps } from "../models/event.helpers";
+import Logger from "../utils/logger";
 
 const NAME = 'USER_EVENT_GROUP';
 const getData = createDataExtractor<UserEventGroup>(
@@ -87,7 +88,7 @@ export const update: RequestHandler<{ id: string }, any, { data: UserEventGroup 
             }
         });
         if (!current) {
-            console.log('current', current);
+            Logger.warn('current', current);
             res.status(403).send();
             return;
         }
