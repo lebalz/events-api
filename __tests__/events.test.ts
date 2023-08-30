@@ -5,6 +5,7 @@ import Events from '../src/models/event'
 import { v4 as uuidv4 } from 'uuid';
 import prisma from '../src/prisma';
 import { prepareEvent } from '../src/models/event.helpers';
+import { HTTP400Error, HTTP403Error, HTTP404Error } from '../src/errors/Errors';
 
 export const getMockProps = (authorId: string, props: Partial<Prisma.EventUncheckedCreateInput>) => {
   return {
@@ -131,7 +132,7 @@ describe('updateEvent', () => {
     const user = getMockedUser({ id: 'user-1' })
 
     await expect(Events.updateEvent(user, 'event-1', {})).rejects.toEqual(
-      new Error('Event not found')
+      new HTTP404Error('Event not found')
     );
   });
   test('can not update another users events', async () => {
@@ -140,7 +141,7 @@ describe('updateEvent', () => {
     createMocks([event]);
 
     await expect(Events.updateEvent(user, 'event-1', { description: 'hello' })).rejects.toEqual(
-      new Error('Not authorized')
+      new HTTP403Error('Not authorized')
     );
   });
   test('update PUBLISHED creates a version', async () => {
@@ -188,7 +189,7 @@ describe('setState transitions', () => {
     createMocks([event]);
 
     await expect(Events.setState(user, 'event-1', EventState.PUBLISHED)).rejects.toEqual(
-      new Error('Draft can only be set to review')
+      new HTTP400Error('Draft can only be set to review')
     );
   });
 
@@ -197,7 +198,7 @@ describe('setState transitions', () => {
     createMocks([event]);
 
     await expect(Events.setState(user, 'event-1', EventState.REFUSED)).rejects.toEqual(
-      new Error('Draft can only be set to review')
+      new HTTP400Error('Draft can only be set to review')
     );
   });
 
@@ -206,7 +207,7 @@ describe('setState transitions', () => {
     createMocks([event]);
 
     await expect(Events.setState(user, 'event-1', EventState.PUBLISHED)).rejects.toEqual(
-      new Error('REFUSED state is immutable')
+      new HTTP400Error('REFUSED state is immutable')
     );
   });
 
@@ -215,7 +216,7 @@ describe('setState transitions', () => {
     createMocks([event]);
 
     await expect(Events.setState(user, 'event-1', EventState.REFUSED)).rejects.toEqual(
-      new Error('PUBLISHED state is immutable')
+      new HTTP400Error('PUBLISHED state is immutable')
     );
   });
 
@@ -345,7 +346,7 @@ describe('destroyEvent', () => {
     const event = getMockProps(user.id, { id: 'event-1', state: EventState.PUBLISHED })
     createMocks([event]);
     await expect(Events.destroy(malory, event.id)).rejects.toEqual(
-      new Error('Not authorized')
+      new HTTP403Error('Not authorized')
     );
   });
   test('admin can delete users event', async () => {

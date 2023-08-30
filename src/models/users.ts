@@ -2,6 +2,7 @@ import { Event, PrismaClient, Role, User } from "@prisma/client";
 import {default as createIcsFile} from '../services/createIcs';
 import { default as queryAffectedEvents} from "../services/assets/query.eventsAffectingUser";
 import prisma from "../prisma";
+import { HTTP403Error, HTTP404Error } from "../errors/Errors";
 
 function Users(prismaUser: PrismaClient['user']) {
     return Object.assign(prismaUser, {
@@ -17,7 +18,7 @@ function Users(prismaUser: PrismaClient['user']) {
         },
         async linkToUntis(actor: User, userId: string, untisId: number | null): Promise<User> {
             if (actor.role !== Role.ADMIN && actor.id !== userId) {
-                throw new Error('Not authorized');
+                throw new HTTP403Error('Not authorized');
             }
             return prismaUser.update({
                 where: {
@@ -30,7 +31,7 @@ function Users(prismaUser: PrismaClient['user']) {
         },
         async setRole(actor: User, userId: string, role: Role): Promise<User> {
             if (actor.role !== Role.ADMIN) {
-                throw new Error('Not authorized');
+                throw new HTTP403Error('Not authorized');
             }
             return prismaUser.update({
                 where: {
@@ -43,17 +44,17 @@ function Users(prismaUser: PrismaClient['user']) {
         },
         async createIcs(actor: User, userId: string): Promise<User> {
             if (actor.role !== userId) {
-                throw new Error('Not authorized');
+                throw new HTTP403Error('Not authorized');
             }
             return createIcsFile(userId, '');
         },
         async affectedEvents(actor: User, userId: string, semesterId?: string): Promise<Event[]> {
             if (actor.id !== userId && actor.role !== Role.ADMIN) {
-                throw new Error('Not authorized');
+                throw new HTTP403Error('Not authorized');
             }
             const user = await this.findUser(userId);
             if (!user) {
-                throw new Error('User not found');
+                throw new HTTP404Error('User not found');
             }
             const semester = semesterId ? 
                 await prisma.semester.findUnique({ where: { id: semesterId } }) :
@@ -64,7 +65,7 @@ function Users(prismaUser: PrismaClient['user']) {
                     ]
                 }});
             if (!semester) {
-                throw new Error('Semester not found');
+                throw new HTTP404Error('Semester not found');
             }
             const events = await prisma.$queryRaw<Event[]>(
                 queryAffectedEvents(user.id, { 

@@ -5,6 +5,7 @@ import { prismaMock } from "../__mocks__/singleton";
 import Users from "../src/models/users";
 import prisma from "../src/prisma";
 import { DefaultArgs } from "@prisma/client/runtime/library";
+import { HTTP403Error, HTTP404Error } from "../src/errors/Errors";
 
 export const getMockProps = (props: Partial<Prisma.UserUncheckedCreateInput>) => {
     const mail = props.email || 'foo@bar.ch';
@@ -101,7 +102,7 @@ describe('linkToUntis', () => {
         const reto = getMockProps({ id: 'reto' })
         const maria = getMockProps({ id: 'maria' })
         createMocks([reto]);
-        await expect(Users.linkToUntis(reto, maria.id, 42)).rejects.toEqual(new Error('Not authorized'));
+        await expect(Users.linkToUntis(reto, maria.id, 42)).rejects.toEqual(new HTTP403Error('Not authorized'));
     });
 });
 
@@ -122,7 +123,7 @@ describe('setRole', () => {
         const malory = getMockProps({ id: 'reto' })
         const maria = getMockProps({ id: 'maria' })
         createMocks([malory, maria]);
-        await expect(Users.setRole(malory, maria.id, Role.ADMIN)).rejects.toEqual(new Error('Not authorized'));
+        await expect(Users.setRole(malory, maria.id, Role.ADMIN)).rejects.toEqual(new HTTP403Error('Not authorized'));
     });
 });
 
@@ -132,7 +133,7 @@ describe('createIcs', () => {
         const maria = getMockProps({ id: 'maria' })
         const reto = getMockProps({ id: 'reto' })
         createMocks([maria, reto]);
-        await expect(Users.createIcs(maria, reto.id)).rejects.toEqual(new Error('Not authorized'));
+        await expect(Users.createIcs(maria, reto.id)).rejects.toEqual(new HTTP403Error('Not authorized'));
     });
 });
 
@@ -141,11 +142,11 @@ describe('affectedEvents', () => {
         const maria = getMockProps({ id: 'maria' })
         const reto = getMockProps({ id: 'reto' })
         createMocks([maria, reto]);
-        await expect(Users.affectedEvents(maria, reto.id)).rejects.toEqual(new Error('Not authorized'));
+        await expect(Users.affectedEvents(maria, reto.id)).rejects.toEqual(new HTTP403Error('Not authorized'));
     });
     test('admin can not get affected events of unknown user', async () => {
         const maria = getMockProps({ id: 'maria', role: Role.ADMIN })
         createMocks([maria]);
-        await expect(Users.affectedEvents(maria, 'unknown')).rejects.toEqual(new Error('User not found'));
+        await expect(Users.affectedEvents(maria, 'unknown')).rejects.toEqual(new HTTP404Error('User not found'));
     });
 });

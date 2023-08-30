@@ -2,6 +2,7 @@ import { Department, Event, EventState, Job, Prisma, PrismaClient, Role, User } 
 import prisma from "../prisma";
 import { createDataExtractor } from "../controllers/helpers";
 import { ApiEvent, clonedProps, prepareEvent } from "./event.helpers";
+import { HTTP400Error, HTTP403Error, HTTP404Error } from "../errors/Errors";
 const getData = createDataExtractor<Prisma.EventUncheckedUpdateInput>(
     [
         'klpOnly',
@@ -28,7 +29,7 @@ function Events(prismaEvent: PrismaClient['event']) {
                 include: { departments: true, children: true },
             });
             if (!event) {
-                throw new Error('Event not found');
+                throw new HTTP404Error('Event not found');
             }
             if (event.state === EventState.PUBLISHED) {
                 return prepareEvent(event);
@@ -41,15 +42,15 @@ function Events(prismaEvent: PrismaClient['event']) {
                 event.state === EventState.REFUSED)) {
                 return prepareEvent(event);
             }
-            throw new Error('Not authorized');
+            throw new HTTP403Error('Not authorized');
         },
         async updateEvent(actor: User, id: string, data: Prisma.EventUncheckedUpdateInput & { departmentIds?: string[]}): Promise<ApiEvent> {
             const record = await prismaEvent.findUnique({ where: { id: id }, include: { departments: true } });
             if (!record) {
-                throw new Error('Event not found');
+                throw new HTTP404Error('Event not found');
             }
             if (record.authorId !== actor.id && actor.role !== Role.ADMIN) {
-                throw new Error('Not authorized');
+                throw new HTTP403Error('Not authorized');
             }
             /** remove fields not updatable*/
             const sanitized = getData(data);
@@ -95,7 +96,7 @@ function Events(prismaEvent: PrismaClient['event']) {
             const isAdmin = actor!.role === Role.ADMIN;
             const record = await prismaEvent.findUnique({ where: { id: id }, include: { departments: true, children: true } });
             if (!record || (record.authorId !== actor.id && !isAdmin)) {
-                throw new Error('Not authorized');
+                throw new HTTP403Error('Not authorized');
             }
             
             const updater = () => prismaEvent.update({
@@ -130,7 +131,7 @@ function Events(prismaEvent: PrismaClient['event']) {
                             `);
 
                             if (publishedParent.length < 1) {
-                                throw new Error('Parent not found');
+                                throw new HTTP404Error('Parent not found');
                             }
                             const model = await prismaEvent.update({
                                 where: { id: record.id },
@@ -146,17 +147,17 @@ function Events(prismaEvent: PrismaClient['event']) {
                             return prepareEvent(model);
                         }
                     }
-                    throw new Error('Draft can only be set to review');
+                    throw new HTTP400Error('Draft can only be set to review');
                 case EventState.REVIEW:
                     if (!isAdmin) {
-                        throw new Error('Not authorized');
+                        throw new HTTP403Error('Not authorized');
                     }
                     if (record.parentId && EventState.PUBLISHED === requested) {
                         const parent = await prismaEvent.findUnique({ where: { id: record.parentId }, include: { departments: true, children: true } });
                         if (!parent) {
-                            throw new Error('Parent not found');
+                            throw new HTTP404Error('Parent not found');
                         } else if (!!parent.parentId) {
-                            throw new Error('Parent must be the current published version');
+                            throw new HTTP400Error('Parent must be the current published version');
                         }
                         const siblings = await prismaEvent.findMany({ where: { AND: [{parentId: parent.id}, {NOT: {id: record.id}}] } });
                         const result = await prisma.$transaction([
@@ -188,22 +189,22 @@ function Events(prismaEvent: PrismaClient['event']) {
                         const model = await updater();
                         return prepareEvent(model);
                     }
-                    throw new Error('Review can only be set to Published or to Refused');
+                    throw new HTTP400Error('Review can only be set to Published or to Refused');
                 case EventState.PUBLISHED:
                 case EventState.REFUSED:
                     /** can't do anything with it */
-                    throw new Error(`${record.state} state is immutable`);
+                    throw new HTTP400Error(`${record.state} state is immutable`);
             }
-            throw new Error(`Unknown state "${requested}" requested`);
+            throw new HTTP400Error(`Unknown state "${requested}" requested`);
         },
         async destroy(actor: User, id: string): Promise<ApiEvent> {
             const record = await prismaEvent.findUnique({ where: { id: id } });
             /** check policy - only delete if user is author or admin */
-            if (!record) {        
-                throw new Error('Event not found');
+            if (!record) {
+                throw new HTTP404Error('Event not found');
             }
             if (record.authorId !== actor.id && actor.role !== Role.ADMIN) {
-                throw new Error('Not authorized');
+                throw new HTTP403Error('Not authorized');
             }
             /** only drafts are allowed to be hard deleted */
             if (record.state === EventState.DRAFT) {
