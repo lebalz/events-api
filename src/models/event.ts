@@ -145,7 +145,7 @@ function Events(prismaEvent: PrismaClient['event']) {
                             return prepareEvent(model);
                         }
                     }
-                    break;
+                    throw new Error('Draft can only be set to review');
                 case EventState.REVIEW:
                     if (!isAdmin) {
                         throw new Error('Not authorized');
@@ -183,18 +183,17 @@ function Events(prismaEvent: PrismaClient['event']) {
                             })
                         ]);
                         return prepareEvent(result[0]);
-                    } else {
-                        if (EventState.PUBLISHED === requested || EventState.REFUSED === requested) {
-                            const model = await updater();
-                            return prepareEvent(model);
-                        }
+                    } else if (EventState.PUBLISHED === requested || EventState.REFUSED === requested) {
+                        const model = await updater();
+                        return prepareEvent(model);
                     }
-                    break;
+                    throw new Error('Review can only be set to Published or to Refused');
                 case EventState.PUBLISHED:
+                case EventState.REFUSED:
                     /** can't do anything with it */
-                    break;
+                    throw new Error(`${record.state} state is immutable`);
             }
-            return prepareEvent(record);
+            throw new Error(`Unknown state "${requested}" requested`);
         }
     });
 }

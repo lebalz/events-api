@@ -116,6 +116,42 @@ describe('setState transitions', () => {
     });
   });
 
+  test('DRAFT -> PUBLISHED', async () => {
+    const event = getMockProps('user-1', { id: 'event-1', state: EventState.DRAFT })
+    createMocks([event]);
+
+    await expect(Events.setState(user, 'event-1', EventState.PUBLISHED)).rejects.toEqual(
+      new Error('Draft can only be set to review')
+    );
+  });
+
+  test('DRAFT -> REFUSED', async () => {
+    const event = getMockProps('user-1', { id: 'event-1', state: EventState.DRAFT })
+    createMocks([event]);
+
+    await expect(Events.setState(user, 'event-1', EventState.REFUSED)).rejects.toEqual(
+      new Error('Draft can only be set to review')
+    );
+  });
+
+  test('REFUSED -> PUBLISHED', async () => {
+    const event = getMockProps('user-1', { id: 'event-1', state: EventState.REFUSED })
+    createMocks([event]);
+
+    await expect(Events.setState(user, 'event-1', EventState.PUBLISHED)).rejects.toEqual(
+      new Error('REFUSED state is immutable')
+    );
+  });
+
+  test('PUBLISHED -> REFUSED', async () => {
+    const event = getMockProps('user-1', { id: 'event-1', state: EventState.PUBLISHED })
+    createMocks([event]);
+
+    await expect(Events.setState(user, 'event-1', EventState.REFUSED)).rejects.toEqual(
+      new Error('PUBLISHED state is immutable')
+    );
+  });
+
   test('versioned DRAFT -> REVIEW', async () => {
     const parent = getMockProps('user-1', { id: 'parent', state: EventState.PUBLISHED })
     const event = getMockProps('user-1', { id: 'child', state: EventState.DRAFT, parentId: parent.id })
