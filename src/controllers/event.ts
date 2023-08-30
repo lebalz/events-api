@@ -107,37 +107,69 @@ export const destroy: RequestHandler = async (req, res, next) => {
     }
 }
 
-type AllEventQueryCondition = ({ state: EventState } | { authorId: string })[];
 
 export const all: RequestHandler = async (req, res, next) => {
     try {
-        const condition: AllEventQueryCondition = [];
-        if (req.user) {
-            condition.push({ authorId: req.user.id });
-        }
-        if (req.user?.role === Role.ADMIN) {
-            condition.push({ state: EventState.REVIEW });
-            condition.push({ state: EventState.REFUSED });
-        }
-        const events = await db
-            .findMany({
-                include: { departments: true, children: true },
-                where: {
-                    OR: [
-                        {
-                            AND: [
-                                {state: EventState.PUBLISHED},
-                                {deletedAt: null}
-                            ]
-                        },
-                        ...condition
-                    ]
-                }
-            })
-            .then((events) => {
-                return events.map(prepareEvent);
-            });
+        const events = await Events.all(req.user);
         res.json(events);
+    } catch (error) {
+        next(error);
+    }
+}
+
+export const create: RequestHandler<any, any, Event> = async (req, res, next) => {
+    const { start, end } = req.body;
+    try {
+        const event = await Events.createEvent(req.user!, start, end);
+
+        res.notifications = [
+            {
+                message: { record: NAME, id: event.id },
+                event: IoEvent.NEW_RECORD,
+                to: req.user!.id
+            }
+        ];
+        res.status(201).json(event);
+    } catch (e) {
+        next(e)
+    }
+}
+
+export const clone: RequestHandler<{ id: string }, any, any> = async (req, res, next) => {
+    try {
+        const eid = req.params.id;
+
+        const newEvent = await Events.cloneEvent(req.user!, eid);
+        res.notifications = [
+            {
+                message: { record: NAME, id: newEvent.id },
+                event: IoEvent.NEW_RECORD,
+                to: req.user!.id
+            }
+        ];
+        res.status(201).json(prepareEvent(newEvent));
+    } catch (e) {
+        next(e)
+    }
+}
+
+
+export const importEvents: RequestHandler = async (req, res, next) => {
+    try {
+        const {job, importer} = await Events.importEvents(req.user!, req.file!.path, req.file!.originalname);
+ 
+        importer.finally(() => {
+            notifyChangedRecord(req.io, { record: 'JOB', id: job.id });
+        });
+ 
+        res.notifications = [
+            {
+                message: { record: 'JOB', id: job.id },
+                event: IoEvent.NEW_RECORD,
+                to: req.user!.id
+            }
+        ];
+        res.json(job);
     } catch (error) {
         next(error);
     }
@@ -166,116 +198,6 @@ export const exportExcel: RequestHandler = async (req, res, next) => {
         } else {
             res.status(400).json({message: 'No semester found'});
         }
-    } catch (error) {
-        next(error);
-    }
-}
-
-export const create: RequestHandler<any, any, Event> = async (req, res, next) => {
-    const { start, end } = req.body;
-    try {
-        const uid = req.user!.id;
-        const event = await db.create({
-            data: {
-                start,
-                end,
-                author: {
-                    connect: {
-                        id: uid
-                    }
-                }
-            }
-        });
-
-        res.notifications = [
-            {
-                message: { record: NAME, id: event.id },
-                event: IoEvent.NEW_RECORD,
-                to: uid
-            }
-        ];
-        res.status(201).json({ ...event, departmentIds: [] });
-    } catch (e) {
-        next(e)
-    }
-}
-
-
-export const cloneEvent = async (id: string, uid: string) => {
-    const event = await db.findUnique({ where: { id }, include: { departments: true } });
-    if (!event) {
-        return Promise.resolve(null);
-    }
-    const newEvent = await db.create({
-        data: {...clonedProps(event, uid), cloned: true},
-        include: { departments: true, children: true }
-    });
-    return newEvent;
-}
-
-
-export const clone: RequestHandler<{ id: string }, any, any> = async (req, res, next) => {
-    try {
-        const uid = req.user!.id;
-        const eid = req.params.id;
-        const newEvent = await cloneEvent(eid, uid);
-        if (!newEvent) {
-            return res.status(404).json({ message: 'Not found' });
-        }
-
-        res.notifications = [
-            {
-                message: { record: NAME, id: newEvent.id },
-                event: IoEvent.NEW_RECORD,
-                to: uid
-            }
-        ];
-        res.status(201).json(prepareEvent(newEvent));
-    } catch (e) {
-        next(e)
-    }
-}
-
-
-export const importEvents: RequestHandler = async (req, res, next) => {
-    try {
-        const importJob = await prisma.job.create({
-            data: {
-                type: JobType.IMPORT,
-                user: { connect: { id: req.user!.id } },
-                filename: req.file!.originalname,
-            }
-        });
-        if (req.file) {
-            importExcel(req.file!.path, req.user!.id, importJob.id).then(async (events) => {
-                await prisma.job.update({
-                    where: { id: importJob.id },
-                    data: {
-                        state: 'DONE',
-                    }
-                });
-            }).catch(async (e) => {
-                console.error(e);
-                await prisma.job.update({
-                    where: { id: importJob.id },
-                    data: {
-                        state: 'ERROR',
-                        log: JSON.stringify(e, Object.getOwnPropertyNames(e))
-                    }
-                });
-            }).finally(() => {
-                notifyChangedRecord(req.io, { record: 'JOB', id: importJob.id });
-            });
-        }
-
-        res.notifications = [
-            {
-                message: { record: 'JOB', id: importJob.id },
-                event: IoEvent.NEW_RECORD,
-                to: req.user!.id
-            }
-        ];
-        res.json(importJob);
     } catch (error) {
         next(error);
     }

@@ -1,8 +1,10 @@
-import { Department, Event, EventState, Job, Prisma, PrismaClient, Role, User } from "@prisma/client";
+import { Department, Event, EventState, Job, JobState, JobType, Prisma, PrismaClient, Role, User } from "@prisma/client";
 import prisma from "../prisma";
 import { createDataExtractor } from "../controllers/helpers";
 import { ApiEvent, clonedProps, prepareEvent } from "./event.helpers";
 import { HTTP400Error, HTTP403Error, HTTP404Error } from "../utils/errors/Errors";
+import { importExcel } from "../services/importExcel";
+import Logger from "../utils/logger";
 const getData = createDataExtractor<Prisma.EventUncheckedUpdateInput>(
     [
         'klpOnly',
@@ -20,6 +22,8 @@ const getData = createDataExtractor<Prisma.EventUncheckedUpdateInput>(
         'subjects'
     ]
 );
+
+type AllEventQueryCondition = ({ state: EventState } | { authorId: string })[];
 
 function Events(prismaEvent: PrismaClient['event']) {
     return Object.assign(prismaEvent, {
@@ -226,6 +230,84 @@ function Events(prismaEvent: PrismaClient['event']) {
                 include: { departments: true, children: true },
             });
             return prepareEvent(model);
+        },
+        async all(actor: User | undefined): Promise<ApiEvent[]> {
+            const condition: AllEventQueryCondition = [];
+            if (actor) {
+                condition.push({ authorId: actor.id });
+            }
+            if (actor?.role === Role.ADMIN) {
+                condition.push({ state: EventState.REVIEW });
+                condition.push({ state: EventState.REFUSED });
+            }
+            const events = await prismaEvent.findMany({
+                include: { departments: true, children: true },
+                where: {
+                    OR: [
+                        {
+                            AND: [
+                                {state: EventState.PUBLISHED},
+                                {parentId: null}
+                            ]
+                        },
+                        ...condition
+                    ]
+                }
+            });
+            return events.map(prepareEvent);
+        },
+        async createEvent(actor: User, start: Date, end: Date): Promise<ApiEvent> {
+            const model = await prismaEvent.create({
+                data: {
+                    start: start,
+                    end: end,
+                    state: EventState.DRAFT,
+                    authorId: actor.id,
+                }
+            });
+            return prepareEvent(model);
+        },
+        async cloneEvent(actor: User, id: string): Promise<ApiEvent> {
+            const record = await prismaEvent.findUnique({ where: { id: id }, include: { departments: true } });
+            /** check policy - only delete if user is author or admin */
+            if (!record) {
+                throw new HTTP404Error('Event not found');
+            }
+            if (record.state !== EventState.PUBLISHED && record.authorId !== actor.id) {
+                throw new HTTP403Error('Not authorized');
+            }
+            const newEvent = await prismaEvent.create({
+                data: {...clonedProps(record, actor.id), cloned: true},
+                include: { departments: true }
+            });
+            return prepareEvent(newEvent);
+        },
+        async importEvents(actor: User, filepath: string, filename: string): Promise<{job: Job, importer: Promise<Job>}> {
+            const importJob = await prisma.job.create({
+                data: {
+                    type: JobType.IMPORT,
+                    user: { connect: { id: actor.id } },
+                    filename: filename,
+                }
+            });
+            const importer = importExcel(filepath, actor.id, importJob.id).then(async (events) => {
+                return await prisma.job.update({
+                    where: { id: importJob.id },
+                    data: {
+                        state: JobState.DONE
+                    }
+                });
+            }).catch(async (e) => {
+                Logger.error(e);
+                return await prisma.job.update({
+                    where: { id: importJob.id },
+                    data: {
+                        state: JobState.ERROR,
+                        log: JSON.stringify(e, Object.getOwnPropertyNames(e))
+                    }
+                });
+            });
+            return {job: importJob, importer: importer};
         }
     });
 }

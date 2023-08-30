@@ -12,17 +12,17 @@ export interface ApiEvent extends Event {
 }
 
 export const prepareEvent = (event: (Event & {
-    children: Event[];
-    departments: Department[];
+    children?: Event[];
+    departments?: Department[];
 })): ApiEvent => {
     return {
         ...event,
         job: undefined,
         author: undefined,
         departments: undefined,
-        departmentIds: event?.departments.map((d) => d.id) || [],
+        departmentIds: event?.departments?.map((d) => d.id) || [],
         children: undefined,
-        versionIds: event?.children.sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime()).map((c) => c.id) || [],
+        versionIds: event?.children?.sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime()).map((c) => c.id) || [],
     };
 }
 
