@@ -231,7 +231,7 @@ function Events(prismaEvent: PrismaClient['event']) {
             });
             return prepareEvent(model);
         },
-        async all(actor: User | undefined): Promise<ApiEvent[]> {
+        async all(actor?: User | undefined): Promise<ApiEvent[]> {
             const condition: AllEventQueryCondition = [];
             if (actor) {
                 condition.push({ authorId: actor.id });
@@ -254,6 +254,8 @@ function Events(prismaEvent: PrismaClient['event']) {
                     ]
                 }
             });
+            const e = events;
+            const p = e.map(prepareEvent);
             return events.map(prepareEvent);
         },
         async createEvent(actor: User, start: Date, end: Date): Promise<ApiEvent> {

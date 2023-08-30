@@ -58,7 +58,7 @@ const createMocks = (_users: User[]) => {
         return null;
     }) as unknown as typeof prisma.user.findUnique);
 
-    /** mock find event */
+    /** mock findMany event */
     prismaMock.user.findMany.mockImplementation(((args: Prisma.UserFindManyArgs) => {
         const ret = users.filter(u => {
             if (args.where?.id) {

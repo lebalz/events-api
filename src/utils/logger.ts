@@ -11,7 +11,6 @@ const levels = {
 const level = () => {
   const env = process.env.NODE_ENV || 'development'
   const isDevelopment = env === 'development'
-  console.log(env, isDevelopment)
   return isDevelopment ? 'debug' : 'info'
 }
 
