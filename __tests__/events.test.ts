@@ -1,6 +1,7 @@
 import { prismaMock } from '../__mocks__/singleton'
-import { Department, Event, EventState, Prisma, Role, TeachingAffected } from '@prisma/client'
+import { $Enums, Department, Event, EventState, Prisma, Role, TeachingAffected } from '@prisma/client'
 import { getMockProps as getMockedUser } from './users.test';
+import { getMockProps as getMockedDepartment } from './departments.test';
 import Events from '../src/models/event'
 import { v4 as uuidv4 } from 'uuid';
 import prisma from '../src/prisma';
@@ -29,14 +30,14 @@ export const getMockProps = (authorId: string, props: Partial<Prisma.EventUnchec
 		jobId: props.jobId || null,
 		createdAt: props.createdAt as Date || new Date(),
 		updatedAt: props.updatedAt as Date || new Date(),
-		deletedAt: props.deletedAt as Date || null,
-		departments: props.departments as Department[] || [],
-		children: props.children as Event[] || [],
+		deletedAt: props.deletedAt as Date || null
 	}
 }
 
-const createMocks = (_events: Event[]) => {
+const createMocks = (_events: Event[], _departments?: Department[], _event2department?: [string, string[]][]) => {
 	const events = _events.map(e => ({ ...e }));
+	const departments = _departments?.map(d => ({ ...d })) || [];
+	const event2department = new Map<string, string[]>(_event2department || []);
 
 	const handleRelations = (event: Event, include?: Prisma.EventInclude | null) => {
 		const ret = { ...event }
@@ -44,7 +45,14 @@ const createMocks = (_events: Event[]) => {
 			return ret
 		};
 		if (include.departments) {
-			(ret as any).departments = [];
+			if (event2department.has(event.id)) {
+				(ret as any).departments = event2department.get(event.id)!	/** get department ids */
+					.map(d => departments.find((p) => d === p.id))			/** find department */
+					.filter(d => !!d) 										/** filter not found departments */
+					.map((d) => ({ ...d })); 								/** clone department */
+			} else {
+				(ret as any).departments = [];
+			}
 		}
 		if (include.children) {
 			(ret as any).children = events.filter(e => e.parentId === ret.id).map(e => ({ ...e }));
@@ -53,8 +61,20 @@ const createMocks = (_events: Event[]) => {
 	}
 	/** mock update */
 	prismaMock.event.update.mockImplementation(((args: Prisma.EventUpdateArgs) => {
+		if (!args.where.id) {
+			throw new Error('Missing id');
+		}
 		const idx = events.findIndex(e => e.id === args.where.id);
-		Object.keys(args.data).forEach((key) => {
+
+		(Object.keys(args.data) as (keyof typeof args.data)[]).forEach((key) => {
+			if (key === 'departments') {
+				if (args.data[key]?.connect || args.data[key]?.set) {
+					const connect = (args.data[key]!.connect || args.data[key]?.set) as Prisma.DepartmentWhereUniqueInput[];
+					event2department.set(args.where.id!, connect.map((d) => (d as { id: string }).id));
+				} else {
+					throw new Error(`Not implemented: ${JSON.stringify(args.data.departments)}`);
+				}
+			}
 			(events[idx] as any)[key] = (args.data as any)[key];
 		});
 		return handleRelations(events[idx], args.include);
@@ -81,12 +101,20 @@ const createMocks = (_events: Event[]) => {
 
 	/** mock create event */
 	prismaMock.event.create.mockImplementation(((args: Prisma.EventCreateArgs) => {
-		const event = events.find(e => e.id === args.data.id);
+		const id = args.data.id || `event-${events.length + 1}`
+		const event = events.find(e => e.id === id);
 		if (event) {
 			throw new Error('Event already exists');
 		}
-		const newEvent = getMockProps(args.data.authorId || 'unknown', { ...args.data, id: `event-${events.length + 1}` });
+		const newEvent = getMockProps(args.data.authorId || 'unknown', { ...args.data, id: id });
 		events.push(newEvent);
+		
+		if (args.data.departments?.connect) {
+			const connect = args.data.departments.connect as Prisma.DepartmentWhereUniqueInput[];
+			event2department.set(id, connect.map((d) => (d as { id: string }).id));
+		} else {
+			throw new Error(`Not implemented: ${JSON.stringify(args.data.departments)}`);
+		}
 		return handleRelations(newEvent, args.include);
 	}) as unknown as typeof prisma.event.create);
 
@@ -165,9 +193,22 @@ describe('updateEvent', () => {
 		const event = getMockProps(user.id, { id: 'event-1', state: EventState.DRAFT })
 		createMocks([event]);
 
-		await expect(Events.updateEvent(user, 'event-1', { description: 'hello' })).resolves.toEqual(prepareEvent({
+		await expect(Events.updateEvent(user, event.id, { description: 'hello' })).resolves.toEqual(prepareEvent({
 			...event,
 			description: 'hello'
+		}));
+	});
+	test('can add departments to a draft', async () => {
+		const user = getMockedUser({ id: 'user-1' })
+		const event = getMockProps(user.id, { id: 'event-1', state: EventState.DRAFT })
+		const dep1 = getMockedDepartment({ id: 'dep-1' });
+		createMocks([event], [dep1]);
+		expect(prepareEvent(event).departmentIds).toEqual([])
+
+		await expect(Events.updateEvent(user, event.id, { description: 'hello', departmentIds: [dep1.id] })).resolves.toEqual(prepareEvent({
+			...event,
+			description: 'hello',
+			departments: [dep1],
 		}));
 	});
 	test('can not update not existant event', async () => {
@@ -186,6 +227,7 @@ describe('updateEvent', () => {
 			new HTTP403Error('Not authorized')
 		);
 	});
+
 	test('update PUBLISHED creates a version', async () => {
 		const user = getMockedUser({ id: 'user-1' })
 		const event = getMockProps(user.id, { id: 'event-1', state: EventState.PUBLISHED, description: 'published' })
@@ -441,5 +483,52 @@ describe('allEvents', () => {
 			prepareEvent(pub2),
 			prepareEvent(draft2),
 		]);
+	});
+});
+
+describe('cloneEvent', () => {
+	test('clone Event', async () => {
+		const reto = getMockedUser({ id: 'user-1' })
+		const maria = getMockedUser({ id: 'user-1' })
+		const event = getMockProps(maria.id, { id: 'event-1', state: EventState.PUBLISHED })
+		createMocks([event]);
+		/** wait a bit to ensure createdAt/updatedAt properties are not accitentially equal to the original event */
+		await Promise.resolve(setTimeout(() => { }, 100));
+		const clone = Events.cloneEvent(reto, event.id);
+		await expect(clone).resolves.toEqual(prepareEvent({
+			...event,
+			id: expect.not.stringMatching(event.id),
+			authorId: reto.id,
+			state: EventState.DRAFT,
+			cloned: true,
+			createdAt: expect.any(Date),
+			updatedAt: expect.any(Date),
+		}));
+		await expect(clone).resolves.toHaveProperty('id', expect.any(String));
+		await expect(clone).resolves.not.toHaveProperty('createdAt', event.createdAt);
+		await expect(clone).resolves.not.toHaveProperty('updatedAt', event.updatedAt);
+	});
+	test('clone Event with departments', async () => {
+		const reto = getMockedUser({ id: 'user-1' })
+		const maria = getMockedUser({ id: 'user-1' })
+		const dep1 = getMockedDepartment({ id: 'dep-1' });
+		const dep2 = getMockedDepartment({ id: 'dep-2' });
+		const event = getMockProps(maria.id, { id: 'event-1', state: EventState.PUBLISHED })
+
+		createMocks([event], [dep1, dep2], [[event.id, [dep1.id, dep2.id]]]);
+		/** wait a bit to ensure createdAt/updatedAt properties are not accitentially equal to the original event */
+		await Promise.resolve(setTimeout(() => { }, 100));
+
+		const clone = Events.cloneEvent(reto, event.id);
+		await expect(clone).resolves.toEqual(prepareEvent({
+			...event,
+			id: expect.not.stringMatching(event.id),
+			authorId: reto.id,
+			state: EventState.DRAFT,
+			cloned: true,
+			departments: [dep1, dep2],
+			createdAt: expect.any(Date),
+			updatedAt: expect.any(Date),
+		}));
 	});
 });
