@@ -1,5 +1,5 @@
 import { prismaMock } from '../__mocks__/singleton'
-import { $Enums, Department, Event, EventState, Prisma, Role, TeachingAffected } from '@prisma/client'
+import { Department, Event, EventState, Prisma, Role, TeachingAffected } from '@prisma/client'
 import { getMockProps as getMockedUser } from './users.test';
 import { getMockProps as getMockedDepartment } from './departments.test';
 import Events from '../src/models/event'
@@ -490,10 +490,9 @@ describe('cloneEvent', () => {
 	test('clone Event', async () => {
 		const reto = getMockedUser({ id: 'user-1' })
 		const maria = getMockedUser({ id: 'user-1' })
-		const event = getMockProps(maria.id, { id: 'event-1', state: EventState.PUBLISHED })
+		const event = getMockProps(maria.id, { id: 'event-1', state: EventState.PUBLISHED, createdAt: new Date(2021, 1, 1), updatedAt: new Date(2021, 1, 2) })
 		createMocks([event]);
 		/** wait a bit to ensure createdAt/updatedAt properties are not accitentially equal to the original event */
-		await Promise.resolve(setTimeout(() => { }, 100));
 		const clone = Events.cloneEvent(reto, event.id);
 		await expect(clone).resolves.toEqual(prepareEvent({
 			...event,
@@ -513,11 +512,10 @@ describe('cloneEvent', () => {
 		const maria = getMockedUser({ id: 'user-1' })
 		const dep1 = getMockedDepartment({ id: 'dep-1' });
 		const dep2 = getMockedDepartment({ id: 'dep-2' });
-		const event = getMockProps(maria.id, { id: 'event-1', state: EventState.PUBLISHED })
+		const event = getMockProps(maria.id, { id: 'event-1', state: EventState.PUBLISHED, createdAt: new Date(2021, 1, 1), updatedAt: new Date(2021, 1, 2) })
 
 		createMocks([event], [dep1, dep2], [[event.id, [dep1.id, dep2.id]]]);
 		/** wait a bit to ensure createdAt/updatedAt properties are not accitentially equal to the original event */
-		await Promise.resolve(setTimeout(() => { }, 100));
 
 		const clone = Events.cloneEvent(reto, event.id);
 		await expect(clone).resolves.toEqual(prepareEvent({
