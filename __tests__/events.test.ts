@@ -163,13 +163,7 @@ describe('find event', () => {
 	test('returns event', async () => {
 		const user = getMockedUser({ id: 'user-1' })
 		const event = getMockProps('user-1', { id: 'event-1' })
-
-		prismaMock.event.findUnique.mockImplementation(((args: { where: { id: string } }) => {
-			if (args.where.id === event.id) {
-				return event;
-			}
-			return null;
-		}) as unknown as typeof prisma.event.findUnique);
+		createMocks([event]);
 
 		await expect(Events.findEvent(user, 'event-1')).resolves.toEqual({
 			/** expect the prepared event to be returned
@@ -185,6 +179,33 @@ describe('find event', () => {
 			versionIds: []
 		});
 	});
+	test('admin can get review event', async () => {
+		const user = getMockedUser({ id: 'user-1' })
+		const admin = getMockedUser({ id: 'admin', role: Role.ADMIN });
+		const event = getMockProps(user.id, { id: 'event-1', state: EventState.REVIEW });
+		createMocks([event]);
+		await expect(Events.findEvent(admin, event.id)).resolves.toEqual(prepareEvent(event));
+	});
+	test('admin can get refused event', async () => {
+		const user = getMockedUser({ id: 'user-1' })
+		const admin = getMockedUser({ id: 'admin', role: Role.ADMIN });
+		const event = getMockProps(user.id, { id: 'event-1', state: EventState.REFUSED });
+		createMocks([event]);
+		await expect(Events.findEvent(admin, event.id)).resolves.toEqual(prepareEvent(event));
+	});
+	test('admin can not get draft event', async () => {
+		const user = getMockedUser({ id: 'user-1' })
+		const admin = getMockedUser({ id: 'admin', role: Role.ADMIN });
+		const event = getMockProps(user.id, { id: 'event-1', state: EventState.DRAFT });
+		createMocks([event]);
+		await expect(Events.findEvent(admin, event.id)).rejects.toEqual(new HTTP403Error('Not authorized'));
+	});
+	test ('throws 404 if event not found', async () => {
+		const user = getMockedUser({ id: 'user-1' })
+		await expect(Events.findEvent(user, 'event-1')).rejects.toEqual(
+			new HTTP404Error('Event not found')
+		);
+	})
 });
 
 describe('updateEvent', () => {
@@ -243,10 +264,43 @@ describe('updateEvent', () => {
 			description: 'hello'
 		}));
 	});
+
+	test('update PUBLISHED with departments creates a version', async () => {
+		const user = getMockedUser({ id: 'user-1' })
+		const event = getMockProps(user.id, { id: 'event-1', state: EventState.PUBLISHED, description: 'published' })
+		const department = getMockedDepartment({ id: 'dep-1' });
+		createMocks([event], [department]);
+
+		await expect(Events.updateEvent(user, 'event-1', { description: 'hello', departmentIds: [department.id]})).resolves.toEqual(prepareEvent({
+			...event,
+			id: 'event-2',
+			state: EventState.DRAFT,
+			createdAt: expect.any(Date),
+			updatedAt: expect.any(Date),
+			parentId: 'event-1',
+			description: 'hello',
+			departments: [department]
+		}));
+	});
 });
 
 describe('setState transitions', () => {
 	const user = getMockedUser({ id: 'user-1' })
+
+	test('thorws on not found event', async () => {
+		await expect(Events.setState(user, 'event-1', EventState.REVIEW)).rejects.toEqual(
+			new HTTP404Error('Event not found')
+		);
+	});
+
+	test('thorws when not the author', async () => {
+		const malory = getMockedUser({ id: 'malory' })
+		const event = getMockProps(user.id, {});
+		createMocks([event]);
+		await expect(Events.setState(malory, event.id, EventState.REVIEW)).rejects.toEqual(
+			new HTTP403Error('Not authorized')
+		);
+	});
 
 	test('DRAFT -> REVIEW', async () => {
 		const event = getMockProps('user-1', { id: 'event-1', state: EventState.DRAFT })

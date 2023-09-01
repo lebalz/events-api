@@ -99,7 +99,10 @@ function Events(prismaEvent: PrismaClient['event']) {
         async setState(actor: User, id: string, requested: EventState): Promise<ApiEvent> {
             const isAdmin = actor!.role === Role.ADMIN;
             const record = await prismaEvent.findUnique({ where: { id: id }, include: { departments: true, children: true } });
-            if (!record || (record.authorId !== actor.id && !isAdmin)) {
+            if (!record) {
+                throw new HTTP404Error('Event not found');
+            }
+            if (record.authorId !== actor.id && !isAdmin) {
                 throw new HTTP403Error('Not authorized');
             }
             
