@@ -87,7 +87,7 @@ function UserEventGroups(db: PrismaClient['userEventGroup']) {
                 });
             }
         },
-        async clone(actor: User, id: string) {
+        async cloneModel(actor: User, id: string) {
             const model = await this.findModel(actor, id, { include: { departments: true }});
             if (!model) {
                 throw new HTTP404Error('Group not found');

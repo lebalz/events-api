@@ -2,10 +2,10 @@ import { prismaMock } from '../__mocks__/singleton'
 import { Department, Event, EventState, Prisma, Role, TeachingAffected } from '@prisma/client'
 import { getMockProps as getMockedUser } from './users.test';
 import { getMockProps as getMockedDepartment } from './departments.test';
-import Events from '../src/models/event'
+import Events from '../src/models/events'
 import { v4 as uuidv4 } from 'uuid';
 import prisma from '../src/prisma';
-import { prepareEvent } from '../src/models/event.helpers';
+import { ApiEvent, prepareEvent } from '../src/models/event.helpers';
 import { HTTP400Error, HTTP403Error, HTTP404Error } from '../src/utils/errors/Errors';
 
 export const getMockProps = (authorId: string, props: Partial<Prisma.EventUncheckedCreateInput>) => {
@@ -27,11 +27,11 @@ export const getMockProps = (authorId: string, props: Partial<Prisma.EventUnchec
 		classes: props.classes as string[] || [],
 		classGroups: props.classGroups as string[] || [],
 		subjects: props.subjects as string[] || [],
-		jobId: props.jobId || null,
+		jobId: props.jobId,
 		createdAt: props.createdAt as Date || new Date(),
 		updatedAt: props.updatedAt as Date || new Date(),
 		deletedAt: props.deletedAt as Date || null
-	}
+	} as Event;
 }
 
 const createMocks = (_events: Event[], _departments?: Department[], _event2department?: [string, string[]][]) => {
@@ -165,7 +165,7 @@ describe('find event', () => {
 		const event = getMockProps('user-1', { id: 'event-1' })
 		createMocks([event]);
 
-		await expect(Events.findEvent(user, 'event-1')).resolves.toEqual({
+		await expect(Events.findModel(user, 'event-1')).resolves.toEqual({
 			/** expect the prepared event to be returned
 			 * @see event.helpers.ts#prepareEvent 
 			 */
@@ -173,7 +173,7 @@ describe('find event', () => {
 			author: undefined,
 			departments: undefined,
 			departmentIds: [],
-			jobId: null,
+			jobId: undefined,
 			job: undefined,
 			children: undefined,
 			versionIds: []
@@ -184,25 +184,25 @@ describe('find event', () => {
 		const admin = getMockedUser({ id: 'admin', role: Role.ADMIN });
 		const event = getMockProps(user.id, { id: 'event-1', state: EventState.REVIEW });
 		createMocks([event]);
-		await expect(Events.findEvent(admin, event.id)).resolves.toEqual(prepareEvent(event));
+		await expect(Events.findModel(admin, event.id)).resolves.toEqual(prepareEvent(event));
 	});
 	test('admin can get refused event', async () => {
 		const user = getMockedUser({ id: 'user-1' })
 		const admin = getMockedUser({ id: 'admin', role: Role.ADMIN });
 		const event = getMockProps(user.id, { id: 'event-1', state: EventState.REFUSED });
 		createMocks([event]);
-		await expect(Events.findEvent(admin, event.id)).resolves.toEqual(prepareEvent(event));
+		await expect(Events.findModel(admin, event.id)).resolves.toEqual(prepareEvent(event));
 	});
 	test('admin can not get draft event', async () => {
 		const user = getMockedUser({ id: 'user-1' })
 		const admin = getMockedUser({ id: 'admin', role: Role.ADMIN });
 		const event = getMockProps(user.id, { id: 'event-1', state: EventState.DRAFT });
 		createMocks([event]);
-		await expect(Events.findEvent(admin, event.id)).rejects.toEqual(new HTTP403Error('Not authorized'));
+		await expect(Events.findModel(admin, event.id)).rejects.toEqual(new HTTP403Error('Not authorized'));
 	});
 	test ('throws 404 if event not found', async () => {
 		const user = getMockedUser({ id: 'user-1' })
-		await expect(Events.findEvent(user, 'event-1')).rejects.toEqual(
+		await expect(Events.findModel(user, 'event-1')).rejects.toEqual(
 			new HTTP404Error('Event not found')
 		);
 	})
@@ -214,7 +214,7 @@ describe('updateEvent', () => {
 		const event = getMockProps(user.id, { id: 'event-1', state: EventState.DRAFT })
 		createMocks([event]);
 
-		await expect(Events.updateEvent(user, event.id, { description: 'hello' })).resolves.toEqual(prepareEvent({
+		await expect(Events.updateModel(user, event.id, { description: 'hello' })).resolves.toEqual(prepareEvent({
 			...event,
 			description: 'hello'
 		}));
@@ -226,7 +226,7 @@ describe('updateEvent', () => {
 		createMocks([event], [dep1]);
 		expect(prepareEvent(event).departmentIds).toEqual([])
 
-		await expect(Events.updateEvent(user, event.id, { description: 'hello', departmentIds: [dep1.id] })).resolves.toEqual(prepareEvent({
+		await expect(Events.updateModel(user, event.id, { description: 'hello', departmentIds: [dep1.id] })).resolves.toEqual(prepareEvent({
 			...event,
 			description: 'hello',
 			departments: [dep1],
@@ -235,7 +235,7 @@ describe('updateEvent', () => {
 	test('can not update not existant event', async () => {
 		const user = getMockedUser({ id: 'user-1' })
 
-		await expect(Events.updateEvent(user, 'event-1', {})).rejects.toEqual(
+		await expect(Events.updateModel(user, 'event-1', {})).rejects.toEqual(
 			new HTTP404Error('Event not found')
 		);
 	});
@@ -244,7 +244,7 @@ describe('updateEvent', () => {
 		const event = getMockProps('felix', { id: 'event-1', state: EventState.DRAFT })
 		createMocks([event]);
 
-		await expect(Events.updateEvent(user, 'event-1', { description: 'hello' })).rejects.toEqual(
+		await expect(Events.updateModel(user, 'event-1', { description: 'hello' })).rejects.toEqual(
 			new HTTP403Error('Not authorized')
 		);
 	});
@@ -254,7 +254,7 @@ describe('updateEvent', () => {
 		const event = getMockProps(user.id, { id: 'event-1', state: EventState.PUBLISHED, description: 'published' })
 		createMocks([event]);
 
-		await expect(Events.updateEvent(user, 'event-1', { description: 'hello' })).resolves.toEqual(prepareEvent({
+		await expect(Events.updateModel(user, 'event-1', { description: 'hello' })).resolves.toEqual(prepareEvent({
 			...event,
 			id: 'event-2',
 			state: EventState.DRAFT,
@@ -271,7 +271,7 @@ describe('updateEvent', () => {
 		const department = getMockedDepartment({ id: 'dep-1' });
 		createMocks([event], [department]);
 
-		await expect(Events.updateEvent(user, 'event-1', { description: 'hello', departmentIds: [department.id]})).resolves.toEqual(prepareEvent({
+		await expect(Events.updateModel(user, 'event-1', { description: 'hello', departmentIds: [department.id]})).resolves.toEqual(prepareEvent({
 			...event,
 			id: 'event-2',
 			state: EventState.DRAFT,
@@ -315,7 +315,7 @@ describe('setState transitions', () => {
 			author: undefined,
 			departments: undefined,
 			departmentIds: [],
-			jobId: null,
+			jobId: undefined,
 			job: undefined,
 			children: undefined,
 			versionIds: []
@@ -374,7 +374,7 @@ describe('setState transitions', () => {
 			author: undefined,
 			departments: undefined,
 			departmentIds: [],
-			jobId: null,
+			jobId: undefined,
 			job: undefined,
 			children: undefined,
 			versionIds: []
@@ -398,7 +398,7 @@ describe('setState transitions', () => {
 			author: undefined,
 			departments: undefined,
 			departmentIds: [],
-			jobId: null,
+			jobId: undefined,
 			job: undefined,
 			children: undefined,
 			parentId: ancestor1.id,
@@ -421,19 +421,19 @@ describe('setState transitions', () => {
 			author: undefined,
 			departments: undefined,
 			departmentIds: [],
-			jobId: null,
+			jobId: undefined,
 			job: undefined,
 			children: undefined,
 			parentId: null,
 			versionIds: ['child']
 		});
-		await expect(Events.findEvent(user, event.id)).resolves.toEqual({
+		await expect(Events.findModel(user, event.id)).resolves.toEqual({
 			...ancestor1,
 			id: event.id,
 			author: undefined,
 			departments: undefined,
 			departmentIds: [],
-			jobId: null,
+			jobId: undefined,
 			job: undefined,
 			children: undefined,
 			parentId: ancestor1.id,
@@ -547,7 +547,7 @@ describe('cloneEvent', () => {
 		const event = getMockProps(maria.id, { id: 'event-1', state: EventState.PUBLISHED, createdAt: new Date(2021, 1, 1), updatedAt: new Date(2021, 1, 2) })
 		createMocks([event]);
 		/** wait a bit to ensure createdAt/updatedAt properties are not accitentially equal to the original event */
-		const clone = Events.cloneEvent(reto, event.id);
+		const clone = Events.cloneModel(reto, event.id);
 		await expect(clone).resolves.toEqual(prepareEvent({
 			...event,
 			id: expect.not.stringMatching(event.id),
@@ -571,7 +571,7 @@ describe('cloneEvent', () => {
 		createMocks([event], [dep1, dep2], [[event.id, [dep1.id, dep2.id]]]);
 		/** wait a bit to ensure createdAt/updatedAt properties are not accitentially equal to the original event */
 
-		const clone = Events.cloneEvent(reto, event.id);
+		const clone = Events.cloneModel(reto, event.id);
 		await expect(clone).resolves.toEqual(prepareEvent({
 			...event,
 			id: expect.not.stringMatching(event.id),

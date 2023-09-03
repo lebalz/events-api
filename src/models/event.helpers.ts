@@ -1,8 +1,8 @@
 import { Department, Event, EventState, Job, Prisma, User } from "@prisma/client";
 
-export interface ApiEvent extends Event {
+export interface ApiEvent extends Omit<Event, 'jobId'> {
     job: undefined;
-    jobId: string | null;
+    jobId: string | undefined | null;
     author: undefined;
     authorId: string;
     departments: undefined;

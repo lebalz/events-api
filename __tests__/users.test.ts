@@ -4,7 +4,6 @@ import { v4 as uuidv4 } from 'uuid';
 import { prismaMock } from "../__mocks__/singleton";
 import Users from "../src/models/users";
 import prisma from "../src/prisma";
-import { DefaultArgs } from "@prisma/client/runtime/library";
 import { HTTP403Error, HTTP404Error } from "../src/utils/errors/Errors";
 
 export const getMockProps = (props: Partial<Prisma.UserUncheckedCreateInput>) => {
@@ -78,7 +77,7 @@ test('returns user', async () => {
     const user = getMockProps({ id: 'user-1' })
     createMocks([user]);
 
-    await expect(Users.findUser('user-1')).resolves.toEqual({
+    await expect(Users.findModel('user-1')).resolves.toEqual({
         ...user
     });
 })

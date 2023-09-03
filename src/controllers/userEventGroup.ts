@@ -75,7 +75,7 @@ export const destroy: RequestHandler<{ id: string }, any, any> = async (req, res
 
 export const clone: RequestHandler<{ id: string }, any, any> = async (req, res, next) => {
     try {
-        const newGroup = await UserEventGroups.clone(req.user!, req.params.id);
+        const newGroup = await UserEventGroups.cloneModel(req.user!, req.params.id);
         res.notifications = [
             {
                 message: { record: NAME, id: newGroup.id },
