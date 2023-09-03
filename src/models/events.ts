@@ -1,4 +1,4 @@
-import { Department, Event as Events, EventState, Job, JobState, JobType, Prisma, PrismaClient, Role, User } from "@prisma/client";
+import { Department, Event, EventState, Job, JobState, JobType, Prisma, PrismaClient, Role, User } from "@prisma/client";
 import prisma from "../prisma";
 import { createDataExtractor } from "../controllers/helpers";
 import { ApiEvent, clonedProps, prepareEvent } from "./event.helpers";
@@ -60,9 +60,9 @@ function Events(db: PrismaClient['event']) {
             const sanitized = getData(data);
             const departmentIds = data.departmentIds || [];
 
-            let model: Events & {
+            let model: Event & {
                 departments: Department[];
-                children: Events[];
+                children: Event[];
             };
             /* DRAFT     --> update the fields */
             /* OTHERWIES --> create a linked clone and update the props there */
@@ -120,7 +120,7 @@ function Events(db: PrismaClient['event']) {
                         if (record.parentId) {
                             /* ensure that the parent is the current published version. Otherwise set 
                             /  the parent_id to the first ancestor */
-                            const publishedParent = await prisma.$queryRaw<Events[]>(Prisma.sql`
+                            const publishedParent = await prisma.$queryRaw<Event[]>(Prisma.sql`
                                 WITH RECURSIVE tree as (
                                     -- start with the requested event
                                     SELECT id, parent_id
@@ -204,7 +204,7 @@ function Events(db: PrismaClient['event']) {
             }
             throw new HTTP400Error(`Unknown state "${requested}" requested`);
         },
-        async _forceDestroy(record: Events, options: {unlinkFromJob?: boolean} = {}): Promise<ApiEvent> {
+        async _forceDestroy(record: Event | ApiEvent, options: {unlinkFromJob?: boolean} = {}): Promise<ApiEvent> {
             /** only drafts are allowed to be hard deleted */
             if (record.state === EventState.DRAFT) {
                 const model = await db.delete({

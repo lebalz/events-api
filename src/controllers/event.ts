@@ -1,25 +1,20 @@
-import { NextFunction, Request, RequestHandler, Response } from "express";
+import { RequestHandler } from "express";
 import prisma from "../prisma";
 import { IoEvent } from "../routes/socketEventTypes";
 import { notifyChangedRecord } from "../routes/notify";
-import { importExcel } from "../services/importExcel";
-import type { Department, Job, User, Event, Prisma } from "@prisma/client";
-import { Role, EventState, JobType } from "@prisma/client";
-import { createDataExtractor } from "./helpers";
+import type { Event } from "@prisma/client";
+import { EventState } from "@prisma/client";
 import { IoRoom } from "../routes/socketEvents";
 import createExcel from "../services/createExcel";
-import { existsSync } from "fs";
-import {default as Events } from "../models/events";
+import Events from "../models/events";
 import path from "path";
-import { clonedProps, prepareEvent } from "../models/event.helpers";
 
 const NAME = 'EVENT';
-const db = prisma.event;
 
 
 export const find: RequestHandler = async (req, res, next) => {
     try {
-        const event = await Event.findEvent(req.user, req.params.id);
+        const event = await Events.findModel(req.user, req.params.id);
         res.status(200).json(event);
     } catch (error) {
         next(error);
@@ -28,7 +23,7 @@ export const find: RequestHandler = async (req, res, next) => {
 
 export const update: RequestHandler<{ id: string }, any, { data: Event & { departmentIds?: string[] } }> = async (req, res, next) => {
     try {
-        const model = await Event.updateEvent(req.user!, req.params.id, req.body.data);
+        const model = await Events.updateModel(req.user!, req.params.id, req.body.data);
 
         res.notifications = [
             {
@@ -47,7 +42,7 @@ export const setState: RequestHandler<{}, any, { data: { ids: string[], state: E
     try {
         const { ids, state } = req.body.data;
         const events = await Promise.all(ids.map((id) => {
-            return Event.setState(req.user!, id, state);
+            return Events.setState(req.user!, id, state);
         }));
         const updatedIds = events.map(e => e.id);
         const authorIds = [...new Set(events.map(e => e.authorId).filter(id => !!id))]
@@ -87,7 +82,7 @@ export const setState: RequestHandler<{}, any, { data: { ids: string[], state: E
 
 export const destroy: RequestHandler = async (req, res, next) => {
     try {
-        const event = await Event.destroy(req.user!, req.params.id);
+        const event = await Events.destroy(req.user!, req.params.id);
         if (event.state === EventState.DRAFT) {
             res.notifications = [{
                 message: { record: NAME, id: event.id },
@@ -110,7 +105,7 @@ export const destroy: RequestHandler = async (req, res, next) => {
 
 export const all: RequestHandler = async (req, res, next) => {
     try {
-        const events = await Event.all(req.user);
+        const events = await Events.all(req.user);
         res.json(events);
     } catch (error) {
         next(error);
@@ -120,7 +115,7 @@ export const all: RequestHandler = async (req, res, next) => {
 export const create: RequestHandler<any, any, Event> = async (req, res, next) => {
     const { start, end } = req.body;
     try {
-        const event = await Event.createEvent(req.user!, start, end);
+        const event = await Events.createModel(req.user!, start, end);
 
         res.notifications = [
             {
@@ -139,7 +134,7 @@ export const clone: RequestHandler<{ id: string }, any, any> = async (req, res, 
     try {
         const eid = req.params.id;
 
-        const newEvent = await Event.cloneEvent(req.user!, eid);
+        const newEvent = await Events.cloneModel(req.user!, eid);
         res.notifications = [
             {
                 message: { record: NAME, id: newEvent.id },
@@ -147,7 +142,7 @@ export const clone: RequestHandler<{ id: string }, any, any> = async (req, res, 
                 to: req.user!.id
             }
         ];
-        res.status(201).json(prepareEvent(newEvent));
+        res.status(201).json(newEvent);
     } catch (e) {
         next(e)
     }
@@ -156,7 +151,7 @@ export const clone: RequestHandler<{ id: string }, any, any> = async (req, res, 
 
 export const importEvents: RequestHandler = async (req, res, next) => {
     try {
-        const {job, importer} = await Event.importEvents(req.user!, req.file!.path, req.file!.originalname);
+        const {job, importer} = await Events.importEvents(req.user!, req.file!.path, req.file!.originalname);
  
         importer.finally(() => {
             notifyChangedRecord(req.io, { record: 'JOB', id: job.id });
