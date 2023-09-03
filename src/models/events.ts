@@ -1,4 +1,4 @@
-import { Department, Event, EventState, Job, JobState, JobType, Prisma, PrismaClient, Role, User } from "@prisma/client";
+import { Department, Event as Events, EventState, Job, JobState, JobType, Prisma, PrismaClient, Role, User } from "@prisma/client";
 import prisma from "../prisma";
 import { createDataExtractor } from "../controllers/helpers";
 import { ApiEvent, clonedProps, prepareEvent } from "./event.helpers";
@@ -25,10 +25,10 @@ const getData = createDataExtractor<Prisma.EventUncheckedUpdateInput>(
 
 type AllEventQueryCondition = ({ state: EventState } | { authorId: string })[];
 
-function Events(prismaEvent: PrismaClient['event']) {
-    return Object.assign(prismaEvent, {
-        async findEvent(actor: User | undefined, id: string): Promise<ApiEvent | null> {
-            const event = await prismaEvent.findUnique({
+function Events(db: PrismaClient['event']) {
+    return Object.assign(db, {
+        async findModel(actor: User | undefined, id: string): Promise<ApiEvent | null> {
+            const event = await db.findUnique({
                 where: { id: id },
                 include: { departments: true, children: true },
             });
@@ -48,8 +48,8 @@ function Events(prismaEvent: PrismaClient['event']) {
             }
             throw new HTTP403Error('Not authorized');
         },
-        async updateEvent(actor: User, id: string, data: Prisma.EventUncheckedUpdateInput & { departmentIds?: string[]}): Promise<ApiEvent> {
-            const record = await prismaEvent.findUnique({ where: { id: id }, include: { departments: true } });
+        async updateModel(actor: User, id: string, data: Prisma.EventUncheckedUpdateInput & { departmentIds?: string[]}): Promise<ApiEvent> {
+            const record = await db.findUnique({ where: { id: id }, include: { departments: true } });
             if (!record) {
                 throw new HTTP404Error('Event not found');
             }
@@ -60,14 +60,14 @@ function Events(prismaEvent: PrismaClient['event']) {
             const sanitized = getData(data);
             const departmentIds = data.departmentIds || [];
 
-            let model: Event & {
+            let model: Events & {
                 departments: Department[];
-                children: Event[];
+                children: Events[];
             };
             /* DRAFT     --> update the fields */
             /* OTHERWIES --> create a linked clone and update the props there */
             if (record?.state === EventState.DRAFT) {
-                model = await prismaEvent.update({
+                model = await db.update({
                     where: { id: id },
                     data: {
                         ...sanitized,
@@ -81,7 +81,7 @@ function Events(prismaEvent: PrismaClient['event']) {
             } else {
                 const cProps = clonedProps(record, actor.id, { cloneUserGroup: true });
 
-                model = await prismaEvent.create({
+                model = await db.create({
                     data: {
                         ...cProps,
                         ...(sanitized as Prisma.EventUncheckedCreateInput),
@@ -98,7 +98,7 @@ function Events(prismaEvent: PrismaClient['event']) {
         },
         async setState(actor: User, id: string, requested: EventState): Promise<ApiEvent> {
             const isAdmin = actor!.role === Role.ADMIN;
-            const record = await prismaEvent.findUnique({ where: { id: id }, include: { departments: true, children: true } });
+            const record = await db.findUnique({ where: { id: id }, include: { departments: true, children: true } });
             if (!record) {
                 throw new HTTP404Error('Event not found');
             }
@@ -106,7 +106,7 @@ function Events(prismaEvent: PrismaClient['event']) {
                 throw new HTTP403Error('Not authorized');
             }
             
-            const updater = () => prismaEvent.update({
+            const updater = () => db.update({
                 where: { id: id },
                 data: {
                     state: requested
@@ -120,7 +120,7 @@ function Events(prismaEvent: PrismaClient['event']) {
                         if (record.parentId) {
                             /* ensure that the parent is the current published version. Otherwise set 
                             /  the parent_id to the first ancestor */
-                            const publishedParent = await prisma.$queryRaw<Event[]>(Prisma.sql`
+                            const publishedParent = await prisma.$queryRaw<Events[]>(Prisma.sql`
                                 WITH RECURSIVE tree as (
                                     -- start with the requested event
                                     SELECT id, parent_id
@@ -140,7 +140,7 @@ function Events(prismaEvent: PrismaClient['event']) {
                             if (publishedParent.length < 1) {
                                 throw new HTTP404Error('Parent not found');
                             }
-                            const model = await prismaEvent.update({
+                            const model = await db.update({
                                 where: { id: record.id },
                                 data: {
                                     state: requested,
@@ -160,16 +160,16 @@ function Events(prismaEvent: PrismaClient['event']) {
                         throw new HTTP403Error('Not authorized');
                     }
                     if (record.parentId && EventState.PUBLISHED === requested) {
-                        const parent = await prismaEvent.findUnique({ where: { id: record.parentId }, include: { departments: true, children: true } });
+                        const parent = await db.findUnique({ where: { id: record.parentId }, include: { departments: true, children: true } });
                         if (!parent) {
                             throw new HTTP404Error('Parent not found');
                         } else if (!!parent.parentId) {
                             throw new HTTP400Error('Parent must be the current published version');
                         }
-                        const siblings = await prismaEvent.findMany({ where: { AND: [{parentId: parent.id}, {NOT: {id: record.id}}] } });
+                        const siblings = await db.findMany({ where: { AND: [{parentId: parent.id}, {NOT: {id: record.id}}] } });
                         const result = await prisma.$transaction([
                             /** swap the child and the parent - ensures that the uuid for the ical stays the same  */
-                            prismaEvent.update({
+                            db.update({
                                 where: { id: parent.id },
                                 data: {
                                     ...clonedProps(record, record.authorId, {full: true}),
@@ -177,14 +177,14 @@ function Events(prismaEvent: PrismaClient['event']) {
                                 },
                                 include: { departments: true, children: true },
                             }),
-                            prismaEvent.update({
+                            db.update({
                                 where: { id: record.id },
                                 data: {
                                     ...clonedProps(parent, parent.authorId, {full: true}),
                                 }
                             }),
                             /** ensure that all pending reviews with this parent are refused... */
-                            prismaEvent.updateMany({
+                            db.updateMany({
                                 where: { AND: [{ id: { in: siblings.map((s) => s.id) }}, { state: EventState.REVIEW }] },
                                 data: {
                                     state: EventState.REFUSED
@@ -204,18 +204,10 @@ function Events(prismaEvent: PrismaClient['event']) {
             }
             throw new HTTP400Error(`Unknown state "${requested}" requested`);
         },
-        async destroy(actor: User, id: string): Promise<ApiEvent> {
-            const record = await prismaEvent.findUnique({ where: { id: id } });
-            /** check policy - only delete if user is author or admin */
-            if (!record) {
-                throw new HTTP404Error('Event not found');
-            }
-            if (record.authorId !== actor.id && actor.role !== Role.ADMIN) {
-                throw new HTTP403Error('Not authorized');
-            }
+        async _forceDestroy(record: Events, options: {unlinkFromJob?: boolean} = {}): Promise<ApiEvent> {
             /** only drafts are allowed to be hard deleted */
             if (record.state === EventState.DRAFT) {
-                const model = await prismaEvent.delete({
+                const model = await db.delete({
                     where: {
                         id: record.id,
                     },
@@ -223,16 +215,36 @@ function Events(prismaEvent: PrismaClient['event']) {
                 });
                 return prepareEvent(model);
             }
-            const model = await prismaEvent.update({
+            const model = await db.update({
                 where: {
                     id: record.id,
                 },
                 data: {
-                    deletedAt: new Date()
+                    deletedAt: new Date(),
+                    jobId: options.unlinkFromJob ? null : undefined
                 },
                 include: { departments: true, children: true },
             });
             return prepareEvent(model);
+        },
+        async _unlinkFromUserGroup(id: string) {
+            await db.update({
+                where: { id: id },
+                data: {
+                    userGroupId: null
+                }
+            });
+        },
+        async destroy(actor: User, id: string): Promise<ApiEvent> {
+            const record = await db.findUnique({ where: { id: id } });
+            /** check policy - only delete if user is author or admin */
+            if (!record) {
+                throw new HTTP404Error('Event not found');
+            }
+            if (record.authorId !== actor.id && actor.role !== Role.ADMIN) {
+                throw new HTTP403Error('Not authorized');
+            }
+            return this._forceDestroy(record);
         },
         async all(actor?: User | undefined): Promise<ApiEvent[]> {
             const condition: AllEventQueryCondition = [];
@@ -243,7 +255,7 @@ function Events(prismaEvent: PrismaClient['event']) {
                 condition.push({ state: EventState.REVIEW });
                 condition.push({ state: EventState.REFUSED });
             }
-            const events = await prismaEvent.findMany({
+            const events = await db.findMany({
                 include: { departments: true, children: true },
                 where: {
                     OR: [
@@ -261,8 +273,8 @@ function Events(prismaEvent: PrismaClient['event']) {
             const p = e.map(prepareEvent);
             return events.map(prepareEvent);
         },
-        async createEvent(actor: User, start: Date, end: Date): Promise<ApiEvent> {
-            const model = await prismaEvent.create({
+        async createModel(actor: User, start: Date, end: Date): Promise<ApiEvent> {
+            const model = await db.create({
                 data: {
                     start: start,
                     end: end,
@@ -272,8 +284,8 @@ function Events(prismaEvent: PrismaClient['event']) {
             });
             return prepareEvent(model);
         },
-        async cloneEvent(actor: User, id: string): Promise<ApiEvent> {
-            const record = await prismaEvent.findUnique({ where: { id: id }, include: { departments: true } });
+        async cloneModel(actor: User, id: string): Promise<ApiEvent> {
+            const record = await db.findUnique({ where: { id: id }, include: { departments: true } });
             /** check policy - only delete if user is author or admin */
             if (!record) {
                 throw new HTTP404Error('Event not found');
@@ -281,7 +293,7 @@ function Events(prismaEvent: PrismaClient['event']) {
             if (record.state !== EventState.PUBLISHED && record.authorId !== actor.id) {
                 throw new HTTP403Error('Not authorized');
             }
-            const newEvent = await prismaEvent.create({
+            const newEvent = await db.create({
                 data: {...clonedProps(record, actor.id), cloned: true},
                 include: { departments: true }
             });

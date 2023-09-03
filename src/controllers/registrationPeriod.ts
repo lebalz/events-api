@@ -1,18 +1,13 @@
 import type { RegistrationPeriod, Semester } from "@prisma/client";
 import { RequestHandler } from "express";
-import prisma from "../prisma";
 import { IoEvent } from "../routes/socketEventTypes";
-import { createDataExtractor } from "./helpers";
+import RegistrationPeriods from "../models/registrationPeriods";
 
 const NAME = 'REGISTRATION_PERIOD';
-const getData = createDataExtractor<RegistrationPeriod>(
-    ['name', 'start', 'end']
-);
-const db = prisma.registrationPeriod;
 
 export const all: RequestHandler = async (req, res, next) => {
     try {
-        const models = await db.findMany({});
+        const models = await RegistrationPeriods.all();
         res.json(models);
     } catch (error) {
         next(error);
@@ -21,10 +16,7 @@ export const all: RequestHandler = async (req, res, next) => {
 
 export const find: RequestHandler<{ id: string }, any, any> = async (req, res, next) => {
     try {
-        const model = await db
-            .findUnique({
-                where: { id: req.params.id }
-            });
+        const model = await RegistrationPeriods.findModel(req.params.id);
         res.status(200).json(model);
     } catch (error) {
         next(error);
@@ -32,16 +24,8 @@ export const find: RequestHandler<{ id: string }, any, any> = async (req, res, n
 }
 
 export const create: RequestHandler<any, any, Semester> = async (req, res, next) => {
-    const { start, end, name } = req.body;
     try {
-        const model = await db.create({
-            data: {
-                start,
-                end,
-                name
-            }
-        });
-
+        const model = await RegistrationPeriods.createModel(req.user!, req.body);
         res.notifications = [
             {
                 message: { record: NAME, id: model.id },
@@ -55,14 +39,8 @@ export const create: RequestHandler<any, any, Semester> = async (req, res, next)
 }
 
 export const update: RequestHandler<{ id: string }, any, { data: Semester }> = async (req, res, next) => {
-    /** remove fields not updatable*/
-    const data = getData(req.body.data);
     try {
-        const model = await db.update({
-            where: { id: req.params.id },
-            data
-        });
-
+        const model = await RegistrationPeriods.updateModel(req.user!, req.params.id, req.body.data);
         res.notifications = [
             {
                 message: { record: NAME, id: model.id },
@@ -77,11 +55,7 @@ export const update: RequestHandler<{ id: string }, any, { data: Semester }> = a
 
 export const destroy: RequestHandler<{ id: string }, any, any> = async (req, res, next) => {
     try {
-        const model = await db.delete({
-            where: {
-                id: req.params.id,
-            },
-        });
+        const model = await RegistrationPeriods.destroy(req.user!, req.params.id);
         res.notifications = [{
             message: { record: NAME, id: model.id },
             event: IoEvent.DELETED_RECORD

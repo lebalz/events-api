@@ -22,7 +22,7 @@ export const user: RequestHandler = async (req, res) => {
 
 export const find: RequestHandler<{ id: string }> = async (req, res, next) => {
     try {
-        const user = await Users.findUser(req.params.id);
+        const user = await User.findUser(req.params.id);
         res.json(user);
     } catch (error) {
         next(error)
@@ -31,7 +31,7 @@ export const find: RequestHandler<{ id: string }> = async (req, res, next) => {
 
 export const all: RequestHandler = async (req, res, next) => {
     try {
-        const users = await Users.all();
+        const users = await User.all();
         res.json(users);
     } catch (error) {
         next(error)
@@ -40,7 +40,7 @@ export const all: RequestHandler = async (req, res, next) => {
 
 export const linkToUntis: RequestHandler<{ id: string }, any, { data: { untisId: number } }> = async (req, res, next) => {
     try {
-        const user = await Users.linkToUntis(req.user!, req.params.id, req.body.data.untisId || null);
+        const user = await User.linkToUntis(req.user!, req.params.id, req.body.data.untisId || null);
 
         res.notifications = [
             {
@@ -57,7 +57,7 @@ export const linkToUntis: RequestHandler<{ id: string }, any, { data: { untisId:
 
 export const setRole: RequestHandler<{ id: string }, any, { data: { role: Role } }> = async (req, res, next) => {
    try {
-        const user = await Users.setRole(req.user!, req.params.id, req.body.data.role);
+        const user = await User.setRole(req.user!, req.params.id, req.body.data.role);
         res.notifications = [
             {
                 message: { record: NAME, id: user.id },
@@ -74,7 +74,7 @@ export const setRole: RequestHandler<{ id: string }, any, { data: { role: Role }
 
 export const createIcs: RequestHandler<{ id: string }, any, any> = async (req, res, next) => {
     try {
-        const user = await Users.createIcs(req.user!, req.params.id);
+        const user = await User.createIcs(req.user!, req.params.id);
         res.json(user);
     } catch (error) {
         next(error)
@@ -85,7 +85,7 @@ export const createIcs: RequestHandler<{ id: string }, any, any> = async (req, r
 
 export const affectedEvents: RequestHandler<{ id: string }, string[] | {message: string}, any, {semesterId?: string}> = async (req, res, next) => {
     try {
-        const events = await Users.affectedEvents(req.user!, req.params.id, req.query.semesterId);
+        const events = await User.affectedEvents(req.user!, req.params.id, req.query.semesterId);
         res.status(200).json(events.map((e) => e.id));
     } catch (error) {
         next(error);

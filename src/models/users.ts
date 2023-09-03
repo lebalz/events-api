@@ -1,26 +1,26 @@
-import { Event, PrismaClient, Role, User } from "@prisma/client";
+import { Event, PrismaClient, Role, User as Users } from "@prisma/client";
 import {default as createIcsFile} from '../services/createIcs';
 import { default as queryAffectedEvents} from "../services/assets/query.eventsAffectingUser";
 import prisma from "../prisma";
 import { HTTP403Error, HTTP404Error } from "../utils/errors/Errors";
 
-function Users(prismaUser: PrismaClient['user']) {
-    return Object.assign(prismaUser, {
+function Users(db: PrismaClient['user']) {
+    return Object.assign(db, {
         /**
          * Signup the first user and create a new team of one. Return the User with
          * a full name and without a password
          */
-        async findUser(id: string): Promise<User | null> {
-            return prismaUser.findUnique({ where: { id } });
+        async findModel(id: string): Promise<Users | null> {
+            return db.findUnique({ where: { id } });
         },
-        async all(): Promise<User[]> {
-            return prismaUser.findMany({});
+        async all(): Promise<Users[]> {
+            return db.findMany({});
         },
-        async linkToUntis(actor: User, userId: string, untisId: number | null): Promise<User> {
+        async linkToUntis(actor: Users, userId: string, untisId: number | null): Promise<Users> {
             if (actor.role !== Role.ADMIN && actor.id !== userId) {
                 throw new HTTP403Error('Not authorized');
             }
-            return prismaUser.update({
+            return db.update({
                 where: {
                     id: userId
                 },
@@ -29,11 +29,11 @@ function Users(prismaUser: PrismaClient['user']) {
                 }
             });
         },
-        async setRole(actor: User, userId: string, role: Role): Promise<User> {
+        async setRole(actor: Users, userId: string, role: Role): Promise<Users> {
             if (actor.role !== Role.ADMIN) {
                 throw new HTTP403Error('Not authorized');
             }
-            return prismaUser.update({
+            return db.update({
                 where: {
                     id: userId
                 },
@@ -42,17 +42,17 @@ function Users(prismaUser: PrismaClient['user']) {
                 }
             });
         },
-        async createIcs(actor: User, userId: string): Promise<User> {
+        async createIcs(actor: Users, userId: string): Promise<Users> {
             if (actor.role !== userId) {
                 throw new HTTP403Error('Not authorized');
             }
             return createIcsFile(userId, '');
         },
-        async affectedEvents(actor: User, userId: string, semesterId?: string): Promise<Event[]> {
+        async affectedEvents(actor: Users, userId: string, semesterId?: string): Promise<Event[]> {
             if (actor.id !== userId && actor.role !== Role.ADMIN) {
                 throw new HTTP403Error('Not authorized');
             }
-            const user = await this.findUser(userId);
+            const user = await this.findModel(userId);
             if (!user) {
                 throw new HTTP404Error('User not found');
             }
