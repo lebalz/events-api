@@ -1,6 +1,6 @@
 import { JobState, Prisma, PrismaClient, Role, User } from "@prisma/client";
 import prisma from "../prisma";
-import { HTTP403Error, HTTP404Error } from "../utils/errors/Errors";
+import { HTTP400Error, HTTP403Error, HTTP404Error } from "../utils/errors/Errors";
 import { createDataExtractor } from "../controllers/helpers";
 import Logger from "../utils/logger";
 import Jobs from "./jobs";
@@ -16,12 +16,22 @@ function Semesters(db: PrismaClient['semester']) {
             return await db.findMany({});
         },
         async findModel(id: string) {
-            return db.findUnique({ where: { id } });
+            const model = await db.findUnique({ where: { id } });
+            if (!model) {
+                throw new HTTP404Error(`Semester with id ${id} not found`);
+            }
+            return model;
         },
-        async createModel(actor: User, data: Prisma.SemesterUncheckedCreateInput) {
+        async createModel(actor: User, data: {name: string, start: Date | string, end: Date | string}) {
+            if (actor.role !== Role.ADMIN) {
+                throw new HTTP403Error('Not authorized');
+            }
             const { name } = data;
             const start = new Date(data.start);
             const end = new Date(data.end);
+            if (start.getTime() >= end.getTime()) {
+                throw new HTTP400Error('End date must be after start date');
+            }
             const syncDate = new Date(start.getTime() + (end.getTime() - start.getTime()) / 2);
             const model = await db.create({
                 data: {
@@ -37,8 +47,24 @@ function Semesters(db: PrismaClient['semester']) {
             if (actor.role !== Role.ADMIN) {
                 throw new HTTP403Error('Not authorized');
             }
+            const semester = await this.findModel(id);
+            if (!semester) {
+                throw new HTTP404Error('Semester not found');
+            }
             /** remove fields not updatable*/
-            const sanitized = getData(data);    
+            const sanitized = getData(data);
+            const { start, end, untisSyncDate } = {...semester, ...sanitized};
+
+            const nStart = new Date(start as string);
+            const nEnd = new Date(end as string);
+            const nSync = new Date(untisSyncDate as string);
+
+            if (nStart.getTime() >= nEnd.getTime()) {
+                throw new HTTP400Error('End date must be after start date');
+            }
+            if (nSync.getTime() < nStart.getTime() || nSync.getTime() > nEnd.getTime()) {
+                throw new HTTP400Error('Sync date must be between start and end date');
+            }
 
             const model = await db.update({
                 where: { id: id },
