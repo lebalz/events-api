@@ -5,7 +5,7 @@ import { createDataExtractor } from "../controllers/helpers";
 import { prepareEvent } from "./event.helpers";
 import Events from "./events";
 
-const getData = createDataExtractor<Jobs>(
+const getData = createDataExtractor<Prisma.JobUncheckedUpdateInput>(
     ['description']
 );
 
@@ -23,11 +23,11 @@ function Jobs(db: PrismaClient['job']) {
                     }
                 },
             });
-            if (job?.userId !== actor.id && actor.role !== Role.ADMIN) {
-                throw new HTTP403Error('Not authorized');
-            }
             if (!job) {
                 throw new HTTP404Error(`Job with id ${id} not found`)
+            }
+            if (job?.userId !== actor.id && actor.role !== Role.ADMIN) {
+                throw new HTTP403Error('Not authorized');
             }
             const events = job.events.map(prepareEvent);
             return {
@@ -41,7 +41,7 @@ function Jobs(db: PrismaClient['job']) {
             });
             return models;
         },
-        async updateModel(actor: User, id: string, data: Jobs) {
+        async updateModel(actor: User, id: string, data: Prisma.JobUncheckedUpdateInput) {
             /** ensure all permissions are correct */
             await this.findModel(actor, id);
             const sanitized = getData(data);
