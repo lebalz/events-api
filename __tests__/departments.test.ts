@@ -1,6 +1,4 @@
 import { Prisma, Role } from "@prisma/client";
-import { v4 as uuidv4 } from 'uuid';
-// import { createDepartment } from "../__mocks__/factories/department.factory";
 import Departments from "../src/models/departments";
 import prismock from "../__mocks__/prismockClient";
 import { createUser } from "./users.test";
@@ -38,10 +36,20 @@ describe('Departments', () => {
         test('admin can update department', async () => {
             const admin = await createUser({role: Role.ADMIN});
             const department = await createDepartment({});
-            await expect(Departments.updateModel(admin, department.id, {name: 'new name'})).resolves.toEqual({
+            await expect(Departments.updateModel(admin, department.id, {name: 'new name', classLetters: ['B', 'A']})).resolves.toEqual({
                 ...department,
-                name: 'new name'
+                name: 'new name',
+                classLetters: ['B', 'A']
             });
+        });
+
+        test('detects invalid letter combinations', async () => {
+            const admin = await createUser({role: Role.ADMIN});
+            const depAB = await createDepartment({name: 'depAB-', classLetters: ['A', 'B']});
+            const depCD = await createDepartment({name: 'depCD-', classLetters: ['C', 'D']});
+            await expect(Departments.updateModel(admin, depCD.id, {classLetters: ['B', 'C', 'D']})).rejects.toEqual(
+                new HTTP400Error('Unique Letters Constraint Error: invalid combinations: depCD-B')
+            );
         });
     });
     describe('create department', () => {
