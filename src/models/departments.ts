@@ -47,7 +47,7 @@ function Departments(db: PrismaClient['department']) {
             const model = await db.create({
                 data: {
                     name: name,
-                    description: description || ''
+                    description: description
                 },
             });
             return model;

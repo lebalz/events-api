@@ -57,7 +57,7 @@
     "prisma": "5",
     "prisma-dbml-generator": "^0.10.0",
     "prisma-docs-generator": "^0.8.0",
-    "prismock": "^1.19.1",
+    "prismock": "^1.19.2",
     "ts-jest": "^29.1.1",
     "ts-node": "^10.9.1"
   },
