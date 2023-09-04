@@ -188,7 +188,7 @@ model UntisLesson {
     classes     UntisClass[]   @relation("classes_to_lessons")
     teachers    UntisTeacher[] @relation("teachers_to_lessons")
 
-    semester   Semester @relation(fields: [semesterId], references: [id])
+    semester   Semester @relation(fields: [semesterId], references: [id], onDelete: Cascade)
     semesterId String   @map("semester_id") @db.Uuid
 
     @@map("untis_lessons")

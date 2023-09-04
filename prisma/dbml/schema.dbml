@@ -254,6 +254,6 @@ Ref: jobs.userId > users.id
 
 Ref: jobs.semesterId > semesters.id
 
-Ref: untis_lessons.semesterId > semesters.id
+Ref: untis_lessons.semesterId > semesters.id [delete: Cascade]
 
 Ref: untis_classes.departmentId > departments.id
