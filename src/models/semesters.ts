@@ -1,6 +1,4 @@
-import { Event, JobState, Prisma, PrismaClient, Role, User } from "@prisma/client";
-import {default as createIcsFile} from '../services/createIcs';
-import { default as queryAffectedEvents} from "../services/assets/query.eventsAffectingUser";
+import { JobState, Prisma, PrismaClient, Role, User } from "@prisma/client";
 import prisma from "../prisma";
 import { HTTP403Error, HTTP404Error } from "../utils/errors/Errors";
 import { createDataExtractor } from "../controllers/helpers";
