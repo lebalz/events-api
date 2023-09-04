@@ -11,7 +11,7 @@ Table users {
   lastName String [not null]
   role Role [not null, default: 'USER']
   createdAt DateTime [default: `now()`, not null]
-  updatedAt DateTime [not null]
+  updatedAt DateTime [default: `now()`, not null]
   events events [not null]
   icsLocator String
   jobs jobs [not null]
@@ -44,7 +44,7 @@ Table events {
   subjects String[] [not null]
   teachingAffected TeachingAffected [not null, default: 'YES']
   createdAt DateTime [default: `now()`, not null]
-  updatedAt DateTime [not null]
+  updatedAt DateTime [default: `now()`, not null]
   deletedAt DateTime
 }
 
@@ -56,7 +56,7 @@ Table user_event_groups {
   userId String [not null]
   events events [not null]
   createdAt DateTime [default: `now()`, not null]
-  updatedAt DateTime [not null]
+  updatedAt DateTime [default: `now()`, not null]
 }
 
 Table departments {
@@ -69,7 +69,7 @@ Table departments {
   events events [not null]
   color String [not null, default: '#306cce']
   createdAt DateTime [default: `now()`, not null]
-  updatedAt DateTime [not null]
+  updatedAt DateTime [default: `now()`, not null]
 }
 
 Table semesters {
@@ -81,7 +81,7 @@ Table semesters {
   lessons untis_lessons [not null]
   jobs jobs [not null]
   createdAt DateTime [default: `now()`, not null]
-  updatedAt DateTime [not null]
+  updatedAt DateTime [default: `now()`, not null]
 }
 
 Table registration_periods {
@@ -90,7 +90,7 @@ Table registration_periods {
   start DateTime [not null]
   end DateTime [not null]
   createdAt DateTime [default: `now()`, not null]
-  updatedAt DateTime [not null]
+  updatedAt DateTime [default: `now()`, not null]
 }
 
 Table jobs {
@@ -107,7 +107,7 @@ Table jobs {
   filename String
   log String [not null, default: '']
   createdAt DateTime [default: `now()`, not null]
-  updatedAt DateTime [not null]
+  updatedAt DateTime [default: `now()`, not null]
 }
 
 Table untis_teachers {

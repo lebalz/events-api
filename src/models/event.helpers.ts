@@ -1,4 +1,5 @@
 import { Department, Event, EventState, Job, Prisma, User } from "@prisma/client";
+import { isNull } from "lodash";
 
 export interface ApiEvent extends Omit<Event, 'jobId'> {
     job: undefined;
@@ -15,7 +16,7 @@ export const prepareEvent = (event: (Event & {
     children?: Event[];
     departments?: Department[];
 })): ApiEvent => {
-    return {
+    const prepared = {
         ...event,
         job: undefined,
         author: undefined,
@@ -24,6 +25,7 @@ export const prepareEvent = (event: (Event & {
         children: undefined,
         versionIds: event?.children?.sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime()).map((c) => c.id) || [],
     };
+    return prepared;
 }
 
 type EventProps = Prisma.EventUncheckedCreateInput;
@@ -33,21 +35,26 @@ export const clonedProps = (event: Event & {departments: Department[]}, uid: str
         start: event.start,
         end: event.end,
         klpOnly: event.klpOnly,
-        classes: event.classes,
         description: event.description,
         cloned: event.cloned,
         teachersOnly: event.teachersOnly,
         location: event.location,
         descriptionLong: event.descriptionLong,
         teachingAffected: event.teachingAffected,
-        subjects: event.subjects,
-        classGroups: event.classGroups,
         state: EventState.DRAFT,
-        departments: {
-            connect: event.departments.map((d) => ({ id: d.id }))
-        },
         authorId: uid
     }
+    if (event.departments.length > 0) {
+        props.departments = {
+            connect: event.departments.map((d) => ({ id: d.id }))
+        }
+    }
+    const arrKeys: (keyof Event)[] = ['classGroups', 'classes', 'subjects'];
+    arrKeys.forEach((key) => {
+        if (event[key]) {
+            (props as any)[key] = [...(event[key] as string[])]
+        }
+    });
     if (options.full || options.cloneUserGroup) {
         props.userGroupId = event.userGroupId;
     }

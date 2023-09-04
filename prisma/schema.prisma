@@ -26,7 +26,7 @@ model User {
     lastName    String            @map("last_name")
     role        Role              @default(USER)
     createdAt   DateTime          @default(now()) @map("created_at")
-    updatedAt   DateTime          @updatedAt @map("updated_at")
+    updatedAt   DateTime          @updatedAt @default(now()) @map("updated_at")
     events      Event[]           @relation("events")
     icsLocator  String?           @map("ics_locator")
     jobs        Job[]
@@ -73,7 +73,7 @@ model Event {
     teachingAffected TeachingAffected @default(YES) @map("teaching_affected")
 
     createdAt DateTime  @default(now()) @map("created_at")
-    updatedAt DateTime  @updatedAt @map("updated_at")
+    updatedAt DateTime  @updatedAt @default(now()) @map("updated_at")
     deletedAt DateTime? @map("deleted_at")
 
     @@map("events")
@@ -88,7 +88,7 @@ model UserEventGroup {
     events      Event[]
 
     createdAt DateTime @default(now()) @map("created_at")
-    updatedAt DateTime @updatedAt @map("updated_at")
+    updatedAt DateTime @updatedAt @default(now()) @map("updated_at")
 
     @@map("user_event_groups")
 }
@@ -105,7 +105,7 @@ model Department {
     color   String       @default("#306cce")
 
     createdAt DateTime @default(now()) @map("created_at")
-    updatedAt DateTime @updatedAt @map("updated_at")
+    updatedAt DateTime @updatedAt @default(now()) @map("updated_at")
 
     @@map("departments")
 }
@@ -119,7 +119,7 @@ model Semester {
     lessons       UntisLesson[]
     jobs          Job[]
     createdAt     DateTime      @default(now()) @map("created_at")
-    updatedAt     DateTime      @updatedAt @map("updated_at")
+    updatedAt     DateTime      @updatedAt @default(now()) @map("updated_at")
 
     @@map("semesters")
 }
@@ -130,7 +130,7 @@ model RegistrationPeriod {
     start     DateTime
     end       DateTime
     createdAt DateTime @default(now()) @map("created_at")
-    updatedAt DateTime @updatedAt @map("updated_at")
+    updatedAt DateTime @updatedAt @default(now()) @map("updated_at")
 
     @@map("registration_periods")
 }
@@ -157,7 +157,7 @@ model Job {
     log      String  @default("")
 
     createdAt DateTime @default(now()) @map("created_at")
-    updatedAt DateTime @updatedAt @map("updated_at")
+    updatedAt DateTime @updatedAt @default(now()) @map("updated_at")
 
     @@map("jobs")
 }

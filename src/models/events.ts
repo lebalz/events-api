@@ -166,7 +166,14 @@ function Events(db: PrismaClient['event']) {
                         } else if (!!parent.parentId) {
                             throw new HTTP400Error('Parent must be the current published version');
                         }
-                        const siblings = await db.findMany({ where: { AND: [{parentId: parent.id}, {NOT: {id: record.id}}] } });
+                        const siblings = await db.findMany({ 
+                            where: {
+                                AND: [
+                                    { parentId: parent.id },
+                                    { id: { not: record.id } }
+                                ]
+                            }
+                        });
                         const result = await prisma.$transaction([
                             /** swap the child and the parent - ensures that the uuid for the ical stays the same  */
                             db.update({
@@ -185,7 +192,12 @@ function Events(db: PrismaClient['event']) {
                             }),
                             /** ensure that all pending reviews with this parent are refused... */
                             db.updateMany({
-                                where: { AND: [{ id: { in: siblings.map((s) => s.id) }}, { state: EventState.REVIEW }] },
+                                where: { 
+                                    AND: [
+                                        { state: EventState.REVIEW },
+                                        { id: { in: siblings.map((s) => s.id) }},
+                                    ]
+                                },
                                 data: {
                                     state: EventState.REFUSED
                                 }
