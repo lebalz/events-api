@@ -39,20 +39,23 @@ function Departments(db: PrismaClient['department']) {
             });
             return model;
         },
-        async createModel(actor: User, data: Prisma.DepartmentUncheckedCreateInput) {
+        async createModel(actor: User, data: {name: string, description?: string}) {
             if (actor.role !== Role.ADMIN) {
                 throw new HTTP403Error('Not authorized');
             }
             const { name, description } = data;
             const model = await db.create({
                 data: {
-                    name,
-                    description
+                    name: name,
+                    description: description || ''
                 },
             });
             return model;
         },
         async destroy(actor: User, id: string) {
+            if (actor.role !== Role.ADMIN) {
+                throw new HTTP403Error('Not authorized');
+            }
             const toDestroy = await db.findUnique({ 
                 where: { id: id }, 
                 include: { 
