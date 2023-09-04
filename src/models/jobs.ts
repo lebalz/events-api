@@ -54,25 +54,18 @@ function Jobs(db: PrismaClient['job']) {
             return model;
         },
         async destroy(actor: User, id: string) {
-            try {
-                const job = await this.findModel(actor, id);
-                if (job.events.length > 0) {
-                    const destroyEvents = job.events.map(e => Events._forceDestroy(e, { unlinkFromJob: false }));
-                    await Promise.all(destroyEvents);
-                    const cleanedUp = await this.findModel(actor, id);
-                    if (cleanedUp.events.length === 0) {
-                        return await db.delete({ where: { id: id } });
-                    } else {
-                        return cleanedUp
-                    }
-                } else {
+            const job = await this.findModel(actor, id);
+            if (job.events.length > 0) {
+                const destroyEvents = job.events.map(e => Events._forceDestroy(e, { unlinkFromJob: false }));
+                await Promise.all(destroyEvents);
+                const cleanedUp = await this.findModel(actor, id);
+                if (cleanedUp.events.length === 0) {
                     return await db.delete({ where: { id: id } });
+                } else {
+                    return cleanedUp
                 }
-            } catch (error) {
-                if (error instanceof HTTP403Error) {
-                    throw error;
-                }
-                return;
+            } else {
+                return await db.delete({ where: { id: id } });
             }
 
         },

@@ -2,6 +2,7 @@ import { type Job } from "@prisma/client";
 import { RequestHandler } from "express";
 import { IoEvent } from "../routes/socketEventTypes";
 import Jobs from "../models/jobs";
+import { HTTP404Error } from "../utils/errors/Errors";
 
 const NAME = 'JOB';
 
@@ -41,17 +42,22 @@ export const update: RequestHandler<{ id: string }, any, { data: Job }> = async 
 
 export const destroy: RequestHandler = async (req, res, next) => {
     try {
-        const job = await Jobs.destroy(req.user!, req.params.id);
-        if (!job) {
-            return res.status(204).send();
-        }
-        res.notifications = [
-            {
-                message: { record: NAME, id: job.id },
-                event: IoEvent.DELETED_RECORD
+        try {
+            const job = await Jobs.destroy(req.user!, req.params.id);
+            res.notifications = [
+                {
+                    message: { record: NAME, id: job.id },
+                    event: IoEvent.DELETED_RECORD
+                }
+            ]
+            res.status(204).send();
+        } catch (error) {
+            if (error instanceof HTTP404Error) {
+                /** if the job does not exist, we still want to send a 204 */
+                return res.status(204).send();
             }
-        ]
-        res.status(204).send();
+            throw error;
+        }
     } catch (error) {
         next(error);
     }
