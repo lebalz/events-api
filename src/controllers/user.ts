@@ -13,8 +13,6 @@ const NAME = 'USER';
 const getData = createDataExtractor<User>(
     []
 );
-const db = prisma.user;
-
 
 export const user: RequestHandler = async (req, res) => {
     res.json(req.user);

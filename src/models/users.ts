@@ -11,16 +11,16 @@ function Users(db: PrismaClient['user']) {
          * a full name and without a password
          */
         async findModel(id: string): Promise<Users | null> {
-            return db.findUnique({ where: { id } });
+            return await db.findUnique({ where: { id } });
         },
         async all(): Promise<Users[]> {
-            return db.findMany({});
+            return await db.findMany({});
         },
         async linkToUntis(actor: Users, userId: string, untisId: number | null): Promise<Users> {
             if (actor.role !== Role.ADMIN && actor.id !== userId) {
                 throw new HTTP403Error('Not authorized');
             }
-            return db.update({
+            return await db.update({
                 where: {
                     id: userId
                 },
@@ -33,7 +33,7 @@ function Users(db: PrismaClient['user']) {
             if (actor.role !== Role.ADMIN) {
                 throw new HTTP403Error('Not authorized');
             }
-            return db.update({
+            return await db.update({
                 where: {
                     id: userId
                 },
@@ -46,7 +46,7 @@ function Users(db: PrismaClient['user']) {
             if (actor.role !== userId) {
                 throw new HTTP403Error('Not authorized');
             }
-            return createIcsFile(userId, '');
+            return await createIcsFile(userId, '');
         },
         async affectedEvents(actor: Users, userId: string, semesterId?: string): Promise<Event[]> {
             if (actor.id !== userId && actor.role !== Role.ADMIN) {

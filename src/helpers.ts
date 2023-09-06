@@ -32,9 +32,9 @@ export const userProps = (authInfo?: Express.AuthInfo, includeId?: boolean): Pri
 
 }
 
-export const findUser = (authInfo?: Express.AuthInfo) => {
+export const findUser = async (authInfo?: Express.AuthInfo) => {
     const {oid } = getAuthInfo(authInfo);
-    return prisma.user.upsert({
+    return await prisma.user.upsert({
         where: {id: oid},
         update: userProps(authInfo, false),
         create: userProps(authInfo, true)

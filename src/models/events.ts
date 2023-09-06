@@ -106,7 +106,7 @@ function Events(db: PrismaClient['event']) {
                 throw new HTTP403Error('Not authorized');
             }
             
-            const updater = () => db.update({
+            const updater = async () => await db.update({
                 where: { id: id },
                 data: {
                     state: requested

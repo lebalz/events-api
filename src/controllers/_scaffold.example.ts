@@ -64,22 +64,6 @@ export const update: RequestHandler<{ id: string }, any, { data: Semester }> = a
             data
         });
 
-        /*
-        
-        const [count, model] = await prisma.$transaction([
-            db.updateMany({
-                where: { 
-                    AND: [
-                        { id: req.params.id },
-                        { userId: req.user!.id }
-                    ],
-                },
-                data
-            }),
-            db.findUnique({ where: { id: req.params.id } })
-        ]);
-        */
-
         res.notifications = [
             {
                 message: { record: NAME, id: model.id },

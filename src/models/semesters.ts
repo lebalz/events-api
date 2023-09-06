@@ -76,7 +76,7 @@ function Semesters(db: PrismaClient['semester']) {
             if (actor.role !== Role.ADMIN) {
                 throw new HTTP403Error('Not authorized');
             }
-            return db.delete({
+            return await db.delete({
                 where: { id: id }
             });
         },

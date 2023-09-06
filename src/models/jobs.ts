@@ -36,7 +36,7 @@ function Jobs(db: PrismaClient['job']) {
             };
         },
         async all(actor: User) {
-            const models = db.findMany({
+            const models = await db.findMany({
                 where: { userId: actor.id }
             });
             return models;
