@@ -1,11 +1,11 @@
 import { JobType, Prisma, Role, User } from "@prisma/client";
-import Jobs from "../src/models/jobs";
+import Jobs from "../../../src/models/jobs";
 import prismock from "../__mocks__/prismockClient";
 import { createUser } from "./users.test";
-import { HTTP400Error, HTTP403Error, HTTP404Error } from "../src/utils/errors/Errors";
+import { HTTP400Error, HTTP403Error, HTTP404Error } from "../../../src/utils/errors/Errors";
 import { createEvent } from "./events.test";
-import Events from "../src/models/events";
-import { prepareEvent } from "../src/models/event.helpers";
+import Events from "../../../src/models/events";
+import { prepareEvent } from "../../../src/models/event.helpers";
 
 export const createJob = async (props: Partial<Prisma.JobUncheckedCreateInput> & { userId: string, type: JobType }) => {
     return await prismock.job.create({

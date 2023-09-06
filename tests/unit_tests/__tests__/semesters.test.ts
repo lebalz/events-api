@@ -1,8 +1,8 @@
 import { JobType, Prisma, Role, User } from "@prisma/client";
-import Semesters from "../src/models/semesters";
+import Semesters from "../../../src/models/semesters";
 import prismock from "../__mocks__/prismockClient";
 import { createUser } from "./users.test";
-import { HTTP400Error, HTTP403Error, HTTP404Error } from "../src/utils/errors/Errors";
+import { HTTP400Error, HTTP403Error, HTTP404Error } from "../../../src/utils/errors/Errors";
 
 export const createSemester = async (props: Partial<Prisma.SemesterUncheckedCreateInput>) => {
     return await prismock.semester.create({

@@ -1,8 +1,8 @@
 import { Prisma, Role } from "@prisma/client";
-import Departments from "../src/models/departments";
+import Departments from "../../../src/models/departments";
 import prismock from "../__mocks__/prismockClient";
 import { createUser } from "./users.test";
-import { HTTP400Error, HTTP403Error } from "../src/utils/errors/Errors";
+import { HTTP400Error, HTTP403Error } from "../../../src/utils/errors/Errors";
 
 export const createDepartment = async (props: Partial<Prisma.DepartmentUncheckedCreateInput>) => {
     return await prismock.department.create({ 

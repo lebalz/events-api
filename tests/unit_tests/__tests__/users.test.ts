@@ -1,7 +1,7 @@
 import { Prisma, Role } from "@prisma/client"
 import _ from "lodash";
-import Users from "../src/models/users";
-import { HTTP403Error, HTTP404Error } from "../src/utils/errors/Errors";
+import Users from "../../../src/models/users";
+import { HTTP403Error, HTTP404Error } from "../../../src/utils/errors/Errors";
 import prismock from "../__mocks__/prismockClient";
 
 export const createUser = async (props: Partial<Prisma.UserUncheckedCreateInput>) => {
