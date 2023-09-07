@@ -16,10 +16,10 @@ function UntisTeachers(db: PrismaClient['untisTeacher']) {
             });
             return models;
         },
-        async findModel(id: string) {
+        async findModel(id: string | number) {
             const model = await db.findUnique({
                 where: {
-                    id: Number.parseInt(id, 10)
+                    id: Number.parseInt(`${id}`, 10)
                 },
                 include: {
                     lessons: {
@@ -37,7 +37,8 @@ function UntisTeachers(db: PrismaClient['untisTeacher']) {
                         }
                     },
                 }
-            })
+            });
+            return model;
         },
     })
 }
