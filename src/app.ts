@@ -1,5 +1,5 @@
 import { strategyForEnvironment } from "./auth/index";
-import express, { Request, Response, NextFunction } from "express";
+import express, { Request } from "express";
 import session from 'express-session';
 import compression from "compression";
 import prisma from "./prisma";
@@ -7,15 +7,10 @@ import path from "path";
 import cors from "cors";
 import morganMiddleware from './middlewares/morgan.middleware'
 import passport from "passport";
-import { Server } from "socket.io";
-import http from 'http';
 import router from './routes/router';
 import routeGuard, { createAccessRules } from './auth/guard';
 import authConfig, { PUBLIC_ROUTES } from './routes/authConfig';
-import EventRouter from './routes/socketEvents';
-import {instrument} from '@socket.io/admin-ui';
 import type { User } from "@prisma/client";
-import Logger from "./utils/logger";
 
 const AccessRules = createAccessRules(authConfig.accessMatrix);
 
@@ -26,10 +21,7 @@ const AccessRules = createAccessRules(authConfig.accessMatrix);
  * 
  */
 
-const PORT = process.env.PORT || 3002;
-
 const app = express();
-const server = http.createServer(app);
 
 app.use(compression(), express.json({ limit: "5mb" }));
 
@@ -45,7 +37,7 @@ app.use(express.json());
 
 app.use(morganMiddleware);
 
-const sessionMiddleware = session({
+export const sessionMiddleware = session({
     secret: process.env.SESSION_SECRET || 'secret',
     resave: false,
     saveUninitialized: false /** TODO: check if false is ok */
@@ -87,58 +79,7 @@ app.get('/api/v1/checklogin',
 );
 
 
-const corsOrigin = process.env.CORS_ORIGIN ? [process.env.CORS_ORIGIN, 'https://admin.socket.io'] : true;
 
-const io = new Server(server, {
-    cors: {
-        origin: corsOrigin,
-        credentials: true,
-        methods: ["GET", "POST", "PUT", "DELETE"],
-    },
-    transports: ['websocket'/* , 'polling' */]
-});
-
-
-instrument(io, {
-    readonly: false,
-    namespaceName: '/sio-admin',
-    mode: 'development',
-    auth: process.env.ADMIN_UI_PASSWORD ? {
-        type: 'basic',
-        username: 'admin',
-        /* generate a bcrypt hashed pw, e.g. with https://bcrypt.online/ */
-        password: process.env.ADMIN_UI_PASSWORD
-    } : false,
-});
-
-
-// convert a connect middleware to a Socket.IO middleware
-io.use((socket, next) => {
-    sessionMiddleware(socket.request as Request, {} as Response, next as NextFunction);
-});
-io.use((socket, next) => {
-    passport.initialize()(socket.request as Request, {} as Response, next as NextFunction)
-});
-io.use((socket, next) => {
-    passport.session()(socket.request as Request, {} as Response, next as NextFunction)
-});
-
-EventRouter(io);
-
-// only allow authenticated users in socketio
-io.use((socket, next) => {
-    if ((socket.request as any).user) {
-        next();
-    } else {
-        next(new Error("unauthorized"));
-    }
-});
-
-// Make io accessible to our router
-app.use((req: Request, res, next) => {
-    req.io = io;
-    next();
-});
 
 /**
  * Notification Middleware
@@ -197,7 +138,4 @@ app.use('/api/v1', (req, res, next) => {
 );
 
 
-server.listen(PORT || 3002, () => {
-    Logger.info(`application is running at: http://localhost:${PORT}`);
-    Logger.info('Press Ctrl+C to quit.')
-});
+export default app;
