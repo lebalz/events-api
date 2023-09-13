@@ -49,7 +49,15 @@ In the example, the password is `password`.
 
 👉 https://socket.io/docs/v4/admin-ui/#available-options
 
+### Setup Test DB
 
+Once you created your test db, you can run the migrations with:
+
+Make sure to have a `.test.env` file with the correct values.
+
+```bash
+dotenv -e .test.env -- yarn run test:db:create
+```
 
 #### Use unauthorized backend (e.g. when developping offline)
 
