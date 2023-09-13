@@ -84,8 +84,8 @@ function Events(db: PrismaClient['event']) {
                 model = await db.create({
                     data: {
                         ...cProps,
-                        ...(sanitized as Prisma.EventUncheckedCreateInput),
-                        parentId: record.id,
+                        ...(sanitized as Prisma.EventCreateInput),
+                        parent: {connect: { id: record.id }},
                         state: EventState.DRAFT,
                         departments: {
                             connect: departmentIds.map((id) => ({ id }))

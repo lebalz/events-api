@@ -28,10 +28,8 @@ export const prepareEvent = (event: (Event & {
     return prepared;
 }
 
-type EventProps = Prisma.EventUncheckedCreateInput;
-
-export const clonedProps = (event: Event & {departments: Department[]}, uid: string, options: {full?: boolean, cloneUserGroup?: boolean} = {}): EventProps => {
-    const props: EventProps = {
+export const clonedProps = (event: Event & {departments: Department[]}, uid: string, options: {full?: boolean, cloneUserGroup?: boolean} = {}): Prisma.EventCreateInput => {
+    const props: Prisma.EventCreateInput = {
         start: event.start,
         end: event.end,
         klpOnly: event.klpOnly,
@@ -42,7 +40,7 @@ export const clonedProps = (event: Event & {departments: Department[]}, uid: str
         descriptionLong: event.descriptionLong,
         teachingAffected: event.teachingAffected,
         state: EventState.DRAFT,
-        authorId: uid
+        author: { connect: { id: uid }},        
     }
     if (event.departments.length > 0) {
         props.departments = {
@@ -55,11 +53,13 @@ export const clonedProps = (event: Event & {departments: Department[]}, uid: str
             (props as any)[key] = [...(event[key] as string[])]
         }
     });
-    if (options.full || options.cloneUserGroup) {
-        props.userGroupId = event.userGroupId;
+    if (event.userGroupId && (options.full || options.cloneUserGroup)) {
+        props.userGroup = {connect: {id: event.userGroupId}};
     }
     if (options.full) {
-        props.jobId = event.jobId;
+        if (event.jobId) {
+            props.job = {connect: {id: event.jobId}};
+        }
         props.state = event.state;
         props.createdAt = event.createdAt;
         props.updatedAt = event.updatedAt;

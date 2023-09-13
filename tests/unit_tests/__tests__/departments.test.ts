@@ -3,13 +3,11 @@ import Departments from "../../../src/models/departments";
 import prismock from "../__mocks__/prismockClient";
 import { createUser } from "./users.test";
 import { HTTP400Error, HTTP403Error } from "../../../src/utils/errors/Errors";
+import { generateDepartment } from "../../factories/department";
 
 export const createDepartment = async (props: Partial<Prisma.DepartmentUncheckedCreateInput>) => {
     return await prismock.department.create({ 
-        data: {
-            name: '', 
-            ...props
-        }
+        data: generateDepartment(props)
     });
 }
 

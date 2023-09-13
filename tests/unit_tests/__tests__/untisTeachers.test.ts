@@ -6,6 +6,8 @@ import { HTTP400Error, HTTP403Error, HTTP404Error } from "../../../src/utils/err
 import { PrismockClientType } from "prismock/build/main/lib/client";
 import untisTeachers from "../../../src/models/untisTeachers";
 import { createSemester } from "./semesters.test";
+import { generateUntisLesson } from "../../factories/untisLesson";
+import { generateUntisTeacher } from "../../factories/untisTeacher";
 
 export const createUntisLesson = async (props: Partial<Prisma.UntisLessonUncheckedCreateInput>) => {
     let sid: string = '';
@@ -22,33 +24,14 @@ export const createUntisLesson = async (props: Partial<Prisma.UntisLessonUncheck
     }
 
     return await prismock.untisLesson.create({
-        data: {
-            description: props.description ?? '',
-            subject: props.subject ?? 'M',
-            room: props.room ?? 'D201',
-            weekDay: props.weekDay ?? 2,
-            startHHMM: props.startHHMM ?? (props.endHHMM === undefined ? 920 : props.endHHMM - 100),
-            endHHMM: props.endHHMM ?? (props.startHHMM === undefined ? 1005 : props.startHHMM + 100),
-            semesterNr: props.semesterNr ?? 1,
-            year: props.year ?? 2023,
-            semesterId: props.semesterId ?? sid
-        }
+        data: generateUntisLesson(sid, props)
     });
 }
 
 export const createUntisTeacher = async (props: Partial<Prisma.UntisTeacherUncheckedCreateInput>, lessons?: Partial<Prisma.UntisLessonUncheckedCreateInput>[]) => {
     const lessns = await Promise.all((lessons || []).map(createUntisLesson));
     return await prismock.untisTeacher.create({
-        data: {
-            active: true,
-            name: 'fba',
-            longName: 'Foo Bar',
-            title: 'M',
-            ...props,
-            lessons: {
-                connect: lessns.map((l) => ({ id: l.id }))
-            }
-        }
+        data: generateUntisTeacher({ lessons: { connect: lessns.map((l) => ({ id: l.id })) }, ...props })
     });
 }
 
@@ -85,7 +68,7 @@ describe('UntisTeacher', () => {
         });
         test('found untis teacher includes lessons', async () => {
             const teacherABC = await createUntisTeacher(
-                { name: 'abc' },
+                { name: 'abc', longName: 'Foo Bar', title: 'M' },
                 [
                     { subject: 'M', startHHMM: 920, endHHMM: 1005, room: 'D201', semesterNr: 1, weekDay: 2, year: 2023, description: 'falla', id: 1 },
                     { subject: 'In', startHHMM: 1025, endHHMM: 1110, room: 'D205', semesterNr: 2, weekDay: 3, year: 2023, description: 'dupla', id: 2 }

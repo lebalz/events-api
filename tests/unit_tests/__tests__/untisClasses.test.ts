@@ -5,15 +5,11 @@ import { createUser } from "./users.test";
 import { HTTP400Error, HTTP403Error, HTTP404Error } from "../../../src/utils/errors/Errors";
 import { createUntisTeacher } from "./untisTeachers.test";
 import { PrismockClientType } from "prismock/build/main/lib/client";
+import { generateUntisClass } from "../../factories/untisClass";
 
 export const createUntisClass = async (props: Partial<Prisma.UntisClassUncheckedCreateInput>) => {
     return await prismock.untisClass.create({
-        data: {
-            name: '25h',
-            sf: 'E',
-            year: 2025,
-            ...props
-        }
+        data: generateUntisClass(props)
     });
 }
 

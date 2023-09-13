@@ -3,16 +3,11 @@ import Semesters from "../../../src/models/semesters";
 import prismock from "../__mocks__/prismockClient";
 import { createUser } from "./users.test";
 import { HTTP400Error, HTTP403Error, HTTP404Error } from "../../../src/utils/errors/Errors";
+import { generateSemester } from "../../factories/semester";
 
 export const createSemester = async (props: Partial<Prisma.SemesterUncheckedCreateInput>) => {
     return await prismock.semester.create({
-        data: {
-            name: 'HS 2023',
-            start: new Date(2023, 7, 21),
-            end: new Date(2024, 1, 21),
-            untisSyncDate: new Date(2023, 11, 6),
-            ...props
-        }
+        data: generateSemester(props)
     });
 }
 

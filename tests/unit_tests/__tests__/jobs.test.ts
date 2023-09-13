@@ -6,12 +6,11 @@ import { HTTP400Error, HTTP403Error, HTTP404Error } from "../../../src/utils/err
 import { createEvent } from "./events.test";
 import Events from "../../../src/models/events";
 import { prepareEvent } from "../../../src/models/event.helpers";
+import { generateJob } from "../../factories/job";
 
-export const createJob = async (props: Partial<Prisma.JobUncheckedCreateInput> & { userId: string, type: JobType }) => {
+export const createJob = async (props: Partial<Prisma.JobUncheckedCreateInput> & { userId: string, type: 'IMPORT' }) => {
     return await prismock.job.create({
-        data: {
-            ...props
-        }
+        data: generateJob(props)
     });
 }
 
@@ -78,7 +77,8 @@ describe('Jobs', () => {
             await expect(Jobs.updateModel(user, job.id, {
                 type: JobType.CLONE, state: "DONE",
                 log: 'Blaa', filename: 'foobar.xlsx', semesterId: 'sid',
-                userId: 'another-ones', syncDate: new Date()
+                userId: 'another-ones', 
+                syncDate: new Date()
             })).resolves.toEqual(job);
         });
         test('admin can update description of others jobs', async () => {
@@ -101,8 +101,8 @@ describe('Jobs', () => {
         test('user can destroy job including connected draft events', async () => {
             const user = await createUser({ firstName: 'Reto' });
             const job = await createJob({ userId: user.id, type: JobType.IMPORT });
-            const event1 = await createEvent(user.id, { jobId: job.id });
-            const event2 = await createEvent(user.id, { jobId: job.id });
+            const event1 = await createEvent({authorId: user.id, jobId: job.id });
+            const event2 = await createEvent({authorId: user.id, jobId: job.id });
             await expect(Jobs.destroy(user, job.id)).resolves.toEqual(job);
             await expect(Jobs.findModel(user, job.id)).rejects.toEqual(new HTTP404Error(`Job with id ${job.id} not found`));
             await expect(Events.findModel(user, event1.id)).rejects.toEqual(new HTTP404Error('Event not found'));
@@ -111,10 +111,10 @@ describe('Jobs', () => {
         test('user can not destroy job with published/reviewed/refused events', async () => {
             const user = await createUser({ firstName: 'Reto' });
             const job = await createJob({ userId: user.id, type: JobType.IMPORT });
-            await createEvent(user.id, { jobId: job.id, state: 'DRAFT' });
-            const reviewed = await createEvent(user.id, { jobId: job.id, state: 'REVIEW' });
-            const refused = await createEvent(user.id, { jobId: job.id, state: 'REFUSED' });
-            const published = await createEvent(user.id, { jobId: job.id, state: 'PUBLISHED' });
+            await createEvent({authorId: user.id, jobId: job.id, state: 'DRAFT' });
+            const reviewed = await createEvent({authorId: user.id, jobId: job.id, state: 'REVIEW' });
+            const refused = await createEvent({authorId: user.id, jobId: job.id, state: 'REFUSED' });
+            const published = await createEvent({authorId: user.id, jobId: job.id, state: 'PUBLISHED' });
             await expect(Jobs.destroy(user, job.id)).resolves.toEqual({
                 ...job,
                 events: [

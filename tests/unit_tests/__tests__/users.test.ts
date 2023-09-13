@@ -3,15 +3,11 @@ import _ from "lodash";
 import Users from "../../../src/models/users";
 import { HTTP403Error, HTTP404Error } from "../../../src/utils/errors/Errors";
 import prismock from "../__mocks__/prismockClient";
+import { generateUser } from "../../factories/user";
 
 export const createUser = async (props: Partial<Prisma.UserUncheckedCreateInput>) => {
 	return await prismock.user.create({
-		data: {
-            firstName: '',
-            lastName: '',
-            email: 'foo@bar.ch',
-			...props
-		}
+		data: generateUser(props)
 	});
 }
 
