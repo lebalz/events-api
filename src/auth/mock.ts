@@ -14,14 +14,21 @@ class MockStrat extends Strategy {
         req: Request<ParamsDictionary, any, any, ParsedQs, Record<string, any>>,
         options?: any
     ) {
-        // return this.success(user, { preferred_username: auth.email });
-        const user = await prisma.user.findUnique({
-            where: {
-                id: process.env.TEST_USER_ID || '-1'
+        let where: { email: string } | { id: string } = { id: process.env.TEST_USER_ID || '-1' };
+        if (process.env.NODE_ENV === 'test' && req.headers.authorization) {
+            try {
+                const auth = JSON.parse(req.headers.authorization) as { email: string };           
+                where = { email: auth.email || ''};
+            } catch (err) {
+                Logger.error('Bearer Verify Error', err);
+                return this.fail('Could not parse authorization header');
             }
+        }
+        const user = await prisma.user.findUnique({
+            where: where
         }).catch((err: any) => {
             Logger.error('Bearer Verify Error', err);
-            return this.fail(`No User found for ${process.env.TEST_USER_ID}`);
+            return this.fail(`No User found for ${where}`);
         });
         return this.success(user!, { preferred_username: user!.email });
     }
