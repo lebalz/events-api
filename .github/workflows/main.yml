@@ -17,7 +17,7 @@ jobs:
         node-version: ${{ matrix.node-version }}
     - run: yarn install
     - run: yarn build
-    - run: yarn coverage
+    - run: yarn cov
     - name: Upload coverage reports to Codecov
       uses: codecov/codecov-action@v3
       with:

@@ -11,7 +11,7 @@ const PORT = process.env.PORT || 3002;
 
 
 const server = http.createServer(app);
-const corsOrigin = process.env.CORS_ORIGIN ? [process.env.CORS_ORIGIN, 'https://admin.socket.io'] : true;
+const corsOrigin = process.env.EVENTS_APP_URL ? [process.env.EVENTS_APP_URL, 'https://admin.socket.io'] : true;
 
 
 const io = new Server(server, {

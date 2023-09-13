@@ -136,12 +136,12 @@ dokku postgres:link events-api events-api
 dokku config:set events-api CLIENT_ID="XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX"
 dokku config:set events-api TENANT_ID="XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX"
 dokku config:set --no-restart events-api DOKKU_LETSENCRYPT_EMAIL="foo@bar.ch"
-dokku config:set hfr-events-api CORS_ORIGIN="allowed.domain.ch"
 dokku config:set hfr-events-api SESSION_SECRET=""
 dokku config:set hfr-events-api UNTIS_SCHOOL="gym_Schoolname"
 dokku config:set hfr-events-api UNTIS_USER="xyz"
 dokku config:set hfr-events-api UNTIS_SECRET="XYZXZXYZ"
 dokku config:set hfr-events-api UNTIS_BASE_URL="xyz.webuntis.com"
+dokku config:set hfr-events-api EVENTS_APP_URL="https://domain.ch"
 
 dokku storage:ensure-directory hfr-events-api
 dokku storage:mount hfr-events-api /var/lib/dokku/data/storage/hfr-events-api/ical:/app/ical

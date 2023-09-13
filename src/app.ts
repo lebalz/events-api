@@ -28,7 +28,7 @@ app.use(compression(), express.json({ limit: "5mb" }));
 // ensure the server can call other domains: enable cross origin resource sharing (cors)
 app.use(cors({
     credentials: true,
-    origin: process.env.CORS_ORIGIN || true, /* true = strict origin */
+    origin: process.env.EVENTS_APP_URL || true, /* true = strict origin */
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"]
 }));
 
