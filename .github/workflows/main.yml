@@ -29,7 +29,6 @@ jobs:
     - run: yarn install
     - run: yarn build
     - name: Run unit tests
-      working-directory: ./events-api
       run: yarn run cov:unit
     - name: Upload coverage reports to Codecov
       uses: codecov/codecov-action@v3
@@ -68,7 +67,6 @@ jobs:
     - run: yarn install
     - run: yarn build
     - name: Run integration tests
-      working-directory: ./events-api
       run: yarn run test:db:create && yarn run test:integration
       env:
         DATABASE_URL: "postgres://postgres:postgres@localhost:5432/events_api_test"
