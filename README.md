@@ -19,11 +19,18 @@ postgres=> \q
 psql -d postgres -h localhost -U events_api
 
 postgres=> CREATE DATABASE events_api;
+postgres=> CREATE DATABASE events_api_test; # for testing
 postgres=> \list
 postgres=> \c events_api
 ```
 
 ## Environment
+
+Add dotenv-cli globally to run the tests local:
+
+```bash
+yarn global add dotenv-cli
+```
 
 Copy the `example.env` file to `.env` and fill in the values.
 

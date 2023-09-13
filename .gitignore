@@ -2,7 +2,7 @@
 /out
 .DS_Store
 .env
-/tests/**/*.env
+.test.env
 
 data.json
 teachers.json

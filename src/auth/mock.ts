@@ -24,13 +24,18 @@ class MockStrat extends Strategy {
                 return this.fail('Could not parse authorization header');
             }
         }
-        const user = await prisma.user.findUnique({
-            where: where
-        }).catch((err: any) => {
+        try {
+            const user = await prisma.user.findUnique({
+                where: where
+            })
+            if (!user) {
+                return this.fail(`No User found for ${where}`);
+            }
+            return this.success(user, { preferred_username: user.email });            
+        } catch (err) {
             Logger.error('Bearer Verify Error', err);
             return this.fail(`No User found for ${where}`);
-        });
-        return this.success(user!, { preferred_username: user!.email });
+        }
     }
 }
 

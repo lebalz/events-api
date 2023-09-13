@@ -22,6 +22,8 @@ const AccessRules = createAccessRules(authConfig.accessMatrix);
  */
 
 const app = express();
+export const API_VERSION = 'v1';
+export const API_URL = `/api/${API_VERSION}`;
 
 app.use(compression(), express.json({ limit: "5mb" }));
 
@@ -67,11 +69,11 @@ app.use('/ical', express.static(path.join(__dirname, '..', 'ical')));
 app.use(express.static(path.join(__dirname,'..', 'docs')));
 
 // Public Endpoints
-app.get("/api/v1", (req, res) => {
+app.get(`${API_URL}`, (req, res) => {
     return res.status(200).send("Welcome to the EVENTES-API V1.0");
 });
 
-app.get('/api/v1/checklogin',
+app.get(`${API_URL}/checklogin`,
     passport.authenticate("oauth-bearer", { session: true }),
     async (req, res) => {
         res.status(req.user ? 200 : 401).send('OK')
@@ -111,7 +113,7 @@ app.use((req: Request, res, next) => {
 });
 
 
-app.use('/api/v1', (req, res, next) => {
+app.use(`${API_URL}`, (req, res, next) => {
     passport.authenticate('oauth-bearer', { session: true }, (err: Error, user: User, info: any) => {
         if (err) {
             /**

@@ -1,3 +1,2 @@
 import * as dotenv from 'dotenv';
-
-dotenv.config({ path: './config.env.test' });
+const env = dotenv.config({ path: './.test.env' });

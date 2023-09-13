@@ -9,6 +9,7 @@
     "build": "npx prisma generate && tsc --build ./tsconfig.build.json",
     "start": "node -r dotenv/config ./dist/src/server.js",
     "dev": "ts-node -r dotenv/config ./src/server.ts",
+    "test:db:create": "dotenv -e .test.env -- npx prisma migrate dev",
     "test": "jest -c jest.config.unit.js -- && jest -c jest.config.integration.js --",
     "unit": "jest -c jest.config.unit.js --",
     "integration": "jest -c jest.config.integration.js --",
