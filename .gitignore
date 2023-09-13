@@ -2,6 +2,8 @@
 /out
 .DS_Store
 .env
+/tests/**/*.env
+
 data.json
 teachers.json
 *.xlsx
@@ -16,6 +18,6 @@ ical/*.ics
 **.example.sql
 docs/prisma/**/*
 **/helpers/*.pdf
-/coverage
+/coverage.*
 /dist
 /logs
