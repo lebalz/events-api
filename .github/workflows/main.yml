@@ -2,23 +2,11 @@ name: Node CI
 
 on: [push]
 jobs:
-  build:
+  unit-testing:
     runs-on: ubuntu-latest
     strategy:
       matrix:
         node-version: [18.x]
-    steps:
-    - uses: actions/checkout@v3
-    - name: Use Node.js ${{ matrix.node-version }}
-      uses: actions/setup-node@v3
-      with:
-        node-version: ${{ matrix.node-version }}
-        cache: 'yarn'
-    - run: yarn install
-    - run: yarn build
-  unit-testing:
-    needs: build
-    runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
     - name: Use Node.js ${{ matrix.node-version }}
@@ -37,8 +25,10 @@ jobs:
       env:
         CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
   integration-testing:
-    needs: build
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [18.x]
     services:
       # Label used to access the service container
       postgres:
