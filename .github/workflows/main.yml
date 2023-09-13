@@ -19,7 +19,9 @@ jobs:
     runs-on: ubuntu-latest
     needs: build
     steps:
-    - run: yarn run cov:unit
+    - name: Run unit tests
+      working-directory: ./events-api
+      run: yarn run cov:unit
     - name: Upload coverage reports to Codecov
       uses: codecov/codecov-action@v3
       with:
@@ -49,6 +51,7 @@ jobs:
           - 5432:5432
     steps:
     - name: Run integration tests
+      working-directory: ./events-api
       run: yarn run test:db:create && yarn run test:integration
       env:
         DATABASE_URL: "postgres://postgres:postgres@localhost:5432/events_api_test"
