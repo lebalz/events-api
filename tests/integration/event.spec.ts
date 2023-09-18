@@ -47,30 +47,30 @@ describe(`POST ${API_URL}/event/import`, () => {
         const event1 = events.find(e => e.description === '1. Schultag gemäss Programm');
         expect(event1?.descriptionLong).toEqual('');
         expect(event1?.location).toEqual('GBSL');
-        expect(event1?.start.toISOString()).toEqual('2023-08-21T23:59:59.000Z');
-        expect(event1?.end.toISOString()).toEqual('2023-08-21T23:59:59.000Z');
+        expect(event1?.start).toEqual(new Date(Date.UTC(2023, 7, 21, 23, 59, 59)));
+        expect(event1?.end).toEqual(new Date(Date.UTC(2023, 7, 21, 23, 59, 59)));
         expect(event1?.classes).toEqual([]);
 
         
         const event2 = events.find(e => e.description === '26Fa FMS1 Kurzklassenkonferenz');
         expect(event2?.descriptionLong).toEqual('');
         expect(event2?.location).toEqual('');
-        expect(event2?.start.toISOString()).toEqual('2023-08-24T13:15:00.000Z');
-        expect(event2?.end.toISOString()).toEqual('2023-08-24T13:30:00.000Z');
+        expect(event2?.start).toEqual(new Date(Date.UTC(2023, 7, 24, 13, 15, 0)));
+        expect(event2?.end).toEqual(new Date(Date.UTC(2023, 7, 24, 13, 30, 0)));
         expect(event2?.classes).toEqual([]);
 
         const event3 = events.find(e => e.description === 'Koordinationssitzung LK der neuen Bilingue-Klassen 27Gw, 27Gx, 27mT, 27mU');
         expect(event3?.descriptionLong).toEqual('');
         expect(event3?.location).toEqual('M208');
-        expect(event3?.start.toISOString()).toEqual('2023-08-24T13:15:00.000Z');
-        expect(event3?.end.toISOString()).toEqual('2023-08-24T14:00:00.000Z');
+        expect(event3?.start).toEqual(new Date(Date.UTC(2023, 7, 24, 13, 15, 0)));
+        expect(event3?.end).toEqual(new Date(Date.UTC(2023, 7, 24, 14, 0, 0)));
         expect(event3?.classes).toEqual([ '27Gw', '27Gx', '27mT', '27mU' ]);
 
         const event4 = events.find(e => e.description === 'Information IDAF 1 Geschichte / Französisch');
         expect(event4?.descriptionLong).toEqual('Die Lehrpersonen informieren die Klasse in einer der Lektionen über den Zeitpunkt und Ablauf des IDAF-Moduls');
         expect(event4?.location).toEqual('');
-        expect(event4?.start.toISOString()).toEqual('2023-08-28T00:00:00.000Z');
-        expect(event4?.end.toISOString()).toEqual('2023-09-01T23:59:59.000Z');
+        expect(event4?.start).toEqual(new Date(Date.UTC(2023, 7, 28, 0, 0, 0)));
+        expect(event4?.end).toEqual(new Date(Date.UTC(2023, 8, 1, 23, 59, 59)));
         expect(event4?.classes).toEqual([ '26Wa' ]);
     });
 });
