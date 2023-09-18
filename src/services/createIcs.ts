@@ -15,6 +15,36 @@ export const toDateArray = (date: Date): DateArray => {
     return [date.getUTCFullYear(), date.getUTCMonth() + 1, date.getUTCDate(), date.getUTCHours(), date.getUTCMinutes()];
 }
 
+export const prepareEvent = (event: Event): EventAttributes => {
+    const start = toDateArray(new Date(event.start));
+    const end = toDateArray(new Date(event.end));
+    const createdAt = toDateArray(new Date(event.createdAt));
+    const updatedAt = toDateArray(new Date(event.updatedAt));
+    const descriptionLong = `${event.descriptionLong || ''}
+
+    ${event.classes.length > 0 ? 'Klassen: ' + event.classes.join(', ') : ''}
+    ${event.deletedAt ? 'Gelöscht am: ' + event.deletedAt : ''}
+    ${event.location ? 'Ort: ' + event.location : ''}
+
+    👉 ${process.env.EVENTS_APP_URL}/event?id=${event.id}`;
+
+    return {
+        title: event.description,
+        start: start,
+        end: end,
+        description: descriptionLong,
+        location: event.location,
+        uid: event.id,
+        startInputType: 'utc',
+        startOutputType: 'local',
+        endInputType: 'utc',
+        endOutputType: 'local',
+        categories: event.classes,
+        lastModified: updatedAt,
+        created: createdAt 
+    }
+}
+
 export default async function createIcs(userId: string, jobId: string) {
     const user = await prisma.user.findUnique({
         where: { id: userId }
@@ -25,32 +55,7 @@ export default async function createIcs(userId: string, jobId: string) {
     if (fileName && publicEvents.length > 0) {
         const events: EventAttributes[] = [];
         publicEvents.forEach(event => {
-            const start = toDateArray(new Date(event.start));
-            const end = toDateArray(new Date(event.end));
-            const createdAt = toDateArray(new Date(event.createdAt));
-            const updatedAt = toDateArray(new Date(event.updatedAt));
-            const descriptionLong = `${event.descriptionLong || ''}
-
-            ${event.classes.length > 0 ? 'Klassen: ' + event.classes.join(', ') : ''}
-            ${event.deletedAt ? 'Gelöscht am: ' + event.deletedAt : ''}
-            ${event.location ? 'Ort: ' + event.location : ''}
-
-            👉 ${process.env.EVENTS_APP_URL}/event?id=${event.id}`
-            events.push({
-                title: event.description,
-                start: start,
-                end: end,
-                description: descriptionLong,
-                location: event.location,
-                uid: event.id,
-                startInputType: 'utc',
-                startOutputType: 'local',
-                endInputType: 'utc',
-                endOutputType: 'local',
-                categories: event.classes,
-                lastModified: updatedAt,
-                created: createdAt 
-            });
+            events.push(prepareEvent(event));
         });
         const fileCreated: boolean = await new Promise((resolve, reject) => {
             createEvents(events, (error, value) => {

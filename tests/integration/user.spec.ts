@@ -3,8 +3,16 @@ import { truncate } from "./helpers/db";
 import prisma from '../../src/prisma';
 import app, { API_URL } from '../../src/app';
 import { generateUser } from '../factories/user';
-import { Role, User } from '@prisma/client';
+import { EventState, Role, TeachingAffected, User } from '@prisma/client';
 import { generateUntisTeacher } from '../factories/untisTeacher';
+import { generateEvent } from '../factories/event';
+import { generateSemester } from '../factories/semester';
+import { generateDepartment } from '../factories/department';
+import { generateUntisClass } from '../factories/untisClass';
+import { generateUntisLesson } from '../factories/untisLesson';
+import { existsSync, readFile, readFileSync } from 'fs';
+import { createEvent, createEvents } from 'ics';
+import { prepareEvent } from '../../src/services/createIcs';
 
 beforeAll(() => {
     return truncate();
@@ -154,5 +162,77 @@ describe(`PUT ${API_URL}/user/:id/link_to_untis`, () => {
             untisId: untisUser.id,
             updatedAt: expect.any(String)
         });
+    });
+});
+
+
+
+describe(`POST ${API_URL}/user/:id/create_ics`, () => {
+    afterEach(() => {
+        return truncate();
+    });
+    it('can create an ics for the users calendar', async () => {
+        const sem = await prisma.semester.create({
+            data: generateSemester({
+                start: new Date(), 
+                end: new Date(Date.now() + 1000 * 60 * 60 * 24 * 7 * 4 * 6)
+        })});
+        const department = await prisma.department.create({data: generateDepartment({classLetters: ['h'], letter: 'G'})});
+        const teacher = await prisma.untisTeacher.create({data: generateUntisTeacher()});
+        const klass = await prisma.untisClass.create({data: {
+            ...generateUntisClass({departmentId: department.id, name: '25Gh'}),
+            teachers: {
+                connect: {
+                    id: teacher.id
+                }
+            }
+        }});
+        const lesson = await prisma.untisLesson.create({
+            data: generateUntisLesson(
+                sem.id, {
+                    teachers: {
+                        connect: { id: teacher.id }
+                    },
+                    classes: {
+                        connect: { id: klass.id }
+                    }
+                }
+            )
+        });
+
+        const user = await prisma.user.create({
+            data: generateUser({email: 'foo@bar.ch', untisId: teacher.id})
+        });
+        
+        const event = await prisma.event.create({
+            data: generateEvent({
+                authorId: user.id, 
+                state: EventState.PUBLISHED,
+                departments: {
+                    connect: {
+                        id: department.id
+                    }
+                },
+                teachingAffected: TeachingAffected.YES,
+                start: new Date(),
+                end: new Date(Date.now() + 1000 * 60 * 60),
+            })
+        });
+
+        const result = await request(app)
+            .post(`${API_URL}/user/${user.id}/create_ics`)
+            .set('authorization', JSON.stringify({email: user.email}));
+        expect(result.statusCode).toEqual(200);
+        expect(result.body).toEqual({
+            ...prepareUser(user),
+            icsLocator: expect.any(String),
+            updatedAt: expect.any(String)
+        });
+        expect(existsSync(`${__dirname}/../../ical/${result.body.icsLocator}`)).toBeTruthy();
+        const ical = readFileSync(`${__dirname}/../../ical/${result.body.icsLocator}`, { encoding: 'utf8' });
+        const ics = createEvents([prepareEvent(event)]);
+        expect(ical).toEqual(
+            ics.value
+        );
     });
 });

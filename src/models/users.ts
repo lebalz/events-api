@@ -53,7 +53,7 @@ function Users(db: PrismaClient['user']) {
             });
         },
         async createIcs(actor: Users, userId: string): Promise<Users> {
-            if (actor.role !== userId) {
+            if (actor.id !== userId) {
                 throw new HTTP403Error('Not authorized');
             }
             return await createIcsFile(userId, '');

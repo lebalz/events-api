@@ -62,7 +62,7 @@ const query = (userId: string, timerange: RelTR | AbsTR) => {
                             AND (MOD((users_untis_view.l_week_day - events_view.start_week_day + 7)::INTEGER, 7) * 24 * 60 + FLOOR(users_untis_view.l_end_hhmm / 100) * 60 + MOD(users_untis_view.l_end_hhmm, 100)) > events_view.start_offset_m
                         )
                     OR
-                        /* & overlpaaing subjects */
+                        /* & overlapping subjects */
                         events_view.subjects && users_teaching_view.subjects
                 )
             )
