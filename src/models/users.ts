@@ -2,7 +2,8 @@ import { Event, PrismaClient, Role, User as Users } from "@prisma/client";
 import {default as createIcsFile} from '../services/createIcs';
 import { default as queryAffectedEvents} from "../services/assets/query.eventsAffectingUser";
 import prisma from "../prisma";
-import { HTTP403Error, HTTP404Error } from "../utils/errors/Errors";
+import { HTTP400Error, HTTP403Error, HTTP404Error } from "../utils/errors/Errors";
+import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
 
 function Users(db: PrismaClient['user']) {
     return Object.assign(db, {
@@ -20,14 +21,23 @@ function Users(db: PrismaClient['user']) {
             if (actor.role !== Role.ADMIN && actor.id !== userId) {
                 throw new HTTP403Error('Not authorized');
             }
-            return await db.update({
-                where: {
-                    id: userId
-                },
-                data: {
-                    untisId: untisId || null
+            try {
+                const res = await db.update({
+                    where: {
+                        id: userId
+                    },
+                    data: {
+                        untisId: untisId || null
+                    }
+                });
+                return res;
+            } catch (err: unknown) {
+                const error = err as PrismaClientKnownRequestError;
+                if (error.name === 'PrismaClientKnownRequestError' && error.code === 'P2002') {
+                    throw new HTTP400Error('Untis ID already in use');
                 }
-            });
+                throw error;
+            }
         },
         async setRole(actor: Users, userId: string, role: Role): Promise<Users> {
             if (actor.role !== Role.ADMIN) {

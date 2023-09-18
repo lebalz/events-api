@@ -8,6 +8,8 @@ import {default as createIcsFile} from '../services/createIcs';
 import { IoRoom } from "../routes/socketEvents";
 import { default as queryAffectedEvents} from "../services/assets/query.eventsAffectingUser";
 import Users from '../models/users';
+import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
+import { HTTP400Error } from "../utils/errors/Errors";
 
 const NAME = 'USER';
 const getData = createDataExtractor<User>(

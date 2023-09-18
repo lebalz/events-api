@@ -4,6 +4,7 @@ import prisma from '../../src/prisma';
 import app, { API_URL } from '../../src/app';
 import { generateUser } from '../factories/user';
 import { Role, User } from '@prisma/client';
+import { generateUntisTeacher } from '../factories/untisTeacher';
 
 beforeAll(() => {
     return truncate();
@@ -74,5 +75,84 @@ describe(`GET ${API_URL}/user/:id authorized`, () => {
             .set('authorization', JSON.stringify({email: user.email}));
         expect(result.statusCode).toEqual(200);
         expect(result.body).toEqual(prepareUser(other));
+    });
+});
+
+describe(`PUT ${API_URL}/user/:id/link_to_untis`, () => {
+    afterEach(() => {
+        return truncate();
+    });
+    it('can link self to an untis teacher', async () => {
+        const user = await prisma.user.create({
+            data: generateUser({email: 'foo@bar.ch'})
+        });
+        const untisUser = await prisma.untisTeacher.create({
+            data: generateUntisTeacher({id: 1234})
+        });
+        const result = await request(app)
+            .put(`${API_URL}/user/${user.id}/link_to_untis`)
+            .set('authorization', JSON.stringify({email: user.email}))
+            .send({ data: { untisId: untisUser.id } });
+        expect(result.statusCode).toEqual(200);
+        expect(result.body).toEqual({
+            ...prepareUser(user),
+            untisId: untisUser.id,
+            updatedAt: expect.any(String)
+        });
+    });
+    it('can not link to a used untis teacher', async () => {
+        const untisUser = await prisma.untisTeacher.create({
+            data: generateUntisTeacher({id: 1234})
+        });
+        const reto = await prisma.user.create({
+            data: generateUser({email: 'reto@bar.ch', untisId: untisUser.id})
+        });
+        const user = await prisma.user.create({
+            data: generateUser({email: 'foo@bar.ch'})
+        });
+        const result = await request(app)
+            .put(`${API_URL}/user/${user.id}/link_to_untis`)
+            .set('authorization', JSON.stringify({email: user.email}))
+            .send({ data: { untisId: untisUser.id } });
+        expect(result.statusCode).toEqual(400);
+    });
+    it('can not link to other users', async () => {
+        const reto = await prisma.user.create({
+            data: generateUser({email: 'reto@bar.ch'})
+        });
+        const user = await prisma.user.create({
+            data: generateUser({email: 'foo@bar.ch'})
+        });
+        const untisUser = await prisma.untisTeacher.create({
+            data: generateUntisTeacher({id: 1234})
+        });
+
+        const result = await request(app)
+            .put(`${API_URL}/user/${user.id}/link_to_untis`)
+            .set('authorization', JSON.stringify({email: reto.email}))
+            .send({ data: { untisId: untisUser.id } });
+        expect(result.statusCode).toEqual(403);
+    });
+    it('can link other users when admin role', async () => {
+        const admin = await prisma.user.create({
+            data: generateUser({email: 'admin@bar.ch', role: Role.ADMIN})
+        });
+        const user = await prisma.user.create({
+            data: generateUser({email: 'foo@bar.ch'})
+        });
+        const untisUser = await prisma.untisTeacher.create({
+            data: generateUntisTeacher({id: 1234})
+        });
+
+        const result = await request(app)
+            .put(`${API_URL}/user/${user.id}/link_to_untis`)
+            .set('authorization', JSON.stringify({email: admin.email}))
+            .send({ data: { untisId: untisUser.id } });
+        expect(result.statusCode).toEqual(200);
+        expect(result.body).toEqual({
+            ...prepareUser(user),
+            untisId: untisUser.id,
+            updatedAt: expect.any(String)
+        });
     });
 });

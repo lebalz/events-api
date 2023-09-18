@@ -11,6 +11,7 @@ import router from './routes/router';
 import routeGuard, { createAccessRules } from './auth/guard';
 import authConfig, { PUBLIC_ROUTES } from './routes/authConfig';
 import type { User } from "@prisma/client";
+import { HttpStatusCode } from "./utils/errors/BaseError";
 
 const AccessRules = createAccessRules(authConfig.accessMatrix);
 
@@ -120,12 +121,12 @@ app.use(`${API_URL}`, (req, res, next) => {
              * An error occurred during authorization. Send a Not Autohrized 
              * status code.
              */
-            return res.status(401).json({ error: err.message });
+            return res.status(HttpStatusCode.UNAUTHORIZED).json({ error: err.message });
         }
 
         if (!user && !PUBLIC_ROUTES.includes(req.path.toLowerCase())) {
             // If no user object found, send a 401 response.
-            return res.status(401).json({ error: 'Unauthorized' });
+            return res.status(HttpStatusCode.UNAUTHORIZED).json({ error: 'Unauthorized' });
         }
         req.user = user;
         if (info) {

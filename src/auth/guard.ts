@@ -2,6 +2,7 @@ import type { Role } from "@prisma/client";
 import { Request, Response, NextFunction } from "express";
 import { AccessMatrix, PUBLIC_ROUTES } from "../routes/authConfig";
 import Logger from "../utils/logger";
+import { HttpStatusCode } from "../utils/errors/BaseError";
 
 interface AccessRegexRule {
     path: string;
@@ -47,11 +48,11 @@ export const createAccessRules = (accessMatrix: AccessMatrix): AccessRegexRule[]
 const routeGuard = (accessMatrix: AccessRegexRule[]) => {
     return (req: Request, res: Response, next: NextFunction) => {
         if (!req.user && !PUBLIC_ROUTES.includes(req.path.toLowerCase())) {
-            return res.status(403).json({ error: 'No roles claim found!' });
+            return res.status(HttpStatusCode.FORBIDDEN).json({ error: 'No roles claim found!' });
         }
 
         if (!requestHasRequiredAttributes(accessMatrix, req.path, req.method, req.user?.role || 'PUBLIC')) {
-            return res.status(403).json({ error: 'User does not have the role, method or path' });
+            return res.status(HttpStatusCode.FORBIDDEN).json({ error: 'User does not have the role, method or path' });
         }
 
         next();
