@@ -36,7 +36,7 @@ const extractTime = (time: string): [number, number] => {
 }
 
 export const importExcel = async (file: string, userId: string, jobId: string) => {
-  const xlsx = await readXlsxFile(file);
+  const xlsx = await readXlsxFile(file, { dateFormat: 'YYYY-MM-DD' });
   const imports = xlsx.slice(1).map(async (e) => {
     const start = e[COLUMNS.startDate] as any as Date;
     const startTime = e[COLUMNS.startTime] as string;

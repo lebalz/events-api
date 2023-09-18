@@ -55,15 +55,15 @@ describe(`POST ${API_URL}/event/import`, () => {
         const event2 = events.find(e => e.description === '26Fa FMS1 Kurzklassenkonferenz');
         expect(event2?.descriptionLong).toEqual('');
         expect(event2?.location).toEqual('');
-        expect(event2?.start.toISOString()).toEqual('2023-08-24T13:15:00.000Z');
-        expect(event2?.end.toISOString()).toEqual('2023-08-24T13:30:00.000Z');
+        expect(event2?.start.toISOString()).toEqual('2023-08-24T12:15:00.000Z');
+        expect(event2?.end.toISOString()).toEqual('2023-08-24T12:30:00.000Z');
         expect(event2?.classes).toEqual([]);
 
         const event3 = events.find(e => e.description === 'Koordinationssitzung LK der neuen Bilingue-Klassen 27Gw, 27Gx, 27mT, 27mU');
         expect(event3?.descriptionLong).toEqual('');
         expect(event3?.location).toEqual('M208');
-        expect(event3?.start.toISOString()).toEqual('2023-08-24T13:15:00.000Z');
-        expect(event3?.end.toISOString()).toEqual('2023-08-24T14:00:00.000Z');
+        expect(event3?.start.toISOString()).toEqual('2023-08-24T12:15:00.000Z');
+        expect(event3?.end.toISOString()).toEqual('2023-08-24T13:00:00.000Z');
         expect(event3?.classes).toEqual([ '27Gw', '27Gx', '27mT', '27mU' ]);
 
         const event4 = events.find(e => e.description === 'Information IDAF 1 Geschichte / Französisch');
