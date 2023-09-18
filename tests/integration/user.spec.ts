@@ -2,7 +2,7 @@ import request from 'supertest';
 import { truncate } from "./helpers/db";
 import prisma from '../../src/prisma';
 import app, { API_URL } from '../../src/app';
-import { generateUser } from '../factories/user';
+import { generateUser, userSequence } from '../factories/user';
 import { EventState, Role, TeachingAffected, User } from '@prisma/client';
 import { generateUntisTeacher } from '../factories/untisTeacher';
 import { generateEvent } from '../factories/event';
@@ -57,6 +57,43 @@ describe(`GET ${API_URL}/user authorized`, () => {
         });
     });
 });
+
+
+describe(`GET ${API_URL}/user/all`, () => {
+    afterEach(() => {
+        return truncate();
+    });
+    it('rejects unauthorized users', async () => {
+        const result = await request(app)
+            .get(`${API_URL}/user/all`)
+            .set('authorization', JSON.stringify({ noAuth: true }));
+        expect(result.statusCode).toEqual(401);
+    });
+    it('returns all users', async () => {
+        const user = await prisma.user.create({
+            data: generateUser({email: 'foo@bar.ch'})
+        });
+        const users = await Promise.all(userSequence(10).map(user => {
+            return prisma.user.create({
+                data: user
+            });
+        }));
+        const result = await request(app)
+            .get(`${API_URL}/user/all`)
+            .set('authorization', JSON.stringify({ email: user.email }));
+        expect(result.statusCode).toEqual(200);
+        expect(result.body).toHaveLength(11);
+        [user, ...users].forEach((usr, i) => {
+            const res = result.body.find((u: User) => u.id === usr.id);
+            expect(res).toEqual({
+                ...usr,
+                updatedAt: expect.any(String),
+                createdAt: expect.any(String)
+            });
+        });
+    });
+});
+
 describe(`GET ${API_URL}/user/:id authorized`, () => {
     afterEach(() => {
         return truncate();
@@ -236,8 +273,6 @@ describe(`POST ${API_URL}/user/:id/create_ics`, () => {
         );
     });
 });
-
-
 
 describe(`POST ${API_URL}/user/:id/set_role`, () => {
     afterEach(() => {
