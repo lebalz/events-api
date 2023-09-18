@@ -236,3 +236,72 @@ describe(`POST ${API_URL}/user/:id/create_ics`, () => {
         );
     });
 });
+
+
+
+describe(`POST ${API_URL}/user/:id/set_role`, () => {
+    afterEach(() => {
+        return truncate();
+    });
+    it('user can not set role of self', async () => {
+        const user = await prisma.user.create({
+            data: generateUser({email: 'foo@bar.ch'})
+        });
+        const result = await request(app)
+            .put(`${API_URL}/user/${user.id}/set_role`)
+            .set('authorization', JSON.stringify({email: user.email}))
+            .send({ data: { role: Role.ADMIN } });
+        expect(result.statusCode).toEqual(403);
+    });
+    it('admin can set role of self', async () => {
+        const admin = await prisma.user.create({
+            data: generateUser({email: 'admin@bar.ch', role: Role.ADMIN})
+        });
+        const result = await request(app)
+            .put(`${API_URL}/user/${admin.id}/set_role`)
+            .set('authorization', JSON.stringify({email: admin.email}))
+            .send({ data: { role: Role.USER } });
+        expect(result.statusCode).toEqual(200);
+        expect(result.body).toEqual({
+            ...prepareUser(admin),
+            role: Role.USER,
+            updatedAt: expect.any(String)
+        });
+    });
+    it('admin can grant a user admin privileges', async () => {
+        const user = await prisma.user.create({
+            data: generateUser({email: 'foo@bar.ch'})
+        });
+        const admin = await prisma.user.create({
+            data: generateUser({email: 'admin@bar.ch', role: Role.ADMIN})
+        });
+        const result = await request(app)
+            .put(`${API_URL}/user/${user.id}/set_role`)
+            .set('authorization', JSON.stringify({email: admin.email}))
+            .send({ data: { role: Role.ADMIN } });
+        expect(result.statusCode).toEqual(200);
+        expect(result.body).toEqual({
+            ...prepareUser(user),
+            role: Role.ADMIN,
+            updatedAt: expect.any(String)
+        });
+    });
+    it('admin can revoke admin privileges', async () => {
+        const user = await prisma.user.create({
+            data: generateUser({email: 'foo@bar.ch', role: Role.ADMIN})
+        });
+        const admin = await prisma.user.create({
+            data: generateUser({email: 'admin@bar.ch', role: Role.ADMIN})
+        });
+        const result = await request(app)
+            .put(`${API_URL}/user/${user.id}/set_role`)
+            .set('authorization', JSON.stringify({email: admin.email}))
+            .send({ data: { role: Role.USER } });
+        expect(result.statusCode).toEqual(200);
+        expect(result.body).toEqual({
+            ...prepareUser(user),
+            role: Role.USER,
+            updatedAt: expect.any(String)
+        });
+    });
+});

@@ -1,4 +1,3 @@
-import { Prisma } from '@prisma/client';
 import prisma from '../../../src/prisma';
 import { unlinkSync } from 'fs';
 
