@@ -2,11 +2,24 @@ import request from 'supertest';
 import app, { API_URL } from '../../src/app';
 import prisma from '../../src/prisma';
 import { generateUser } from '../factories/user';
-import { EventState, JobState, Role, TeachingAffected } from '@prisma/client';
+import { Event, EventState, JobState, Role, TeachingAffected } from '@prisma/client';
 import { truncate } from './helpers/db';
 import Jobs from '../../src/models/jobs';
-import { HTTP403Error } from '../../src/utils/errors/Errors';
-import { eventSequence } from '../factories/event';
+import { eventSequence, generateEvent } from '../factories/event';
+import { prepareEvent as prepEvent } from '../../src/models/event.helpers';
+
+const prepareEvent = (event: Event): any => {
+    const prepared = {
+        departmentIds: [],
+        versionIds: [],
+        ...event,
+        start: event.start.toISOString(),
+        end: event.end.toISOString(),
+        updatedAt: event.updatedAt.toISOString(),
+        createdAt: event.createdAt.toISOString()
+    };
+    return prepared;
+}
 
 describe(`POST ${API_URL}/event/import`, () => {
     afterEach(() => {
@@ -182,3 +195,76 @@ describe(`GET ${API_URL}/event/all`, () => {
         expect(result.body.map((e: any) => e.id).sort()).toEqual([...pubEvents, ...refusedEvents, ...reviewEvents, ...draftAdminEvents].map(e => e.id).sort());    
     });
 });
+
+describe(`GET ${API_URL}/event/:id`, () => {
+    afterEach(() => {
+        return truncate();
+    });
+    it("unauthorized user can not fetch public event", async () => {
+        const user = await prisma.user.create({
+            data: generateUser({email: 'foo@bar.ch'})
+        });
+        const event = await prisma.event.create({data: generateEvent({authorId: user.id, state: EventState.PUBLISHED})});
+        const result = await request(app)
+            .get(`${API_URL}/event/${event.id}`)
+            .set('authorization', JSON.stringify({ noAuth: true }));
+        expect(result.statusCode).toEqual(403);
+    });
+    it("authorized user can fetch public event", async () => {
+        const user = await prisma.user.create({
+            data: generateUser({email: 'foo@bar.ch'})
+        });
+        const other = await prisma.user.create({
+            data: generateUser({email: 'other@foo.ch'})
+        });
+        const event = await prisma.event.create({data: generateEvent({authorId: other.id, state: EventState.PUBLISHED})});
+        const result = await request(app)
+            .get(`${API_URL}/event/${event.id}`)
+            .set('authorization', JSON.stringify({ email: user.email }));
+        expect(result.statusCode).toEqual(200);
+        expect(result.body).toEqual(prepareEvent(event));
+    });
+});
+
+
+describe(`PUT ${API_URL}/event/:id`, () => {
+    afterEach(() => {
+        return truncate();
+    });
+    it('Lets users update their own draft events', async () => {
+        const user = await prisma.user.create({
+            data: generateUser({email: 'foo@bar.ch'})
+        });
+        const event = await prisma.event.create({data: generateEvent({authorId: user.id, description: 'foo bar!'})});
+        const result = await request(app)
+            .put(`${API_URL}/event/${event.id}`)
+            .set('authorization', JSON.stringify({ email: user.email }))
+            .send({data: {description: 'Hoo Ray!'}});
+        expect(result.statusCode).toEqual(200);
+        expect(result.body).toEqual({
+            ...prepareEvent(event),
+            description: 'Hoo Ray!',
+            updatedAt: expect.any(String)
+        });
+    });
+});
+
+/*
+describe(`POST ${API_URL}/event`, () => {
+    afterEach(() => {
+        return truncate();
+    });
+});
+
+
+describe(`DELETE ${API_URL}/event/:id`, () => {
+    afterEach(() => {
+        return truncate();
+    });
+});
+
+describe(`POST ${API_URL}/event/:id/clone`, () => {
+    afterEach(() => {
+        return truncate();
+    });
+});*/

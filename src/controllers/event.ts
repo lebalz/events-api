@@ -8,6 +8,7 @@ import { IoRoom } from "../routes/socketEvents";
 import createExcel from "../services/createExcel";
 import Events from "../models/events";
 import path from "path";
+import { prepareEvent } from "../models/event.helpers";
 
 const NAME = 'EVENT';
 

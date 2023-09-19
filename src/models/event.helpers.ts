@@ -25,6 +25,9 @@ export const prepareEvent = (event: (Event & {
         children: undefined,
         versionIds: event?.children?.sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime()).map((c) => c.id) || [],
     };
+    ['author', 'departments', 'children', 'job'].forEach((key) => {
+        delete (prepared as any)[key];
+    });
     return prepared;
 }
 
