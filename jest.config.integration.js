@@ -1,3 +1,5 @@
+process.env.TZ = 'UTC';
+
 var config = require('./jest.config')
 config.testRegex = "\\.spec\\.ts$"
 

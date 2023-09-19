@@ -172,3 +172,11 @@ dokku letsencrypt:enable events-api
 git remote add dokku dokku@<your-ip>:events-api
 git push -u dokku
 ```
+
+## VS Code Config
+
+```json title=settings.json
+{
+    "jestrunner.jestCommand": "TZ=UTC yarn jest"
+}
+```

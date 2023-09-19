@@ -1,5 +1,5 @@
 import prisma from '../../../src/prisma';
-import { unlinkSync } from 'fs';
+import { mkdirSync, rmSync, unlinkSync, writeFileSync } from 'fs';
 
 export const truncate = async () => {
     const DATABASE_URL = process.env.DATABASE_URL;
@@ -15,6 +15,15 @@ export const truncate = async () => {
             console.warn(error);
         }
     });
+    const path = `${__dirname}/../../uploads`;
+    try {
+        rmSync(path, { recursive: true });
+        mkdirSync(path);
+        writeFileSync(`${path}/.gitkeep`, '');
+    } catch (error) {
+        console.warn(error);
+    }
+
     await prisma.$transaction([
         prisma.department.deleteMany(),
         prisma.job.deleteMany(),

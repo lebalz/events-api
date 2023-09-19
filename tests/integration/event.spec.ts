@@ -5,6 +5,7 @@ import { generateUser } from '../factories/user';
 import { EventState, JobState, Role, TeachingAffected } from '@prisma/client';
 import { truncate } from './helpers/db';
 import Jobs from '../../src/models/jobs';
+import { HTTP403Error } from '../../src/utils/errors/Errors';
 
 describe(`POST ${API_URL}/event/import`, () => {
     afterEach(() => {
@@ -72,5 +73,17 @@ describe(`POST ${API_URL}/event/import`, () => {
         expect(event4?.start.toISOString()).toEqual('2023-08-28T00:00:00.000Z');
         expect(event4?.end.toISOString()).toEqual('2023-09-01T23:59:59.000Z');
         expect(event4?.classes).toEqual([ '26Wa' ]);
+    });
+
+    it("prevents users from importing events", async () => {
+        const user = await prisma.user.create({
+            data: generateUser({email: 'foo@bar.ch'})
+        });
+
+        const result = await request(app)
+            .post(`${API_URL}/event/import`)
+            .set('authorization', JSON.stringify({ email: user.email }))
+            .attach('terminplan', `${__dirname}/stubs/terminplan-import.xlsx`);
+        expect(result.statusCode).toEqual(403);
     });
 });
