@@ -6,6 +6,7 @@ import { EventState, JobState, Role, TeachingAffected } from '@prisma/client';
 import { truncate } from './helpers/db';
 import Jobs from '../../src/models/jobs';
 import { HTTP403Error } from '../../src/utils/errors/Errors';
+import { eventSequence } from '../factories/event';
 
 describe(`POST ${API_URL}/event/import`, () => {
     afterEach(() => {
@@ -112,5 +113,72 @@ describe(`POST ${API_URL}/event/import`, () => {
         expect(job.log.length).toBeGreaterThan(0);
         const events = await prisma.event.findMany();
         expect(events.length).toEqual(0);
+    });
+});
+
+describe(`GET ${API_URL}/event/all`, () => {
+    afterEach(() => {
+        return truncate();
+    });
+    it("lets unauthorized user fetch all public events", async () => {
+        const user = await prisma.user.create({
+            data: generateUser({email: 'foo@bar.ch'})
+        });
+        const pubEvents = await Promise.all(eventSequence(user.id, 10, {state: EventState.PUBLISHED}).map(e => prisma.event.create({data: e})));
+        const draftEvents = await Promise.all(eventSequence(user.id, 3, {state: EventState.DRAFT}).map(e => prisma.event.create({data: e})));
+        const refusedEvents = await Promise.all(eventSequence(user.id, 2, {state: EventState.REFUSED}).map(e => prisma.event.create({data: e})));
+        const reviewEvents = await Promise.all(eventSequence(user.id, 4, {state: EventState.REVIEW}).map(e => prisma.event.create({data: e})));
+        const result = await request(app)
+            .get(`${API_URL}/event/all`)
+            .set('authorization', JSON.stringify({ noAuth: true }));
+        expect(result.statusCode).toEqual(200);
+        expect(result.body.length).toEqual(10);
+        expect(result.body.map((e: any) => e.id).sort()).toEqual(pubEvents.map(e => e.id).sort());
+    });
+    it("lets authorized user fetch all public and it's own events", async () => {
+        const user = await prisma.user.create({
+            data: generateUser({email: 'foo@bar.ch'})
+        });
+        const other = await prisma.user.create({
+            data: generateUser({email: 'other@foo.ch'})
+        });
+        const pubEvents = await Promise.all(eventSequence(user.id, 10, {state: EventState.PUBLISHED}).map(e => prisma.event.create({data: e})));
+        const draftEvents = await Promise.all(eventSequence(user.id, 3, {state: EventState.DRAFT}).map(e => prisma.event.create({data: e})));
+        const refusedEvents = await Promise.all(eventSequence(user.id, 2, {state: EventState.REFUSED}).map(e => prisma.event.create({data: e})));
+        const reviewEvents = await Promise.all(eventSequence(user.id, 4, {state: EventState.REVIEW}).map(e => prisma.event.create({data: e})));
+        const refusedOtherEvents = await Promise.all(eventSequence(other.id, 5, {state: EventState.REFUSED}).map(e => prisma.event.create({data: e})));
+        const reviewOtherEvents = await Promise.all(eventSequence(other.id, 5, {state: EventState.REVIEW}).map(e => prisma.event.create({data: e})));
+        const all = await prisma.event.findMany();
+        expect(all.length).toEqual(29);
+
+        const result = await request(app)
+            .get(`${API_URL}/event/all`)
+            .set('authorization', JSON.stringify({ email: user.email }));
+        expect(result.statusCode).toEqual(200);
+        expect(result.body.length).toEqual(19);
+        expect(result.body.map((e: any) => e.id).sort()).toEqual([...pubEvents, ...draftEvents, ...refusedEvents, ...reviewEvents].map(e => e.id).sort());
+    });
+
+    it("lets admins fetch all events of state public, review and refused", async () => {
+        const user = await prisma.user.create({
+            data: generateUser({email: 'foo@bar.ch'})
+        });
+        const admin = await prisma.user.create({
+            data: generateUser({email: 'admin@foo.ch', role: Role.ADMIN})
+        });
+        const pubEvents = await Promise.all(eventSequence(user.id, 10, {state: EventState.PUBLISHED}).map(e => prisma.event.create({data: e})));
+        const draftEvents = await Promise.all(eventSequence(user.id, 7, {state: EventState.DRAFT}).map(e => prisma.event.create({data: e})));
+        const refusedEvents = await Promise.all(eventSequence(user.id, 2, {state: EventState.REFUSED}).map(e => prisma.event.create({data: e})));
+        const reviewEvents = await Promise.all(eventSequence(user.id, 4, {state: EventState.REVIEW}).map(e => prisma.event.create({data: e})));
+        const draftAdminEvents = await Promise.all(eventSequence(admin.id, 5, {state: EventState.DRAFT}).map(e => prisma.event.create({data: e})));
+        const all = await prisma.event.findMany();
+        expect(all.length).toEqual(28);
+
+        const result = await request(app)
+            .get(`${API_URL}/event/all`)
+            .set('authorization', JSON.stringify({ email: admin.email }));
+        expect(result.statusCode).toEqual(200);
+        expect(result.body.length).toEqual(21);
+        expect(result.body.map((e: any) => e.id).sort()).toEqual([...pubEvents, ...refusedEvents, ...reviewEvents, ...draftAdminEvents].map(e => e.id).sort());    
     });
 });
