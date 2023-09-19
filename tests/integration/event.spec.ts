@@ -21,6 +21,8 @@ describe(`POST ${API_URL}/event/import`, () => {
             .set('authorization', JSON.stringify({ email: admin.email }))
             .attach('terminplan', `${__dirname}/stubs/terminplan-import.xlsx`)
         expect(result.statusCode).toEqual(200);
+        expect(result.body.state).toEqual(JobState.PENDING);
+        expect(result.body.filename).toEqual('terminplan-import.xlsx');
         /** wait for the import job to finish */
         let job = await Jobs.findModel(admin, result.body.id);
         while (job.state === JobState.PENDING) {
@@ -28,6 +30,7 @@ describe(`POST ${API_URL}/event/import`, () => {
             job = await Jobs.findModel(admin, result.body.id);
         }
         expect(job.state).toEqual(JobState.DONE);
+        expect(job.log).toEqual('');
 
         const events = await prisma.event.findMany();
         expect(events.length).toEqual(4);
@@ -85,5 +88,29 @@ describe(`POST ${API_URL}/event/import`, () => {
             .set('authorization', JSON.stringify({ email: user.email }))
             .attach('terminplan', `${__dirname}/stubs/terminplan-import.xlsx`);
         expect(result.statusCode).toEqual(403);
+    });
+    it("lets logs failed import", async () => {
+        const admin = await prisma.user.create({
+            data: generateUser({email: 'admin@bar.ch', role: Role.ADMIN})
+        });
+
+        const result = await request(app)
+            .post(`${API_URL}/event/import`)
+            .set('authorization', JSON.stringify({ email: admin.email }))
+            .attach('terminplan', `${__dirname}/stubs/terminplan-corrupted.xlsx`)
+        expect(result.statusCode).toEqual(200);
+        expect(result.body.state).toEqual(JobState.PENDING);
+        expect(result.body.filename).toEqual('terminplan-corrupted.xlsx');
+        /** wait for the import job to finish */
+        let job = await Jobs.findModel(admin, result.body.id);
+        while (job.state === JobState.PENDING) {
+            await new Promise((resolve) => setTimeout(resolve, 50));
+            job = await Jobs.findModel(admin, result.body.id);
+        }
+        expect(job.state).toEqual(JobState.ERROR);
+        expect(job.log).toEqual(expect.any(String));
+        expect(job.log.length).toBeGreaterThan(0);
+        const events = await prisma.event.findMany();
+        expect(events.length).toEqual(0);
     });
 });
