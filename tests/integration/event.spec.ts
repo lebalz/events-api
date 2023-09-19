@@ -6,7 +6,6 @@ import { Event, EventState, JobState, Role, TeachingAffected } from '@prisma/cli
 import { truncate } from './helpers/db';
 import Jobs from '../../src/models/jobs';
 import { eventSequence, generateEvent } from '../factories/event';
-import { prepareEvent as prepEvent } from '../../src/models/event.helpers';
 
 const prepareEvent = (event: Event): any => {
     const prepared = {
@@ -208,7 +207,7 @@ describe(`GET ${API_URL}/event/:id`, () => {
         const result = await request(app)
             .get(`${API_URL}/event/${event.id}`)
             .set('authorization', JSON.stringify({ noAuth: true }));
-        expect(result.statusCode).toEqual(403);
+        expect(result.statusCode).toEqual(401);
     });
     it("authorized user can fetch public event", async () => {
         const user = await prisma.user.create({
