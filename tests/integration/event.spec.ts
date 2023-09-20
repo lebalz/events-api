@@ -338,9 +338,77 @@ describe(`DELETE ${API_URL}/event/:id`, () => {
     });
 });
 
-/*
+
 describe(`POST ${API_URL}/event/:id/clone`, () => {
     afterEach(() => {
         return truncate();
     });
-});*/
+
+    it('Lets users clone events', async () => {
+        const user = await prisma.user.create({
+            data: generateUser({email: 'foo@bar.ch'})
+        });
+        const event = await prisma.event.create({data: generateEvent({authorId: user.id, description: 'foo bar!'})});
+        const result = await request(app)
+            .post(`${API_URL}/event/${event.id}/clone`)
+            .set('authorization', JSON.stringify({ email: user.email }));
+        expect(result.statusCode).toEqual(201);
+        const all = await prisma.event.findMany();
+        expect(all.length).toEqual(2);
+        expect(result.body).toEqual({
+            ...prepareEvent(event),
+            id: expect.any(String),
+            cloned: true,
+            parentId: null,
+            createdAt: expect.any(String),
+            updatedAt: expect.any(String),
+        });
+        expect(result.body.description).toEqual('foo bar!');
+
+    });
+
+    it("Lets users clone other's published events", async () => {
+        const other = await prisma.user.create({
+            data: generateUser({email: 'other@bar.ch'})
+        });
+        const user = await prisma.user.create({
+            data: generateUser({email: 'foo@bar.ch'})
+        });
+        const event = await prisma.event.create({data: generateEvent({authorId: other.id, description: 'foo bar!', state: EventState.PUBLISHED})});
+        const result = await request(app)
+            .post(`${API_URL}/event/${event.id}/clone`)
+            .set('authorization', JSON.stringify({ email: user.email }));
+        expect(result.statusCode).toEqual(201);
+        const all = await prisma.event.findMany();
+        expect(all.length).toEqual(2);
+        expect(result.body).toEqual({
+            ...prepareEvent(event),
+            id: expect.any(String),
+            state: EventState.DRAFT,
+            authorId: user.id,
+            cloned: true,
+            parentId: null,
+            createdAt: expect.any(String),
+            updatedAt: expect.any(String),
+        });
+        expect(result.body.description).toEqual('foo bar!');
+    });
+
+    [EventState.DRAFT, EventState.REVIEW, EventState.REFUSED].forEach((state) => {
+        it(`is forbidden for user to clone other's ${state} events`, async () => {
+            const other = await prisma.user.create({
+                data: generateUser({email: 'other@bar.ch'})
+            });
+            const user = await prisma.user.create({
+                data: generateUser({email: 'foo@bar.ch'})
+            });
+            const event = await prisma.event.create({data: generateEvent({authorId: other.id, description: 'foo bar!', state: state})});
+            const result = await request(app)
+                .post(`${API_URL}/event/${event.id}/clone`)
+                .set('authorization', JSON.stringify({ email: user.email }));
+            expect(result.statusCode).toEqual(401);
+            const all = await prisma.event.findMany();
+            expect(all.length).toEqual(1);
+        });
+    });
+});

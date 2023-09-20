@@ -2,7 +2,7 @@ import { Department, Event, EventState, Job, JobState, JobType, Prisma, PrismaCl
 import prisma from "../prisma";
 import { createDataExtractor } from "../controllers/helpers";
 import { ApiEvent, clonedProps, prepareEvent } from "./event.helpers";
-import { HTTP400Error, HTTP403Error, HTTP404Error } from "../utils/errors/Errors";
+import { HTTP400Error, HTTP401Error, HTTP403Error, HTTP404Error } from "../utils/errors/Errors";
 import { importExcel } from "../services/importExcel";
 import Logger from "../utils/logger";
 const getData = createDataExtractor<Prisma.EventUncheckedUpdateInput>(
@@ -298,12 +298,11 @@ function Events(db: PrismaClient['event']) {
         },
         async cloneModel(actor: User, id: string): Promise<ApiEvent> {
             const record = await db.findUnique({ where: { id: id }, include: { departments: true } });
-            /** check policy - only delete if user is author or admin */
             if (!record) {
                 throw new HTTP404Error('Event not found');
             }
             if (record.state !== EventState.PUBLISHED && record.authorId !== actor.id) {
-                throw new HTTP403Error('Not authorized');
+                throw new HTTP401Error('Not authorized');
             }
             const newEvent = await db.create({
                 data: {...clonedProps(record, actor.id), cloned: true},
