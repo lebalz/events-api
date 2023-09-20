@@ -139,7 +139,7 @@ describe(`POST ${API_URL}/department`, () => {
             .post(`${API_URL}/department`)
             .set('authorization', JSON.stringify({email: user.email}))
             .send({name: 'FOO', description: 'BAR'});
-        expect(result.statusCode).toEqual(401);
+        expect(result.statusCode).toEqual(403);
     });
     it("admin can create a new department", async () => {
         const admin = await prisma.user.create({data: generateUser({role: Role.ADMIN})});
