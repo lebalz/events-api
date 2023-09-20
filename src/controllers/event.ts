@@ -75,7 +75,7 @@ export const setState: RequestHandler<{}, any, { data: { ids: string[], state: E
                 to: id
             });
         });
-        res.status(200).json(events);
+        res.status(201).json(events);
     } catch (error) /* istanbul ignore next */ {
         next(error);
     }

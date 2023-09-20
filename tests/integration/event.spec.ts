@@ -7,6 +7,7 @@ import { truncate } from './helpers/db';
 import Jobs from '../../src/models/jobs';
 import { eventSequence, generateEvent } from '../factories/event';
 import exp from 'constants';
+import { HttpStatusCode } from '../../src/utils/errors/BaseError';
 
 const prepareEvent = (event: Event): any => {
     const prepared = {
@@ -406,9 +407,73 @@ describe(`POST ${API_URL}/event/:id/clone`, () => {
             const result = await request(app)
                 .post(`${API_URL}/event/${event.id}/clone`)
                 .set('authorization', JSON.stringify({ email: user.email }));
-            expect(result.statusCode).toEqual(401);
+            expect(result.statusCode).toEqual(403);
             const all = await prisma.event.findMany();
             expect(all.length).toEqual(1);
         });
     });
+});
+
+
+describe(`POST ${API_URL}/event/change_state`, () => {
+    afterEach(() => {
+        return truncate();
+    });
+
+    const ALLOWED_TRANSITIONS = [
+        {from: EventState.DRAFT, to: EventState.REVIEW, for: [Role.USER, Role.ADMIN]},
+        {from: EventState.REVIEW, to: EventState.PUBLISHED, for: [Role.ADMIN]},
+        {from: EventState.REVIEW, to: EventState.REFUSED, for: [Role.ADMIN]},
+    ]
+    const FORBIDDEN_TRANSITIONS = [
+        {from: EventState.DRAFT, to: EventState.PUBLISHED, for: [Role.USER, Role.ADMIN]},
+        {from: EventState.DRAFT, to: EventState.REFUSED, for: [Role.USER, Role.ADMIN]},
+        {from: EventState.PUBLISHED, to: EventState.DRAFT, for: [Role.USER, Role.ADMIN]},
+        {from: EventState.PUBLISHED, to: EventState.REFUSED, for: [Role.USER, Role.ADMIN]},
+        {from: EventState.PUBLISHED, to: EventState.REVIEW, for: [Role.USER, Role.ADMIN]},
+        {from: EventState.REVIEW, to: EventState.DRAFT, for: [Role.USER], errorCode: HttpStatusCode.FORBIDDEN},
+        {from: EventState.REVIEW, to: EventState.DRAFT, for: [Role.ADMIN]},
+        {from: EventState.REFUSED, to: EventState.DRAFT, for: [Role.USER, Role.ADMIN]},
+        {from: EventState.REFUSED, to: EventState.PUBLISHED, for: [Role.USER, Role.ADMIN]},
+        {from: EventState.REFUSED, to: EventState.REVIEW, for: [Role.USER, Role.ADMIN]},
+    ]
+
+    describe('allowed transitions', () => {
+        ALLOWED_TRANSITIONS.forEach((transition) => {
+            transition.for.forEach((role) => {
+                it(`lets ${role} change state from ${transition.from} to ${transition.to}`, async () => {
+                    const user = await prisma.user.create({
+                        data: generateUser({email: 'foo@bar.ch', role: role})
+                    });
+                    const event = await prisma.event.create({data: generateEvent({authorId: user.id, state: transition.from})});
+                    const result = await request(app)
+                        .post(`${API_URL}/event/change_state`)
+                        .set('authorization', JSON.stringify({ email: user.email }))
+                        .send({data: {ids: [event.id], state: transition.to}});
+                    expect(result.statusCode).toEqual(201);
+                    expect(result.body.length).toEqual(1);
+                    expect(result.body[0].state).toEqual(transition.to);
+                });
+            });
+        });
+    });
+
+    describe('forbidden transitions', () => {
+        FORBIDDEN_TRANSITIONS.forEach((transition) => {
+            transition.for.forEach((role) => {
+                it(`forbids ${role} to change state from ${transition.from} to ${transition.to}`, async () => {
+                    const user = await prisma.user.create({
+                        data: generateUser({email: 'foo@bar.ch', role: role})
+                    });
+                    const event = await prisma.event.create({data: generateEvent({authorId: user.id, state: transition.from})});
+                    const result = await request(app)
+                        .post(`${API_URL}/event/change_state`)
+                        .set('authorization', JSON.stringify({ email: user.email }))
+                        .send({data: {ids: [event.id], state: transition.to}});
+                    expect(result.statusCode).toEqual(transition.errorCode || 400);
+                    await expect(prisma.event.findUnique({where: {id: event.id}})).resolves.toMatchObject({state: transition.from});
+                });
+            });
+        });
+    })
 });

@@ -2,7 +2,7 @@ import { Department, Event, EventState, Job, JobState, JobType, Prisma, PrismaCl
 import prisma from "../prisma";
 import { createDataExtractor } from "../controllers/helpers";
 import { ApiEvent, clonedProps, prepareEvent } from "./event.helpers";
-import { HTTP400Error, HTTP401Error, HTTP403Error, HTTP404Error } from "../utils/errors/Errors";
+import { HTTP400Error, HTTP403Error, HTTP404Error } from "../utils/errors/Errors";
 import { importExcel } from "../services/importExcel";
 import Logger from "../utils/logger";
 const getData = createDataExtractor<Prisma.EventUncheckedUpdateInput>(
@@ -157,7 +157,7 @@ function Events(db: PrismaClient['event']) {
                     throw new HTTP400Error('Draft can only be set to review');
                 case EventState.REVIEW:
                     if (!isAdmin) {
-                        throw new HTTP403Error('Not authorized');
+                        throw new HTTP403Error('Forbidden');
                     }
                     if (record.parentId && EventState.PUBLISHED === requested) {
                         const parent = await db.findUnique({ where: { id: record.parentId }, include: { departments: true, children: true } });
@@ -213,8 +213,9 @@ function Events(db: PrismaClient['event']) {
                 case EventState.REFUSED:
                     /** can't do anything with it */
                     throw new HTTP400Error(`${record.state} state is immutable`);
+                default:
+                    throw new HTTP400Error(`Unknown state "${requested}" requested`);
             }
-            throw new HTTP400Error(`Unknown state "${requested}" requested`);
         },
         async _forceDestroy(record: Event | ApiEvent, options: {unlinkFromJob?: boolean} = {}): Promise<ApiEvent> {
             /** only drafts are allowed to be hard deleted */
@@ -302,7 +303,7 @@ function Events(db: PrismaClient['event']) {
                 throw new HTTP404Error('Event not found');
             }
             if (record.state !== EventState.PUBLISHED && record.authorId !== actor.id) {
-                throw new HTTP401Error('Not authorized');
+                throw new HTTP403Error('Forbidden');
             }
             const newEvent = await db.create({
                 data: {...clonedProps(record, actor.id), cloned: true},
