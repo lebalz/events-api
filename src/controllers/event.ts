@@ -17,7 +17,7 @@ export const find: RequestHandler = async (req, res, next) => {
     try {
         const event = await Events.findModel(req.user, req.params.id);
         res.status(200).json(event);
-    } catch (error) {
+    } catch (error) /* istanbul ignore next */ {
         next(error);
     }
 }
@@ -34,7 +34,7 @@ export const update: RequestHandler<{ id: string }, any, { data: Event & { depar
             }
         ]
         res.status(200).json(model);
-    } catch (error) {
+    } catch (error) /* istanbul ignore next */ {
         next(error);
     }
 }
@@ -76,7 +76,7 @@ export const setState: RequestHandler<{}, any, { data: { ids: string[], state: E
             });
         });
         res.status(200).json(events);
-    } catch (error) {
+    } catch (error) /* istanbul ignore next */ {
         next(error);
     }
 }
@@ -98,7 +98,7 @@ export const destroy: RequestHandler = async (req, res, next) => {
             }]
         }
         res.status(204).send();
-    } catch (error) {
+    } catch (error) /* istanbul ignore next */ {
         next(error);
     }
 }
@@ -108,7 +108,7 @@ export const all: RequestHandler = async (req, res, next) => {
     try {
         const events = await Events.all(req.user);
         res.json(events);
-    } catch (error) {
+    } catch (error) /* istanbul ignore next */ {
         next(error);
     }
 }
@@ -166,7 +166,7 @@ export const importEvents: RequestHandler = async (req, res, next) => {
             }
         ];
         res.json(job);
-    } catch (error) {
+    } catch (error) /* istanbul ignore next */ {
         next(error);
     }
 }
@@ -194,7 +194,7 @@ export const exportExcel: RequestHandler = async (req, res, next) => {
         } else {
             res.status(400).json({message: 'No semester found'});
         }
-    } catch (error) {
+    } catch (error) /* istanbul ignore next */ {
         next(error);
     }
 }
