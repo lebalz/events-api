@@ -11,7 +11,7 @@ import multer from 'multer';
 
 const UPLOAD_DIR = process.env.UPLOAD_DIR 
     ? process.env.UPLOAD_DIR 
-    : process.env.NODE_ENV === 'test' ? 'tests/uploads/' : 'uploads/';
+    : process.env.NODE_ENV === 'test' ? 'tests/test-data/uploads' : 'uploads';
 
 // initialize router
 const router = express.Router();
@@ -34,7 +34,7 @@ router.post('/event/change_state', setEventState);
 router.delete('/event/:id', deleteEvent);
 router.post('/event', createEvent);
 
-const upload = multer({ dest: UPLOAD_DIR })
+const upload = multer({ dest: `${UPLOAD_DIR}/` })
 router.post('/event/import', upload.single('terminplan'), importEvents);
 
 

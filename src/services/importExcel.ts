@@ -1,7 +1,6 @@
 import { EventState } from "@prisma/client";
 import readXlsxFile from 'read-excel-file/node';
 import prisma from '../prisma';
-import { toDepartmentName } from "./helpers/departmentNames";
 import { KlassName, mapLegacyClassName } from "./helpers/klassNames";
 
 const COLUMNS = {

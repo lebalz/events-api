@@ -9,6 +9,7 @@ import createExcel from "../services/createExcel";
 import Events from "../models/events";
 import path from "path";
 import { prepareEvent } from "../models/event.helpers";
+import { HTTP400Error } from "../utils/errors/Errors";
 
 const NAME = 'EVENT';
 
@@ -183,6 +184,9 @@ export const exportExcel: RequestHandler = async (req, res, next) => {
                 }
             }
         }});
+        if (!currentSemester) {
+            throw new HTTP400Error('No semester found');
+        }
         const file = await createExcel(currentSemester?.id || '-1');
         if (file) {
             const fpath = path.resolve(file);

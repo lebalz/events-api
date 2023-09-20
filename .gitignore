@@ -15,6 +15,7 @@ yarn-error.log
 /dist
 dokku.sh
 uploads/
+!tests/test-data/uploads/
 ical/*.ics
 **.example.sql
 docs/prisma/**/*

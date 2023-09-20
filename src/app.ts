@@ -9,7 +9,7 @@ import morganMiddleware from './middlewares/morgan.middleware'
 import passport from "passport";
 import router from './routes/router';
 import routeGuard, { createAccessRules } from './auth/guard';
-import authConfig, { PUBLIC_ROUTES } from './routes/authConfig';
+import authConfig, { PUBLIC_POST_ROUTES, PUBLIC_ROUTES } from './routes/authConfig';
 import type { User } from "@prisma/client";
 import { HttpStatusCode } from "./utils/errors/BaseError";
 
@@ -124,7 +124,7 @@ app.use(`${API_URL}`, (req, res, next) => {
             return res.status(HttpStatusCode.UNAUTHORIZED).json({ error: err.message });
         }
 
-        if (!user && !PUBLIC_ROUTES.includes(req.path.toLowerCase())) {
+        if (!user && ![...PUBLIC_ROUTES, ...PUBLIC_POST_ROUTES].includes(req.path.toLowerCase())) {
             // If no user object found, send a 401 response.
             return res.status(HttpStatusCode.UNAUTHORIZED).json({ error: 'Unauthorized' });
         }

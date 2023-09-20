@@ -2,6 +2,16 @@
 
 [![Node CI](https://github.com/lebalz/events-api/actions/workflows/main.yml/badge.svg)](https://github.com/lebalz/events-api/actions/workflows/main.yml) [![codecov](https://codecov.io/gh/lebalz/events-api/graph/badge.svg?token=O9E8JNGEHN)](https://codecov.io/gh/lebalz/events-api)
 
+
+## ENV
+
+| Name | Description | Default |
+| --- | --- | --- |
+| `PORT` | Port to listen on | `3000` |
+| `ICAL_DIR` | Directory to export .ics files to | `./ical` |
+| `EXPORT_DIR` | Directory to export .xlsx files to | `./export` |
+| `UPLOAD_DIR` | Directory to upload excels for import | `./uploads` |
+
 ## Development
 
 Better error reporting for Azure AD: set `loggingNoPII: false` in `src/auth/azure-ad.ts`.

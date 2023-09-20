@@ -1,6 +1,6 @@
 import type { Role } from "@prisma/client";
 import { Request, Response, NextFunction } from "express";
-import { AccessMatrix, PUBLIC_ROUTES } from "../routes/authConfig";
+import { AccessMatrix, PUBLIC_POST_ROUTES, PUBLIC_ROUTES } from "../routes/authConfig";
 import Logger from "../utils/logger";
 import { HttpStatusCode } from "../utils/errors/BaseError";
 
@@ -47,7 +47,7 @@ export const createAccessRules = (accessMatrix: AccessMatrix): AccessRegexRule[]
 
 const routeGuard = (accessMatrix: AccessRegexRule[]) => {
     return (req: Request, res: Response, next: NextFunction) => {
-        if (!req.user && !PUBLIC_ROUTES.includes(req.path.toLowerCase())) {
+        if (!req.user && ![...PUBLIC_ROUTES, ...PUBLIC_POST_ROUTES].includes(req.path.toLowerCase())) {
             return res.status(HttpStatusCode.FORBIDDEN).json({ error: 'No roles claim found!' });
         }
 
@@ -65,6 +65,9 @@ const routeGuard = (accessMatrix: AccessRegexRule[]) => {
  */
 const requestHasRequiredAttributes = (accessMatrix: AccessRegexRule[], path: string, method: string, role: Role | 'PUBLIC') => {
     if (role === 'PUBLIC') {
+        if (PUBLIC_POST_ROUTES.includes(path.toLowerCase())) {
+            return method === 'POST';
+        }
         return method === 'GET';
     }
     const accessRules = Object.values(accessMatrix);

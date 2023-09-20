@@ -11,6 +11,10 @@ import Logger from '../utils/logger';
 export const SEC_2_MS = 1000;
 export const MINUTE_2_MS = 60 * SEC_2_MS;
 
+const ICAL_DIR = process.env.EXPORT_DIR 
+    ? process.env.EXPORT_DIR 
+    : process.env.NODE_ENV === 'test' ? `${__dirname}/../../tests/test-data/ical` : `${__dirname}/../../ical`;
+
 export const toDateArray = (date: Date): DateArray => {   
     return [date.getUTCFullYear(), date.getUTCMonth() + 1, date.getUTCDate(), date.getUTCHours(), date.getUTCMinutes()];
 }
@@ -63,7 +67,7 @@ export default async function createIcs(userId: string, jobId: string) {
                     Logger.error(error);
                     return resolve(false);
                 }            
-                writeFileSync(`${__dirname}/../../ical/${fileName}`, value, { encoding: 'utf8', flag: 'w' })
+                writeFileSync(`${ICAL_DIR}/${fileName}`, value, { encoding: 'utf8', flag: 'w' })
                 resolve(true);
             }
         )});

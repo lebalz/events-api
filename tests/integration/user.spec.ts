@@ -265,8 +265,8 @@ describe(`POST ${API_URL}/user/:id/create_ics`, () => {
             icsLocator: expect.any(String),
             updatedAt: expect.any(String)
         });
-        expect(existsSync(`${__dirname}/../../ical/${result.body.icsLocator}`)).toBeTruthy();
-        const ical = readFileSync(`${__dirname}/../../ical/${result.body.icsLocator}`, { encoding: 'utf8' });
+        expect(existsSync(`${__dirname}/../test-data/ical/${result.body.icsLocator}`)).toBeTruthy();
+        const ical = readFileSync(`${__dirname}/../test-data/ical/${result.body.icsLocator}`, { encoding: 'utf8' });
         const ics = createEvents([prepareEvent(event)]);
         expect(ical).toEqual(
             ics.value

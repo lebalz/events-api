@@ -13,6 +13,11 @@ export const WEEK_2_MS = 7 * DAY_2_MS;
 export const DAYS = ['So', 'Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa'] as const;
 export const DAYS_LONG = ['Sonntag', 'Montag', 'Dienstag', 'Mittwoch', 'Donnerstag', 'Freitag', 'Samstag'] as const;
 
+
+const EXPORT_DIR = process.env.EXPORT_DIR 
+    ? process.env.EXPORT_DIR 
+    : process.env.NODE_ENV === 'test' ? `${__dirname}/../../tests/test-data/exports` : `${__dirname}/../../exports`;
+
 export const getKW = (date: Date) => {
     const utcDate = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate(), 0, 0, 0, 0));
     const dayNumber = date.getUTCDay() || 7;
@@ -44,16 +49,16 @@ const createExcel = async (semesterId: string) => {
     }
     const timeStamp = `${now.getFullYear()}-${now.getMonth() + 1}-${now.getDate()}_${now.getHours()}-${Math.floor(now.getMinutes() / 5) * 5}`;
     const fileName = `${semester.name}-events_${timeStamp}.xlsx`;
-    const file = `./exports/${fileName}`;
+    const file = `${EXPORT_DIR}/${fileName}`;
     if (existsSync(file)) {
         return file;
     }
     // cleanup old files
     try {
 
-        const oldFiles = readdirSync('./exports').filter(f => f.startsWith(`${semester.name}-events `));
+        const oldFiles = readdirSync(`${EXPORT_DIR}/`).filter(f => f.startsWith(`${semester.name}-events `));
         oldFiles.forEach(f => {
-            const file = `./exports/${f}`;
+            const file = `${EXPORT_DIR}/${f}`;
             rmSync(file);
         });
     } catch (error) {

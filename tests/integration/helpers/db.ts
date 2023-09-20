@@ -6,23 +6,16 @@ export const truncate = async () => {
     if (!DATABASE_URL) {
         throw new Error('DATABASE_URL not set');
     }
-    const icals = await prisma.user.findMany({where: {icsLocator: {not: null}}});
-    icals.forEach(ical => {
-        const path = `${__dirname}/../../../ical/${ical.icsLocator}`;
+    ['uploads', 'ical', 'exports'].forEach(dir => {
+        const path = `${__dirname}/../../test-data/${dir}`;
         try {
-            unlinkSync(path);
+            rmSync(path, { recursive: true });
+            mkdirSync(path);
+            writeFileSync(`${path}/.gitkeep`, '');
         } catch (error) {
             console.warn(error);
         }
     });
-    const path = `${__dirname}/../../uploads`;
-    try {
-        rmSync(path, { recursive: true });
-        mkdirSync(path);
-        writeFileSync(`${path}/.gitkeep`, '');
-    } catch (error) {
-        console.warn(error);
-    }
 
     await prisma.$transaction([
         prisma.department.deleteMany(),

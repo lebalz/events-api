@@ -8,6 +8,9 @@ import Jobs from '../../src/models/jobs';
 import { eventSequence, generateEvent } from '../factories/event';
 import exp from 'constants';
 import { HttpStatusCode } from '../../src/utils/errors/BaseError';
+import { generateSemester } from '../factories/semester';
+import { faker } from '@faker-js/faker';
+import { user } from '../../src/controllers/user';
 
 const prepareEvent = (event: Event): any => {
     const prepared = {
@@ -573,4 +576,40 @@ describe(`POST ${API_URL}/event/change_state`, () => {
         });
     });
 
+});
+
+
+describe(`POST ${API_URL}/event/export`, () => {
+    afterEach(() => {
+        return truncate();
+    });
+
+    it('Throws an error if no semester is found', async () => {
+        const result = await request(app)
+            .post(`${API_URL}/event/excel`);
+        expect(result.statusCode).toEqual(400);
+    });
+    it('Lets everyone export an excel', async () => {
+        const user = await prisma.user.create({data: generateUser()});
+        const start = faker.date.recent();
+        const end = faker.date.between({from: start, to: new Date(start.getTime() + 1000 * 60 * 60 * 24 * 180)});
+        const semester = await prisma.semester.create({data: generateSemester({
+            start: start,
+            end: end,
+        })});
+        for(var i = 0; i < 10; i++) {
+            const estart = faker.date.between({from: start, to: end});
+            await prisma.event.create({data: generateEvent({
+                authorId: user.id,
+                start: estart,
+                end: faker.date.between({from: estart, to: end}),
+                state: EventState.PUBLISHED,
+            })});
+        }
+
+        const result = await request(app)
+            .post(`${API_URL}/event/excel`);
+        expect(result.statusCode).toEqual(200);
+        expect(result.body).toEqual({});
+    });
 });
