@@ -6,6 +6,7 @@ import { HTTP400Error, HTTP403Error, HTTP404Error } from '../../../src/utils/err
 import prismock from '../__mocks__/prismockClient';
 import { createUser } from './users.test';
 import { generateEvent } from '../../factories/event';
+import { setTimeout } from 'timers/promises';
 
 export const createEvent = async (props: (Partial<Prisma.EventUncheckedCreateInput> & {authorId: string})) => {
 	return await prismock.event.create({
@@ -264,15 +265,15 @@ describe('setState transitions', () => {
 		const ancestor1 = await createEvent({ id: 'ancestor1', authorId: user.id, description: 'hello', state: EventState.PUBLISHED })
 		const event = await createEvent({ id: 'child', authorId: user.id, description: 'fancy hello', state: EventState.REVIEW, parentId: ancestor1.id })
 		const admin = await createUser({ id: 'admin', role: Role.ADMIN });
+		await setTimeout(100);
 
 		await expect(Events.setState(admin, event.id, EventState.PUBLISHED)).resolves.toEqual({
 			...event,
+			updatedAt: expect.any(Date),
 			state: EventState.PUBLISHED,
 			id: ancestor1.id,
-			author: undefined,
 			departments: undefined,
 			departmentIds: [],
-			job: undefined,
 			children: undefined,
 			parentId: null,
 			versionIds: ['child']
@@ -280,10 +281,9 @@ describe('setState transitions', () => {
 		await expect(Events.findModel(user, event.id)).resolves.toEqual({
 			...ancestor1,
 			id: event.id,
-			author: undefined,
+			updatedAt: expect.any(Date),
 			departments: undefined,
 			departmentIds: [],
-			job: undefined,
 			children: undefined,
 			parentId: ancestor1.id,
 			versionIds: []
