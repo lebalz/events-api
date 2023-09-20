@@ -162,7 +162,7 @@ describe(`DELETE ${API_URL}/department/:id`, () => {
         const result = await request(app)
             .delete(`${API_URL}/department/${dep!.id}`)
             .set('authorization', JSON.stringify({email: user.email}));
-        expect(result.statusCode).toEqual(401);
+        expect(result.statusCode).toEqual(403);
     });
     it("admin can create a new department", async () => {
         const admin = await prisma.user.create({data: generateUser({role: Role.ADMIN})});
