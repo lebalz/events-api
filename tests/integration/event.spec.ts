@@ -419,26 +419,12 @@ describe(`POST ${API_URL}/event/change_state`, () => {
     afterEach(() => {
         return truncate();
     });
-
-    const ALLOWED_TRANSITIONS = [
-        {from: EventState.DRAFT, to: EventState.REVIEW, for: [Role.USER, Role.ADMIN]},
-        {from: EventState.REVIEW, to: EventState.PUBLISHED, for: [Role.ADMIN]},
-        {from: EventState.REVIEW, to: EventState.REFUSED, for: [Role.ADMIN]},
-    ]
-    const FORBIDDEN_TRANSITIONS = [
-        {from: EventState.DRAFT, to: EventState.PUBLISHED, for: [Role.USER, Role.ADMIN]},
-        {from: EventState.DRAFT, to: EventState.REFUSED, for: [Role.USER, Role.ADMIN]},
-        {from: EventState.PUBLISHED, to: EventState.DRAFT, for: [Role.USER, Role.ADMIN]},
-        {from: EventState.PUBLISHED, to: EventState.REFUSED, for: [Role.USER, Role.ADMIN]},
-        {from: EventState.PUBLISHED, to: EventState.REVIEW, for: [Role.USER, Role.ADMIN]},
-        {from: EventState.REVIEW, to: EventState.DRAFT, for: [Role.USER], errorCode: HttpStatusCode.FORBIDDEN},
-        {from: EventState.REVIEW, to: EventState.DRAFT, for: [Role.ADMIN]},
-        {from: EventState.REFUSED, to: EventState.DRAFT, for: [Role.USER, Role.ADMIN]},
-        {from: EventState.REFUSED, to: EventState.PUBLISHED, for: [Role.USER, Role.ADMIN]},
-        {from: EventState.REFUSED, to: EventState.REVIEW, for: [Role.USER, Role.ADMIN]},
-    ]
-
     describe('allowed transitions', () => {
+        const ALLOWED_TRANSITIONS = [
+            {from: EventState.DRAFT, to: EventState.REVIEW, for: [Role.USER, Role.ADMIN]},
+            {from: EventState.REVIEW, to: EventState.PUBLISHED, for: [Role.ADMIN]},
+            {from: EventState.REVIEW, to: EventState.REFUSED, for: [Role.ADMIN]},
+        ]
         ALLOWED_TRANSITIONS.forEach((transition) => {
             transition.for.forEach((role) => {
                 it(`lets ${role} change state from ${transition.from} to ${transition.to}`, async () => {
@@ -459,6 +445,19 @@ describe(`POST ${API_URL}/event/change_state`, () => {
     });
 
     describe('forbidden transitions', () => {
+        const FORBIDDEN_TRANSITIONS = [
+            {from: EventState.DRAFT, to: EventState.PUBLISHED, for: [Role.USER, Role.ADMIN]},
+            {from: EventState.DRAFT, to: EventState.REFUSED, for: [Role.USER, Role.ADMIN]},
+            {from: EventState.PUBLISHED, to: EventState.DRAFT, for: [Role.USER, Role.ADMIN]},
+            {from: EventState.PUBLISHED, to: EventState.REFUSED, for: [Role.USER, Role.ADMIN]},
+            {from: EventState.PUBLISHED, to: EventState.REVIEW, for: [Role.USER, Role.ADMIN]},
+            {from: EventState.REVIEW, to: EventState.DRAFT, for: [Role.USER], errorCode: HttpStatusCode.FORBIDDEN},
+            {from: EventState.REVIEW, to: EventState.DRAFT, for: [Role.ADMIN]},
+            {from: EventState.REFUSED, to: EventState.DRAFT, for: [Role.USER, Role.ADMIN]},
+            {from: EventState.REFUSED, to: EventState.PUBLISHED, for: [Role.USER, Role.ADMIN]},
+            {from: EventState.REFUSED, to: EventState.REVIEW, for: [Role.USER, Role.ADMIN]},
+        ]
+        
         FORBIDDEN_TRANSITIONS.forEach((transition) => {
             transition.for.forEach((role) => {
                 it(`forbids ${role} to change state from ${transition.from} to ${transition.to}`, async () => {
@@ -475,5 +474,99 @@ describe(`POST ${API_URL}/event/change_state`, () => {
                 });
             });
         });
-    })
+    });
+    /** test versioned transitions */
+    
+    describe('versioned transitions', () => {
+        it(`lets versioned DRAFTS become a REVIEW`, async () => {
+            const user = await prisma.user.create({
+                data: generateUser({email: 'foo@bar.ch', role: Role.USER})
+            });
+            /** 
+             * event[:published]                        
+             *   ^                                      
+             *   |                                              event[:published]       
+             * edit1[:draft]      ----> edit2[:review]            ^         ^           
+             *   ^                                                |         |                              
+             *   |                                      edit1[:draft]    edit2[:review]          
+             * edit2[:draft]                             
+             */
+            const event = await prisma.event.create({data: generateEvent({authorId: user.id, state: EventState.PUBLISHED})});
+            const edit1 = await prisma.event.create({data: generateEvent({authorId: user.id, parentId: event.id, state: EventState.DRAFT})});
+            const edit2 = await prisma.event.create({data: generateEvent({authorId: user.id, parentId: edit1.id, state: EventState.DRAFT})});
+            const result = await request(app)
+                .post(`${API_URL}/event/change_state`)
+                .set('authorization', JSON.stringify({ email: user.email }))
+                .send({data: {ids: [edit2.id], state: EventState.REVIEW}});
+            expect(result.statusCode).toEqual(201);
+            expect(result.body.length).toEqual(1);
+            expect(result.body[0].state).toEqual(EventState.REVIEW);
+            expect(result.body[0].parentId).toEqual(event.id);
+        });
+
+        it(`lets versioned REVIEWS become PUBLISHED`, async () => {
+            const user = await prisma.user.create({
+                data: generateUser({email: 'foo@bar.ch', role: Role.ADMIN})
+            });
+            /** 
+             * event[:published/id:1]                                                       edit3[:published / id:1]  !! keeps published id !!
+             *  ^                  ^                                                         ^                    ^
+             *  |                   \                                                        |                     \
+             * edit1[:review/id:2]  edit3[:review/id:4]    ----> edit3[:published]          event[:published/id:4]  edit1[:refused/id:2]
+             *  ^                                                                                                     ^                
+             *  |                                                                                                     |                
+             * edit2[:draft/id:3]                                                                                    edit2[:draft/id:3]
+             * 
+             */
+            const event = await prisma.event.create({data: generateEvent({authorId: user.id, state: EventState.PUBLISHED})});
+            const edit1 = await prisma.event.create({data: generateEvent({authorId: user.id, parentId: event.id, state: EventState.REVIEW})});
+            const edit2 = await prisma.event.create({data: generateEvent({authorId: user.id, parentId: edit1.id, state: EventState.DRAFT})});
+            const edit3 = await prisma.event.create({data: generateEvent({authorId: user.id, parentId: event.id, state: EventState.REVIEW})});
+            const result = await request(app)
+                .post(`${API_URL}/event/change_state`)
+                .set('authorization', JSON.stringify({ email: user.email }))
+                .send({data: {ids: [edit3.id], state: EventState.PUBLISHED}});
+            expect(result.statusCode).toEqual(201);
+            expect(result.body.length).toEqual(1);
+            expect(result.body[0].state).toEqual(EventState.PUBLISHED);
+            expect(result.body[0].id).toEqual(event.id);
+
+            const updatedEvent = await prisma.event.findUnique({where: {id: event.id}});
+            const updatedEdit1 = await prisma.event.findUnique({where: {id: edit1.id}});
+            const updatedEdit2 = await prisma.event.findUnique({where: {id: edit2.id}});
+            const updatedEdit3 = await prisma.event.findUnique({where: {id: edit3.id}});
+            
+            /** swapped ids - updatedEvent is now the published "edit3" */
+            expect(updatedEvent).toEqual({
+                ...edit3,
+                state: EventState.PUBLISHED,
+                id: event.id,
+                parentId: null,
+                updatedAt: expect.any(Date),
+            });
+            expect(updatedEvent?.updatedAt).not.toEqual(edit3.updatedAt);
+
+            /** swapped ids - updatedEdit3 is now the "event" */
+            expect(updatedEdit3).toEqual({
+                ...event,
+                state: EventState.PUBLISHED,
+                id: edit3.id,
+                parentId: event.id,
+                updatedAt: expect.any(Date),
+            });
+            expect(updatedEdit3?.updatedAt).not.toEqual(event.updatedAt);
+
+            /** updatedEdit1 is now refused */
+            expect(updatedEdit1).toEqual({
+                ...edit1,
+                state: EventState.REFUSED,
+                updatedAt: expect.any(Date),
+            });
+
+            expect(updatedEdit2).toEqual(edit2);
+            expect(updatedEdit2).toEqual(edit2);
+            expect(updatedEdit2).toEqual(edit2);
+        });
+    });
+
 });

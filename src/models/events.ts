@@ -176,18 +176,20 @@ function Events(db: PrismaClient['event']) {
                         });
                         const result = await prisma.$transaction([
                             /** swap the child and the parent - ensures that the uuid for the ical stays the same  */
-                            db.update({
+                            db.update({  /** <-- new */
                                 where: { id: parent.id },
                                 data: {
                                     ...clonedProps(record, record.authorId, {full: true}),
-                                    state: requested
+                                    state: requested,
+                                    updatedAt: undefined
                                 },
                                 include: { departments: true, children: true },
                             }),
-                            db.update({
+                            db.update({  /** version */
                                 where: { id: record.id },
                                 data: {
                                     ...clonedProps(parent, parent.authorId, {full: true}),
+                                    updatedAt: undefined
                                 }
                             }),
                             /** ensure that all pending reviews with this parent are refused... */
