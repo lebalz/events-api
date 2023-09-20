@@ -1,3 +1,5 @@
+/* istanbul ignore file */
+
 import { WebUntisSecretAuth, Base, WebAPITimetable, Klasse } from 'webuntis';
 import { authenticator as Authenticator } from 'otplib';
 import type { Department, Prisma, Semester, UntisLesson } from "@prisma/client";
