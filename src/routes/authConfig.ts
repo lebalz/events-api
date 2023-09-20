@@ -169,7 +169,7 @@ const authConfig: Config = {
         findJob: {
             path: '/job/:id',
             access: [{
-                methods: ['GET', 'POST', 'DELETE'],
+                methods: ['GET', 'PUT', 'DELETE'],
                 roles: [Role.ADMIN, Role.USER],
             }]
         },
