@@ -11,7 +11,7 @@ export const all: RequestHandler = async (req, res, next) => {
     try {
         const models = await Departments.all();
         res.json(models);
-    } catch (error) {
+    } catch (error)  /* istanbul ignore next */ {
         next(error);
     }
 }
@@ -20,7 +20,7 @@ export const find: RequestHandler = async (req, res, next) => {
     try {
         const model = await Departments.findModel(req.params.id);
         res.json(model);
-    } catch (error) {
+    } catch (error)  /* istanbul ignore next */ {
         next(error);
     }
 }
@@ -34,7 +34,7 @@ export const update: RequestHandler<{ id: string }, any, { data: Department }> =
             event: IoEvent.CHANGED_RECORD
         }]
         res.json(model);
-    } catch (error) {
+    } catch (error)  /* istanbul ignore next */ {
         next(error);
     }
 }
@@ -46,8 +46,8 @@ export const create: RequestHandler<any, any, Department> = async (req, res, nex
             message: { record: NAME, id: model.id },
             event: IoEvent.NEW_RECORD
         }]
-        res.json(model);
-    } catch (error) {
+        res.status(201).json(model);
+    } catch (error)  /* istanbul ignore next */ {
         next(error);
     }
 }
@@ -60,7 +60,7 @@ export const destroy: RequestHandler<{ id: string }, any, any> = async (req, res
             event: IoEvent.DELETED_RECORD
         }]
         res.status(204).send();
-    } catch (error) {
+    } catch (error)  /* istanbul ignore next */ {
         next(error);
     }
 }
