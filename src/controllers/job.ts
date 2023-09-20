@@ -19,7 +19,7 @@ export const all: RequestHandler = async (req, res, next) => {
     try {
         const jobs = await Jobs.all(req.user!);
         res.json(jobs);
-    } catch (error) {
+    } catch (error) /* istanbul ignore next */ {
         next(error);
     }
 }
@@ -35,7 +35,7 @@ export const update: RequestHandler<{ id: string }, any, { data: Job }> = async 
             }
         ]
         res.status(200).json(model);
-    } catch (e) {
+    } catch (e) /* istanbul ignore next */ {
         next(e)
     }
 }
@@ -58,7 +58,7 @@ export const destroy: RequestHandler = async (req, res, next) => {
             }
             throw error;
         }
-    } catch (error) {
+    } catch (error) /* istanbul ignore next */ {
         next(error);
     }
 }

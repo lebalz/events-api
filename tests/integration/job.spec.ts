@@ -218,4 +218,22 @@ describe(`DELETE ${API_URL}/job/:id`, () => {
         expect(delEvents).toHaveLength(6);
         expect(del).toEqual(job);
     });
+
+    it("is idempotent", async () => {
+        const user = await prisma.user.create({data: generateUser()});
+        const job = await prisma.job.create({data: generateImportJob({userId: user.id, description: 'Bar'})});
+        const result = await request(app)
+            .delete(`${API_URL}/job/${job.id}`)
+            .set('authorization', JSON.stringify({ email: user.email }));
+
+        expect(result.statusCode).toEqual(204);
+        const del = await prisma.job.findUnique({where: {id: job.id}});
+        expect(del).toBeNull();
+
+        const result2 = await request(app)
+            .delete(`${API_URL}/job/${job.id}`)
+            .set('authorization', JSON.stringify({ email: user.email }));
+
+        expect(result2.statusCode).toEqual(204);
+    });
 });
