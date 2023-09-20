@@ -137,7 +137,8 @@ describe(`GET ${API_URL}/event/all`, () => {
         const user = await prisma.user.create({
             data: generateUser({email: 'foo@bar.ch'})
         });
-        const pubEvents = await Promise.all(eventSequence(user.id, 10, {state: EventState.PUBLISHED}).map(e => prisma.event.create({data: e})));
+        const pubEvents = await Promise.all(eventSequence(user.id, 8, {state: EventState.PUBLISHED}).map(e => prisma.event.create({data: e})));
+        const pubDeletedEvents = await Promise.all(eventSequence(user.id, 2, {state: EventState.PUBLISHED, deletedAt: new Date()}).map(e => prisma.event.create({data: e})));
         const draftEvents = await Promise.all(eventSequence(user.id, 3, {state: EventState.DRAFT}).map(e => prisma.event.create({data: e})));
         const refusedEvents = await Promise.all(eventSequence(user.id, 2, {state: EventState.REFUSED}).map(e => prisma.event.create({data: e})));
         const reviewEvents = await Promise.all(eventSequence(user.id, 4, {state: EventState.REVIEW}).map(e => prisma.event.create({data: e})));
@@ -146,7 +147,11 @@ describe(`GET ${API_URL}/event/all`, () => {
             .set('authorization', JSON.stringify({ noAuth: true }));
         expect(result.statusCode).toEqual(200);
         expect(result.body.length).toEqual(10);
-        expect(result.body.map((e: any) => e.id).sort()).toEqual(pubEvents.map(e => e.id).sort());
+        expect(result.body.map((e: any) => e.id).sort()).toEqual([...pubEvents, ...pubDeletedEvents].map(e => e.id).sort());
+        pubDeletedEvents.forEach((e) => {
+            const dEvent = result.body.find((r: any) => r.id === e.id);
+            expect(dEvent.deletedAt).not.toBeNull();
+        });
     });
     it("lets authorized user fetch all public and it's own events", async () => {
         const user = await prisma.user.create({
@@ -296,13 +301,44 @@ describe(`POST ${API_URL}/event`, () => {
     });
 });
 
-/*
+
 describe(`DELETE ${API_URL}/event/:id`, () => {
     afterEach(() => {
         return truncate();
     });
+
+    it('Lets users delete their own draft events', async () => {
+        const user = await prisma.user.create({
+            data: generateUser({email: 'foo@bar.ch'})
+        });
+        const event = await prisma.event.create({data: generateEvent({authorId: user.id})});
+        const result = await request(app)
+            .delete(`${API_URL}/event/${event.id}`)
+            .set('authorization', JSON.stringify({ email: user.email }));
+        expect(result.statusCode).toEqual(204);
+        const all = await prisma.event.findMany();
+        expect(all.length).toEqual(0);
+    });
+    [EventState.PUBLISHED, EventState.REVIEW, EventState.REFUSED].forEach((state) => {
+        it(`does a soft delete of an event with state ${state}`, async () => {
+            const user = await prisma.user.create({
+                data: generateUser({email: 'foo@bar.ch'})
+            });
+            const event = await prisma.event.create({data: generateEvent({authorId: user.id, state: state})});
+            const result = await request(app)
+                .delete(`${API_URL}/event/${event.id}`)
+                .set('authorization', JSON.stringify({ email: user.email }));
+            expect(result.statusCode).toEqual(204);
+            const all = await prisma.event.findMany();
+            expect(all.length).toEqual(1);
+
+            const deleted = await prisma.event.findUnique({where: {id: event.id}});
+            expect(deleted?.deletedAt).not.toBeNull();
+        });
+    });
 });
 
+/*
 describe(`POST ${API_URL}/event/:id/clone`, () => {
     afterEach(() => {
         return truncate();
