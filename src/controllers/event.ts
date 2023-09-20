@@ -52,7 +52,7 @@ export const setState: RequestHandler<{}, any, { data: { ids: string[], state: E
 
         /** NOTIFICATIONS */
         switch (state) {
-            case EventState.DRAFT:
+            /** DRAFT is not possible, since DRAFT -> DRAFT is not allowed */
             case EventState.REVIEW:
             case EventState.REFUSED:
                 audience.add(IoRoom.ADMIN);

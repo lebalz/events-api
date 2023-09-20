@@ -446,13 +446,17 @@ describe(`POST ${API_URL}/event/change_state`, () => {
 
     describe('forbidden transitions', () => {
         const FORBIDDEN_TRANSITIONS = [
+            {from: EventState.DRAFT, to: EventState.DRAFT, for: [Role.USER, Role.ADMIN]},
             {from: EventState.DRAFT, to: EventState.PUBLISHED, for: [Role.USER, Role.ADMIN]},
             {from: EventState.DRAFT, to: EventState.REFUSED, for: [Role.USER, Role.ADMIN]},
+            {from: EventState.PUBLISHED, to: EventState.PUBLISHED, for: [Role.USER, Role.ADMIN]},
             {from: EventState.PUBLISHED, to: EventState.DRAFT, for: [Role.USER, Role.ADMIN]},
             {from: EventState.PUBLISHED, to: EventState.REFUSED, for: [Role.USER, Role.ADMIN]},
             {from: EventState.PUBLISHED, to: EventState.REVIEW, for: [Role.USER, Role.ADMIN]},
+            {from: EventState.REVIEW, to: EventState.REVIEW, for: [Role.ADMIN]},
             {from: EventState.REVIEW, to: EventState.DRAFT, for: [Role.USER], errorCode: HttpStatusCode.FORBIDDEN},
             {from: EventState.REVIEW, to: EventState.DRAFT, for: [Role.ADMIN]},
+            {from: EventState.REFUSED, to: EventState.REFUSED, for: [Role.USER, Role.ADMIN]},
             {from: EventState.REFUSED, to: EventState.DRAFT, for: [Role.USER, Role.ADMIN]},
             {from: EventState.REFUSED, to: EventState.PUBLISHED, for: [Role.USER, Role.ADMIN]},
             {from: EventState.REFUSED, to: EventState.REVIEW, for: [Role.USER, Role.ADMIN]},
