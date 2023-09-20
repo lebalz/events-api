@@ -6,6 +6,7 @@ import { Event, EventState, JobState, Role, TeachingAffected } from '@prisma/cli
 import { truncate } from './helpers/db';
 import Jobs from '../../src/models/jobs';
 import { eventSequence, generateEvent } from '../factories/event';
+import exp from 'constants';
 
 const prepareEvent = (event: Event): any => {
     const prepared = {
@@ -246,16 +247,56 @@ describe(`PUT ${API_URL}/event/:id`, () => {
             updatedAt: expect.any(String)
         });
     });
+
+    /** TODO: check that only accepted attributes are updated */
 });
 
-/*
+
 describe(`POST ${API_URL}/event`, () => {
     afterEach(() => {
         return truncate();
     });
+    it('Lets users create a new draft', async () => {
+        const user = await prisma.user.create({
+            data: generateUser({email: 'foo@bar.ch'})
+        });
+        const before = await prisma.event.findMany();
+        expect(before.length).toEqual(0);
+
+        const result = await request(app)
+            .post(`${API_URL}/event`)
+            .set('authorization', JSON.stringify({ email: user.email }))
+            .send({start: new Date('2023-09-20T08:25:00.000Z'), end: new Date('2023-09-20T09:10:00.000Z')});
+        expect(result.statusCode).toEqual(201);
+        expect(result.body.start).toEqual('2023-09-20T08:25:00.000Z');
+        expect(result.body.end).toEqual('2023-09-20T09:10:00.000Z');
+        expect(result.body.state).toEqual(EventState.DRAFT);
+
+        const after = await prisma.event.findMany();
+        expect(after.length).toEqual(1);
+    });
+
+    [EventState.PUBLISHED, EventState.REVIEW, EventState.REFUSED].forEach((state) => {
+        it(`creates a draft even when a state is set to ${state}`, async () => {
+            const user = await prisma.user.create({
+                data: generateUser({email: 'foo@bar.ch'})
+            });
+        
+            const result = await request(app)
+                .post(`${API_URL}/event`)
+                .set('authorization', JSON.stringify({ email: user.email }))
+                .send({
+                    start: new Date('2023-09-20T08:25:00.000Z'),
+                    end: new Date('2023-09-20T09:10:00.000Z'),
+                    state: state
+                });
+            expect(result.statusCode).toEqual(201);
+            expect(result.body.state).toEqual(EventState.DRAFT);    
+        });
+    });
 });
 
-
+/*
 describe(`DELETE ${API_URL}/event/:id`, () => {
     afterEach(() => {
         return truncate();
