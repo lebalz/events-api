@@ -73,7 +73,7 @@ describe(`GET ${API_URL}/job/:id`, () => {
             .get(`${API_URL}/job/efce93f5-0ead-4d5d-8143-0fd7267db689`)
             .set('authorization', JSON.stringify({ email: user.email }));
         expect(result.statusCode).toEqual(404);
-        expect(result.body).toBeNull();
+        expect(result.body).toEqual({});
     });
 
     it("prevents user from getting others jobs", async () => {
