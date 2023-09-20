@@ -56,6 +56,7 @@ export const destroy: RequestHandler = async (req, res, next) => {
                 /** if the job does not exist, we still want to send a 204 */
                 return res.status(204).send();
             }
+            /* istanbul ignore next */
             throw error;
         }
     } catch (error) /* istanbul ignore next */ {
