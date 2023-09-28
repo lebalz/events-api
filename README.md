@@ -34,6 +34,22 @@ postgres=> \list
 postgres=> \c events_api
 ```
 
+Now run all prisma migrations:
+
+```bash
+yarn run prisma migrate dev
+```
+
+before you start prisma studio to create a new user:
+
+```bash
+yarn run prisma studio
+```
+
+Click on `users > Create Record` and fill in the `id`, `email`, `firstName` and `lastName`. You can either use your AzureAD-UUID as your id or generate a random one (for dev mode only. You could use e.g.`81bb5a4b-6c8b-435b-b00f-6b8baa23c059`).
+
+
+
 ## Environment
 
 Add dotenv-cli globally to run the tests local:

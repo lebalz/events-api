@@ -12,6 +12,7 @@ import routeGuard, { createAccessRules } from './auth/guard';
 import authConfig, { PUBLIC_POST_ROUTES, PUBLIC_ROUTES } from './routes/authConfig';
 import type { User } from "@prisma/client";
 import { HttpStatusCode } from "./utils/errors/BaseError";
+import { notify } from "./middlewares/notify.nop";
 
 const AccessRules = createAccessRules(authConfig.accessMatrix);
 
@@ -91,6 +92,9 @@ app.get(`${API_URL}/checklogin`,
  */
 app.use((req: Request, res, next) => {
     res.on('finish', async () => {
+        if (res.statusCode >= 400) {
+            return;
+        }
         const io = req.io;
         if (res.notifications && io) {
             res.notifications.forEach((notification) => {
@@ -109,9 +113,27 @@ app.use((req: Request, res, next) => {
                 }
             });
         }
+        res.locals.notifications = res.notifications;
     });
     next();
 });
+
+if (process.env.NODE_ENV === 'test') {
+    app.use((req: Request, res, next) => {
+        res.on('finish', async () => {
+            if (res.statusCode >= 400) {
+                return;
+            }    
+            if (res.notifications) {
+                res.notifications.forEach((notification) => {
+                    notify(notification);
+                });
+            }
+            res.locals.notifications = res.notifications;
+        });
+        next();
+    });
+}
 
 
 app.use(`${API_URL}`, (req, res, next) => {

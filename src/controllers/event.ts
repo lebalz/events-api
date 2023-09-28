@@ -46,10 +46,10 @@ export const setState: RequestHandler<{}, any, { data: { ids: string[], state: E
         const events = await Promise.all(ids.map((id) => {
             return Events.setState(req.user!, id, state);
         }));
-        const updatedIds = events.map(e => e.id);
-        const authorIds = [...new Set(events.map(e => e.authorId).filter(id => !!id))]
+        const newStateIds = events.map(e => e.event.id);
+        const updated = events.map(e => e.affected).flat();
 
-        const audience = new Set<IoRoom>();
+        const audience = new Set<IoRoom | string>(events.map(e => e.event.authorId));
 
         /** NOTIFICATIONS */
         switch (state) {
@@ -58,25 +58,43 @@ export const setState: RequestHandler<{}, any, { data: { ids: string[], state: E
             case EventState.REFUSED:
                 audience.add(IoRoom.ADMIN);
                 break;
-            case EventState.PUBLISHED:
+                case EventState.PUBLISHED:
+                audience.clear();
                 audience.add(IoRoom.ALL);
                 break;
         }
-        [...audience].forEach((room) => {
-            res.notifications?.push({
-                message: { state: state, ids: updatedIds },
+        res.notifications = [];
+        [...audience].forEach((to) => {
+            res.notifications!.push({
+                message: { state: state, ids: newStateIds },
                 event: IoEvent.CHANGED_STATE,
-                to: room
-            })
-        });
-        authorIds.forEach((id) => {
-            res.notifications?.push({
-                message: { state: state, ids: updatedIds },
-                event: IoEvent.CHANGED_STATE,
-                to: id
+                to: to
             });
         });
-        res.status(201).json(events);
+        updated.forEach((event) => {
+            const audience: (string | IoRoom)[] = [];
+            switch (event.state) {
+                case EventState.DRAFT:
+                    audience.push(event.authorId);
+                    break;
+                case EventState.REVIEW:
+                case EventState.REFUSED:
+                    audience.push(event.authorId);
+                    audience.push(IoRoom.ADMIN);
+                    break;
+                case EventState.PUBLISHED:
+                    audience.push(IoRoom.ALL);
+                    break;
+            }
+            audience.forEach((to) => {
+                res.notifications!.push({
+                    event: IoEvent.CHANGED_RECORD,
+                    message: { record: 'EVENT', id: event.id },
+                    to: to
+                });
+            });
+        });
+        res.status(201).json(events.map(e => e.event));
     } catch (error) /* istanbul ignore next */ {
         next(error);
     }

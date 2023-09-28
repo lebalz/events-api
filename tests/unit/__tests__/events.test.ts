@@ -165,17 +165,20 @@ describe('setState transitions', () => {
 		const event = await createEvent({ id: 'event-1', authorId: user.id, state: EventState.DRAFT })
 
 		await expect(Events.setState(user, 'event-1', EventState.REVIEW)).resolves.toEqual({
-			/** expect the prepared event to be returned
-			 * @see event.helpers.ts#prepareEvent 
-			 */
-			...event,
-			state: EventState.REVIEW,
-			author: undefined,
-			departments: undefined,
-			departmentIds: [],
-			job: undefined,
-			children: undefined,
-			versionIds: []
+			event: {
+				/** expect the prepared event to be returned
+				 * @see event.helpers.ts#prepareEvent 
+				 */
+				...event,
+				state: EventState.REVIEW,
+				author: undefined,
+				departments: undefined,
+				departmentIds: [],
+				job: undefined,
+				children: undefined,
+				versionIds: []
+			},
+			affected: []
 		});
 	});
 
@@ -226,14 +229,17 @@ describe('setState transitions', () => {
 		 * @see event.helpers.ts#prepareEvent 
 		 */
 		await expect(Events.setState(user, event.id, EventState.REVIEW)).resolves.toEqual({
-			...event,
-			state: EventState.REVIEW,
-			author: undefined,
-			departments: undefined,
-			departmentIds: [],
-			job: undefined,
-			children: undefined,
-			versionIds: []
+			event: {
+				...event,
+				state: EventState.REVIEW,
+				author: undefined,
+				departments: undefined,
+				departmentIds: [],
+				job: undefined,
+				children: undefined,
+				versionIds: []
+			},
+			affected: []
 		});
 	});
 
@@ -249,44 +255,51 @@ describe('setState transitions', () => {
 		 * @see event.helpers.ts#prepareEvent 
 		 */
 		await expect(Events.setState(user, event.id, EventState.REVIEW)).resolves.toEqual({
-			...event,
-			state: EventState.REVIEW,
-			author: undefined,
-			departments: undefined,
-			departmentIds: [],
-			job: undefined,
-			children: undefined,
-			parentId: ancestor1.id,
-			versionIds: []
+			event: {
+				...event,
+				state: EventState.REVIEW,
+				author: undefined,
+				departments: undefined,
+				departmentIds: [],
+				job: undefined,
+				children: undefined,
+				parentId: ancestor1.id,
+				versionIds: []
+			},
+			affected: []
 		});
 	});
 	test('versioned REVIEW version -> PUBLISHED', async () => {
 		const user = await createUser({ id: 'user-1' })
-		const ancestor1 = await createEvent({ id: 'ancestor1', authorId: user.id, description: 'hello', state: EventState.PUBLISHED })
-		const event = await createEvent({ id: 'child', authorId: user.id, description: 'fancy hello', state: EventState.REVIEW, parentId: ancestor1.id })
+		const current = await createEvent({ id: 'ancestor1', authorId: user.id, description: 'hello', state: EventState.PUBLISHED })
+		const nextCurrent = await createEvent({ id: 'child', authorId: user.id, description: 'fancy hello', state: EventState.REVIEW, parentId: current.id })
 		const admin = await createUser({ id: 'admin', role: Role.ADMIN });
 		await setTimeout(100);
-
-		await expect(Events.setState(admin, event.id, EventState.PUBLISHED)).resolves.toEqual({
-			...event,
+		
+		const newCurrent = {
+			...nextCurrent,
 			updatedAt: expect.any(Date),
 			state: EventState.PUBLISHED,
-			id: ancestor1.id,
+			id: current.id,
 			departments: undefined,
 			departmentIds: [],
 			children: undefined,
 			parentId: null,
 			versionIds: ['child']
-		});
-		await expect(Events.findModel(user, event.id)).resolves.toEqual({
-			...ancestor1,
-			id: event.id,
+		};
+
+		const oldCurrent = {
+			...current,
+			id: nextCurrent.id,
 			updatedAt: expect.any(Date),
-			departments: undefined,
 			departmentIds: [],
-			children: undefined,
-			parentId: ancestor1.id,
+			parentId: current.id,
 			versionIds: []
+		};
+
+		await expect(Events.setState(admin, nextCurrent.id, EventState.PUBLISHED)).resolves.toEqual({
+			event: oldCurrent,
+			affected: [newCurrent]
 		});
 	});
 

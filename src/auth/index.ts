@@ -20,12 +20,13 @@ export const strategyForEnvironment = () => {
                             `│   USER_ID: ${tid + ' '.repeat(n)}│`,
                             '│                                                          │',
                             '│                                                          │',
-                            '│   --> enable authentication by removing "TEST_USERNAME"  │',
+                            '│   --> enable authentication by removing "TEST_USER_ID"   │',
                             '│       from the environment (or the .env file)            │',
                             '│                                                          │',
                             "└──────────────────────────────────────────────────────────┘",
             ].join('\n'))
         }
+        Logger.info(`NODE_ENV: ${process.env.NODE_ENV}`);
         Logger.info('USING MOCK STRATEGY');
         return mockStrategy();
     }

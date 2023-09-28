@@ -80,11 +80,10 @@ function Events(db: PrismaClient['event']) {
                 });
             } else {
                 const cProps = clonedProps(record, actor.id, { cloneUserGroup: true });
-
                 model = await db.create({
                     data: {
                         ...cProps,
-                        ...(sanitized as Prisma.EventCreateInput),
+                        ...(getData(data, true) as Prisma.EventCreateInput),
                         parent: {connect: { id: record.id }},
                         state: EventState.DRAFT,
                         departments: {
@@ -96,7 +95,7 @@ function Events(db: PrismaClient['event']) {
             }
             return prepareEvent(model);
         },
-        async setState(actor: User, id: string, requested: EventState): Promise<ApiEvent> {
+        async setState(actor: User, id: string, requested: EventState): Promise<{event: ApiEvent, affected: ApiEvent[]}> {
             const isAdmin = actor!.role === Role.ADMIN;
             const record = await db.findUnique({ where: { id: id }, include: { departments: true, children: true } });
             if (!record) {
@@ -148,10 +147,10 @@ function Events(db: PrismaClient['event']) {
                                 },
                                 include: { departments: true, children: true }
                             });
-                            return prepareEvent(model);
+                            return {event: prepareEvent(model), affected: []};
                         } else {
                             const model = await updater();
-                            return prepareEvent(model);
+                            return {event: prepareEvent(model), affected: []};
                         }
                     }
                     throw new HTTP400Error('Draft can only be set to review');
@@ -174,18 +173,18 @@ function Events(db: PrismaClient['event']) {
                                 ]
                             }
                         });
-                        const result = await prisma.$transaction([
-                            /** swap the child and the parent - ensures that the uuid for the ical stays the same  */
-                            db.update({  /** <-- new */
+                        await prisma.$transaction([
+                            /** update the parent (already published) to receive the new props */
+                            db.update({  /** <-- now the current version */
                                 where: { id: parent.id },
                                 data: {
                                     ...clonedProps(record, record.authorId, {full: true}),
-                                    state: requested,
+                                    state: EventState.PUBLISHED,
                                     updatedAt: undefined
-                                },
-                                include: { departments: true, children: true },
+                                }
                             }),
-                            db.update({  /** version */
+                            /** swap the child and the parent - ensures that the uuid for the ical stays the same  */
+                            db.update({  /** version --> the previous published event, now accessible under the id of the former review candidate */
                                 where: { id: record.id },
                                 data: {
                                     ...clonedProps(parent, parent.authorId, {full: true}),
@@ -205,10 +204,15 @@ function Events(db: PrismaClient['event']) {
                                 }
                             })
                         ]);
-                        return prepareEvent(result[0]);
+                        // refetch both of the published events to ensure updated child ids...
+                        // oldCurrent: the previous published event, now accessible under the id of the former review candidate
+                        const oldCurrent = await db.findUnique({ where: { id: record.id }, include: { departments: true, children: true } });
+                        // updatedCurrent: the current version
+                        const updatedCurrent = await db.findUnique({ where: { id: parent.id }, include: { departments: true, children: true } });
+                        return {event: prepareEvent(oldCurrent!), affected: [prepareEvent(updatedCurrent!), ...siblings.map(prepareEvent)]};
                     } else if (EventState.PUBLISHED === requested || EventState.REFUSED === requested) {
                         const model = await updater();
-                        return prepareEvent(model);
+                        return {event: prepareEvent(model), affected: []};
                     }
                     throw new HTTP400Error('Review can only be set to Published or to Refused');
                 case EventState.PUBLISHED:
