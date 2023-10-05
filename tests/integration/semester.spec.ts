@@ -47,7 +47,7 @@ describe(`GET ${API_URL}/semester/all`, () => {
         const result = await request(app)
             .get(`${API_URL}/semester/all`);
         expect(result.statusCode).toEqual(200);
-        expect(result.body.length).toEqual(13);
+        expect(result.body.length).toEqual(4);
         expect(result.body.map((d: Semester) => d.id).sort()).toEqual(semesters.map(d => d.id).sort());
         expect(mNotification).toHaveBeenCalledTimes(0);
     });
@@ -178,7 +178,6 @@ describe(`PUT ${API_URL}/semester/:id`, () => {
             .set('authorization', JSON.stringify({email: admin.email}))
             .send({data: { untisSyncDate: faker.date.between({from: semester!.start, to: semester!.end})}});
         expect(result.statusCode).toEqual(200);
-        expect(mNotification).toHaveBeenCalledTimes(0);
         expect(mNotification).toHaveBeenCalledTimes(1);
         expect(mNotification.mock.calls[0][0]).toEqual({
             event: IoEvent.CHANGED_RECORD,
@@ -242,7 +241,7 @@ describe(`DELETE ${API_URL}/semester/:id`, () => {
             .set('authorization', JSON.stringify({email: admin.email}));
         expect(result.statusCode).toEqual(204);
         const semestersAfter = await prisma.semester.findMany();
-        expect(semestersAfter).toHaveLength(12);
+        expect(semestersAfter).toHaveLength(3);
         expect(semestersAfter.map(d => d.id)).not.toContain(semester!.id);
         expect(mNotification).toHaveBeenCalledTimes(1);
         expect(mNotification.mock.calls[0][0]).toEqual({
