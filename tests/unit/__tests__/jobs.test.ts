@@ -2,7 +2,7 @@ import { JobType, Prisma, Role, User } from "@prisma/client";
 import Jobs from "../../../src/models/jobs";
 import prismock from "../__mocks__/prismockClient";
 import { createUser } from "./users.test";
-import { HTTP400Error, HTTP403Error, HTTP404Error } from "../../../src/utils/errors/Errors";
+import { HTTP403Error, HTTP404Error } from "../../../src/utils/errors/Errors";
 import { createEvent } from "./events.test";
 import Events from "../../../src/models/events";
 import { prepareEvent } from "../../../src/models/event.helpers";
@@ -68,6 +68,7 @@ describe('Jobs', () => {
             const job = await createJob({ userId: user.id, type: JobType.IMPORT });
             await expect(Jobs.updateModel(user, job.id, { description: 'FooBar' })).resolves.toEqual({
                 ...job,
+                events: [],
                 description: 'FooBar'
             });
         });
@@ -79,7 +80,10 @@ describe('Jobs', () => {
                 log: 'Blaa', filename: 'foobar.xlsx', semesterId: 'sid',
                 userId: 'another-ones', 
                 syncDate: new Date()
-            })).resolves.toEqual(job);
+            })).resolves.toEqual({
+                ...job,   
+                events: []
+            });
         });
         test('admin can update description of others jobs', async () => {
             const user = await createUser({ firstName: 'Reto' });
@@ -87,6 +91,7 @@ describe('Jobs', () => {
             const job = await createJob({ userId: user.id, type: JobType.IMPORT });
             await expect(Jobs.updateModel(admin, job.id, { description: 'FooBar' })).resolves.toEqual({
                 ...job,
+                events: [],
                 description: 'FooBar'
             });
         });
