@@ -262,6 +262,12 @@ describe(`DELETE ${API_URL}/job/:id`, () => {
         expect(result.statusCode).toEqual(204);
         const del = prisma.job.findUnique({where: {id: job.id}});
         expect(del).resolves.toBeNull();
+        expect(mNotification).toHaveBeenCalledTimes(1);
+        expect(mNotification.mock.calls[0][0]).toEqual({
+            event: IoEvent.DELETED_RECORD,
+            message: { record: 'JOB', id: job.id },
+            to: user.id
+        });
     });
 
     it("jobs with draft-events will be deleted, including the events", async () => {
@@ -280,6 +286,12 @@ describe(`DELETE ${API_URL}/job/:id`, () => {
         const result = await request(app)
             .delete(`${API_URL}/job/${job.id}`)
             .set('authorization', JSON.stringify({ email: user.email }));
+        expect(mNotification).toHaveBeenCalledTimes(1);
+        expect(mNotification.mock.calls[0][0]).toEqual({
+            event: IoEvent.DELETED_RECORD,
+            message: { record: 'JOB', id: job.id },
+            to: user.id
+        });
 
         expect(result.statusCode).toEqual(204);
         const del = await prisma.job.findUnique({where: {id: job.id}});
@@ -309,8 +321,14 @@ describe(`DELETE ${API_URL}/job/:id`, () => {
         const result = await request(app)
             .delete(`${API_URL}/job/${job.id}`)
             .set('authorization', JSON.stringify({ email: user.email }));
-
         expect(result.statusCode).toEqual(204);
+        expect(mNotification).toHaveBeenCalledTimes(1);
+        expect(mNotification.mock.calls[0][0]).toEqual({
+            event: IoEvent.DELETED_RECORD,
+            message: { record: 'JOB', id: job.id },
+            to: IoRoom.ALL
+        });
+
         const del = await prisma.job.findUnique({where: {id: job.id}});
         const delEvents = await prisma.event.findMany();
         expect(delEvents).toHaveLength(6);
@@ -324,6 +342,13 @@ describe(`DELETE ${API_URL}/job/:id`, () => {
             .delete(`${API_URL}/job/${job.id}`)
             .set('authorization', JSON.stringify({ email: user.email }));
 
+        expect(mNotification).toHaveBeenCalledTimes(1);
+        expect(mNotification.mock.calls[0][0]).toEqual({
+            event: IoEvent.DELETED_RECORD,
+            message: { record: 'JOB', id: job.id },
+            to: user.id
+        });
+        mNotification.mockReset()
         expect(result.statusCode).toEqual(204);
         const del = await prisma.job.findUnique({where: {id: job.id}});
         expect(del).toBeNull();
@@ -331,6 +356,7 @@ describe(`DELETE ${API_URL}/job/:id`, () => {
         const result2 = await request(app)
             .delete(`${API_URL}/job/${job.id}`)
             .set('authorization', JSON.stringify({ email: user.email }));
+        expect(mNotification).toHaveBeenCalledTimes(0);
 
         expect(result2.statusCode).toEqual(204);
     });

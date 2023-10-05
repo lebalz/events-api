@@ -61,12 +61,12 @@ function Jobs(db: PrismaClient['job']) {
                 await Promise.all(destroyEvents);
                 const cleanedUp = await this.findModel(actor, id);
                 if (cleanedUp.events.length === 0) {
-                    return await db.delete({ where: { id: id } });
+                    return await db.delete({ where: { id: id }, include: { events: true } });
                 } else {
                     return cleanedUp
                 }
             } else {
-                return await db.delete({ where: { id: id } });
+                return await db.delete({ where: { id: id }, include: { events: true } });
             }
 
         },

@@ -100,7 +100,7 @@ describe('Jobs', () => {
         test('user can destroy empty job', async () => {
             const user = await createUser({ firstName: 'Reto' });
             const job = await createJob({ userId: user.id, type: JobType.IMPORT });
-            await expect(Jobs.destroy(user, job.id)).resolves.toEqual(job);
+            await expect(Jobs.destroy(user, job.id)).resolves.toEqual({...job, events: []});
             await expect(Jobs.findModel(user, job.id)).rejects.toEqual(new HTTP404Error(`Job with id ${job.id} not found`));
         });
         test('user can destroy job including connected draft events', async () => {
@@ -108,7 +108,10 @@ describe('Jobs', () => {
             const job = await createJob({ userId: user.id, type: JobType.IMPORT });
             const event1 = await createEvent({authorId: user.id, jobId: job.id });
             const event2 = await createEvent({authorId: user.id, jobId: job.id });
-            await expect(Jobs.destroy(user, job.id)).resolves.toEqual(job);
+            await expect(Jobs.destroy(user, job.id)).resolves.toEqual({
+                ...job,
+                events: []
+            });
             await expect(Jobs.findModel(user, job.id)).rejects.toEqual(new HTTP404Error(`Job with id ${job.id} not found`));
             await expect(Events.findModel(user, event1.id)).rejects.toEqual(new HTTP404Error('Event not found'));
             await expect(Events.findModel(user, event2.id)).rejects.toEqual(new HTTP404Error('Event not found'));

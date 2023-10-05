@@ -223,6 +223,13 @@ function Events(db: PrismaClient['event']) {
                     throw new HTTP400Error(`Unknown state "${requested}" requested`);
             }
         },
+        /**
+         * - [PUBLISHED, REFUSED, REVIEW] -> soft delete
+         * - [DRAFT] -> hard delete
+         * @param record 
+         * @param options 
+         * @returns 
+         */
         async _forceDestroy(record: Event | ApiEvent, options: {unlinkFromJob?: boolean} = {}): Promise<ApiEvent> {
             /** only drafts are allowed to be hard deleted */
             if (record.state === EventState.DRAFT) {
