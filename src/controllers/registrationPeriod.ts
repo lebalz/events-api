@@ -43,6 +43,7 @@ export const create: RequestHandler<any, any, Semester> = async (req, res, next)
 export const update: RequestHandler<{ id: string }, any, { data: Semester }> = async (req, res, next) => {
     try {
         const model = await RegistrationPeriods.updateModel(req.user!, req.params.id, req.body.data);
+        
         res.notifications = [
             {
                 message: { record: NAME, id: model.id },
@@ -52,6 +53,10 @@ export const update: RequestHandler<{ id: string }, any, { data: Semester }> = a
         ]
         res.status(200).json(model);
     } catch (e) {
+        const err = e as Error;
+        if (err.name === 'PrismaClientUnknownRequestError' && err.message.includes('violates check constraint \\"registration_periods_start_end_check\\"')) {
+            return res.status(400).json({ message: 'Start date must be before end date' });
+        }
         next(e)
     }
 }

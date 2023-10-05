@@ -248,9 +248,9 @@ Ref: events.parentId - events.id [delete: Cascade]
 
 Ref: events.userGroupId > user_event_groups.id
 
-Ref: user_event_groups.userId > users.id
+Ref: user_event_groups.userId > users.id [delete: Cascade]
 
-Ref: jobs.userId > users.id
+Ref: jobs.userId > users.id [delete: Cascade]
 
 Ref: jobs.semesterId > semesters.id
 

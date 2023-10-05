@@ -721,6 +721,7 @@ describe(`POST ${API_URL}/event/export`, () => {
             data: generateSemester({
                 start: start,
                 end: end,
+                untisSyncDate: faker.date.between({ from: start, to: end }),
             })
         });
         for (var i = 0; i < 10; i++) {

@@ -16,6 +16,7 @@ import { prepareEvent } from '../../src/services/createIcs';
 import { notify } from '../../src/middlewares/notify.nop';
 import { IoEvent } from '../../src/routes/socketEventTypes';
 import { IoRoom } from '../../src/routes/socketEvents';
+import { faker } from '@faker-js/faker';
 
 jest.mock('../../src/middlewares/notify.nop');
 const mNotification = <jest.Mock<typeof notify>>notify;
@@ -235,10 +236,13 @@ describe(`POST ${API_URL}/user/:id/create_ics`, () => {
         return truncate();
     });
     it('can create an ics for the users calendar', async () => {
+        const semStart = faker.date.soon();
+        const semEnd = faker.date.future({refDate: semStart, years: 1});
         const sem = await prisma.semester.create({
             data: generateSemester({
-                start: new Date(), 
-                end: new Date(Date.now() + 1000 * 60 * 60 * 24 * 7 * 4 * 6)
+                start: semStart,
+                end: semEnd,
+                untisSyncDate: faker.date.between({from: semStart, to: semEnd})
         })});
         const department = await prisma.department.create({data: generateDepartment({classLetters: ['h'], letter: 'G'})});
         const teacher = await prisma.untisTeacher.create({data: generateUntisTeacher()});
@@ -277,8 +281,8 @@ describe(`POST ${API_URL}/user/:id/create_ics`, () => {
                     }
                 },
                 teachingAffected: TeachingAffected.YES,
-                start: new Date(),
-                end: new Date(Date.now() + 1000 * 60 * 60),
+                start: new Date(semStart.getTime() + 1000),
+                end: new Date(semStart.getTime() + 1000 * 60 * 60),
             })
         });
 

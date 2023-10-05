@@ -83,7 +83,7 @@ model UserEventGroup {
     id          String  @id @default(uuid()) @db.Uuid
     name        String  @default("")
     description String  @default("")
-    user        User    @relation(fields: [userId], references: [id])
+    user        User    @relation(fields: [userId], references: [id], onDelete: Cascade)
     userId      String  @map("user_id") @db.Uuid
     events      Event[]
 
@@ -140,7 +140,7 @@ model Job {
     type  JobType
     state JobState @default(PENDING)
 
-    user   User   @relation(fields: [userId], references: [id])
+    user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
     userId String @map("user_id") @db.Uuid
 
     // Sync Job Only

@@ -82,6 +82,8 @@ Once you created your test db, you can run the migrations with:
 Make sure to have a `.test.env` file with the correct values.
 
 ```bash
+# eventually add the global yarn bin to your path
+export PATH="$(yarn global bin):$PATH"
 dotenv -e .test.env -- yarn run test:db:create
 ```
 
