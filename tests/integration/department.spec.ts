@@ -79,7 +79,6 @@ describe(`PUT ${API_URL}/department/:id`, () => {
             .send({data: {name: 'FOO'}});
         expect(result.statusCode).toEqual(403);
         expect(mNotification).toHaveBeenCalledTimes(0);
-        expect(mNotification).toHaveBeenCalledTimes(0);
     });
     it("admin can update departments", async () => {
         const admin = await prisma.user.create({data: generateUser({role: Role.ADMIN})});
@@ -190,7 +189,7 @@ describe(`DELETE ${API_URL}/department/:id`, () => {
         expect(result.statusCode).toEqual(403);
         expect(mNotification).toHaveBeenCalledTimes(0);
     });
-    it("admin can create a new department", async () => {
+    it("admin can delete a department", async () => {
         const admin = await prisma.user.create({data: generateUser({role: Role.ADMIN})});
         const deps = await prisma.department.findMany();
         expect(deps).toHaveLength(13);

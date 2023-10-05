@@ -87,7 +87,7 @@ export const sync: RequestHandler<{ id: string }, any, any> = async (req, res, n
                 to: req.user!.id
             }
         ];
-        res.json(syncJob);
+        res.status(201).json(syncJob);
     } catch (error) {
         next(error);
     }
