@@ -62,7 +62,7 @@ export const setRole: RequestHandler<{ id: string }, any, { data: { role: Role }
             {
                 message: { record: NAME, id: user.id },
                 event: IoEvent.CHANGED_RECORD,
-                to: IoRoom.ALL,
+                to: user.id,
                 toSelf: false
             }
         ];
@@ -75,6 +75,14 @@ export const setRole: RequestHandler<{ id: string }, any, { data: { role: Role }
 export const createIcs: RequestHandler<{ id: string }, any, any> = async (req, res, next) => {
     try {
         const user = await Users.createIcs(req.user!, req.params.id);
+        res.notifications = [
+            {
+                message: { record: NAME, id: user.id },
+                event: IoEvent.CHANGED_RECORD,
+                to: user.id,
+                toSelf: false
+            }
+        ];
         res.json(user);
     } catch (error) /* istanbul ignore next */ {
         next(error)

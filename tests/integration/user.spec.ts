@@ -14,6 +14,8 @@ import { existsSync, readFile, readFileSync } from 'fs';
 import { createEvent, createEvents } from 'ics';
 import { prepareEvent } from '../../src/services/createIcs';
 import { notify } from '../../src/middlewares/notify.nop';
+import { IoEvent } from '../../src/routes/socketEventTypes';
+import { IoRoom } from '../../src/routes/socketEvents';
 
 jest.mock('../../src/middlewares/notify.nop');
 const mNotification = <jest.Mock<typeof notify>>notify;
@@ -39,6 +41,7 @@ describe(`GET ${API_URL}/user authorized`, () => {
             .get(`${API_URL}/user`)
             .set('authorization', JSON.stringify({ noAuth: true }));
         expect(result.statusCode).toEqual(401);
+        expect(mNotification).toHaveBeenCalledTimes(0);
     });
     it('authenticates users', async () => {
         await prisma.user.create({
@@ -59,6 +62,7 @@ describe(`GET ${API_URL}/user authorized`, () => {
             icsLocator: null,
             untisId: null,
         });
+        expect(mNotification).toHaveBeenCalledTimes(0);
     });
 });
 
@@ -72,6 +76,7 @@ describe(`GET ${API_URL}/user/all`, () => {
             .get(`${API_URL}/user/all`)
             .set('authorization', JSON.stringify({ noAuth: true }));
         expect(result.statusCode).toEqual(401);
+        expect(mNotification).toHaveBeenCalledTimes(0);
     });
     it('returns all users', async () => {
         const user = await prisma.user.create({
@@ -95,6 +100,7 @@ describe(`GET ${API_URL}/user/all`, () => {
                 createdAt: expect.any(String)
             });
         });
+        expect(mNotification).toHaveBeenCalledTimes(0);
     });
 });
 
@@ -111,6 +117,7 @@ describe(`GET ${API_URL}/user/:id authorized`, () => {
             .set('authorization', JSON.stringify({email: user.email}));
         expect(result.statusCode).toEqual(200);
         expect(result.body).toEqual(prepareUser(user));
+        expect(mNotification).toHaveBeenCalledTimes(0);
     });
     it('returns other user', async () => {
         const user = await prisma.user.create({
@@ -124,6 +131,7 @@ describe(`GET ${API_URL}/user/:id authorized`, () => {
             .set('authorization', JSON.stringify({email: user.email}));
         expect(result.statusCode).toEqual(200);
         expect(result.body).toEqual(prepareUser(other));
+        expect(mNotification).toHaveBeenCalledTimes(0);
     });
 });
 
@@ -148,6 +156,12 @@ describe(`PUT ${API_URL}/user/:id/link_to_untis`, () => {
             untisId: untisUser.id,
             updatedAt: expect.any(String)
         });
+        expect(mNotification).toHaveBeenCalledTimes(1);
+        expect(mNotification.mock.calls[0][0]).toEqual({
+            event: IoEvent.CHANGED_RECORD,
+            message: { record: 'USER', id: user.id },
+            to: IoRoom.ALL
+        });
     });
     it('can not link to a used untis teacher', async () => {
         const untisUser = await prisma.untisTeacher.create({
@@ -164,8 +178,9 @@ describe(`PUT ${API_URL}/user/:id/link_to_untis`, () => {
             .set('authorization', JSON.stringify({email: user.email}))
             .send({ data: { untisId: untisUser.id } });
         expect(result.statusCode).toEqual(400);
+        expect(mNotification).toHaveBeenCalledTimes(0);
     });
-    it('can not link to other users', async () => {
+    it('can not link for other users', async () => {
         const reto = await prisma.user.create({
             data: generateUser({email: 'reto@bar.ch'})
         });
@@ -181,6 +196,7 @@ describe(`PUT ${API_URL}/user/:id/link_to_untis`, () => {
             .set('authorization', JSON.stringify({email: reto.email}))
             .send({ data: { untisId: untisUser.id } });
         expect(result.statusCode).toEqual(403);
+        expect(mNotification).toHaveBeenCalledTimes(0);
     });
     it('can link other users when admin role', async () => {
         const admin = await prisma.user.create({
@@ -202,6 +218,12 @@ describe(`PUT ${API_URL}/user/:id/link_to_untis`, () => {
             ...prepareUser(user),
             untisId: untisUser.id,
             updatedAt: expect.any(String)
+        });
+        expect(mNotification).toHaveBeenCalledTimes(1);
+        expect(mNotification.mock.calls[0][0]).toEqual({
+            event: IoEvent.CHANGED_RECORD,
+            message: { record: 'USER', id: user.id },
+            to: IoRoom.ALL
         });
     });
 });
@@ -275,6 +297,13 @@ describe(`POST ${API_URL}/user/:id/create_ics`, () => {
         expect(ical).toEqual(
             ics.value
         );
+        expect(mNotification).toHaveBeenCalledTimes(1);
+        expect(mNotification.mock.calls[0][0]).toEqual({
+            event: IoEvent.CHANGED_RECORD,
+            message: { record: 'USER', id: user.id },
+            to: user.id,
+            toSelf: false
+        });
     });
 });
 
@@ -291,6 +320,7 @@ describe(`POST ${API_URL}/user/:id/set_role`, () => {
             .set('authorization', JSON.stringify({email: user.email}))
             .send({ data: { role: Role.ADMIN } });
         expect(result.statusCode).toEqual(403);
+        expect(mNotification).toHaveBeenCalledTimes(0);
     });
     it('admin can set role of self', async () => {
         const admin = await prisma.user.create({
@@ -305,6 +335,13 @@ describe(`POST ${API_URL}/user/:id/set_role`, () => {
             ...prepareUser(admin),
             role: Role.USER,
             updatedAt: expect.any(String)
+        });
+        expect(mNotification).toHaveBeenCalledTimes(1);
+        expect(mNotification.mock.calls[0][0]).toEqual({
+            event: IoEvent.CHANGED_RECORD,
+            message: { record: 'USER', id: admin.id },
+            to: admin.id,
+            toSelf: false
         });
     });
     it('admin can grant a user admin privileges', async () => {
@@ -324,6 +361,13 @@ describe(`POST ${API_URL}/user/:id/set_role`, () => {
             role: Role.ADMIN,
             updatedAt: expect.any(String)
         });
+        expect(mNotification).toHaveBeenCalledTimes(1);
+        expect(mNotification.mock.calls[0][0]).toEqual({
+            event: IoEvent.CHANGED_RECORD,
+            message: { record: 'USER', id: user.id },
+            to: user.id,
+            toSelf: false
+        });
     });
     it('admin can revoke admin privileges', async () => {
         const user = await prisma.user.create({
@@ -341,6 +385,13 @@ describe(`POST ${API_URL}/user/:id/set_role`, () => {
             ...prepareUser(user),
             role: Role.USER,
             updatedAt: expect.any(String)
+        });
+        expect(mNotification).toHaveBeenCalledTimes(1);
+        expect(mNotification.mock.calls[0][0]).toEqual({
+            event: IoEvent.CHANGED_RECORD,
+            message: { record: 'USER', id: user.id },
+            to: user.id,
+            toSelf: false
         });
     });
 });
