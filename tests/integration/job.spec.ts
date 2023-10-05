@@ -7,6 +7,12 @@ import { generateSemester } from '../factories/semester';
 import { truncate } from './helpers/db';
 import { EventState, Job } from '@prisma/client';
 import { eventSequence } from '../factories/event';
+import { notify } from '../../src/middlewares/notify.nop';
+import { IoEvent } from '../../src/routes/socketEventTypes';
+import { IoRoom } from '../../src/routes/socketEvents';
+
+jest.mock('../../src/middlewares/notify.nop');
+const mNotification = <jest.Mock<typeof notify>>notify;
 
 const prepareJob = (job: Job, includeEvents: boolean = false) => {
     if (includeEvents) {
@@ -26,6 +32,7 @@ describe(`GET ${API_URL}/job/all`, () => {
     it('throws an error if visitor is not authenticated', async () => {
         const result = await request(app).get(`${API_URL}/job/all`);
         expect(result.statusCode).toEqual(401);
+        expect(mNotification).toHaveBeenCalledTimes(0);
     });
 
     it("returns all jobs from user", async () => {
@@ -44,6 +51,7 @@ describe(`GET ${API_URL}/job/all`, () => {
         expect(result.statusCode).toEqual(200);
         expect(result.body.length).toEqual(10);
         expect(result.body.map((e: any) => e.id).sort()).toEqual([...importJobs, ...syncJobs].map(e => e.id).sort());
+        expect(mNotification).toHaveBeenCalledTimes(0);
     });
 });
 
@@ -54,6 +62,7 @@ describe(`GET ${API_URL}/job/:id`, () => {
         const job = await prisma.job.create({data: generateImportJob({userId: user.id})});
         const result = await request(app).get(`${API_URL}/job/${job.id}`);
         expect(result.statusCode).toEqual(401);
+        expect(mNotification).toHaveBeenCalledTimes(0);
     });
 
     it("returns job from user", async () => {
@@ -64,6 +73,7 @@ describe(`GET ${API_URL}/job/:id`, () => {
             .set('authorization', JSON.stringify({ email: user.email }));
         expect(result.statusCode).toEqual(200);
         expect(result.body).toEqual(prepareJob(job, true));
+        expect(mNotification).toHaveBeenCalledTimes(0);
     });
 
     it("throws when job is not found", async () => {
@@ -74,6 +84,7 @@ describe(`GET ${API_URL}/job/:id`, () => {
             .set('authorization', JSON.stringify({ email: user.email }));
         expect(result.statusCode).toEqual(404);
         expect(result.body).toEqual({});
+        expect(mNotification).toHaveBeenCalledTimes(0);
     });
 
     it("prevents user from getting others jobs", async () => {
@@ -84,6 +95,7 @@ describe(`GET ${API_URL}/job/:id`, () => {
             .get(`${API_URL}/job/${job.id}`)
             .set('authorization', JSON.stringify({ email: user.email }));
         expect(result.statusCode).toEqual(403);
+        expect(mNotification).toHaveBeenCalledTimes(0);
     });
 
     it("admin can get others jobs", async () => {
@@ -95,6 +107,7 @@ describe(`GET ${API_URL}/job/:id`, () => {
             .set('authorization', JSON.stringify({ email: admin.email }));
         expect(result.statusCode).toEqual(200);
         expect(result.body).toEqual(prepareJob(job, true));
+        expect(mNotification).toHaveBeenCalledTimes(0);
     });
 });
 
@@ -106,6 +119,7 @@ describe(`PUT ${API_URL}/job/:id`, () => {
             .put(`${API_URL}/job/${job.id}`)
             .send({ data: { description: 'Foo' } });
         expect(result.statusCode).toEqual(401);
+        expect(mNotification).toHaveBeenCalledTimes(0);
     });
 
     it("allows user to update description", async () => {
@@ -120,9 +134,86 @@ describe(`PUT ${API_URL}/job/:id`, () => {
             ...prepareJob({
                 ...job,
                 description: 'Foo'
-            }),
+            }, true),
             updatedAt: expect.any(String)
         });
+        expect(mNotification).toHaveBeenCalledTimes(1);
+        expect(mNotification.mock.calls[0][0]).toEqual({
+            event: IoEvent.CHANGED_RECORD,
+            message: { record: 'JOB', id: job.id },
+            to: user.id
+        });
+    });
+
+    it('notifys everyone when job has public events', async () => {
+        const user = await prisma.user.create({data: generateUser()});
+        const job = await prisma.job.create({
+            data: generateImportJob({
+                userId: user.id, 
+                description: 'Bar',
+                events: {create: eventSequence(user.id, 3, {state: EventState.PUBLISHED})}
+            })
+        });
+        const result = await request(app)
+            .put(`${API_URL}/job/${job.id}`)
+            .set('authorization', JSON.stringify({ email: user.email }))
+            .send({ data: { description: 'Foo' } });
+        expect(result.statusCode).toEqual(200);
+        expect(result.body.description).toEqual('Foo');
+        expect(mNotification).toHaveBeenCalledTimes(1);
+        expect(mNotification.mock.calls[0][0]).toEqual({
+            event: IoEvent.CHANGED_RECORD,
+            message: { record: 'JOB', id: job.id },
+            to: IoRoom.ALL
+        });        
+    });
+
+    [EventState.REFUSED, EventState.REVIEW].forEach((state) => {
+        it(`notifys admins when job has ${state} events`, async () => {
+            const user = await prisma.user.create({data: generateUser()});
+            const job = await prisma.job.create({
+                data: generateImportJob({
+                    userId: user.id, 
+                    description: 'Bar',
+                    events: {create: eventSequence(user.id, 3, {state: state})}
+                })
+            });
+            const result = await request(app)
+                .put(`${API_URL}/job/${job.id}`)
+                .set('authorization', JSON.stringify({ email: user.email }))
+                .send({ data: { description: 'Foo' } });
+            expect(result.statusCode).toEqual(200);
+            expect(result.body.description).toEqual('Foo');
+            expect(mNotification).toHaveBeenCalledTimes(1);
+            expect(mNotification.mock.calls[0][0]).toEqual({
+                event: IoEvent.CHANGED_RECORD,
+                message: { record: 'JOB', id: job.id },
+                to: IoRoom.ADMIN
+            });
+        });
+    });
+
+    it('notifys user when job has only draft events', async () => {
+        const user = await prisma.user.create({data: generateUser()});
+        const job = await prisma.job.create({
+            data: generateImportJob({
+                userId: user.id, 
+                description: 'Bar',
+                events: {create: eventSequence(user.id, 3, {state: EventState.DRAFT})}
+            })
+        });
+        const result = await request(app)
+            .put(`${API_URL}/job/${job.id}`)
+            .set('authorization', JSON.stringify({ email: user.email }))
+            .send({ data: { description: 'Foo' } });
+        expect(result.statusCode).toEqual(200);
+        expect(result.body.description).toEqual('Foo');
+        expect(mNotification).toHaveBeenCalledTimes(1);
+        expect(mNotification.mock.calls[0][0]).toEqual({
+            event: IoEvent.CHANGED_RECORD,
+            message: { record: 'JOB', id: job.id },
+            to: user.id
+        });        
     });
 
     it("fields other than 'description' are ignored", async () => {
@@ -139,8 +230,14 @@ describe(`PUT ${API_URL}/job/:id`, () => {
             ...prepareJob({
                 ...job,
                 description: 'Foo'
-            }),
+            }, true),
             updatedAt: expect.any(String)
+        });
+        expect(mNotification).toHaveBeenCalledTimes(1);
+        expect(mNotification.mock.calls[0][0]).toEqual({
+            event: IoEvent.CHANGED_RECORD,
+            message: { record: 'JOB', id: job.id },
+            to: user.id
         });
     });
 });
@@ -152,6 +249,7 @@ describe(`DELETE ${API_URL}/job/:id`, () => {
         const result = await request(app)
             .delete(`${API_URL}/job/${job.id}`);
         expect(result.statusCode).toEqual(401);
+        expect(mNotification).toHaveBeenCalledTimes(0);
     });
 
     it("allows user to delete a job", async () => {

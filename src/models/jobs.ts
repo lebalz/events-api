@@ -49,7 +49,8 @@ function Jobs(db: PrismaClient['job']) {
                 where: {
                     id: id,
                 },
-                data: sanitized
+                data: sanitized,
+                include: {events: true}
             });
             return model;
         },

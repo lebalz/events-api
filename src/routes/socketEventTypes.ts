@@ -27,6 +27,6 @@ export interface ChangedState {
 export interface Notification {
     message: NewRecord | ChangedRecord | ChangedState;
     event: IoEvent;
-    to?: IoRoom | string;
+    to: IoRoom | string;
     toSelf?: true | boolean;
 }

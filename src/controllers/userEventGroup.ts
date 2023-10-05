@@ -3,6 +3,7 @@ import { RequestHandler } from "express";
 import prisma from "../prisma";
 import { IoEvent } from "../routes/socketEventTypes";
 import UserEventGroups from '../models/userEventGroups';
+import { IoRoom } from "../routes/socketEvents";
 
 const NAME = 'USER_EVENT_GROUP';
 
@@ -64,7 +65,8 @@ export const destroy: RequestHandler<{ id: string }, any, any> = async (req, res
         const model = await UserEventGroups.destroy(req.user!, req.params.id);
         res.notifications = [{
             message: { record: NAME, id: model.id },
-            event: IoEvent.DELETED_RECORD
+            event: IoEvent.DELETED_RECORD,
+            to: IoRoom.ALL
         }]
         res.status(204).send();
     } catch (error) {

@@ -662,9 +662,11 @@ describe(`POST ${API_URL}/event/import`, () => {
             .set('authorization', JSON.stringify({ email: user.email }))
             .attach('terminplan', `${__dirname}/stubs/terminplan-import.xlsx`);
         expect(result.statusCode).toEqual(403);
+
+        expect(mNotification).toHaveBeenCalledTimes(0);
     });
 
-    it("lets logs failed import", async () => {
+    it("lets report the logs of failed imports", async () => {
         const admin = await prisma.user.create({
             data: generateUser({ email: 'admin@bar.ch', role: Role.ADMIN })
         });
@@ -677,6 +679,14 @@ describe(`POST ${API_URL}/event/import`, () => {
         expect(result.statusCode).toEqual(200);
         expect(result.body.state).toEqual(JobState.PENDING);
         expect(result.body.filename).toEqual('terminplan-corrupted.xlsx');
+
+        expect(mNotification).toHaveBeenCalledTimes(1);
+        expect(mNotification.mock.calls[0][0]).toEqual({
+            event: IoEvent.NEW_RECORD,
+            message: { record: 'JOB', id: result.body.id },
+            to: admin.id
+        });
+
         /** wait for the import job to finish */
         let job = await Jobs.findModel(admin, result.body.id);
         while (job.state === JobState.PENDING) {
@@ -688,6 +698,7 @@ describe(`POST ${API_URL}/event/import`, () => {
         expect(job.log.length).toBeGreaterThan(0);
         const events = await prisma.event.findMany();
         expect(events.length).toEqual(0);
+        expect(mNotification).toHaveBeenCalledTimes(1);
     });
 });
 

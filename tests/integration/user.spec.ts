@@ -13,6 +13,10 @@ import { generateUntisLesson } from '../factories/untisLesson';
 import { existsSync, readFile, readFileSync } from 'fs';
 import { createEvent, createEvents } from 'ics';
 import { prepareEvent } from '../../src/services/createIcs';
+import { notify } from '../../src/middlewares/notify.nop';
+
+jest.mock('../../src/middlewares/notify.nop');
+const mNotification = <jest.Mock<typeof notify>>notify;
 
 beforeAll(() => {
     return truncate();

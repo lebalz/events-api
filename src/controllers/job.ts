@@ -1,8 +1,9 @@
-import { type Job } from "@prisma/client";
+import { EventState, type Job } from "@prisma/client";
 import { RequestHandler } from "express";
 import { IoEvent } from "../routes/socketEventTypes";
 import Jobs from "../models/jobs";
 import { HTTP404Error } from "../utils/errors/Errors";
+import { IoRoom } from "../routes/socketEvents";
 
 const NAME = 'JOB';
 
@@ -25,13 +26,19 @@ export const all: RequestHandler = async (req, res, next) => {
 }
 
 export const update: RequestHandler<{ id: string }, any, { data: Job }> = async (req, res, next) => {
-    /** remove fields not updatable*/
     try {
+        /** remove fields not updatable*/
         const model = await Jobs.updateModel(req.user!, req.params.id, req.body.data);
+        const audience = model.events.some(e => e.state === EventState.PUBLISHED) ?
+                            IoRoom.ALL :
+                            model.events.some(e => e.state === EventState.REFUSED || e.state === EventState.REVIEW) ?
+                                IoRoom.ADMIN :
+                                model.userId;
         res.notifications = [
             {
                 message: { record: NAME, id: model.id },
-                event: IoEvent.NEW_RECORD
+                event: IoEvent.CHANGED_RECORD,
+                to: audience
             }
         ]
         res.status(200).json(model);
@@ -47,7 +54,8 @@ export const destroy: RequestHandler = async (req, res, next) => {
             res.notifications = [
                 {
                     message: { record: NAME, id: job.id },
-                    event: IoEvent.DELETED_RECORD
+                    event: IoEvent.DELETED_RECORD,
+                    to: IoRoom.ALL
                 }
             ]
             res.status(204).send();

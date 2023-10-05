@@ -31,7 +31,7 @@ export const update: RequestHandler<{ id: string }, any, { data: Event & { depar
             {
                 message: { record: NAME, id: model.id },
                 event: IoEvent.CHANGED_RECORD,
-                to: model.state === EventState.PUBLISHED ? undefined : req.user!.id
+                to: model.state === EventState.PUBLISHED ? IoRoom.ALL : req.user!.id
             }
         ]
         res.status(200).json(model);

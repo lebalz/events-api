@@ -106,11 +106,12 @@ app.use((req: Request, res, next) => {
                         except.push(socketID);
                     }
                 }
-                if (notification.to) {
-                    io.except(except).to(notification.to).emit(notification.event, JSON.stringify(notification.message));
-                } else {
-                    io.except(except).emit(notification.event, JSON.stringify(notification.message));
-                }
+                io.except(except)
+                    .to(notification.to)
+                    .emit(
+                        notification.event, 
+                        JSON.stringify(notification.message)
+                    );
             });
         }
         res.locals.notifications = res.notifications;
