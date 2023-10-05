@@ -2,15 +2,12 @@ import request from 'supertest';
 import app, { API_URL } from '../../src/app';
 import prisma from '../../src/prisma';
 import { generateUser } from '../factories/user';
-import { generateImportJob, generateSyncJob, jobSequence } from '../factories/job';
 import { truncate } from './helpers/db';
-import { Department, EventState, Job, JobState, JobType, RegistrationPeriod, Role } from '@prisma/client';
-import { eventSequence } from '../factories/event';
+import { RegistrationPeriod, Role } from '@prisma/client';
 import _ from 'lodash';
 import { notify } from '../../src/middlewares/notify.nop';
 import { IoEvent } from '../../src/routes/socketEventTypes';
 import { faker } from '@faker-js/faker';
-import { HTTP401Error } from '../../src/utils/errors/Errors';
 
 jest.mock('../../src/middlewares/notify.nop');
 const mNotification = <jest.Mock<typeof notify>>notify;
@@ -37,7 +34,6 @@ beforeEach(async () => {
         ]
     });
 });
-
 
 afterEach(() => {
     return truncate();
@@ -83,6 +79,7 @@ describe(`GET ${API_URL}/registration_period/:id`, () => {
         expect(mNotification).toHaveBeenCalledTimes(0);
     });
 });
+
 describe(`PUT ${API_URL}/registration_period/:id`, () => {
     it("prevents user to update Registration Period", async () => {
         const user = await prisma.user.create({data: generateUser({})});
@@ -114,7 +111,6 @@ describe(`PUT ${API_URL}/registration_period/:id`, () => {
             to: 'all'
         });
     });
-
     it("can not update start Date to be later than the end date", async () => {
         const regPeriod = await prisma.registrationPeriod.findFirst();
         const admin = await prisma.user.create({data: generateUser({role: Role.ADMIN})});
@@ -201,7 +197,6 @@ describe(`DELETE ${API_URL}/registration_period/:id`, () => {
         });
     });
 });
-
 
 describe(`POST ${API_URL}/registration_period/:id/sync_untis`, () => {
     it("prevents user to sync with untis", async () => {
