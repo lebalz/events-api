@@ -1,16 +1,15 @@
 import type { Prisma } from "@prisma/client";
 import prisma from "./prisma";
-import { findTeacher } from "./untis_helpers";
 
 export const getAuthInfo = (authInfo?: Express.AuthInfo) => {
   if (!authInfo) {
     throw 'No valid authorization provided';
   }
   const { name, preferred_username, oid } = (authInfo as any) || {};
-  if (!name || !preferred_username || !oid) {
+  if (!(name || preferred_username) || !oid) {
     throw 'No valid authorization provided';
   }
-  const nameParts: string[] = (name?.split(", ") || [])[0]?.split(" ") || [preferred_username.split("@")[0].split(".")[0] || '', preferred_username.split("@")[0].split(".")[1] || ""];
+  const nameParts: string[] = (name?.split(", ") || [])[0]?.split(" ") || [preferred_username.split("@")[0].split(".")[1] || '', preferred_username.split("@")[0].split(".")[0] || ""];
   const firstName = nameParts.pop()!;
   const lastName = nameParts.join(" ");
   return {
