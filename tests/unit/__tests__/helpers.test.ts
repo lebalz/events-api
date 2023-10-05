@@ -85,4 +85,16 @@ describe('findUser from auth info', () => {
             updatedAt: expect.any(Date),
         }]);
     });
+    test('throws on wrong format', async () => {
+        const authInfo = {
+            preferredUsername: 'Maximilian.Dorodan@abcd.ch',
+            id: 'a8407e9c-be32-46af-a69d-e35a569f76ad'
+        };
+        await expect(findUser(authInfo)).rejects.toEqual('No valid authorization provided');
+        
+    });
+    test('throws on missing', async () => {
+        const authInfo = undefined
+        await expect(findUser(authInfo)).rejects.toEqual('No valid authorization provided');
+    });
 });

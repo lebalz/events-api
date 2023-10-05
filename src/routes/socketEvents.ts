@@ -31,7 +31,8 @@ const EventRouter = (io: Server) => {
                 const result = await checkEvent(event_id, user.id);
                 socket.emit('checkEvent', { state: 'success', result });
             } catch (error) {
-                console.error(error);
+                /* istanbul ignore next */
+                Logger.error(error);
                 socket.emit('checkEvent', { state: 'error', result: {} });
             }
         })
@@ -40,7 +41,8 @@ const EventRouter = (io: Server) => {
                 const result = await checkUnpersisted(event, user.id);
                 socket.emit('checkEvent', { state: 'success', result });
             } catch (error) {
-                console.error(error);
+                /* istanbul ignore next */
+                Logger.error(error);
                 socket.emit('checkEvent', { state: 'error', result: {} });
             }
         })
@@ -48,15 +50,18 @@ const EventRouter = (io: Server) => {
 
     io.on('disconnect', (socket) => {
         const { user } = (socket.request as { user?: User });
+        /* istanbul ignore next */
         Logger.info('Socket.io disconnect');
     });
 
     io.on('error', (socket) => {
+        /* istanbul ignore next */
         Logger.error(`Socket.io error`);
     })
 
     io.on('reconnect', (socket) => {
         const { user } = (socket.request as { user?: User });
+        /* istanbul ignore next */
         Logger.info('Socket.io reconnect');
     })
 }
