@@ -1,10 +1,6 @@
-import { JobType, Prisma, Role, User } from "@prisma/client";
+import { Prisma } from "@prisma/client";
 import UntisClasses from "../../../src/models/untisClasses";
 import prismock from "../__mocks__/prismockClient";
-import { createUser } from "./users.test";
-import { HTTP400Error, HTTP403Error, HTTP404Error } from "../../../src/utils/errors/Errors";
-import { createUntisTeacher } from "./untisTeachers.test";
-import { PrismockClientType } from "prismock/build/main/lib/client";
 import { generateUntisClass } from "../../factories/untisClass";
 
 export const createUntisClass = async (props: Partial<Prisma.UntisClassUncheckedCreateInput>) => {

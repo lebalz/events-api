@@ -1,4 +1,4 @@
-import { JobType, Prisma, Role, User } from "@prisma/client";
+import { Prisma, Role } from "@prisma/client";
 import Semesters from "../../../src/models/semesters";
 import prismock from "../__mocks__/prismockClient";
 import { createUser } from "./users.test";
