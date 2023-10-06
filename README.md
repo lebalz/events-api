@@ -87,6 +87,11 @@ export PATH="$(yarn global bin):$PATH"
 dotenv -e .test.env -- yarn run test:db:create
 ```
 
+### Code Coverage
+
+![](https://codecov.io/gh/lebalz/events-api/graphs/sunburst.svg?token=O9E8JNGEHN)
+
+
 #### Use unauthorized backend (e.g. when developping offline)
 
 Start the dev server with
