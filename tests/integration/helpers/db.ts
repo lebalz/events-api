@@ -26,7 +26,7 @@ export const truncate = async () => {
         prisma.untisLesson.deleteMany(),
         prisma.untisTeacher.deleteMany(),
         prisma.event.deleteMany(),
-        prisma.user.deleteMany(),
         prisma.userEventGroup.deleteMany(),
+        prisma.user.deleteMany(),
     ])
 };

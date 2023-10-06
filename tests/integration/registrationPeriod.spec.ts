@@ -61,14 +61,14 @@ describe(`GET ${API_URL}/registration_period/all`, () => {
 });
 
 describe(`GET ${API_URL}/registration_period/:id`, () => {
-    it("prevents public user to get department", async () => {
-        const semetser = await prisma.registrationPeriod.findFirst();
+    it("prevents public user to get registration period", async () => {
+        const regPeriod = await prisma.registrationPeriod.findFirst();
         const result = await request(app)
-            .get(`${API_URL}/registration_period/${semetser!.id}`);
+            .get(`${API_URL}/registration_period/${regPeriod!.id}`);
         expect(result.statusCode).toEqual(401);
         expect(mNotification).toHaveBeenCalledTimes(0);
     });
-    it("can get department by id", async () => {
+    it("can get registration period by id", async () => {
         const user = await prisma.user.create({data: generateUser({})});
         const regPeriod = await prisma.registrationPeriod.findFirst();
         const result = await request(app)
@@ -168,7 +168,7 @@ describe(`POST ${API_URL}/registration_period`, () => {
 });
 
 describe(`DELETE ${API_URL}/registration_period/:id`, () => {
-    it("prevents user to delete a department", async () => {
+    it("prevents user to delete a registration period", async () => {
         const regPeriod = await prisma.registrationPeriod.findFirst();
         const user = await prisma.user.create({data: generateUser({})});
         const result = await request(app)

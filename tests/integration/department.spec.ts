@@ -6,7 +6,6 @@ import { generateImportJob, generateSyncJob, jobSequence } from '../factories/jo
 import { generateSemester } from '../factories/semester';
 import { truncate } from './helpers/db';
 import { Department, EventState, Job, Role } from '@prisma/client';
-import { eventSequence } from '../factories/event';
 import stubs from './stubs/departments.json';
 import _ from 'lodash';
 import { notify } from '../../src/middlewares/notify.nop';

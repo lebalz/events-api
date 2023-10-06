@@ -28,3 +28,16 @@ export const generateEvent = (props: (Partial<Prisma.EventUncheckedCreateInput> 
 export const eventSequence = (authorId: string, count: number, props: Partial<Prisma.EventUncheckedCreateInput> = {}) => {
     return [...Array(count).keys()].map(i => generateEvent({...props, authorId: authorId}));
 }
+export const eventSequenceUnchecked = (count: number, props: Partial<Prisma.EventUncheckedCreateInput> & {authorId: string}) => {
+    return [...Array(count).keys()].map(i => {
+        const event = generateEvent({...props});
+        const {author, parent} = event;
+        delete (event as any).author;
+        delete (event as any).parent;
+        return {
+            ...event,
+            authorId: author.connect!.id!,
+            parentId: parent?.connect?.id
+        }
+    });
+}

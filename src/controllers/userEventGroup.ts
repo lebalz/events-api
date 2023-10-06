@@ -66,7 +66,7 @@ export const destroy: RequestHandler<{ id: string }, any, any> = async (req, res
         res.notifications = [{
             message: { record: NAME, id: model.id },
             event: IoEvent.DELETED_RECORD,
-            to: IoRoom.ALL
+            to: req.user!.id
         }]
         res.status(204).send();
     } catch (error) {

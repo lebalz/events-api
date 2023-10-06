@@ -1,7 +1,8 @@
 import { JobType, Prisma } from "@prisma/client";
 import { faker } from '@faker-js/faker';
 
-const _generateJob = (props: Partial<Prisma.JobUncheckedCreateInput> & { userId: string, type: JobType }): Prisma.JobCreateInput => {
+const _generateJob = (_props: Partial<Prisma.JobUncheckedCreateInput> & { userId: string, type: JobType }): Prisma.JobCreateInput => {
+    const props = {..._props};
     const {userId, semesterId, events} = props;
     delete (props as any).userId;
     delete props.semesterId;
