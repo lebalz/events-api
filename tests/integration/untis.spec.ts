@@ -54,6 +54,8 @@ describe(`GET ${API_URL}/untis/teacher/all`, () => {
         expect(result.statusCode).toEqual(200);
         expect(result.body.length).toEqual(2);
         expect(result.body.map((d: UntisTeacher) => d.id).sort()).toEqual(teachers.map(d => d.id).sort());
+        expect(result.body[0]).not.toHaveProperty('lessons');
+        expect(result.body[1]).not.toHaveProperty('lessons');
         expect(mNotification).toHaveBeenCalledTimes(0);
     });
 });
