@@ -1,3 +1,4 @@
+/* istanbul ignore file */
 /**
  * MUST BE IN SYNC WITH THE CLIENT SIDE
  */
