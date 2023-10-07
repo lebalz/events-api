@@ -8,6 +8,13 @@ export const generateSemester = (props: Partial<Prisma.SemesterUncheckedCreateIn
     const day = semester === 'FS' 
         ? faker.number.int({min: 4, max: 8}) 
         : faker.number.int({min: 12, max: 18});
+    if (props.start && props.end && !props.untisSyncDate) {
+        props.untisSyncDate = faker.date.between({from: props.start, to: props.end});
+    } else if (props.start && !props.end && props.untisSyncDate) {
+        props.end = faker.date.soon({refDate: props.untisSyncDate});
+    } else if (!props.start && props.end && props.untisSyncDate) {
+        props.start = faker.date.recent({refDate: props.untisSyncDate});
+    }
 	return {
         name: `${semester} ${year}`,
         start: new Date(year, month, day),

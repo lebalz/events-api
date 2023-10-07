@@ -10,14 +10,17 @@ import { generateSemester } from '../factories/semester';
 import { generateDepartment } from '../factories/department';
 import { generateUntisClass } from '../factories/untisClass';
 import { generateUntisLesson } from '../factories/untisLesson';
-import { existsSync, readFile, readFileSync } from 'fs';
-import { createEvent, createEvents } from 'ics';
+import { existsSync, readFileSync } from 'fs';
+import { createEvents } from 'ics';
+import stubs from './stubs/semesters.json';
 import { prepareEvent } from '../../src/services/createIcs';
 import { notify } from '../../src/middlewares/notify.nop';
 import { IoEvent } from '../../src/routes/socketEventTypes';
 import { IoRoom } from '../../src/routes/socketEvents';
 import { faker } from '@faker-js/faker';
+import { syncUntis2DB } from '../../src/services/syncUntis2DB';
 
+jest.mock('../../src/services/fetchUntis');
 jest.mock('../../src/middlewares/notify.nop');
 const mNotification = <jest.Mock<typeof notify>>notify;
 
@@ -28,15 +31,15 @@ beforeAll(() => {
 afterAll(() => {
     return prisma.$disconnect();
 });
+afterEach(() => {
+    return truncate();
+});
 
 const prepareUser = (user: User) => {
     return JSON.parse(JSON.stringify(user));
 }
 
 describe(`GET ${API_URL}/user authorized`, () => {
-    afterEach(() => {
-        return truncate();
-    });
     it('rejects unauthorized users', async () => {
         const result = await request(app)
             .get(`${API_URL}/user`)
@@ -69,9 +72,6 @@ describe(`GET ${API_URL}/user authorized`, () => {
 
 
 describe(`GET ${API_URL}/user/all`, () => {
-    afterEach(() => {
-        return truncate();
-    });
     it('rejects unauthorized users', async () => {
         const result = await request(app)
             .get(`${API_URL}/user/all`)
@@ -106,9 +106,6 @@ describe(`GET ${API_URL}/user/all`, () => {
 });
 
 describe(`GET ${API_URL}/user/:id authorized`, () => {
-    afterEach(() => {
-        return truncate();
-    });
     it('returns user', async () => {
         const user = await prisma.user.create({
             data: generateUser({email: 'foo@bar.ch'})
@@ -137,9 +134,6 @@ describe(`GET ${API_URL}/user/:id authorized`, () => {
 });
 
 describe(`PUT ${API_URL}/user/:id/link_to_untis`, () => {
-    afterEach(() => {
-        return truncate();
-    });
     it('can link self to an untis teacher', async () => {
         const user = await prisma.user.create({
             data: generateUser({email: 'foo@bar.ch'})
@@ -229,12 +223,7 @@ describe(`PUT ${API_URL}/user/:id/link_to_untis`, () => {
     });
 });
 
-
-
 describe(`POST ${API_URL}/user/:id/create_ics`, () => {
-    afterEach(() => {
-        return truncate();
-    });
     it('can create an ics for the users calendar', async () => {
         const semStart = faker.date.soon();
         const semEnd = faker.date.future({refDate: semStart, years: 1});
@@ -312,9 +301,6 @@ describe(`POST ${API_URL}/user/:id/create_ics`, () => {
 });
 
 describe(`POST ${API_URL}/user/:id/set_role`, () => {
-    afterEach(() => {
-        return truncate();
-    });
     it('user can not set role of self', async () => {
         const user = await prisma.user.create({
             data: generateUser({email: 'foo@bar.ch'})
@@ -399,3 +385,46 @@ describe(`POST ${API_URL}/user/:id/set_role`, () => {
         });
     });
 });
+
+describe( `GET ${API_URL}/user/:id/affected-event-ids`, () => {
+    it('can not get affected event ids without a valid semester', async () => {
+        const user = await prisma.user.create({data: generateUser({})});
+        const result = await request(app)
+            .get(`${API_URL}/user/${user.id}/affected-event-ids`)
+            .set('authorization', JSON.stringify({email: user.email}));
+        expect(result.statusCode).toEqual(404);
+        expect(mNotification).toHaveBeenCalledTimes(0);
+    });
+
+    describe('with existing semesters', () => {        
+        beforeEach(async () => {
+            await prisma.semester.createMany({
+                data: stubs.map((e: any) => ({
+                    id: e.id,
+                    name: e.name,
+                    start: e.start,
+                    end: e.end,
+                    untisSyncDate: e.untisSyncDate
+                }))
+            });
+            const semester = await prisma.semester.findFirst({ where: { name: 'HS2023' } });
+            await syncUntis2DB(semester!.id);
+        });
+        it('returns affected events from the current semester', async () => {
+            /** ensure a semester is present */
+            const semester = await prisma.semester.create({
+                data: generateSemester({
+                    start: faker.date.recent(),
+                    end: faker.date.future()
+                })
+            });
+            const user = await prisma.user.create({data: generateUser({})});
+            const result = await request(app)
+                .get(`${API_URL}/user/${user.id}/affected-event-ids`)
+                .set('authorization', JSON.stringify({email: user.email}));
+            expect(result.statusCode).toEqual(200);
+            expect(mNotification).toHaveBeenCalledTimes(0);
+        });
+    });
+});
+
