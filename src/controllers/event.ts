@@ -73,9 +73,7 @@ export const setState: RequestHandler<{}, any, { data: { ids: string[], state: E
         updated.forEach((event) => {
             const audience: (string | IoRoom)[] = [];
             switch (event.state) {
-                case EventState.DRAFT:
-                    audience.push(event.authorId);
-                    break;
+                /** DRAFT is not possible, since DRAFT -> DRAFT is not allowed */
                 case EventState.REVIEW:
                 case EventState.REFUSED:
                     audience.push(event.authorId);
