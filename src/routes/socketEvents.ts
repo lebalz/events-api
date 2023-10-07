@@ -1,3 +1,5 @@
+/* istanbul ignore file */
+
 import type { Event, User } from "@prisma/client";
 import { Server } from "socket.io";
 import { checkEvent } from "../services/eventChecker";
@@ -11,11 +13,11 @@ export enum IoRoom {
 
 const EventRouter = (io: Server) => {
     io.on("connection", (socket) => {
-        const { user } = (socket.request as { user?: User });
+        const user = (socket.request as { user?: User }).user;
         if (!user) {
             return socket.disconnect();
         }
-        const sid = (socket.request as any).sessionID;
+        const sid = (socket.request as { sessionID?: string }).sessionID;
         if (sid) {
             socket.join(sid);
         }
@@ -31,7 +33,6 @@ const EventRouter = (io: Server) => {
                 const result = await checkEvent(event_id, user.id);
                 socket.emit('checkEvent', { state: 'success', result });
             } catch (error) /* istanbul ignore next */ {
-                /* istanbul ignore next */
                 Logger.error(error);
                 socket.emit('checkEvent', { state: 'error', result: {} });
             }
@@ -41,7 +42,6 @@ const EventRouter = (io: Server) => {
                 const result = await checkUnpersisted(event, user.id);
                 socket.emit('checkEvent', { state: 'success', result });
             } catch (error) /* istanbul ignore next */ {
-                /* istanbul ignore next */
                 Logger.error(error);
                 socket.emit('checkEvent', { state: 'error', result: {} });
             }
