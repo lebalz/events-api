@@ -208,6 +208,7 @@ export const exportExcel: RequestHandler = async (req, res, next) => {
         if (file) {
             const fpath = path.resolve(file);
             res.download(fpath, (err) => {
+                /* istanbul ignore next */
                 if (err) {
                     console.error(err);
                 }
