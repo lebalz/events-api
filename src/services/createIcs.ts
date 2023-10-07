@@ -1,7 +1,7 @@
 import prisma from '../prisma';
 import { v4 as uuidv4 } from 'uuid';
 import { createEvents, DateArray, EventAttributes } from 'ics';
-import query from './assets/query.eventsAffectingUser';
+import query from './assets/eventsAffectingUser.query';
 import { Event } from '@prisma/client';
 import { writeFileSync } from 'fs';
 import _ from 'lodash';

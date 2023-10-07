@@ -1,6 +1,6 @@
 import { Event, PrismaClient, Role, User as Users } from "@prisma/client";
 import {default as createIcsFile} from '../services/createIcs';
-import { default as queryAffectedEvents} from "../services/assets/query.eventsAffectingUser";
+import { default as queryAffectedEvents} from "../services/assets/eventsAffectingUser.query";
 import prisma from "../prisma";
 import { HTTP400Error, HTTP403Error, HTTP404Error } from "../utils/errors/Errors";
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";

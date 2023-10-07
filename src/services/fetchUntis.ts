@@ -1,3 +1,5 @@
+/* istanbul ignore file */
+
 import { authenticator as Authenticator } from 'otplib';
 import { Base, WebAPITimetable, WebUntisSecretAuth } from 'webuntis';
 import Logger from '../utils/logger';
