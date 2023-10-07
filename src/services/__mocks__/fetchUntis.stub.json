@@ -1,148 +1,386 @@
 {
-    "schoolyear": {
-      "name": "2023/2024",
-      "id": 49,
-      "startDate": "2023-07-30T22:00:00.000Z",
-      "endDate": "2024-07-27T22:00:00.000Z"
+  "schoolyear": {
+    "name": "2023/2024",
+    "id": 49,
+    "startDate": "2023-07-30T22:00:00.000Z",
+    "endDate": "2024-07-27T22:00:00.000Z"
+  },
+  "subjects": [
+    {
+      "id": 1,
+      "name": "M",
+      "longName": "Mathematik",
+      "alternateName": "",
+      "active": true,
+      "foreColor": "ffffff",
+      "backColor": "0000ff"
     },
-    "subjects": [
+    {
+      "id": 2,
+      "name": "IN",
+      "longName": "Informatik",
+      "alternateName": "",
+      "active": true,
+      "foreColor": "ff00ff",
+      "backColor": "ff00ff"
+    }
+  ],
+  "teachers": [
+    {
+      "id": 1,
+      "name": "abc",
+      "foreName": "",
+      "longName": "Ambrosio Clark",
+      "title": "M",
+      "active": true,
+      "dids": []
+    },
+    {
+      "id": 2,
+      "name": "xyz",
+      "foreName": "",
+      "longName": "Xavinda Zorro",
+      "title": "F",
+      "active": true,
+      "dids": []
+    }
+  ],
+  "classes": [
+    {
+      "id": 1,
+      "name": "25h",
+      "longName": "E",
+      "active": true,
+      "did": 66,
+      "teacher1": 1
+    },
+    {
+      "id": 2,
+      "name": "24i",
+      "longName": "BG/WR",
+      "active": true,
+      "did": 66,
+      "teacher1": 2
+    }
+  ],
+  "timetable": [
+    {
+      "id": 999,
+      "lessonId": 1,
+      "lessonNumber": 1,
+      "lessonCode": "LESSON",
+      "lessonText": "",
+      "periodText": "",
+      "hasPeriodText": false,
+      "periodInfo": "",
+      "periodAttachments": [],
+      "staffText": "",
+      "staffAttachments": [],
+      "substText": "",
+      "date": 20231010,
+      "startTime": 1455,
+      "endTime": 1540,
+      "elements": [],
+      "studentGroup": "M_25h",
+      "hasInfo": false,
+      "code": 0,
+      "cellState": "STANDARD",
+      "priority": 5,
+      "is": {
+        "standard": true,
+        "event": false
+      },
+      "roomCapacity": 0,
+      "studentCount": 0,
+      "classes": [
         {
-            "id": 1,
-            "name": "M",
-            "longName": "Mathematik",
-            "alternateName": "",
-            "active": true,
-            "foreColor": "ffffff",
-            "backColor": "0000ff"
-        }
-    ],
-    "teachers": [
-        {
+          "type": 1,
           "id": 1,
-          "name": "abc",
-          "foreName": "",
-          "longName": "Ambrosio Clark",
-          "title": "M",
-          "active": true,
-          "dids": []
-        }
-    ],
-    "classes": [
-        {
+          "orgId": 0,
+          "missing": false,
+          "state": "REGULAR",
+          "element": {
+            "type": 1,
             "id": 1,
             "name": "25h",
             "longName": "E",
-            "active": true,
-            "did": 66,
-            "teacher1": 2739
-        }
-    ],
-    "timetable": [
-        {
-            "id": 999,
-            "lessonId": 1,
-            "lessonNumber": 1,
-            "lessonCode": "LESSON",
-            "lessonText": "",
-            "periodText": "",
-            "hasPeriodText": false,
-            "periodInfo": "",
-            "periodAttachments": [],
-            "staffText": "",
-            "staffAttachments": [],
-            "substText": "",
-            "date": 20231010,
-            "startTime": 1455,
-            "endTime": 1540,
-            "elements": [],
-            "studentGroup": "M_25h",
-            "hasInfo": false,
-            "code": 0,
-            "cellState": "STANDARD",
-            "priority": 5,
-            "is": {
-              "standard": true,
-              "event": false
-            },
-            "roomCapacity": 0,
-            "studentCount": 0,
-            "classes": [
-              {
-                "type": 1,
-                "id": 1,
-                "orgId": 0,
-                "missing": false,
-                "state": "REGULAR",
-                "element": {
-                  "type": 1,
-                  "id": 1,
-                  "name": "25h",
-                  "longName": "E",
-                  "displayname": "25h",
-                  "alternatename": "",
-                  "canViewTimetable": true,
-                  "roomCapacity": 0
-                }
-              }
-            ],
-            "teachers": [
-              {
-                "type": 2,
-                "id": 1,
-                "orgId": 0,
-                "missing": false,
-                "state": "REGULAR",
-                "element": {
-                  "type": 2,
-                  "id": 1,
-                  "name": "abc",
-                  "canViewTimetable": true,
-                  "externKey": "",
-                  "roomCapacity": 0
-                }
-              }
-            ],
-            "subjects": [
-              {
-                "type": 3,
-                "id": 1,
-                "orgId": 0,
-                "missing": false,
-                "state": "REGULAR",
-                "element": {
-                  "type": 3,
-                  "id": 1,
-                  "name": "M",
-                  "longName": "Mathematik",
-                  "displayname": "M",
-                  "alternatename": "",
-                  "foreColor": "#ffffff",
-                  "backColor": "#0000ff",
-                  "canViewTimetable": true,
-                  "roomCapacity": 0
-                }
-              }
-            ],
-            "rooms": [
-              {
-                "type": 4,
-                "id": 1,
-                "orgId": 0,
-                "missing": false,
-                "state": "REGULAR",
-                "element": {
-                  "type": 4,
-                  "id": 1,
-                  "name": "D207",
-                  "longName": "Mathematik Unterricht",
-                  "displayname": "D201",
-                  "alternatename": "",
-                  "canViewTimetable": true,
-                  "roomCapacity": 25
-                }
-              }
-            ],
-            "students": []
+            "displayname": "25h",
+            "alternatename": "",
+            "canViewTimetable": true,
+            "roomCapacity": 0
           }
-    ]
+        }
+      ],
+      "teachers": [
+        {
+          "type": 2,
+          "id": 1,
+          "orgId": 0,
+          "missing": false,
+          "state": "REGULAR",
+          "element": {
+            "type": 2,
+            "id": 1,
+            "name": "abc",
+            "canViewTimetable": true,
+            "externKey": "",
+            "roomCapacity": 0
+          }
+        }
+      ],
+      "subjects": [
+        {
+          "type": 3,
+          "id": 1,
+          "orgId": 0,
+          "missing": false,
+          "state": "REGULAR",
+          "element": {
+            "type": 3,
+            "id": 1,
+            "name": "M",
+            "longName": "Mathematik",
+            "displayname": "M",
+            "alternatename": "",
+            "foreColor": "#ffffff",
+            "backColor": "#0000ff",
+            "canViewTimetable": true,
+            "roomCapacity": 0
+          }
+        }
+      ],
+      "rooms": [
+        {
+          "type": 4,
+          "id": 1,
+          "orgId": 0,
+          "missing": false,
+          "state": "REGULAR",
+          "element": {
+            "type": 4,
+            "id": 1,
+            "name": "D207",
+            "longName": "Mathematik Unterricht",
+            "displayname": "D207",
+            "alternatename": "",
+            "canViewTimetable": true,
+            "roomCapacity": 25
+          }
+        }
+      ],
+      "students": []
+    },
+    {
+      "id": 1001,
+      "lessonId": 2,
+      "lessonNumber": 2,
+      "lessonCode": "LESSON",
+      "lessonText": "",
+      "periodText": "",
+      "hasPeriodText": false,
+      "periodInfo": "",
+      "periodAttachments": [],
+      "staffText": "",
+      "staffAttachments": [],
+      "substText": "",
+      "date": 20231010,
+      "startTime": 1550,
+      "endTime": 1635,
+      "elements": [],
+      "studentGroup": "IN_25h",
+      "hasInfo": false,
+      "code": 0,
+      "cellState": "STANDARD",
+      "priority": 5,
+      "is": {
+        "standard": true,
+        "event": false
+      },
+      "roomCapacity": 0,
+      "studentCount": 0,
+      "classes": [
+        {
+          "type": 1,
+          "id": 1,
+          "orgId": 0,
+          "missing": false,
+          "state": "REGULAR",
+          "element": {
+            "type": 1,
+            "id": 1,
+            "name": "25h",
+            "longName": "E",
+            "displayname": "25h",
+            "alternatename": "",
+            "canViewTimetable": true,
+            "roomCapacity": 0
+          }
+        }
+      ],
+      "teachers": [
+        {
+          "type": 2,
+          "id": 1,
+          "orgId": 0,
+          "missing": false,
+          "state": "REGULAR",
+          "element": {
+            "type": 2,
+            "id": 1,
+            "name": "abc",
+            "canViewTimetable": true,
+            "externKey": "",
+            "roomCapacity": 0
+          }
+        }
+      ],
+      "subjects": [
+        {
+          "type": 3,
+          "id": 2,
+          "orgId": 0,
+          "missing": false,
+          "state": "REGULAR",
+          "element": {
+            "type": 3,
+            "id": 2,
+            "name": "IN",
+            "longName": "Informatik",
+            "displayname": "IN",
+            "alternatename": "",
+            "foreColor": "ff00ff",
+            "backColor": "ff00ff",
+            "canViewTimetable": true,
+            "roomCapacity": 0
+          }
+        }
+      ],
+      "rooms": [
+        {
+          "type": 4,
+          "id": 1,
+          "orgId": 0,
+          "missing": false,
+          "state": "REGULAR",
+          "element": {
+            "type": 4,
+            "id": 1,
+            "name": "D207",
+            "longName": "Mathematik Unterricht",
+            "displayname": "D207",
+            "alternatename": "",
+            "canViewTimetable": true,
+            "roomCapacity": 25
+          }
+        }
+      ],
+      "students": []
+    },
+    {
+      "id": 1003,
+      "lessonId": 3,
+      "lessonNumber": 3,
+      "lessonCode": "LESSON",
+      "lessonText": "",
+      "periodText": "",
+      "hasPeriodText": false,
+      "periodInfo": "",
+      "periodAttachments": [],
+      "staffText": "",
+      "staffAttachments": [],
+      "substText": "",
+      "date": 20231010,
+      "startTime": 1455,
+      "endTime": 1540,
+      "elements": [],
+      "studentGroup": "M_24i",
+      "hasInfo": false,
+      "code": 0,
+      "cellState": "STANDARD",
+      "priority": 5,
+      "is": {
+        "standard": true,
+        "event": false
+      },
+      "roomCapacity": 0,
+      "studentCount": 0,
+      "classes": [
+        {
+          "type": 1,
+          "id": 2,
+          "orgId": 0,
+          "missing": false,
+          "state": "REGULAR",
+          "element": {
+            "type": 1,
+            "id": 1,
+            "name": "24i",
+            "longName": "BG/WR",
+            "displayname": "24i",
+            "alternatename": "",
+            "canViewTimetable": true,
+            "roomCapacity": 0
+          }
+        }
+      ],
+      "teachers": [
+        {
+          "type": 2,
+          "id": 2,
+          "orgId": 0,
+          "missing": false,
+          "state": "REGULAR",
+          "element": {
+            "type": 2,
+            "id": 2,
+            "name": "xyz",
+            "canViewTimetable": true,
+            "externKey": "",
+            "roomCapacity": 0
+          }
+        }
+      ],
+      "subjects": [
+        {
+          "type": 3,
+          "id": 1,
+          "orgId": 0,
+          "missing": false,
+          "state": "REGULAR",
+          "element": {
+            "type": 3,
+            "id": 1,
+            "name": "M",
+            "longName": "Mathematik",
+            "displayname": "M",
+            "alternatename": "",
+            "foreColor": "#ffffff",
+            "backColor": "#0000ff",
+            "canViewTimetable": true,
+            "roomCapacity": 0
+          }
+        }
+      ],
+      "rooms": [
+        {
+          "type": 4,
+          "id": 2,
+          "orgId": 0,
+          "missing": false,
+          "state": "REGULAR",
+          "element": {
+            "type": 4,
+            "id": 2,
+            "name": "D204",
+            "longName": "Mathematik Unterricht",
+            "displayname": "D204",
+            "alternatename": "",
+            "canViewTimetable": true,
+            "roomCapacity": 25
+          }
+        }
+      ],
+      "students": []
+    }
+  ]
 }
