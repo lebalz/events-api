@@ -103,9 +103,11 @@ describe('findUser from auth info', () => {
 
 describe('Department Names', () => {
     test('Nothing when too short', () => {
+        expect(toDepartmentName(undefined as unknown as KlassName)).toEqual('');
         expect(toDepartmentName('' as KlassName)).toEqual('');
         expect(toDepartmentName('2' as KlassName)).toEqual('');
         expect(toDepartmentName('27' as KlassName)).toEqual('');
+        expect(toDepartmentName('Eifach Öppis' as KlassName)).toEqual(undefined);
     });
     // abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ
     test('Wirtschaftsmittelschule [wms]', () => {

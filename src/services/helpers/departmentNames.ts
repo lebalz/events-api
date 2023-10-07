@@ -130,7 +130,7 @@ export const ClassLetterMap: {[key in keyof typeof Departments]: readonly string
  */
 export const toDepartmentName = (name: KlassName) => {
     if (!name || name.length < 3) {
-        '';
+        return '';
     }
     const [department, letter] = name.slice(2).split('') as [DepartmentLetter, Letter];
     switch (department) {
