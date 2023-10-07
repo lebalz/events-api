@@ -1,4 +1,6 @@
 import { findUser } from "../../../src/helpers";
+import { Departments, toDepartmentName } from "../../../src/services/helpers/departmentNames";
+import { KlassName } from "../../../src/services/helpers/klassNames";
 import { chunks } from "../../../src/services/helpers/splitInChunks";
 import prismock from "../__mocks__/prismockClient";
 
@@ -97,4 +99,97 @@ describe('findUser from auth info', () => {
         const authInfo = undefined
         await expect(findUser(authInfo)).rejects.toEqual('No valid authorization provided');
     });
+});
+
+describe('Department Names', () => {
+    // abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ
+    test('Wirtschaftsmittelschule [wms]', () => {
+        'abc'.split('').forEach(letter => {
+            expect(toDepartmentName(`27W${letter}` as KlassName)).toEqual(Departments.WMS);
+        });
+        'defghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('').forEach(letter => {
+            expect(toDepartmentName(`27W${letter}` as KlassName)).not.toEqual(Departments.WMS);
+        });
+    });
+    test('Fachmittelschule [fms]', () => {
+        'abcdefghijklmno'.split('').forEach(letter => {
+            expect(toDepartmentName(`27F${letter}` as KlassName)).toEqual(Departments.FMS);
+        });
+        'pqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('').forEach(letter => {
+            expect(toDepartmentName(`27F${letter}` as KlassName)).not.toEqual(Departments.FMS);
+        });
+    });
+    test('Fachmittelschule Bilingue [fms]', () => {
+        'wxy'.split('').forEach(letter => {
+            expect(toDepartmentName(`27F${letter}` as KlassName)).toEqual(Departments.FMSBilingual);
+        });
+        'abcdefghijklmnopqrstuvzABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('').forEach(letter => {
+            expect(toDepartmentName(`27F${letter}` as KlassName)).not.toEqual(Departments.FMSBilingual);
+        });
+    });
+    test('FM Päd', () => {
+        'pqrs'.split('').forEach(letter => {
+            expect(toDepartmentName(`27F${letter}` as KlassName)).toEqual(Departments.FMPaed);
+        });
+        'abcdefghijklmnotuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('').forEach(letter => {
+            expect(toDepartmentName(`27F${letter}` as KlassName)).not.toEqual(Departments.FMPaed);
+        });
+    });
+    test('Gymnasium de', () => {
+        'abcdefghijklmnopqrs'.split('').forEach(letter => {
+            expect(toDepartmentName(`27G${letter}` as KlassName)).toEqual(Departments.GYMD);
+        });
+        'tuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('').forEach(letter => {
+            expect(toDepartmentName(`27G${letter}` as KlassName)).not.toEqual(Departments.GYMD);
+        });
+    });
+    test('Gymnasium de Bilingue', () => {
+        'wxy'.split('').forEach(letter => {
+            expect(toDepartmentName(`27G${letter}` as KlassName)).toEqual(Departments.GYMDBilingual);
+        });
+        'abcdefghijklmnopqrstuvzABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('').forEach(letter => {
+            expect(toDepartmentName(`27G${letter}` as KlassName)).not.toEqual(Departments.GYMDBilingual);
+        });
+    });
+    test('Filière gymnasiale Maturité (gym fr)', () => {
+        'ABCDEFGHIJKLMNOPQRS'.split('').forEach(letter => {
+            expect(toDepartmentName(`27m${letter}` as KlassName)).toEqual(Departments.GYMF);
+        });
+        'abcdefghijklmnopqrstuvwxyzTUVWXYZ'.split('').forEach(letter => {
+            expect(toDepartmentName(`27m${letter}` as KlassName)).not.toEqual(Departments.GYMF);
+        });
+    });
+    test('Filière gymnasiale Maturité Bilingue (gym fr)', () => {
+        'TUV'.split('').forEach(letter => {
+            expect(toDepartmentName(`27m${letter}` as KlassName)).toEqual(Departments.GYMFBilingual);
+        });
+        'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSWXYZ'.split('').forEach(letter => {
+            expect(toDepartmentName(`27m${letter}` as KlassName)).not.toEqual(Departments.GYMFBilingual);
+        });
+    });
+    test('Ecole de Culture Générale [ecg]', () => {
+        'ABCDEFGHIJKLMNO'.split('').forEach(letter => {
+            expect(toDepartmentName(`27s${letter}` as KlassName)).toEqual(Departments.ECG);
+        });
+        'abcdefghijklmnopqrstuvwxyzPQRSTUVWXYZ'.split('').forEach(letter => {
+            expect(toDepartmentName(`27s${letter}` as KlassName)).not.toEqual(Departments.ECG);
+        });
+    });
+    test('Filière Passerelle [passerelle]', () => {
+        'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('').forEach(letter => {
+            expect(toDepartmentName(`27p${letter}` as KlassName)).toEqual(Departments.PASSERELLE);
+        });
+        'abcdefghijklmnopqrstuvwxyz'.split('').forEach(letter => {
+            expect(toDepartmentName(`27p${letter}` as KlassName)).not.toEqual(Departments.PASSERELLE);
+        });
+    });
+    test('Ecole Supérieure de Commerce [esc]', () => {
+        'ABCD'.split('').forEach(letter => {
+            expect(toDepartmentName(`27c${letter}` as KlassName)).toEqual(Departments.ESC);
+        });
+        'abcdefghijklmnopqrstuvwxyzEFGHIJKLMNOPQRSTUVWXYZ'.split('').forEach(letter => {
+            expect(toDepartmentName(`27c${letter}` as KlassName)).not.toEqual(Departments.ESC);
+        });
+    });
+
 });

@@ -124,6 +124,10 @@ export const ClassLetterMap: {[key in keyof typeof Departments]: readonly string
     PASSERELLE: PASSERELLE
 }
 
+/**
+ * 
+ * @param name class Name with the new format
+ */
 export const toDepartmentName = (name: KlassName) => {
     if (!name || name.length < 3) {
         '';
@@ -131,25 +135,33 @@ export const toDepartmentName = (name: KlassName) => {
     const [department, letter] = name.slice(2).split('') as [DepartmentLetter, Letter];
     switch (department) {
         case DepartmentLetter.WMS:
-            return Departments.WMS;
+            if (WMS.includes(letter as any)) {
+                return Departments.WMS;
+            }
+            break;
         case DepartmentLetter.FMS:
             if (FMPaed.includes(letter as any)) {
                 return Departments.FMPaed;
-            }
-            if (FMSBilingual.includes(letter as any)) {
+            } else if (FMSBilingual.includes(letter as any)) {
                 return Departments.FMSBilingual;
+            } else if (FMS.includes(letter as any)) {
+                return Departments.FMS;
             }
-            return Departments.FMS;
+            break;
         case DepartmentLetter.GYMD:
             if (GYMDBilingual.includes(letter as any)) {
                 return Departments.GYMDBilingual;
-            }
-            return Departments.GYMD;
+            } else if (GYMD.includes(letter as any)) {
+                return Departments.GYMD;
+            } 
+            break;
         case DepartmentLetter.GYMF:
             if (GYMFBilingual.includes(letter as any)) {
                 return Departments.GYMFBilingual;
+            } else if (GYMF.includes(letter as any)) {
+                return Departments.GYMF;
             }
-            return Departments.GYMF;
+            break;
         case DepartmentLetter.ECG:
             if (ECGBilingual.includes(letter as any)) {
                 return Departments.ECGBilingual;
@@ -157,10 +169,19 @@ export const toDepartmentName = (name: KlassName) => {
             if (MSOP.includes(letter as any)) {
                 return Departments.MSOP;
             }
-            return Departments.ECG;
+            if (ECG.includes(letter as any)) {
+                return Departments.ECG;
+            }
+            break;
         case DepartmentLetter.PASSERELLE:
-            return Departments.PASSERELLE;
+            if (PASSERELLE.includes(letter as any)) {
+                return Departments.PASSERELLE;
+            }
+            break;
         case DepartmentLetter.ESC:
-            return Departments.ESC;
+            if (ESC.includes(letter as any)) {
+                return Departments.ESC;
+            }
+            break;
     }
 }
