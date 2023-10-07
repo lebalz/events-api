@@ -205,6 +205,8 @@ export const exportExcel: RequestHandler = async (req, res, next) => {
             throw new HTTP400Error('No semester found');
         }
         const file = await createExcel(currentSemester?.id || '-1');
+
+        /* istanbul ignore else */
         if (file) {
             const fpath = path.resolve(file);
             res.download(fpath, (err) => {
@@ -213,7 +215,7 @@ export const exportExcel: RequestHandler = async (req, res, next) => {
                 }
             });
         } else {
-            res.status(400).json({message: 'No semester found'});
+            res.status(500).json({message: 'Excel file could not be created'});
         }
     } catch (error) /* istanbul ignore next */ {
         next(error);
