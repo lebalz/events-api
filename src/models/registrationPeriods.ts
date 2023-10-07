@@ -16,6 +16,7 @@ function RegistrationPeriods(db: PrismaClient['registrationPeriod']) {
             return await db.findUnique({ where: { id } });
         },
         async createModel(actor: User, data: Prisma.RegistrationPeriodUncheckedCreateInput) {
+            /** authorization handled by route guard */
             const { start, end, name } = data;
             const model = await db.create({
                 data: {
@@ -27,9 +28,7 @@ function RegistrationPeriods(db: PrismaClient['registrationPeriod']) {
             return model;
         },
         async updateModel(actor: User, id: string, data: Prisma.SemesterUncheckedUpdateInput) {
-            if (actor.role !== Role.ADMIN) {
-                throw new HTTP403Error('Not authorized');
-            }
+            /** authorization handled by route guard */
             /** remove fields not updatable*/
             const sanitized = getData(data);    
 
@@ -40,9 +39,7 @@ function RegistrationPeriods(db: PrismaClient['registrationPeriod']) {
             return model;
         },
         async destroy(actor: User, id: string) {
-            if (actor.role !== Role.ADMIN) {
-                throw new HTTP403Error('Not authorized');
-            }
+            /** authorization handled by route guard */
             return await db.delete({
                 where: { id: id }
             });

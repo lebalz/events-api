@@ -89,9 +89,6 @@ function UserEventGroups(db: PrismaClient['userEventGroup']) {
         },
         async cloneModel(actor: User, id: string) {
             const model = await this.findModel(actor, id, { include: { departments: true }});
-            if (!model) {
-                throw new HTTP404Error('Group not found');
-            }
             const events = model.events as (Event & { departments: Department[] })[];
             const newGroup = await db.create({
                 data: {
