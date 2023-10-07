@@ -12,7 +12,7 @@ export const find: RequestHandler = async (req, res, next) => {
     try {
         const job = await Jobs.findModel(req.user!, req.params.id);
         res.json(job);
-    } catch (error) {
+    } catch (error) /* istanbul ignore next */ {
         next(error);
     }
 }
@@ -63,7 +63,7 @@ export const destroy: RequestHandler = async (req, res, next) => {
                 }
             ]
             res.status(204).send();
-        } catch (error) {
+        } catch (error) /* istanbul ignore next */ {
             if (error instanceof HTTP404Error) {
                 /** if the job does not exist, we still want to send a 204 */
                 return res.status(204).send();

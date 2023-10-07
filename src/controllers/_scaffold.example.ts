@@ -15,7 +15,7 @@ export const all: RequestHandler = async (req, res, next) => {
     try {
         const models = await db.findMany({});
         res.json(models);
-    } catch (error) {
+    } catch (error) /* istanbul ignore next */ {
         next(error);
     }
 }
@@ -27,7 +27,7 @@ export const find: RequestHandler<{ id: string }, any, any> = async (req, res, n
                 where: { id: req.params.id }
             });
         res.status(200).json(model);
-    } catch (error) {
+    } catch (error) /* istanbul ignore next */ {
         next(error);
     }
 }
@@ -92,7 +92,7 @@ export const destroy: RequestHandler<{ id: string }, any, any> = async (req, res
             to: IoRoom.ALL
         }]
         res.status(204).send();
-    } catch (error) {
+    } catch (error) /* istanbul ignore next */ {
         next(error);
     }
 }

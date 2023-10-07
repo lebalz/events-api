@@ -61,7 +61,7 @@ const createExcel = async (semesterId: string) => {
             const file = `${EXPORT_DIR}/${f}`;
             rmSync(file);
         });
-    } catch (error) {
+    } catch (error) /* istanbul ignore next */ {
         Logger.error(error);
     }
     

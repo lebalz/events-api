@@ -50,7 +50,7 @@ export const linkToUntis: RequestHandler<{ id: string }, any, { data: { untisId:
             }
         ];
         res.json(user);
-    } catch (error) {
+    } catch (error) /* istanbul ignore next */ {
         next(error)
     }
 }

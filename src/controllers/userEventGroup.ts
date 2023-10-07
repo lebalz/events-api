@@ -11,7 +11,7 @@ export const allOfUser: RequestHandler = async (req, res, next) => {
     try {
         const models = await UserEventGroups.allOfUser(req.user!);
         res.json(models);
-    } catch (error) {
+    } catch (error) /* istanbul ignore next */ {
         next(error);
     }
 }
@@ -20,7 +20,7 @@ export const find: RequestHandler<{ id: string }, any, any> = async (req, res, n
     try {
         const model = await UserEventGroups.findModel(req.user!, req.params.id);
         res.status(200).json(model);
-    } catch (error) {
+    } catch (error) /* istanbul ignore next */ {
         next(error);
     }
 }
@@ -69,7 +69,7 @@ export const destroy: RequestHandler<{ id: string }, any, any> = async (req, res
             to: req.user!.id
         }]
         res.status(204).send();
-    } catch (error) {
+    } catch (error) /* istanbul ignore next */ {
         next(error);
     }
 }

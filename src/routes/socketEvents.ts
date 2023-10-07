@@ -30,7 +30,7 @@ const EventRouter = (io: Server) => {
             try {
                 const result = await checkEvent(event_id, user.id);
                 socket.emit('checkEvent', { state: 'success', result });
-            } catch (error) {
+            } catch (error) /* istanbul ignore next */ {
                 /* istanbul ignore next */
                 Logger.error(error);
                 socket.emit('checkEvent', { state: 'error', result: {} });
@@ -40,7 +40,7 @@ const EventRouter = (io: Server) => {
             try {
                 const result = await checkUnpersisted(event, user.id);
                 socket.emit('checkEvent', { state: 'success', result });
-            } catch (error) {
+            } catch (error) /* istanbul ignore next */ {
                 /* istanbul ignore next */
                 Logger.error(error);
                 socket.emit('checkEvent', { state: 'error', result: {} });

@@ -12,7 +12,7 @@ export const all: RequestHandler = async (req, res, next) => {
     try {
         const models = await Departments.all();
         res.json(models);
-    } catch (error)  /* istanbul ignore next */ {
+    } catch (error) /* istanbul ignore next */ {
         next(error);
     }
 }
@@ -21,7 +21,7 @@ export const find: RequestHandler = async (req, res, next) => {
     try {
         const model = await Departments.findModel(req.params.id);
         res.json(model);
-    } catch (error)  /* istanbul ignore next */ {
+    } catch (error) /* istanbul ignore next */ {
         next(error);
     }
 }
@@ -35,7 +35,7 @@ export const update: RequestHandler<{ id: string }, any, { data: Department }> =
             to: IoRoom.ALL
         }]
         res.json(model);
-    } catch (error)  /* istanbul ignore next */ {
+    } catch (error) /* istanbul ignore next */ {
         next(error);
     }
 }
@@ -49,7 +49,7 @@ export const create: RequestHandler<any, any, Department> = async (req, res, nex
             to: IoRoom.ALL
         }]
         res.status(201).json(model);
-    } catch (error)  /* istanbul ignore next */ {
+    } catch (error) /* istanbul ignore next */ {
         next(error);
     }
 }
@@ -63,7 +63,7 @@ export const destroy: RequestHandler<{ id: string }, any, any> = async (req, res
             to: IoRoom.ALL
         }]
         res.status(204).send();
-    } catch (error)  /* istanbul ignore next */ {
+    } catch (error) /* istanbul ignore next */ {
         next(error);
     }
 }
