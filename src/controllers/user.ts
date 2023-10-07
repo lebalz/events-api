@@ -1,20 +1,10 @@
-import type { User, Event } from "@prisma/client";
 import {Role} from '@prisma/client';
 import { RequestHandler } from "express";
-import prisma from "../prisma";
 import { IoEvent } from "../routes/socketEventTypes";
-import { createDataExtractor } from "./helpers";
-import {default as createIcsFile} from '../services/createIcs';
 import { IoRoom } from "../routes/socketEvents";
-import { default as queryAffectedEvents} from "../services/assets/eventsAffectingUser.query";
 import Users from '../models/users';
-import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
-import { HTTP400Error } from "../utils/errors/Errors";
 
 const NAME = 'USER';
-const getData = createDataExtractor<User>(
-    []
-);
 
 export const user: RequestHandler = async (req, res) => {
     res.json(req.user);

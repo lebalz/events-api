@@ -37,7 +37,7 @@ export const create: RequestHandler<any, any, UserEventGroup & { event_ids: stri
             }
         ]
         res.status(201).json(model);
-    } catch (e) {
+    } catch (e) /* istanbul ignore next */ {
         next(e)
     }
 }
@@ -55,7 +55,7 @@ export const update: RequestHandler<{ id: string }, any, { data: UserEventGroup 
             }
         ]
         res.status(200).json(model);
-    } catch (e) {
+    } catch (e) /* istanbul ignore next */ {
         next(e)
     }
 }
@@ -86,7 +86,7 @@ export const clone: RequestHandler<{ id: string }, any, any> = async (req, res, 
             }
         ];
         res.status(201).json(newGroup);
-    } catch (e) {
+    } catch (e) /* istanbul ignore next */ {
         next(e)
     }
 }
@@ -95,7 +95,7 @@ export const events: RequestHandler<{ id: string }, any, any> = async (req, res,
     try {
         const events = await UserEventGroups.events(req.user!, req.params.id);
         res.status(200).json(events);
-    } catch (e) {
+    } catch (e) /* istanbul ignore next */ {
         next(e)
     }
 }

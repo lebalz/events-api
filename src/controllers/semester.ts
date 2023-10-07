@@ -37,7 +37,7 @@ export const create: RequestHandler<any, any, Semester> = async (req, res, next)
             }
         ]
         res.status(201).json(model);
-    } catch (e) {
+    } catch (e) /* istanbul ignore next */ {
         next(e)
     }
 }
@@ -53,7 +53,7 @@ export const update: RequestHandler<{ id: string }, any, { data: Semester }> = a
             }
         ]
         res.status(200).json(model);
-    } catch (e) {
+    } catch (e) /* istanbul ignore next */ {
         next(e)
     }
 }

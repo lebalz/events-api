@@ -8,7 +8,6 @@ import { IoRoom } from "../routes/socketEvents";
 import createExcel from "../services/createExcel";
 import Events from "../models/events";
 import path from "path";
-import { prepareEvent } from "../models/event.helpers";
 import { HTTP400Error } from "../utils/errors/Errors";
 
 const NAME = 'EVENT';
@@ -145,7 +144,7 @@ export const create: RequestHandler<any, any, Event> = async (req, res, next) =>
             }
         ];
         res.status(201).json(event);
-    } catch (e) {
+    } catch (e) /* istanbul ignore next */ {
         next(e)
     }
 }
@@ -163,7 +162,7 @@ export const clone: RequestHandler<{ id: string }, any, any> = async (req, res, 
             }
         ];
         res.status(201).json(newEvent);
-    } catch (e) {
+    } catch (e) /* istanbul ignore next */ {
         next(e)
     }
 }
