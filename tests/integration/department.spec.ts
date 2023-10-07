@@ -8,6 +8,7 @@ import stubs from './stubs/departments.json';
 import _ from 'lodash';
 import { notify } from '../../src/middlewares/notify.nop';
 import { IoEvent } from '../../src/routes/socketEventTypes';
+import { faker } from '@faker-js/faker';
 
 jest.mock('../../src/middlewares/notify.nop');
 const mNotification = <jest.Mock<typeof notify>>notify;
@@ -53,6 +54,14 @@ describe(`GET ${API_URL}/department/:id`, () => {
         const result = await request(app)
             .get(`${API_URL}/department/${dep!.id}`);
         expect(result.statusCode).toEqual(401);
+        expect(mNotification).toHaveBeenCalledTimes(0);
+    });
+    it("prevents public user to get non existant department", async () => {
+        const user = await prisma.user.create({data: generateUser({})});
+        const result = await request(app)
+            .get(`${API_URL}/department/${faker.string.uuid()}`)
+            .set('authorization', JSON.stringify({email: user.email}));
+        expect(result.statusCode).toEqual(404);
         expect(mNotification).toHaveBeenCalledTimes(0);
     });
     it("can get department by id", async () => {

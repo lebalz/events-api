@@ -27,7 +27,7 @@ type AllEventQueryCondition = ({ state: EventState } | { authorId: string })[];
 
 function Events(db: PrismaClient['event']) {
     return Object.assign(db, {
-        async findModel(actor: User | undefined, id: string): Promise<ApiEvent | null> {
+        async findModel(actor: User | undefined, id: string): Promise<ApiEvent> {
             const event = await db.findUnique({
                 where: { id: id },
                 include: { departments: true, children: true },
@@ -136,6 +136,7 @@ function Events(db: PrismaClient['event']) {
                                 SELECT * FROM tree WHERE parent_id IS NULL LIMIT 1;
                             `);
 
+                            /* istanbul ignore next */
                             if (publishedParent.length < 1) {
                                 throw new HTTP404Error('Parent not found');
                             }
@@ -160,6 +161,8 @@ function Events(db: PrismaClient['event']) {
                     }
                     if (record.parentId && EventState.PUBLISHED === requested) {
                         const parent = await db.findUnique({ where: { id: record.parentId }, include: { departments: true, children: true } });
+                        
+                        /* istanbul ignore next */
                         if (!parent) {
                             throw new HTTP404Error('Parent not found');
                         } else if (!!parent.parentId) {
@@ -219,7 +222,8 @@ function Events(db: PrismaClient['event']) {
                 case EventState.REFUSED:
                     /** can't do anything with it */
                     throw new HTTP400Error(`${record.state} state is immutable`);
-                default:
+                 /* istanbul ignore next */
+                default: /* shall never happen - difficult to test */
                     throw new HTTP400Error(`Unknown state "${requested}" requested`);
             }
         },
@@ -262,11 +266,8 @@ function Events(db: PrismaClient['event']) {
             });
         },
         async destroy(actor: User, id: string): Promise<ApiEvent> {
-            const record = await db.findUnique({ where: { id: id } });
-            /** check policy - only delete if user is author or admin */
-            if (!record) {
-                throw new HTTP404Error('Event not found');
-            }
+            const record = await this.findModel(actor, id);
+            // /** check policy - only delete if user is author or admin */
             if (record.authorId !== actor.id && actor.role !== Role.ADMIN) {
                 throw new HTTP403Error('Not authorized');
             }

@@ -365,6 +365,16 @@ describe(`POST ${API_URL}/event/:id/clone`, () => {
             expect(mNotification).toHaveBeenCalledTimes(0);
         });
     });
+    it(`is not possible to clone non existant events`, async () => {
+        const user = await prisma.user.create({
+            data: generateUser({ email: 'foo@bar.ch' })
+        });
+        const result = await request(app)
+            .post(`${API_URL}/event/${faker.string.uuid()}/clone`)
+            .set('authorization', JSON.stringify({ email: user.email }));
+        expect(result.statusCode).toEqual(404);
+        expect(mNotification).toHaveBeenCalledTimes(0);
+    });
 });
 
 
