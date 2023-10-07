@@ -20,9 +20,3 @@ export class HTTP404Error extends BaseError {
     super('NOT FOUND', HttpStatusCode.NOT_FOUND, description, true);
   }
 }
-
-export class APIError extends BaseError {
-  constructor(name: string, httpCode = HttpStatusCode.INTERNAL_SERVER, description = 'internal server error', isOperational = true) {
-    super(name, httpCode, description, isOperational);
-  }
-}

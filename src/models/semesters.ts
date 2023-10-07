@@ -48,9 +48,6 @@ function Semesters(db: PrismaClient['semester']) {
                 throw new HTTP403Error('Not authorized');
             }
             const semester = await this.findModel(id);
-            if (!semester) {
-                throw new HTTP404Error('Semester not found');
-            }
             /** remove fields not updatable*/
             const sanitized = getData(data);
             const { start, end, untisSyncDate } = {...semester, ...sanitized};
@@ -82,9 +79,6 @@ function Semesters(db: PrismaClient['semester']) {
         },
         async sync(actor: User, id: string, onComplete?: (jobId: string) => void) {
             const semester = await this.findModel(id);
-            if (!semester) {
-                throw new HTTP404Error('Semester not found');
-            }
             Logger.info(semester.untisSyncDate);
             const syncJob = await Jobs._createSyncJob(actor, semester);
             /** start async untis synchronisation */

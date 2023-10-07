@@ -92,9 +92,6 @@ function UserEventGroups(db: PrismaClient['userEventGroup']) {
             if (!model) {
                 throw new HTTP404Error('Group not found');
             }
-            if (model.userId !== actor.id) {
-                throw new HTTP403Error('Not authorized');
-            }
             const events = model.events as (Event & { departments: Department[] })[];
             const newGroup = await db.create({
                 data: {

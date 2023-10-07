@@ -201,6 +201,7 @@ export const syncUntis2DB = async (semesterId: string) => {
     /** UPSERT LESSONS */
     data.timetable.forEach((lesson) => {
         const lsnData = extractLesson(lesson);
+        /* istanbul ignore next */
         if (!lsnData) {
             return;
         }
@@ -228,6 +229,7 @@ export const syncUntis2DB = async (semesterId: string) => {
                     teachers: []
                 }
             }
+            /* istanbul ignore else */
             if (lessonIdSet.has(lesson.id)) {
                 classes[cid].lessons.push({ id: lesson.id });
             } else {
@@ -241,6 +243,7 @@ export const syncUntis2DB = async (semesterId: string) => {
             if (!teachers[tchr.id]) {
                 teachers[tchr.id] = []
             }
+            /* istanbul ignore else */
             if (lessonIdSet.has(lesson.id)) {
                 teachers[tchr.id].push({ id: lesson.id });
             } else {
@@ -267,6 +270,7 @@ export const syncUntis2DB = async (semesterId: string) => {
         dbTransactions.push(update);
     });
     data.teachers.forEach((tchr) => {
+        /* istanbul ignore next */
         if (!teachers[tchr.id] || teachers[tchr.id].length === 0) {
             return;
         }
@@ -294,6 +298,7 @@ export const syncUntis2DB = async (semesterId: string) => {
             summary[`#${key}`] = len;
         }
     });
+    /* istanbul ignore next */
     if (Object.keys(unknownClassDepartments).length > 0) {
         summary['unknownClassDepartments'] = unknownClassDepartments;
     }

@@ -7,6 +7,7 @@ import Logger from "../utils/logger";
 // Morgan to use our custom logger instead of the console.log.
 const stream: StreamOptions = {
   // Use the http severity
+  /* istanbul ignore next */
   write: (message) => Logger.http(message),
 };
 

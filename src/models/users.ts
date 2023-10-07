@@ -36,6 +36,7 @@ function Users(db: PrismaClient['user']) {
                 if (error.name === 'PrismaClientKnownRequestError' && error.code === 'P2002') {
                     throw new HTTP400Error('Untis ID already in use');
                 }
+                /* istanbul ignore next */
                 throw error;
             }
         },

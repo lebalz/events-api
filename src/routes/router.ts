@@ -1,4 +1,4 @@
-import express from 'express';
+import express, { RequestHandler } from 'express';
 import { create as createEvent, all as allEvents, find as findEvent, update as updateEvent, importEvents, clone as cloneEvent, destroy as deleteEvent, setState as setEventState, exportExcel } from '../controllers/event';
 import { find as findJob, all as allJobs, destroy as deleteJob, update as updateJob } from '../controllers/job';
 import { all as allDepartments, find as findDepartment, update as updateDepartment, create as createDepartment, destroy as deleteDepartment } from '../controllers/department';
@@ -9,7 +9,7 @@ import { teachers, teacher, classes, subjects } from '../controllers/untis';
 import { user, all as allUsers, linkToUntis, find as findUser, createIcs, setRole, affectedEvents } from '../controllers/user';
 import multer from 'multer';
 
-const UPLOAD_DIR = process.env.UPLOAD_DIR 
+const UPLOAD_DIR = process.env.UPLOAD_DIR
     ? process.env.UPLOAD_DIR 
     : process.env.NODE_ENV === 'test' ? 'tests/test-data/uploads' : 'uploads';
 

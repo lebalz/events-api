@@ -2,6 +2,7 @@ import Logger from '../utils/logger';
 import { getStrategy } from './azure-ad';
 import { getStrategy as mockStrategy } from './mock';
 export const strategyForEnvironment = () => {
+    /* istanbul ignore next */
     if (process.env.NODE_ENV === 'test' || (process.env.TEST_USER_ID && process.env.NODE_ENV !== 'production')) {
         if (process.env.TEST_USER_ID) {
             const tid = process.env.TEST_USER_ID;

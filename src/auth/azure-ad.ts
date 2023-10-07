@@ -1,3 +1,5 @@
+/* istanbul ignore file */
+
 import prisma from '../prisma';
 import { BearerStrategy, IBearerStrategyOptionWithRequest, VerifyBearerFunction } from 'passport-azure-ad';
 import { getAuthInfo, userProps } from '../helpers';

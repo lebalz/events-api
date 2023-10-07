@@ -67,6 +67,14 @@ describe(`GET ${API_URL}/user_event_group/:id`, () => {
         expect(result.body).toEqual(prepareRegistrationPeriod(ueGroup!));
         expect(mNotification).toHaveBeenCalledTimes(0);
     });
+    it("returns 404 when user event group was not found", async () => {
+        const user = await prisma.user.create({data: generateUser({})});
+        const result = await request(app)
+            .get(`${API_URL}/user_event_group/${faker.string.uuid()}`)
+            .set('authorization', JSON.stringify({email: user.email}));
+        expect(result.statusCode).toEqual(404);
+        expect(mNotification).toHaveBeenCalledTimes(0);
+    });
     it("prevents user to fetch other users event group by id", async () => {
         const user = await prisma.user.create({data: generateUser({})});
         const mallory = await prisma.user.create({data: generateUser({})});
@@ -221,6 +229,14 @@ describe(`POST ${API_URL}/user_event_group/:id/clone`, () => {
             .post(`${API_URL}/user_event_group/${ueGroup!.id}/clone`);
 
         expect(result.statusCode).toEqual(401);
+    });
+    it("returns 404 when user event group was not found", async () => {
+        const user = await prisma.user.create({data: generateUser({})});
+        const result = await request(app)
+            .get(`${API_URL}/user_event_group/${faker.string.uuid()}/clone`)
+            .set('authorization', JSON.stringify({email: user.email}));
+        expect(result.statusCode).toEqual(404);
+        expect(mNotification).toHaveBeenCalledTimes(0);
     });
     it("clones user groups including it's events", async () => {
         const user = await prisma.user.create({data: generateUser({})});

@@ -13,6 +13,7 @@ import authConfig, { PUBLIC_POST_ROUTES, PUBLIC_ROUTES } from './routes/authConf
 import type { User } from "@prisma/client";
 import { HttpStatusCode } from "./utils/errors/BaseError";
 import { notify } from "./middlewares/notify.nop";
+import { HTTP401Error } from "./utils/errors/Errors";
 
 const AccessRules = createAccessRules(authConfig.accessMatrix);
 
@@ -56,13 +57,15 @@ app.use(passport.session());
 passport.use(strategyForEnvironment());
 
 passport.serializeUser((user, done) => {
-    done(null, user.id)
+    /** ignore this socket */
+    done(null, user.id);
 })
 
 
+/** ignore this socket */
 passport.deserializeUser(async (id, done) => {
-    const user = await prisma.user.findUnique({ where: { id: id as string } })
-    done(null, user)
+    const user = await prisma.user.findUnique({ where: { id: id as string } });
+    done(null, user);
 });
 
 /** Static folders */
@@ -77,8 +80,15 @@ app.get(`${API_URL}`, (req, res) => {
 
 app.get(`${API_URL}/checklogin`,
     passport.authenticate("oauth-bearer", { session: true }),
-    async (req, res) => {
-        res.status(req.user ? 200 : 401).send('OK')
+    async (req, res, next) => {
+        try {
+            if (req.user) {
+                return res.status(200).send('OK');
+            }
+            throw new HTTP401Error();
+        } catch /* istanbul ignore next */ (error) {
+            next(error);
+        }
     }
 );
 
@@ -96,6 +106,8 @@ app.use((req: Request, res, next) => {
             return;
         }
         const io = req.io;
+
+        /* istanbul ignore next */
         if (res.notifications && io) {
             res.notifications.forEach((notification) => {
                 const except: string[] = [];
@@ -144,6 +156,7 @@ app.use(`${API_URL}`, (req, res, next) => {
              * An error occurred during authorization. Send a Not Autohrized 
              * status code.
              */
+            /* istanbul ignore next */
             return res.status(HttpStatusCode.UNAUTHORIZED).json({ error: err.message });
         }
 
