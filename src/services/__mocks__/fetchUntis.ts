@@ -1,16 +1,18 @@
 /* istanbul ignore file */
 import { Semester } from "@prisma/client";
 import stub from './fetchUntis.stub.json';
+import { UntisData } from "../fetchUntis";
 
-export const fetchUntis = (semester: Semester) => {
+export const fetchUntis = (semester: Semester): Promise<UntisData> => {
     return new Promise((resolve, reject) => {
+        const untisData = stub as unknown as UntisData;
         const schoolyear = {
-            ...stub.schoolyear,
-            startDate: new Date(stub.schoolyear.startDate),
-            endDate: new Date(stub.schoolyear.endDate)
+            ...untisData.schoolyear,
+            startDate: new Date(untisData.schoolyear.startDate),
+            endDate: new Date(untisData.schoolyear.endDate)
         }
         resolve({
-            ...stub,
+            ...untisData,
             schoolyear: schoolyear
         });
     })

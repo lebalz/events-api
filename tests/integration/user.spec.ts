@@ -3,11 +3,11 @@ import { truncate } from "./helpers/db";
 import prisma from '../../src/prisma';
 import app, { API_URL } from '../../src/app';
 import { generateUser, userSequence } from '../factories/user';
-import { EventState, Role, TeachingAffected, User } from '@prisma/client';
+import { Department, Event, EventState, Role, Semester, TeachingAffected, UntisTeacher, User } from '@prisma/client';
 import { generateUntisTeacher } from '../factories/untisTeacher';
-import { generateEvent } from '../factories/event';
+import { eventSequence, eventSequenceUnchecked, generateEvent } from '../factories/event';
 import { generateSemester } from '../factories/semester';
-import { generateDepartment } from '../factories/department';
+import { departmentSequence, generateDepartment } from '../factories/department';
 import { generateUntisClass } from '../factories/untisClass';
 import { generateUntisLesson } from '../factories/untisLesson';
 import { existsSync, readFileSync } from 'fs';
@@ -49,7 +49,7 @@ describe(`GET ${API_URL}/user authorized`, () => {
     });
     it('authenticates users', async () => {
         await prisma.user.create({
-            data: generateUser({email: 'foo@bar.ch'})
+            data: generateUser({ email: 'foo@bar.ch' })
         });
         const result = await request(app)
             .get(`${API_URL}/user`)
@@ -81,7 +81,7 @@ describe(`GET ${API_URL}/user/all`, () => {
     });
     it('returns all users', async () => {
         const user = await prisma.user.create({
-            data: generateUser({email: 'foo@bar.ch'})
+            data: generateUser({ email: 'foo@bar.ch' })
         });
         const users = await Promise.all(userSequence(10).map(user => {
             return prisma.user.create({
@@ -108,25 +108,25 @@ describe(`GET ${API_URL}/user/all`, () => {
 describe(`GET ${API_URL}/user/:id authorized`, () => {
     it('returns user', async () => {
         const user = await prisma.user.create({
-            data: generateUser({email: 'foo@bar.ch'})
+            data: generateUser({ email: 'foo@bar.ch' })
         });
         const result = await request(app)
             .get(`${API_URL}/user/${user.id}`)
-            .set('authorization', JSON.stringify({email: user.email}));
+            .set('authorization', JSON.stringify({ email: user.email }));
         expect(result.statusCode).toEqual(200);
         expect(result.body).toEqual(prepareUser(user));
         expect(mNotification).toHaveBeenCalledTimes(0);
     });
     it('returns other user', async () => {
         const user = await prisma.user.create({
-            data: generateUser({email: 'foo@bar.ch'})
+            data: generateUser({ email: 'foo@bar.ch' })
         });
         const other = await prisma.user.create({
-            data: generateUser({email: 'other@user.ch'})
+            data: generateUser({ email: 'other@user.ch' })
         });
         const result = await request(app)
             .get(`${API_URL}/user/${other.id}`)
-            .set('authorization', JSON.stringify({email: user.email}));
+            .set('authorization', JSON.stringify({ email: user.email }));
         expect(result.statusCode).toEqual(200);
         expect(result.body).toEqual(prepareUser(other));
         expect(mNotification).toHaveBeenCalledTimes(0);
@@ -136,14 +136,14 @@ describe(`GET ${API_URL}/user/:id authorized`, () => {
 describe(`PUT ${API_URL}/user/:id/link_to_untis`, () => {
     it('can link self to an untis teacher', async () => {
         const user = await prisma.user.create({
-            data: generateUser({email: 'foo@bar.ch'})
+            data: generateUser({ email: 'foo@bar.ch' })
         });
         const untisUser = await prisma.untisTeacher.create({
-            data: generateUntisTeacher({id: 1234})
+            data: generateUntisTeacher({ id: 1234 })
         });
         const result = await request(app)
             .put(`${API_URL}/user/${user.id}/link_to_untis`)
-            .set('authorization', JSON.stringify({email: user.email}))
+            .set('authorization', JSON.stringify({ email: user.email }))
             .send({ data: { untisId: untisUser.id } });
         expect(result.statusCode).toEqual(200);
         expect(result.body).toEqual({
@@ -160,53 +160,53 @@ describe(`PUT ${API_URL}/user/:id/link_to_untis`, () => {
     });
     it('can not link to a used untis teacher', async () => {
         const untisUser = await prisma.untisTeacher.create({
-            data: generateUntisTeacher({id: 1234})
+            data: generateUntisTeacher({ id: 1234 })
         });
         const reto = await prisma.user.create({
-            data: generateUser({email: 'reto@bar.ch', untisId: untisUser.id})
+            data: generateUser({ email: 'reto@bar.ch', untisId: untisUser.id })
         });
         const user = await prisma.user.create({
-            data: generateUser({email: 'foo@bar.ch'})
+            data: generateUser({ email: 'foo@bar.ch' })
         });
         const result = await request(app)
             .put(`${API_URL}/user/${user.id}/link_to_untis`)
-            .set('authorization', JSON.stringify({email: user.email}))
+            .set('authorization', JSON.stringify({ email: user.email }))
             .send({ data: { untisId: untisUser.id } });
         expect(result.statusCode).toEqual(400);
         expect(mNotification).toHaveBeenCalledTimes(0);
     });
     it('can not link for other users', async () => {
         const reto = await prisma.user.create({
-            data: generateUser({email: 'reto@bar.ch'})
+            data: generateUser({ email: 'reto@bar.ch' })
         });
         const user = await prisma.user.create({
-            data: generateUser({email: 'foo@bar.ch'})
+            data: generateUser({ email: 'foo@bar.ch' })
         });
         const untisUser = await prisma.untisTeacher.create({
-            data: generateUntisTeacher({id: 1234})
+            data: generateUntisTeacher({ id: 1234 })
         });
 
         const result = await request(app)
             .put(`${API_URL}/user/${user.id}/link_to_untis`)
-            .set('authorization', JSON.stringify({email: reto.email}))
+            .set('authorization', JSON.stringify({ email: reto.email }))
             .send({ data: { untisId: untisUser.id } });
         expect(result.statusCode).toEqual(403);
         expect(mNotification).toHaveBeenCalledTimes(0);
     });
     it('can link other users when admin role', async () => {
         const admin = await prisma.user.create({
-            data: generateUser({email: 'admin@bar.ch', role: Role.ADMIN})
+            data: generateUser({ email: 'admin@bar.ch', role: Role.ADMIN })
         });
         const user = await prisma.user.create({
-            data: generateUser({email: 'foo@bar.ch'})
+            data: generateUser({ email: 'foo@bar.ch' })
         });
         const untisUser = await prisma.untisTeacher.create({
-            data: generateUntisTeacher({id: 1234})
+            data: generateUntisTeacher({ id: 1234 })
         });
 
         const result = await request(app)
             .put(`${API_URL}/user/${user.id}/link_to_untis`)
-            .set('authorization', JSON.stringify({email: admin.email}))
+            .set('authorization', JSON.stringify({ email: admin.email }))
             .send({ data: { untisId: untisUser.id } });
         expect(result.statusCode).toEqual(200);
         expect(result.body).toEqual({
@@ -226,43 +226,46 @@ describe(`PUT ${API_URL}/user/:id/link_to_untis`, () => {
 describe(`POST ${API_URL}/user/:id/create_ics`, () => {
     it('can create an ics for the users calendar', async () => {
         const semStart = faker.date.soon();
-        const semEnd = faker.date.future({refDate: semStart, years: 1});
+        const semEnd = faker.date.future({ refDate: semStart, years: 1 });
         const sem = await prisma.semester.create({
             data: generateSemester({
                 start: semStart,
                 end: semEnd,
-                untisSyncDate: faker.date.between({from: semStart, to: semEnd})
-        })});
-        const department = await prisma.department.create({data: generateDepartment({classLetters: ['h'], letter: 'G'})});
-        const teacher = await prisma.untisTeacher.create({data: generateUntisTeacher()});
-        const klass = await prisma.untisClass.create({data: {
-            ...generateUntisClass({departmentId: department.id, name: '25Gh'}),
-            teachers: {
-                connect: {
-                    id: teacher.id
+                untisSyncDate: faker.date.between({ from: semStart, to: semEnd })
+            })
+        });
+        const department = await prisma.department.create({ data: generateDepartment({ classLetters: ['h'], letter: 'G' }) });
+        const teacher = await prisma.untisTeacher.create({ data: generateUntisTeacher() });
+        const klass = await prisma.untisClass.create({
+            data: {
+                ...generateUntisClass({ departmentId: department.id, name: '25Gh' }),
+                teachers: {
+                    connect: {
+                        id: teacher.id
+                    }
                 }
             }
-        }});
+        });
         const lesson = await prisma.untisLesson.create({
             data: generateUntisLesson(
                 sem.id, {
-                    teachers: {
-                        connect: { id: teacher.id }
-                    },
-                    classes: {
-                        connect: { id: klass.id }
-                    }
+                teachers: {
+                    connect: { id: teacher.id }
+                },
+                classes: {
+                    connect: { id: klass.id }
                 }
+            }
             )
         });
 
         const user = await prisma.user.create({
-            data: generateUser({email: 'foo@bar.ch', untisId: teacher.id})
+            data: generateUser({ email: 'foo@bar.ch', untisId: teacher.id })
         });
-        
+
         const event = await prisma.event.create({
             data: generateEvent({
-                authorId: user.id, 
+                authorId: user.id,
                 state: EventState.PUBLISHED,
                 departments: {
                     connect: {
@@ -277,7 +280,7 @@ describe(`POST ${API_URL}/user/:id/create_ics`, () => {
 
         const result = await request(app)
             .post(`${API_URL}/user/${user.id}/create_ics`)
-            .set('authorization', JSON.stringify({email: user.email}));
+            .set('authorization', JSON.stringify({ email: user.email }));
         expect(result.statusCode).toEqual(200);
         expect(result.body).toEqual({
             ...prepareUser(user),
@@ -303,22 +306,22 @@ describe(`POST ${API_URL}/user/:id/create_ics`, () => {
 describe(`POST ${API_URL}/user/:id/set_role`, () => {
     it('user can not set role of self', async () => {
         const user = await prisma.user.create({
-            data: generateUser({email: 'foo@bar.ch'})
+            data: generateUser({ email: 'foo@bar.ch' })
         });
         const result = await request(app)
             .put(`${API_URL}/user/${user.id}/set_role`)
-            .set('authorization', JSON.stringify({email: user.email}))
+            .set('authorization', JSON.stringify({ email: user.email }))
             .send({ data: { role: Role.ADMIN } });
         expect(result.statusCode).toEqual(403);
         expect(mNotification).toHaveBeenCalledTimes(0);
     });
     it('admin can set role of self', async () => {
         const admin = await prisma.user.create({
-            data: generateUser({email: 'admin@bar.ch', role: Role.ADMIN})
+            data: generateUser({ email: 'admin@bar.ch', role: Role.ADMIN })
         });
         const result = await request(app)
             .put(`${API_URL}/user/${admin.id}/set_role`)
-            .set('authorization', JSON.stringify({email: admin.email}))
+            .set('authorization', JSON.stringify({ email: admin.email }))
             .send({ data: { role: Role.USER } });
         expect(result.statusCode).toEqual(200);
         expect(result.body).toEqual({
@@ -336,14 +339,14 @@ describe(`POST ${API_URL}/user/:id/set_role`, () => {
     });
     it('admin can grant a user admin privileges', async () => {
         const user = await prisma.user.create({
-            data: generateUser({email: 'foo@bar.ch'})
+            data: generateUser({ email: 'foo@bar.ch' })
         });
         const admin = await prisma.user.create({
-            data: generateUser({email: 'admin@bar.ch', role: Role.ADMIN})
+            data: generateUser({ email: 'admin@bar.ch', role: Role.ADMIN })
         });
         const result = await request(app)
             .put(`${API_URL}/user/${user.id}/set_role`)
-            .set('authorization', JSON.stringify({email: admin.email}))
+            .set('authorization', JSON.stringify({ email: admin.email }))
             .send({ data: { role: Role.ADMIN } });
         expect(result.statusCode).toEqual(200);
         expect(result.body).toEqual({
@@ -361,14 +364,14 @@ describe(`POST ${API_URL}/user/:id/set_role`, () => {
     });
     it('admin can revoke admin privileges', async () => {
         const user = await prisma.user.create({
-            data: generateUser({email: 'foo@bar.ch', role: Role.ADMIN})
+            data: generateUser({ email: 'foo@bar.ch', role: Role.ADMIN })
         });
         const admin = await prisma.user.create({
-            data: generateUser({email: 'admin@bar.ch', role: Role.ADMIN})
+            data: generateUser({ email: 'admin@bar.ch', role: Role.ADMIN })
         });
         const result = await request(app)
             .put(`${API_URL}/user/${user.id}/set_role`)
-            .set('authorization', JSON.stringify({email: admin.email}))
+            .set('authorization', JSON.stringify({ email: admin.email }))
             .send({ data: { role: Role.USER } });
         expect(result.statusCode).toEqual(200);
         expect(result.body).toEqual({
@@ -386,17 +389,20 @@ describe(`POST ${API_URL}/user/:id/set_role`, () => {
     });
 });
 
-describe( `GET ${API_URL}/user/:id/affected-event-ids`, () => {
+describe(`GET ${API_URL}/user/:id/affected-event-ids`, () => {
     it('can not get affected event ids without a valid semester', async () => {
-        const user = await prisma.user.create({data: generateUser({})});
+        const user = await prisma.user.create({ data: generateUser({}) });
         const result = await request(app)
             .get(`${API_URL}/user/${user.id}/affected-event-ids`)
-            .set('authorization', JSON.stringify({email: user.email}));
+            .set('authorization', JSON.stringify({ email: user.email }));
         expect(result.statusCode).toEqual(404);
         expect(mNotification).toHaveBeenCalledTimes(0);
     });
 
-    describe('with existing semesters', () => {        
+    describe('with existing semesters', () => {
+        let semester: Semester;
+        let departments: Department[];
+        let untisTeachers: UntisTeacher[];
         beforeEach(async () => {
             await prisma.semester.createMany({
                 data: stubs.map((e: any) => ({
@@ -407,22 +413,81 @@ describe( `GET ${API_URL}/user/:id/affected-event-ids`, () => {
                     untisSyncDate: e.untisSyncDate
                 }))
             });
-            const semester = await prisma.semester.findFirst({ where: { name: 'HS2023' } });
+            // await prisma.department.createMany({ data: departmentSequence(5)});
+            semester = await prisma.semester.findFirst({ where: { name: 'HS2023' } }) as Semester;
             await syncUntis2DB(semester!.id);
+            untisTeachers = await prisma.untisTeacher.findMany();
+            departments = await prisma.department.findMany();
         });
-        it('returns affected events from the current semester', async () => {
-            /** ensure a semester is present */
-            const semester = await prisma.semester.create({
+        it('returns empty list when no events are present for the current semester', async () => {
+            /** ensure a semester for the current date is present */
+            await prisma.semester.create({
                 data: generateSemester({
                     start: faker.date.recent(),
                     end: faker.date.future()
                 })
             });
-            const user = await prisma.user.create({data: generateUser({})});
+            const user = await prisma.user.create({ data: generateUser({}) });
             const result = await request(app)
                 .get(`${API_URL}/user/${user.id}/affected-event-ids`)
-                .set('authorization', JSON.stringify({email: user.email}));
+                .set('authorization', JSON.stringify({ email: user.email }));
             expect(result.statusCode).toEqual(200);
+            expect(result.body).toEqual([]);
+            expect(mNotification).toHaveBeenCalledTimes(0);
+        });
+        it('returns no events when only draft events are present semester', async () => {
+            const user = await prisma.user.create({ data: generateUser({ untisId: untisTeachers[0].id }) });
+            const events = await Promise.all([1, 2, 3, 4, 5].map(() => {
+                const start = faker.date.between({ from: semester.start, to: semester.end });
+                return prisma.event.create({ data: generateEvent({ authorId: user.id, start: start, end: faker.date.between({ from: start, to: semester.end }) }) });
+            }))
+            const result = await request(app)
+                .get(`${API_URL}/user/${user.id}/affected-event-ids?semesterId=${semester.id}`)
+                .set('authorization', JSON.stringify({ email: user.email }));
+            expect(result.statusCode).toEqual(200);
+            expect(result.body).toEqual([]);
+            expect(mNotification).toHaveBeenCalledTimes(0);
+        });
+        it('returns published affecting teachers semester', async () => {
+            const user = await prisma.user.create({ data: generateUser({ untisId: untisTeachers[0].id }) });
+            const gbsl = departments.find((d) => d.name === 'GBSL' && d.letter === 'G')!;
+            const gbjb = departments.find((d) => d.name === 'GBJB' && d.letter === 'm')!;
+            const gbslEvents = await Promise.all([1, 2, 3, 4, 5].map(() => {
+                const start = faker.date.between({ from: semester.start, to: semester.end });
+                return prisma.event.create({
+                    data: generateEvent({
+                        authorId: user.id,
+                        start: start,
+                        end: faker.date.between({ from: start, to: semester.end }),
+                        state: EventState.PUBLISHED,
+                        teachersOnly: true,
+                        departments: {
+                            connect: { id: gbsl.id }
+                        }
+                    })
+                });
+            }))
+            const gbjbEvents = await Promise.all([1, 2, 3, 4, 5].map(() => {
+                const start = faker.date.between({ from: semester.start, to: semester.end });
+                return prisma.event.create({
+                    data: generateEvent({
+                        authorId: user.id,
+                        start: start,
+                        end: faker.date.between({ from: start, to: semester.end }),
+                        state: EventState.PUBLISHED,
+                        teachersOnly: true,
+                        departments: {
+                            connect: { id: gbjb.id }
+                        }
+                    })
+                });
+            }))
+            const result = await request(app)
+                .get(`${API_URL}/user/${user.id}/affected-event-ids?semesterId=${semester.id}`)
+                .set('authorization', JSON.stringify({ email: user.email }));
+            expect(result.statusCode).toEqual(200);
+            expect(result.body).toHaveLength(5);
+            expect(result.body.sort()).toEqual(gbslEvents.map((e: Event) => e.id).sort());
             expect(mNotification).toHaveBeenCalledTimes(0);
         });
     });

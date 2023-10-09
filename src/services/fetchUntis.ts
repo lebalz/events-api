@@ -1,7 +1,7 @@
 /* istanbul ignore file */
 
 import { authenticator as Authenticator } from 'otplib';
-import { Base, WebAPITimetable, WebUntisSecretAuth } from 'webuntis';
+import { Base, Klasse, SchoolYear, Subject, Teacher, WebAPITimetable, WebUntisSecretAuth } from 'webuntis';
 import Logger from '../utils/logger';
 import { Semester } from '@prisma/client';
 import { chunks } from './helpers/splitInChunks';
@@ -54,7 +54,15 @@ const ensureLogin = async () => {
     return loggedIn;
 }
 
-export const fetchUntis = async (semester: Semester) => {
+export interface UntisData {
+    schoolyear: SchoolYear;
+    subjects: Subject[];
+    teachers: Teacher[];
+    classes: Klasse[];
+    timetable: WebAPITimetable[];
+}
+
+export const fetchUntis = async (semester: Semester): Promise<UntisData> => {
     Logger.info('Start fetching untis')
     const data = await ensureLogin()
         .then(async (loggedIn) => {
