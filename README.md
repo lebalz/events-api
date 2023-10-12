@@ -57,14 +57,7 @@ before you seed the db with default data:
 yarn run prisma db seed
 ```
 
-before you start prisma studio to create a new user:
-
-```bash
-yarn run prisma studio
-```
-
-Click on `users > Create Record` and fill in the `id`, `email`, `firstName` and `lastName`. You can either use your AzureAD-UUID as your id or generate a random one (for dev mode only. You could use e.g.`81bb5a4b-6c8b-435b-b00f-6b8baa23c059`).
-
+This will create a new user with the email/id set over `USER_ID`/`USER_EMAIL` or `ADMIN_ID`/`ADMIN_EMAIL` in the `.env` file.
 
 
 ## Environment
