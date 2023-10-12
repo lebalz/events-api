@@ -1,5 +1,5 @@
 import type { UntisTeacher } from "@prisma/client";
-import prisma from "./prisma";
+import prisma from "../prisma";
 
 const teacherCache = new Map<string, UntisTeacher>();
 

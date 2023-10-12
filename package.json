@@ -16,9 +16,11 @@
     "cov": "TZ=UTC jest --collectCoverage -c jest.config.unit.js -- && TZ=UTC jest --collectCoverage -c jest.config.integration.js --",
     "cov:unit": "TZ=UTC jest --collectCoverage -c jest.config.unit.js --",
     "cov:integration": "TZ=UTC jest --collectCoverage -c jest.config.integration.js --",
-    "db_seed": "ts-node -r dotenv/config ./bin/db_seed_prepare.ts && ts-node -r dotenv/config ./bin/db_seed_untis.ts && ts-node -r dotenv/config ./bin/db_seed_files",
-    "db_cleanup": "ts-node -r dotenv/config ./bin/db_reset.ts",
-    "db_reset": "yarn run db_cleanup && npx prisma migrate reset --force && yarn run db_seed"
+    "db:cleanup": "ts-node -r dotenv/config ./bin/db_reset.ts",
+    "db:reset": "yarn run db:cleanup && npx prisma migrate reset --force"
+  },
+  "prisma": {
+    "seed": "ts-node -r dotenv/config prisma/seed.ts"
   },
   "dependencies": {
     "@azure/msal-node": "^1.14.0",

@@ -5,12 +5,23 @@
 
 ## ENV
 
-| Name | Description | Default |
-| --- | --- | --- |
-| `PORT` | Port to listen on | `3000` |
-| `ICAL_DIR` | Directory to export .ics files to | `./ical` |
-| `EXPORT_DIR` | Directory to export .xlsx files to | `./export` |
+| Name         | Description                           | Default     |
+|--------------|---------------------------------------|-------------|
+| `PORT`       | Port to listen on                     | `3000`      |
+| `ICAL_DIR`   | Directory to export .ics files to     | `./ical`    |
+| `EXPORT_DIR` | Directory to export .xlsx files to    | `./export`  |
 | `UPLOAD_DIR` | Directory to upload excels for import | `./uploads` |
+
+for development only:
+
+| Name          | Description                               | Example                                |
+|:--------------|:------------------------------------------|:---------------------------------------|
+| `USER_ID`     | id of the test user (no admin privileges) | `97786ad4-9a6c-4fa7-83b6-a07df1f8a8db` |
+| `USER_EMAIL`  | email of the test user                    | `foo.bar@bazz.ch`                      |
+| `ADMIN_ID`    | id of the test admin                      | `9fe3404a-f21c-4327-9f5a-c2818308fed4` |
+| `ADMIN_EMAIL` | email of the test admin                   | `admin.bar@bazz.ch`                    |
+
+Make sure, that the User/Admin props are in sync with the frontend `events-app`.
 
 ## Development
 
@@ -38,6 +49,12 @@ Now run all prisma migrations:
 
 ```bash
 yarn run prisma migrate dev
+```
+
+before you seed the db with default data:
+
+```bash
+yarn run prisma db seed
 ```
 
 before you start prisma studio to create a new user:

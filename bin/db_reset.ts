@@ -10,11 +10,12 @@ async function main() {
             WHERE tableowner = 'events_api';
         `
     );
-    const promises = res.map(async (e) => {
-        return prisma.$queryRawUnsafe(e.query);
-    });
-    await Promise.all(promises);
-    console.log(res);
+    /** ensure drops happen sequential to prevent deadlocks (because of the cascade) */
+    for (let i = 0; i < res.length; i++) {
+        const table = res[i].query.split(' ')[4];
+        const r = await prisma.$queryRawUnsafe(res[i].query);
+        console.log(`Dropped table ${table}`);
+    }
 }
 
 main()

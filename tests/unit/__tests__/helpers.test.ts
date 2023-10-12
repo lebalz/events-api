@@ -1,4 +1,5 @@
-import { findUser } from "../../../src/helpers";
+import { findUser } from "../../../src/helpers/authInfo";
+import { getNameFromEmail } from "../../../src/helpers/email";
 import { Departments, toDepartmentName } from "../../../src/services/helpers/departmentNames";
 import { KlassName } from "../../../src/services/helpers/klassNames";
 import { chunks } from "../../../src/services/helpers/splitInChunks";
@@ -14,6 +15,33 @@ describe('Split In Chunks', () => {
 
         const result = await chunks(items, fn, 5);
         expect(result).toEqual([1, 4, 9, 16, 25, 36, 49, 64, 81, 100, 121, 144, 169, 196,225, 256, 289, 324, 361, 400]);
+    });
+});
+
+describe('getNameFromEmail', () => {
+    test('can extract user name from email', () => {
+        const email = 'foo.bar@bazz.com';
+        expect(getNameFromEmail(email)).toEqual({ firstName: 'Foo', lastName: 'Bar' });
+    });
+    test('ignores additional dot separated parts', () => {
+        const email = 'foo.de.bar@bazz.com';
+        expect(getNameFromEmail(email)).toEqual({ firstName: 'Foo', lastName: 'De' });
+    });
+    test('does not fail on single value name', () => {
+        const email = 'foo@bazz.com';
+        expect(getNameFromEmail(email)).toEqual({ firstName: 'Foo', lastName: '' });
+    });
+    test('does not fail on empty input', () => {
+        const email = '';
+        expect(getNameFromEmail(email)).toEqual({ firstName: '', lastName: '' });
+    });
+    test('does not fail on undefined input', () => {
+        const email = undefined;
+        expect(getNameFromEmail(email)).toEqual({ firstName: '', lastName: '' });
+    });
+    test('does not fail on wrong format', () => {
+        const email = 'foobar';
+        expect(getNameFromEmail(email)).toEqual({ firstName: 'Foobar', lastName: '' });
     });
 });
 

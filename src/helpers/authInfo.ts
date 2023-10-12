@@ -1,5 +1,6 @@
-import type { Prisma } from "@prisma/client";
-import prisma from "./prisma";
+import type { Prisma } from '@prisma/client';
+import prisma from '../prisma';
+import { getNameFromEmail } from './email';
 
 export const getAuthInfo = (authInfo?: Express.AuthInfo) => {
   if (!authInfo) {
@@ -9,9 +10,20 @@ export const getAuthInfo = (authInfo?: Express.AuthInfo) => {
   if (!(name || preferred_username) || !oid) {
     throw 'No valid authorization provided';
   }
-  const nameParts: string[] = (name?.split(", ") || [])[0]?.split(" ") || [preferred_username.split("@")[0].split(".")[1] || '', preferred_username.split("@")[0].split(".")[0] || ""];
-  const firstName = nameParts.pop()!;
-  const lastName = nameParts.join(" ");
+  let firstName = '';
+  let lastName = '';
+  if (name) {
+    const parts = name.split(', ')[0]?.split(' ') || []
+    if (parts.length > 1) {
+      firstName = parts.pop()!;
+      lastName = parts.join(' ');
+    }
+  }
+  if (!firstName && !lastName) {
+    const mailName = getNameFromEmail(preferred_username);
+    firstName = mailName.firstName;
+    lastName = mailName.lastName;
+  }
   return {
     email: preferred_username?.toLowerCase(),
     firstName: firstName,
