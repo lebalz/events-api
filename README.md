@@ -123,7 +123,18 @@ This will use the [mock strategy](src/auth/mock.ts) for authentication. To work 
 yarn run prisma migrate dev
 ```
 
-### Drop all migrations and create new DB
+### Reset the database
+
+**Caution**: All data will be lost!
+
+The database is reset and will be seeded with the default data from `prisma/seed.ts`
+
+```bash
+yarn run db:reset
+```
+
+<details>
+<summary>When everythin fails: recreate the database</summary>
 
 ```bash
 psql -d postgres -h localhost -U events_api
@@ -135,6 +146,8 @@ postgres=> \q
 
 yarn run prisma migrate dev
 ```
+
+</details>
 
 ### DB Models: Typings
 
