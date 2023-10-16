@@ -7,10 +7,9 @@ import { importExcel } from "../services/importExcel";
 import Logger from "../utils/logger";
 const getData = createDataExtractor<Prisma.EventUncheckedUpdateInput>(
     [
-        'klpOnly',
+        'audience',
         'classes',
         'description',
-        'teachersOnly',
         'start',
         'end',
         'location',

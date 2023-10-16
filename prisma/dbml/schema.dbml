@@ -39,8 +39,7 @@ Table events {
   classes String[] [not null]
   classGroups String[] [not null]
   departments departments [not null]
-  teachersOnly Boolean [not null, default: false]
-  klpOnly Boolean [not null, default: false]
+  audience EventAudience [not null, default: 'ALL']
   subjects String[] [not null]
   teachingAffected TeachingAffected [not null, default: 'YES']
   createdAt DateTime [default: `now()`, not null]
@@ -160,9 +159,11 @@ Table users_untis_view {
   lStartHHMM Int [not null]
   lEndHHMM Int [not null]
   lWeekDay Int [not null]
-  lSemesterId Int [not null]
+  lSemesterId String [not null]
   dId String [not null]
   dName String [not null]
+  klp String
+  klpLegacy String
 
   indexes {
     (uId, cId, lId, dId) [unique]
@@ -177,8 +178,7 @@ Table events_view {
   classes String[] [not null]
   description String [not null]
   class_groups String[] [not null]
-  teachers_only Boolean [not null]
-  klp_only Boolean [not null]
+  audience EventAudience [not null]
   subjects String[] [not null]
   department_ids String[] [not null]
   year_s Decimal [not null]
@@ -198,7 +198,8 @@ Table events_view {
 }
 
 Table users_teaching_view {
-  lSemesterId Int [unique, not null]
+  uId String [not null]
+  lSemesterId String [unique, not null]
   classIds Int[] [not null]
   classNames String[] [not null]
   legacyClassNames String[] [not null]
@@ -236,6 +237,13 @@ Enum JobType {
   IMPORT
   CLONE
   SYNC_UNTIS
+}
+
+Enum EventAudience {
+  LP
+  KLP
+  STUDENTS
+  ALL
 }
 
 Ref: users.untisId - untis_teachers.id

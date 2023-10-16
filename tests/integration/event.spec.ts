@@ -2,7 +2,7 @@ import request from 'supertest';
 import app, { API_URL } from '../../src/app';
 import prisma from '../../src/prisma';
 import { generateUser } from '../factories/user';
-import { Event, EventState, JobState, Role, TeachingAffected } from '@prisma/client';
+import { Event, EventAudience, EventState, JobState, Role, TeachingAffected } from '@prisma/client';
 import { truncate } from './helpers/db';
 import Jobs from '../../src/models/jobs';
 import { eventSequence, generateEvent } from '../factories/event';
@@ -626,8 +626,7 @@ describe(`POST ${API_URL}/event/import`, () => {
             expect(e.parentId).toBeNull();
             expect(e.userGroupId).toBeNull();
             expect(e.subjects).toEqual([]);
-            expect(e.teachersOnly).toBeFalsy();
-            expect(e.klpOnly).toBeFalsy();
+            expect(e.audience).toBe(EventAudience.ALL);
             expect(e.deletedAt).toBeNull();
             expect(e.start.getTime()).toBeLessThanOrEqual(e.end.getTime());
             expect(e.classGroups).toEqual([]);

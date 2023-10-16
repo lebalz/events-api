@@ -65,8 +65,8 @@ model Event {
     // wildcard class names
     classGroups  String[]     @default([]) @map("class_groups")
     departments  Department[] @relation("events_to_departments")
-    teachersOnly Boolean      @default(false) @map("teachers_only")
-    klpOnly      Boolean      @default(false) @map("klp_only")
+
+    audience     EventAudience @default(ALL)
     // teachers with this subject
     subjects     String[]     @default([])
 
@@ -219,9 +219,11 @@ view UsersUntisView {
     lStartHHMM  Int    @map("l_start_hhmm")
     lEndHHMM    Int    @map("l_end_hhmm")
     lWeekDay    Int    @map("l_week_day")
-    lSemesterId Int    @map("l_semester_id")
+    lSemesterId String @map("l_semester_id") @db.Uuid
     dId         String @map("d_id") @db.Uuid
     dName       String @map("d_name")
+    klp         String? @map("klp")
+    klpLegacy   String? @map("klp_legacy")
 
     @@unique([uId, cId, lId, dId])
     @@map("users_untis_view")
@@ -229,32 +231,32 @@ view UsersUntisView {
 
 /// The underlying view does not contain a valid unique identifier and can therefore currently not be handled by the Prisma Client.
 view EventsView {
-    e_id           String     @map("e_id") @db.Uuid
-    start          DateTime   @map("start")
-    end            DateTime   @map("end")
-    state          EventState @map("state")
-    classes        String[]   @map("classes")
-    description    String     @map("description")
-    class_groups   String[]   @map("class_groups")
-    teachers_only  Boolean    @map("teachers_only")
-    klp_only       Boolean    @map("klp_only")
-    subjects       String[]   @map("subjects")
-    department_ids String[]   @map("department_ids") @db.Uuid
-    year_s         Decimal    @map("year_s") @db.Decimal
-    year_e         Decimal    @map("year_e") @db.Decimal
-    start_week_day Decimal    @map("start_week_day") @db.Decimal
-    end_week_day   Decimal    @map("end_week_day") @db.Decimal
-    start_offset_m Decimal    @map("start_offset_m") @db.Decimal
-    end_offset_m   Decimal    @map("end_offset_m") @db.Decimal
-    duration_m     Decimal    @map("duration_m") @db.Decimal
-    s_id           String     @map("s_id") @db.Uuid
+    e_id           String           @map("e_id") @db.Uuid
+    start          DateTime         @map("start")
+    end            DateTime         @map("end")
+    state          EventState       @map("state")
+    classes        String[]         @map("classes")
+    description    String           @map("description")
+    class_groups   String[]         @map("class_groups")
+    audience       EventAudience    @map("audience")
+    subjects       String[]         @map("subjects")
+    department_ids String[]         @map("department_ids") @db.Uuid
+    year_s         Decimal          @map("year_s") @db.Decimal
+    year_e         Decimal          @map("year_e") @db.Decimal
+    start_week_day Decimal          @map("start_week_day") @db.Decimal
+    end_week_day   Decimal          @map("end_week_day") @db.Decimal
+    start_offset_m Decimal          @map("start_offset_m") @db.Decimal
+    end_offset_m   Decimal          @map("end_offset_m") @db.Decimal
+    duration_m     Decimal          @map("duration_m") @db.Decimal
+    s_id           String           @map("s_id") @db.Uuid
 
     @@unique([s_id, e_id])
     @@map("events_view")
 }
 
 view UsersTeachingView {
-    lSemesterId      Int      @map("l_semester_id")
+    uId              String   @map("u_id") @db.Uuid
+    lSemesterId      String   @map("l_semester_id") @db.Uuid
     classIds         Int[]    @map("class_ids")
     classNames       String[] @map("class_names")
     legacyClassNames String[] @map("legacy_class_names")
@@ -295,4 +297,11 @@ enum JobType {
     IMPORT
     CLONE
     SYNC_UNTIS
+}
+
+enum EventAudience {
+    LP // LP's only
+    KLP // KLP's only
+    STUDENTS // Students+KLP's
+    ALL // All
 }

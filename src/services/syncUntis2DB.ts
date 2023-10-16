@@ -6,11 +6,11 @@ import { ClassLetterMap, Colors, DepartmentLetterMap, Departments } from './help
 import { KlassName, mapLegacyClassName } from './helpers/klassNames';
 import { chunks } from './helpers/splitInChunks';
 import Logger from '../utils/logger';
-import { fetchUntis } from './fetchUntis';
+import { UntisData, fetchUntis as defaultFetchUntis } from './fetchUntis';
 import { getClassYear } from './helpers/untisKlasse';
 
 
-export const syncUntis2DB = async (semesterId: string) => {
+export const syncUntis2DB = async (semesterId: string, fetchUntis: (semester: Semester) => Promise<UntisData> = defaultFetchUntis) => {
     const semester = await prisma.semester.findUnique({ where: { id: semesterId }, include: { lessons: { include: { classes: true } } } });
     if (!semester) {
         throw new Error('No Semester found');

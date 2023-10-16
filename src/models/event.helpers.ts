@@ -35,10 +35,9 @@ export const clonedProps = (event: Event & {departments: Department[]}, uid: str
     const props: Prisma.EventCreateInput = {
         start: event.start,
         end: event.end,
-        klpOnly: event.klpOnly,
+        audience: event.audience,
         description: event.description,
         cloned: event.cloned,
-        teachersOnly: event.teachersOnly,
         location: event.location,
         descriptionLong: event.descriptionLong,
         teachingAffected: event.teachingAffected,

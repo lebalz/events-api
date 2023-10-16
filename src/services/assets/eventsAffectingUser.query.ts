@@ -21,6 +21,8 @@ const query = (userId: string, timerange: RelTR | AbsTR) => {
         WHERE
             users_untis_view.u_id=${userId}::uuid
         AND
+            users_teaching_view.u_id=${userId}::uuid
+        AND
             events_view.state = 'PUBLISHED'
         AND
             events_view.parent_id IS NULL
@@ -45,14 +47,14 @@ const query = (userId: string, timerange: RelTR | AbsTR) => {
                 )
                 AND (
                         /* & klp ba*/
-                        (events_view.klp_only AND Array['KS', 'MC']::text[] && users_teaching_view.subjects)
+                        (events_view.audience = 'KLP' AND users_teaching_view.klp IS NOT NULL)
                     OR 
                         /* & only teachers bb*/
-                        (NOT events_view.klp_only AND events_view.teachers_only)
+                        (events_view.audience = 'LP')
                     OR
                         /* & only overlapping lessons of class bc */
                         (
-                            NOT (events_view.teachers_only OR events_view.klp_only)
+                            (events_view.audience='STUDENTS' OR events_view.audience='ALL')
                             AND (
                                 users_untis_view.c_name in (select unnest(events_view.classes))
                                 OR
