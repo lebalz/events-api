@@ -73,12 +73,27 @@ const query = (userId: string, timerange: RelTR | AbsTR) => {
                         (
                             (events_view.audience='STUDENTS' OR events_view.audience='ALL')
                             AND (
-                                users_untis_view.c_name in (select unnest(events_view.classes))
-                                OR
-                                users_untis_view.c_name LIKE ANY (SELECT CONCAT(unnest(events_view.class_groups), '%'))
+                                (
+                                    (
+                                        users_untis_view.c_name in (select unnest(events_view.classes))
+                                        OR
+                                        users_untis_view.c_name LIKE ANY (SELECT CONCAT(unnest(events_view.class_groups), '%'))
+                                    )
+                                    AND (MOD((users_untis_view.l_week_day - events_view.start_week_day + 7)::INTEGER, 7) * 24 * 60 + FLOOR(users_untis_view.l_start_hhmm / 100) * 60 + MOD(users_untis_view.l_start_hhmm, 100)) < events_view.start_offset_m + events_view.duration_m
+                                    AND (MOD((users_untis_view.l_week_day - events_view.start_week_day + 7)::INTEGER, 7) * 24 * 60 + FLOOR(users_untis_view.l_end_hhmm / 100) * 60 + MOD(users_untis_view.l_end_hhmm, 100)) > events_view.start_offset_m
+                                ) OR (
+                                    users_teaching_view.klp IS NOT NULL AND (
+                                            /* overlapping departments */
+                                            (users_teaching_view.klp_department_id = ANY(events_view.department_ids))
+                                        OR
+                                            /* overlapping exact class names */
+                                            (users_teaching_view.klp = ANY(events_view.classes))
+                                        OR
+                                            /* overlapping class groups */
+                                            (users_teaching_view.klp SIMILAR TO CONCAT('(', array_to_string(array_cat(ARRAY[NULL], events_view.class_groups), '|','--'), ')%'))
+                                    )
+                                )
                             )
-                            AND (MOD((users_untis_view.l_week_day - events_view.start_week_day + 7)::INTEGER, 7) * 24 * 60 + FLOOR(users_untis_view.l_start_hhmm / 100) * 60 + MOD(users_untis_view.l_start_hhmm, 100)) < events_view.start_offset_m + events_view.duration_m
-                            AND (MOD((users_untis_view.l_week_day - events_view.start_week_day + 7)::INTEGER, 7) * 24 * 60 + FLOOR(users_untis_view.l_end_hhmm / 100) * 60 + MOD(users_untis_view.l_end_hhmm, 100)) > events_view.start_offset_m
                         )
                     OR
                         /* & overlapping subjects */
