@@ -6,7 +6,6 @@ import Logger from '../utils/logger';
 import { Semester } from '@prisma/client';
 import { chunks } from './helpers/splitInChunks';
 import { getClassYear } from './helpers/untisKlasse';
-import { writeFileSync } from 'fs';
 
 /**
  * @docs https://webuntis.noim.me/
@@ -63,7 +62,7 @@ export interface UntisData {
 }
 
 export const fetchUntis = async (semester: Semester): Promise<UntisData> => {
-    Logger.info('Start fetching untis')
+    Logger.info('Start fetching Untis Data')
     const data = await ensureLogin()
         .then(async (loggedIn) => {
             if (!loggedIn) {
@@ -119,12 +118,12 @@ export const fetchUntis = async (semester: Semester): Promise<UntisData> => {
             Object.keys(data).forEach((key) => {
                 const len = (data as any)[key].length;
                 if (len) {
-                    Logger.info(key,);
+                    Logger.info(`${key}: ${len}`);
                 }
             });
             Logger.info('Fetched School Year: ', data.schoolyear);
-            Logger.info('Synced Week: ', semester.untisSyncDate);
-            writeFileSync('untis.data.json', JSON.stringify(data, null, 2));
+            Logger.info(`Synced Week: ${semester.untisSyncDate}`);
+            // writeFileSync('untis.data.json', JSON.stringify(data, null, 2));
             return data;
         }).finally(async () => {
             Logger.info('logout untis')

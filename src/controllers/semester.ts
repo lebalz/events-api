@@ -4,6 +4,7 @@ import { IoEvent } from "../routes/socketEventTypes";
 import { notifyChangedRecord } from "../routes/notify";
 import Semesters from "../models/semesters";
 import { IoRoom } from "../routes/socketEvents";
+import Logger from "../utils/logger";
 
 const NAME = 'SEMESTER';
 
@@ -76,7 +77,7 @@ export const destroy: RequestHandler<{ id: string }, any, any> = async (req, res
 export const sync: RequestHandler<{ id: string }, any, any> = async (req, res, next) => {
     try {
         const onComplete = (jobId: string) => {
-            notifyChangedRecord(req.io, { record: 'JOB', id: jobId });
+            notifyChangedRecord(req.io, { record: 'JOB', id: jobId }, IoRoom.ADMIN);
         };
         const syncJob = await Semesters.sync(req.user!, req.params.id, onComplete);
 
@@ -84,7 +85,7 @@ export const sync: RequestHandler<{ id: string }, any, any> = async (req, res, n
             {
                 message: { record: 'JOB', id: syncJob.id },
                 event: IoEvent.NEW_RECORD,
-                to: req.user!.id
+                to: IoRoom.ADMIN
             }
         ];
         res.status(201).json(syncJob);

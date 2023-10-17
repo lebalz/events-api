@@ -13,6 +13,7 @@ import { notify } from '../../src/middlewares/notify.nop';
 import { IoEvent } from '../../src/routes/socketEventTypes';
 import { faker } from '@faker-js/faker';
 import Jobs from '../../src/models/jobs';
+import { IoRoom } from '../../src/routes/socketEvents';
 
 jest.mock('../../src/services/fetchUntis');
 jest.mock('../../src/middlewares/notify.nop');
@@ -279,7 +280,7 @@ describe(`POST ${API_URL}/semester/:id/sync_untis`, () => {
         expect(mNotification.mock.calls[0][0]).toEqual({
             event: IoEvent.NEW_RECORD,
             message: { record: 'JOB', id: result.body.id },
-            to: admin.id
+            to: IoRoom.ADMIN
         });
 
         

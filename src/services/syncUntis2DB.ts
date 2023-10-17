@@ -1,10 +1,8 @@
-import { WebUntisSecretAuth, Base, WebAPITimetable, Klasse } from 'webuntis';
-import { authenticator as Authenticator } from 'otplib';
+import { WebAPITimetable } from 'webuntis';
 import type { Department, Prisma, Semester, UntisLesson } from "@prisma/client";
 import prisma from '../prisma';
 import { ClassLetterMap, Colors, DepartmentLetterMap, Departments } from './helpers/departmentNames';
 import { KlassName, mapLegacyClassName } from './helpers/klassNames';
-import { chunks } from './helpers/splitInChunks';
 import Logger from '../utils/logger';
 import { UntisData, fetchUntis as defaultFetchUntis } from './fetchUntis';
 import { getClassYear } from './helpers/untisKlasse';
@@ -106,7 +104,7 @@ export const syncUntis2DB = async (semesterId: string, fetchUntis: (semester: Se
         const cLetter = isoName.slice(3, 4); /** fourth letter, e.g. 26gA --> A */
         const department = departments.find(d => d.letter === dLetter && d.classLetters.includes(cLetter));
         if (!department) {
-            Logger.info('No Department found for ', dLetter, c.id, c.longName, c.active, c.name, isoName);
+            Logger.info(`No Department found for ${dLetter}, ${c.id}, ${c.longName}, ${c.active}, ${c.name}, ${isoName}`);
             unknownClassDepartments[c.name] = {
                 classId: c.id,
                 className: c.name,
@@ -175,7 +173,7 @@ export const syncUntis2DB = async (semesterId: string, fetchUntis: (semester: Se
             description: sub?.longName || 'Unbekannt',
         }
     }
-    Logger.info('Next ID', nextId);
+    Logger.info(`Next ID: ${nextId}`);
     const extractLesson = (lesson: WebAPITimetable): UntisLesson | undefined => {
         const year = lesson.date / 10000;
         const month = (lesson.date % 10000) / 100;
@@ -233,7 +231,7 @@ export const syncUntis2DB = async (semesterId: string, fetchUntis: (semester: Se
             if (lessonIdSet.has(lesson.id)) {
                 classes[cid].lessons.push({ id: lesson.id });
             } else {
-                Logger.info('Lesson not found', lesson.id, findSubject(lesson.subjects[0].id), lesson.classes.map((c) => c.element.name).join(', '));
+                Logger.info(`Lesson not found: ${lesson.id}, ${findSubject(lesson.subjects[0].id)}, ${lesson.classes.map((c) => c.element.name).join(', ')}`);
             }
             if (lesson.teachers.length > 0) {
                 classes[cid].teachers.push(...lesson.teachers.map((t) => ({ id: t.id })).filter(t => t.id));
@@ -286,7 +284,7 @@ export const syncUntis2DB = async (semesterId: string, fetchUntis: (semester: Se
         });
         dbTransactions.push(update);
     });
-    Logger.info('TRANSACTION COUNT', dbTransactions.length);
+    Logger.info(`TRANSACTION COUNT: ${dbTransactions.length}`);
     await prisma.$transaction(dbTransactions);
     const summary: { [key: string]: number | string | Object } = {
         schoolyear: `${data.schoolyear.name} [${data.schoolyear.startDate.toISOString().slice(0, 10)} - ${data.schoolyear.endDate.toISOString().slice(0, 10)}]`,
@@ -302,5 +300,6 @@ export const syncUntis2DB = async (semesterId: string, fetchUntis: (semester: Se
     if (Object.keys(unknownClassDepartments).length > 0) {
         summary['unknownClassDepartments'] = unknownClassDepartments;
     }
+    Logger.info('Summary', summary);
     return summary;
 }

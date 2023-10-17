@@ -1,4 +1,4 @@
-import app, { sessionMiddleware } from "./app";
+import app, { configure, sessionMiddleware } from "./app";
 import http from 'http';
 import Logger from "./utils/logger";
 import { Server } from "socket.io";
@@ -17,10 +17,8 @@ const corsOrigin = process.env.EVENTS_APP_URL ? [process.env.EVENTS_APP_URL, 'ht
 const io = new Server(server, {
     cors: {
         origin: corsOrigin,
-        credentials: true,
-        methods: ["GET", "POST", "PUT", "DELETE"],
-    },
-    transports: ['websocket'/* , 'polling' */]
+        credentials: true
+    }
 });
 
 
@@ -64,6 +62,8 @@ app.use((req: Request, res, next) => {
     req.io = io;
     next();
 });
+
+configure(app);
 
 server.listen(PORT || 3002, () => {
     Logger.info(`application is running at: http://localhost:${PORT}`);

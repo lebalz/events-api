@@ -92,89 +92,94 @@ app.get(`${API_URL}/checklogin`,
     }
 );
 
-
-
-
-/**
- * Notification Middleware
- * when the response `res` contains a `notifications` property, the middleware will
- * send the notification over SocketIO to the specififed rooms.
- */
-app.use((req: Request, res, next) => {
-    res.on('finish', async () => {
-        if (res.statusCode >= 400) {
-            return;
-        }
-        const io = req.io;
-
-        /* istanbul ignore next */
-        if (res.notifications && io) {
-            res.notifications.forEach((notification) => {
-                const except: string[] = [];
-                /** ignore this socket */
-                if (!notification.toSelf) {
-                    const socketID = req.headers['x-metadata-socketid'] as string;
-                    if (socketID) {
-                        except.push(socketID);
-                    }
-                }
-                io.except(except)
-                    .to(notification.to)
-                    .emit(
-                        notification.event, 
-                        JSON.stringify(notification.message)
-                    );
-            });
-        }
-        res.locals.notifications = res.notifications;
-    });
-    next();
-});
-
-if (process.env.NODE_ENV === 'test') {
-    app.use((req: Request, res, next) => {
+export const configure = (_app: typeof app) => {
+    /**
+     * Notification Middleware
+     * when the response `res` contains a `notifications` property, the middleware will
+     * send the notification over SocketIO to the specififed rooms.
+     */
+    _app.use((req: Request, res, next) => {
         res.on('finish', async () => {
             if (res.statusCode >= 400) {
                 return;
-            }    
-            if (res.notifications) {
+            }
+            const io = req.io;
+    
+            /* istanbul ignore next */
+            if (res.notifications && io) {
                 res.notifications.forEach((notification) => {
-                    notify(notification);
+                    const except: string[] = [];
+                    /** ignore this socket */
+                    if (!notification.toSelf) {
+                        const socketID = req.headers['x-metadata-socketid'] as string;
+                        if (socketID) {
+                            except.push(socketID);
+                        }
+                    }
+                    io.except(except)
+                        .to(notification.to)
+                        .emit(
+                            notification.event, 
+                            JSON.stringify(notification.message)
+                        );
                 });
             }
             res.locals.notifications = res.notifications;
         });
         next();
     });
+    
+    if (process.env.NODE_ENV === 'test') {
+        _app.use((req: Request, res, next) => {
+            res.on('finish', async () => {
+                if (res.statusCode >= 400) {
+                    return;
+                }    
+                if (res.notifications) {
+                    res.notifications.forEach((notification) => {
+                        notify(notification);
+                    });
+                }
+                res.locals.notifications = res.notifications;
+            });
+            next();
+        });
+    }
+    
+    
+    _app.use(`${API_URL}`, (req, res, next) => {
+        passport.authenticate('oauth-bearer', { session: true }, (err: Error, user: User, info: any) => {
+            if (err) {
+                /**
+                 * An error occurred during authorization. Send a Not Autohrized 
+                 * status code.
+                 */
+                /* istanbul ignore next */
+                return res.status(HttpStatusCode.UNAUTHORIZED).json({ error: err.message });
+            }
+    
+            if (!user && ![...PUBLIC_ROUTES, ...PUBLIC_POST_ROUTES].includes(req.path.toLowerCase())) {
+                // If no user object found, send a 401 response.
+                return res.status(HttpStatusCode.UNAUTHORIZED).json({ error: 'Unauthorized' });
+            }
+            req.user = user;
+            if (info) {
+                // access token payload will be available in req.authInfo downstream
+                req.authInfo = info;
+                return next();
+            }
+        })(req, res, next);
+    },
+        routeGuard(AccessRules), // route guard middleware
+        router // the router with all the routes
+    );
+}
+
+if (process.env.NODE_ENV === 'test') {
+    configure(app);
 }
 
 
-app.use(`${API_URL}`, (req, res, next) => {
-    passport.authenticate('oauth-bearer', { session: true }, (err: Error, user: User, info: any) => {
-        if (err) {
-            /**
-             * An error occurred during authorization. Send a Not Autohrized 
-             * status code.
-             */
-            /* istanbul ignore next */
-            return res.status(HttpStatusCode.UNAUTHORIZED).json({ error: err.message });
-        }
-
-        if (!user && ![...PUBLIC_ROUTES, ...PUBLIC_POST_ROUTES].includes(req.path.toLowerCase())) {
-            // If no user object found, send a 401 response.
-            return res.status(HttpStatusCode.UNAUTHORIZED).json({ error: 'Unauthorized' });
-        }
-        req.user = user;
-        if (info) {
-            // access token payload will be available in req.authInfo downstream
-            req.authInfo = info;
-            return next();
-        }
-    })(req, res, next);
-},
-    routeGuard(AccessRules), // route guard middleware
-    router // the router with all the routes
-);
 
 
 export default app;
