@@ -626,7 +626,7 @@ describe(`POST ${API_URL}/event/import`, () => {
             expect(e.parentId).toBeNull();
             expect(e.userGroupId).toBeNull();
             expect(e.subjects).toEqual([]);
-            expect(e.audience).toBe(EventAudience.ALL);
+            expect(e.audience).toBe(EventAudience.STUDENTS);
             expect(e.deletedAt).toBeNull();
             expect(e.start.getTime()).toBeLessThanOrEqual(e.end.getTime());
             expect(e.classGroups).toEqual([]);

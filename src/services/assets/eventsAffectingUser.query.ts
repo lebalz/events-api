@@ -32,27 +32,44 @@ const query = (userId: string, timerange: RelTR | AbsTR) => {
             events_view.end > ${start} /* (current_timestamp - interval '1 month') */
         )
         AND (
-            /* departments ac*/
+            /* departments: note: {NULL} && {NULL} evaluates to false */
             (events_view.department_ids && users_teaching_view.department_ids)
             OR (
                 (
-                    /* overlapping exact class names aa*/
-                    ((events_view.classes && users_teaching_view.class_names) OR (events_view.classes && users_teaching_view.legacy_class_names))
+                        /* overlapping exact class names */
+                        ((events_view.classes && users_teaching_view.class_names) OR (events_view.classes && users_teaching_view.legacy_class_names))
                     OR
-                    /* class name in class_group ab*/
-                    array_to_string(users_teaching_view.class_names, ':::') SIMILAR TO CONCAT('(', array_to_string(array_cat(ARRAY[NULL], events_view.class_groups), '|','--'), ')%')
+                        /* class name in class_group */
+                        /* array_cat: concat's multiple arrays; array_to_string(<array>, <join-value>, <when-null-value>) 
+                                    --> class_groups: [] --> %(--)%
+                                    --> class_groups: [24G] --> %(--|24G)%
+                                    --> class_groups: [24G, 26m] --> %(--|24G|26m)%
+                        */
+                        array_to_string(users_teaching_view.class_names, ':::') SIMILAR TO CONCAT('%(', array_to_string(array_cat(ARRAY[NULL], events_view.class_groups), '|','--'), ')%')
                     OR
-                    /* subjects ad*/
-                    array_to_string(users_teaching_view.subjects, ':::') SIMILAR TO CONCAT('(', array_to_string(array_cat(ARRAY[NULL], events_view.subjects), '|','--'), ')')
+                        /* subjects */
+                        array_to_string(users_teaching_view.subjects, ':::') SIMILAR TO CONCAT('%(', array_to_string(array_cat(ARRAY[NULL], events_view.subjects), '|','--'), ')%')
                 )
                 AND (
-                        /* & klp ba*/
-                        (events_view.audience = 'KLP' AND users_teaching_view.klp IS NOT NULL)
+                        /* & klp */
+                        (events_view.audience = 'KLP' AND users_teaching_view.klp IS NOT NULL AND (
+                                /* overlapping departments */
+                                (users_teaching_view.klp_department_id = ANY(events_view.department_ids))
+                            OR
+                                /* overlapping exact class names */
+                                (users_teaching_view.klp = ANY(events_view.classes))
+                            OR
+                                /* overlapping class groups */
+                                (users_teaching_view.klp SIMILAR TO CONCAT('(', array_to_string(array_cat(ARRAY[NULL], events_view.class_groups), '|','--'), ')%'))
+                        ))
                     OR 
-                        /* & only teachers bb*/
+                        /* & only teachers */
                         (events_view.audience = 'LP')
+                    OR  
+                        /* & every teacher of the class and the students of the class */
+                        (events_view.audience='ALL')
                     OR
-                        /* & only overlapping lessons of class bc */
+                        /* & only overlapping lessons of class */
                         (
                             (events_view.audience='STUDENTS' OR events_view.audience='ALL')
                             AND (

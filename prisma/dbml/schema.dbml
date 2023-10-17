@@ -39,7 +39,7 @@ Table events {
   classes String[] [not null]
   classGroups String[] [not null]
   departments departments [not null]
-  audience EventAudience [not null, default: 'ALL']
+  audience EventAudience [not null, default: 'STUDENTS']
   subjects String[] [not null]
   teachingAffected TeachingAffected [not null, default: 'YES']
   createdAt DateTime [default: `now()`, not null]
@@ -163,7 +163,7 @@ Table users_untis_view {
   dId String [not null]
   dName String [not null]
   klp String
-  klpLegacy String
+  klpDepartmentId String
 
   indexes {
     (uId, cId, lId, dId) [unique]
