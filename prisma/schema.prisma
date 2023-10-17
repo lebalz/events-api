@@ -1,11 +1,12 @@
 datasource db {
     provider = "postgresql"
     url      = env("DATABASE_URL")
+    extensions = [pg_trgm]
 }
 
 generator client {
     provider        = "prisma-client-js"
-    previewFeatures = ["views"]
+    previewFeatures = ["views", "postgresqlExtensions"]
 }
 
 generator docs {
