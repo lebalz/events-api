@@ -17,8 +17,10 @@ const corsOrigin = process.env.EVENTS_APP_URL ? [process.env.EVENTS_APP_URL, 'ht
 const io = new Server(server, {
     cors: {
         origin: corsOrigin,
-        credentials: true
-    }
+        credentials: true,
+        methods: ["GET", "POST", "PUT", "DELETE"],
+    },
+    transports: ['websocket'/* , 'polling' */]
 });
 
 
