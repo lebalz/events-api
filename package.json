@@ -17,7 +17,8 @@
     "cov:unit": "TZ=UTC jest --collectCoverage -c jest.config.unit.js --",
     "cov:integration": "TZ=UTC jest --collectCoverage -c jest.config.integration.js --",
     "db:cleanup": "ts-node -r dotenv/config ./bin/db_reset.ts",
-    "db:reset": "yarn run db:cleanup && npx prisma migrate reset --force"
+    "db:reset": "yarn run db:cleanup && npx prisma migrate reset --force",
+    "db:seed:users": "ts-node -r dotenv/config ./bin/users-csv-to-db.ts"
   },
   "prisma": {
     "seed": "ts-node -r dotenv/config prisma/seed.ts"
@@ -61,6 +62,7 @@
     "@types/passport-azure-ad": "^4.3.1",
     "@types/supertest": "^2.0.12",
     "@types/uuid": "^9.0.1",
+    "csv-parse": "^5.5.2",
     "jest": "^29.6.4",
     "jest-mock-extended": "^3.0.5",
     "passport-mock-strategy": "^2.0.0",

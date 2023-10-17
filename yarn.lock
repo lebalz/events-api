@@ -2309,6 +2309,11 @@ crypto-random-string@^2.0.0:
   resolved "https://registry.yarnpkg.com/crypto-random-string/-/crypto-random-string-2.0.0.tgz#ef2a7a966ec11083388369baa02ebead229b30d5"
   integrity sha512-v1plID3y9r/lPhviJ1wrXpLeyUIGAZ2SHNYTEapm7/8A9nLPoyvVp3RK/EPFqn5kEznyWgYZNsRtYYIWbuG8KA==
 
+csv-parse@^5.5.2:
+  version "5.5.2"
+  resolved "https://registry.yarnpkg.com/csv-parse/-/csv-parse-5.5.2.tgz#ab525e642093dccff7c5cca5c7b71fd3e99fe8f2"
+  integrity sha512-YRVtvdtUNXZCMyK5zd5Wty1W6dNTpGKdqQd4EQ8tl/c6KW1aMBB1Kg1ppky5FONKmEqGJ/8WjLlTNLPne4ioVA==
+
 date-fns@^2.28.0:
   version "2.30.0"
   resolved "https://registry.yarnpkg.com/date-fns/-/date-fns-2.30.0.tgz#f367e644839ff57894ec6ac480de40cae4b0f4d0"
