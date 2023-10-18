@@ -35,6 +35,10 @@ export const update: RequestHandler<{ id: string }, any, { data: Event & { depar
         ]
         res.status(200).json(model);
     } catch (error) /* istanbul ignore next */ {
+        const err = error as Error;
+        if (err.name === 'PrismaClientUnknownRequestError' && err.message.includes('violates check constraint \\"events_start_end_check\\"')) {
+            return res.status(400).json({ message: 'Start date must be before end date' });
+        }
         next(error);
     }
 }
