@@ -148,6 +148,12 @@ Table untis_classes {
   departmentId String
 }
 
+Table session {
+  sid String [pk]
+  sess Json [not null]
+  expire DateTime [not null]
+}
+
 Table users_untis_view {
   uId String [not null]
   uEmail String [not null]

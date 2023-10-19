@@ -209,6 +209,15 @@ model UntisClass {
     @@map("untis_classes")
 }
 
+model Session {
+  sid    String   @id @db.VarChar
+  sess   Json     @db.Json
+  expire DateTime @db.Timestamp(6)
+
+  @@index([expire], map: "IDX_session_expire")
+  @@map("session")
+}
+
 view UsersUntisView {
     uId         String @map("u_id") @db.Uuid
     uEmail      String @map("u_email")

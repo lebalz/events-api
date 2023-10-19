@@ -14,6 +14,7 @@ import type { User } from "@prisma/client";
 import { HttpStatusCode } from "./utils/errors/BaseError";
 import { notify } from "./middlewares/notify.nop";
 import { HTTP401Error } from "./utils/errors/Errors";
+import connectPgSimple from "connect-pg-simple";
 
 const AccessRules = createAccessRules(authConfig.accessMatrix);
 
@@ -42,17 +43,38 @@ app.use(express.json());
 
 app.use(morganMiddleware);
 
-export const sessionMiddleware = session({
-    secret: process.env.SESSION_SECRET || 'secret',
-    resave: false,
-    saveUninitialized: false /** TODO: check if false is ok */
+const store = new (connectPgSimple(session))({
+    conString: process.env.DATABASE_URL
 });
 
-app.use(sessionMiddleware)
+export const sessionMiddleware = session({
+    name: 'events-api-session',
+    store: store,
+    secret: process.env.SESSION_SECRET || 'secret',
+    saveUninitialized: false,
+    resave: false,
+    cookie: {
+      secure: process.env.NODE_ENV === 'production',
+      httpOnly: true,
+      sameSite: "strict",
+      domain: process.env.EVENTS_APP_URL ? new URL(process.env.EVENTS_APP_URL).hostname : undefined,
+      maxAge: 1000 * 60 * 60 * 24, // 1 day
+    },
+  });
+
+app.use(sessionMiddleware);
+
+// export const sessionMiddleware = session({
+//     secret: process.env.SESSION_SECRET || 'secret',
+//     resave: false,
+//     saveUninitialized: false /** TODO: check if false is ok */
+// });
+
+// app.use(sessionMiddleware)
 
 
 app.use(passport.initialize());
-app.use(passport.session());
+app.use(passport.session()); /** alias for passport.authenticate('session'); e.g. to use the session... */
 
 passport.use(strategyForEnvironment());
 
