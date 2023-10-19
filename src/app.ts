@@ -35,7 +35,7 @@ app.use(compression(), express.json({ limit: "5mb" }));
 app.use(cors({
     credentials: true,
     origin: process.env.EVENTS_APP_URL || true, /* true = strict origin */
-    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"]
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS", "HEAD"],
 }));
 
 // received packages should be presented in the JSON format
@@ -58,7 +58,7 @@ export const sessionMiddleware = session({
     saveUninitialized: false,
     resave: false,
     cookie: {
-      secure: process.env.NODE_ENV === 'production',
+      secure: false,
       httpOnly: true,
       sameSite: 'lax',
       domain: domain.length > 0 ? domain : undefined,
