@@ -195,7 +195,7 @@ function Events(db: PrismaClient['event']) {
                         const siblings = await db.findMany({ 
                             where: {
                                 AND: [
-                                    { id: {in: allChildren.map((c) => c.id) }},
+                                    { id: {in: (allChildren || []).map((c) => c.id) }},
                                     { id: { not: record.id } },
                                     { state: EventState.REVIEW }
                                 ]
