@@ -58,7 +58,7 @@ export const sessionMiddleware = session({
     saveUninitialized: false,
     resave: false,
     cookie: {
-      secure: false,
+      secure: process.env.NODE_ENV === 'production',
       httpOnly: true,
       sameSite: 'lax',
       domain: domain.length > 0 ? domain : undefined,
