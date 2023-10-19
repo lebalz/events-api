@@ -91,7 +91,8 @@ export const setState: RequestHandler<{}, any, { data: { ids: string[], state: E
                 res.notifications!.push({
                     event: IoEvent.CHANGED_RECORD,
                     message: { record: 'EVENT', id: event.id },
-                    to: to
+                    to: to,
+                    toSelf: true
                 });
             });
         });

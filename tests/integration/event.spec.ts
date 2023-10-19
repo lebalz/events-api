@@ -561,19 +561,22 @@ describe(`POST ${API_URL}/event/change_state`, () => {
             expect(mNotification.mock.calls[1][0]).toEqual({
                 event: IoEvent.CHANGED_RECORD,
                 message: { record: 'EVENT', id: event.id },
-                to: IoRoom.ALL
+                to: IoRoom.ALL,
+                toSelf: true
             });
             /* then the refused's author */
             expect(mNotification.mock.calls[2][0]).toEqual({
                 event: IoEvent.CHANGED_RECORD,
                 message: { record: 'EVENT', id: edit1.id },
-                to: edit1.authorId
+                to: edit1.authorId,
+                toSelf: true
             });
             /* finally admins */
             expect(mNotification.mock.calls[3][0]).toEqual({
                 event: IoEvent.CHANGED_RECORD,
                 message: { record: 'EVENT', id: edit1.id },
-                to: IoRoom.ADMIN
+                to: IoRoom.ADMIN,
+                toSelf: true
             });
         });
     });
@@ -669,23 +672,27 @@ describe(`POST ${API_URL}/event/change_state`, () => {
         expect(authorNotification.find(n => n?.message?.id === edit1.id)).toEqual({
             event: IoEvent.CHANGED_RECORD,
             message: { record: 'EVENT', id: edit1.id },
-            to: edit1.authorId
+            to: edit1.authorId,
+            toSelf: true
         });
         expect(adminNotification.find(n => n?.message?.id === edit1.id)).toEqual({
             event: IoEvent.CHANGED_RECORD,
             message: { record: 'EVENT', id: edit1.id },
-            to: IoRoom.ADMIN
+            to: IoRoom.ADMIN,
+            toSelf: true
         });
         // event2
         expect(authorNotification.find(n => n?.message?.id === edit2.id)).toEqual({
             event: IoEvent.CHANGED_RECORD,
             message: { record: 'EVENT', id: edit2.id },
-            to: edit2.authorId
+            to: edit2.authorId,
+            toSelf: true
         });
         expect(adminNotification.find(n => n?.message?.id === edit2.id)).toEqual({
             event: IoEvent.CHANGED_RECORD,
             message: { record: 'EVENT', id: edit2.id },
-            to: IoRoom.ADMIN
+            to: IoRoom.ADMIN,
+            toSelf: true
         });
     });
 });
