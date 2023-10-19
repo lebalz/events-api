@@ -56,7 +56,6 @@ export const sessionMiddleware = session({
     cookie: {
       secure: process.env.NODE_ENV === 'production',
       httpOnly: true,
-      sameSite: "strict",
       domain: process.env.EVENTS_APP_URL ? new URL(process.env.EVENTS_APP_URL).hostname : undefined,
       maxAge: 1000 * 60 * 60 * 24, // 1 day
     },
