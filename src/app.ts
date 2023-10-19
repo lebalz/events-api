@@ -47,6 +47,10 @@ const store = new (connectPgSimple(session))({
     conString: process.env.DATABASE_URL
 });
 
+const subdomain = process.env.EVENTS_APP_URL ? new URL(process.env.EVENTS_APP_URL).hostname : '';
+const subdomainParts = subdomain.split('.');
+const domain = subdomainParts.slice(subdomainParts.length - 2).join('.');
+
 export const sessionMiddleware = session({
     name: 'events-api-session',
     store: store,
@@ -56,7 +60,8 @@ export const sessionMiddleware = session({
     cookie: {
       secure: process.env.NODE_ENV === 'production',
       httpOnly: true,
-      domain: process.env.EVENTS_APP_URL ? new URL(process.env.EVENTS_APP_URL).hostname : undefined,
+      sameSite: 'lax',
+      domain: domain.length > 0 ? domain : undefined,
       maxAge: 1000 * 60 * 60 * 24, // 1 day
     },
   });
