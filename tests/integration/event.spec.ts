@@ -377,7 +377,6 @@ describe(`POST ${API_URL}/event/:id/clone`, () => {
     });
 });
 
-
 describe(`POST ${API_URL}/event/change_state`, () => {
     afterEach(() => {
         return truncate();
@@ -495,13 +494,13 @@ describe(`POST ${API_URL}/event/change_state`, () => {
                 data: generateUser({ email: 'foo@bar.ch', role: Role.ADMIN })
             });
             /** 
-             * event[:published/id:1]                                                       edit3[:published / id:1]  !! keeps published id !!
+             * event[:published/id:0]                                                       edit3[:published / id:0]  !! keeps published id !!
              *  ^                  ^                                                         ^                    ^
              *  |                   \                                                        |                     \
-             * edit1[:review/id:2]  edit3[:review/id:4]    ----> edit3[:published]          event[:published/id:4]  edit1[:refused/id:2]
+             * edit1[:review/id:1]  edit3[:review/id:3]    ----> !publish edit3!        event[:published/id:3]  edit1[:refused/id:1]
              *  ^                                                                                                     ^                
              *  |                                                                                                     |                
-             * edit2[:draft/id:3]                                                                                    edit2[:draft/id:3]
+             * edit2[:draft/id:2]                                                                                    edit2[:draft/id:2]
              * 
              */
             const event = await prisma.event.create({ data: generateEvent({ authorId: user.id, state: EventState.PUBLISHED }) });
@@ -552,8 +551,6 @@ describe(`POST ${API_URL}/event/change_state`, () => {
             });
 
             expect(updatedEdit2).toEqual(edit2);
-            expect(updatedEdit2).toEqual(edit2);
-            expect(updatedEdit2).toEqual(edit2);
             expect(mNotification).toHaveBeenCalledTimes(4);
             expect(mNotification.mock.calls[0][0]).toEqual({
                 event: IoEvent.CHANGED_STATE,
@@ -581,7 +578,118 @@ describe(`POST ${API_URL}/event/change_state`, () => {
         });
     });
 
+    
+    it(`lets versioned REVIEWS become PUBLISHED: Scenario 2 (should never happen in real world...)`, async () => {
+        const user = await prisma.user.create({
+            data: generateUser({ email: 'foo@bar.ch', role: Role.ADMIN })
+        });
+        /** 
+         * event[:published/id:0]                                                       edit2[:published / id:0]  !! keeps published id !!
+         *  ^                  ^                                                         ^                    ^
+         *  |                   \                                                        |                     \
+         * edit1[:review/id:1]  edit3[:review/id:3]    ----> !publish edit3!        event[:published/id:3]  edit1[:refused/id:1]
+         *  ^                                                                                                     ^                
+         *  |                                                                                                     |                
+         * edit2[:review/id:2] (! should not happen )                                                           edit2[:refused/id:2]
+         * 
+         */
+        const event = await prisma.event.create({ data: generateEvent({ authorId: user.id, state: EventState.PUBLISHED }) });
+        const edit1 = await prisma.event.create({ data: generateEvent({ authorId: user.id, parentId: event.id, state: EventState.REVIEW }) });
+        const edit2 = await prisma.event.create({ data: generateEvent({ authorId: user.id, parentId: edit1.id, state: EventState.REVIEW }) });
+        const edit3 = await prisma.event.create({ data: generateEvent({ authorId: user.id, parentId: event.id, state: EventState.REVIEW }) });
+        const result = await request(app)
+            .post(`${API_URL}/event/change_state`)
+            .set('authorization', JSON.stringify({ email: user.email }))
+            .send({ data: { ids: [edit3.id], state: EventState.PUBLISHED } });
+        expect(result.statusCode).toEqual(201);
+        expect(result.body.length).toEqual(1);
+        expect(result.body[0].state).toEqual(EventState.PUBLISHED);
+        /** even if edi3 is now the versioned old published event, 
+        it is reurned since it's state changed */
+        expect(result.body[0].id).toEqual(edit3.id);
+
+        const updatedEvent = await prisma.event.findUnique({ where: { id: event.id } });
+        const updatedEdit1 = await prisma.event.findUnique({ where: { id: edit1.id } });
+        const updatedEdit2 = await prisma.event.findUnique({ where: { id: edit2.id } });
+        const updatedEdit3 = await prisma.event.findUnique({ where: { id: edit3.id } });
+
+        /** swapped ids - updatedEvent is now the published "edit3" */
+        expect(updatedEvent).toEqual({
+            ...edit3,
+            state: EventState.PUBLISHED,
+            id: event.id,
+            parentId: null,
+            updatedAt: expect.any(Date),
+        });
+        expect(updatedEvent?.updatedAt).not.toEqual(edit3.updatedAt);
+
+        /** swapped ids - updatedEdit3 is now the "event" */
+        expect(updatedEdit3).toEqual({
+            ...event,
+            state: EventState.PUBLISHED,
+            id: edit3.id,
+            parentId: event.id,
+            updatedAt: expect.any(Date),
+        });
+        expect(updatedEdit3?.updatedAt).not.toEqual(event.updatedAt);
+
+        /** updatedEdit1 is now refused */
+        expect(updatedEdit1).toEqual({
+            ...edit1,
+            state: EventState.REFUSED,
+            updatedAt: expect.any(Date),
+        });
+        /** updatedEdit2 is now refused */
+        expect(updatedEdit2).toEqual({
+            ...edit2,
+            state: EventState.REFUSED,
+            updatedAt: expect.any(Date),
+        });
+        expect(mNotification).toHaveBeenCalledTimes(6);
+        /* first the newly published version */
+        expect(mNotification.mock.calls[0][0]).toEqual({
+            event: IoEvent.CHANGED_STATE,
+            message: { state: EventState.PUBLISHED, ids: [edit3.id] },
+            to: IoRoom.ALL
+        });
+        /* second the original event */
+        expect(mNotification.mock.calls[1][0]).toEqual({
+            event: IoEvent.CHANGED_RECORD,
+            message: { record: 'EVENT', id: event.id },
+            to: IoRoom.ALL
+        });
+        /* then the refused's authors and to the admins...*/
+        const adminNotification = mNotification.mock.calls.map(c => c[0]).filter(c => c.to === IoRoom.ADMIN);
+        expect(adminNotification.length).toEqual(2);
+        const authorNotification = mNotification.mock.calls.map(c => c[0]).filter(c => c.to === user.id);
+        expect(authorNotification.length).toEqual(2);
+
+        
+        // event1
+        expect(authorNotification.find(n => n?.message?.id === edit1.id)).toEqual({
+            event: IoEvent.CHANGED_RECORD,
+            message: { record: 'EVENT', id: edit1.id },
+            to: edit1.authorId
+        });
+        expect(adminNotification.find(n => n?.message?.id === edit1.id)).toEqual({
+            event: IoEvent.CHANGED_RECORD,
+            message: { record: 'EVENT', id: edit1.id },
+            to: IoRoom.ADMIN
+        });
+        // event2
+        expect(authorNotification.find(n => n?.message?.id === edit2.id)).toEqual({
+            event: IoEvent.CHANGED_RECORD,
+            message: { record: 'EVENT', id: edit2.id },
+            to: edit2.authorId
+        });
+        expect(adminNotification.find(n => n?.message?.id === edit2.id)).toEqual({
+            event: IoEvent.CHANGED_RECORD,
+            message: { record: 'EVENT', id: edit2.id },
+            to: IoRoom.ADMIN
+        });
+    });
 });
+
 
 
 describe(`POST ${API_URL}/event/import`, () => {

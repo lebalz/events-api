@@ -24,6 +24,44 @@ const getData = createDataExtractor<Prisma.EventUncheckedUpdateInput>(
 
 type AllEventQueryCondition = ({ state: EventState } | { authorId: string })[];
 
+const rootParentSql = (childId: string) => {
+    return Prisma.sql`
+        WITH RECURSIVE tree as (
+            -- start with the requested event
+            SELECT id, parent_id
+            FROM events
+            WHERE id = ${childId}::uuid
+            
+            UNION
+            -- recursively select all ancestors
+            SELECT e.id, e.parent_id
+            FROM events e
+            INNER JOIN tree
+            ON e.id=tree.parent_id
+        ) -- get first ancestor 
+        SELECT * FROM tree WHERE parent_id IS NULL LIMIT 1;
+    `;
+}
+
+const childrenSql = (parentId: string) => {
+    return Prisma.sql`
+        WITH RECURSIVE tree as (
+            -- start with the requested event
+            SELECT id, parent_id
+            FROM events
+            WHERE id = ${parentId}::uuid
+            
+            UNION
+            -- recursively select all descendants
+            SELECT e.id, e.parent_id
+            FROM events e
+            INNER JOIN tree
+            ON e.parent_id=tree.id
+        ) -- get first ancestor 
+        SELECT * FROM tree WHERE parent_id IS NOT NULL;
+    `;
+}
+
 function Events(db: PrismaClient['event']) {
     return Object.assign(db, {
         async findModel(actor: User | undefined, id: string): Promise<ApiEvent> {
@@ -118,22 +156,7 @@ function Events(db: PrismaClient['event']) {
                         if (record.parentId) {
                             /* ensure that the parent is the current published version. Otherwise set 
                             /  the parent_id to the first ancestor */
-                            const publishedParent = await prisma.$queryRaw<Event[]>(Prisma.sql`
-                                WITH RECURSIVE tree as (
-                                    -- start with the requested event
-                                    SELECT id, parent_id
-                                    FROM events
-                                    WHERE id = ${record.id}::uuid
-                                    
-                                    UNION
-                                    -- recursively select all ancestors
-                                    SELECT e.id, e.parent_id
-                                    FROM events e
-                                    INNER JOIN tree
-                                    ON e.id=tree.parent_id
-                                ) -- get first ancestor 
-                                SELECT * FROM tree WHERE parent_id IS NULL LIMIT 1;
-                            `);
+                            const publishedParent = await prisma.$queryRaw<Event[]>(rootParentSql(record.id));
 
                             /* istanbul ignore next */
                             if (publishedParent.length < 1) {
@@ -167,11 +190,14 @@ function Events(db: PrismaClient['event']) {
                         } else if (!!parent.parentId) {
                             throw new HTTP400Error('Parent must be the current published version');
                         }
+                        const allChildren = await prisma.$queryRaw<Event[]>(childrenSql(parent.id));
+
                         const siblings = await db.findMany({ 
                             where: {
                                 AND: [
-                                    { parentId: parent.id },
-                                    { id: { not: record.id } }
+                                    { id: {in: allChildren.map((c) => c.id) }},
+                                    { id: { not: record.id } },
+                                    { state: EventState.REVIEW }
                                 ]
                             }
                         });
