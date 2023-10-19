@@ -659,7 +659,8 @@ describe(`POST ${API_URL}/event/change_state`, () => {
         expect(mNotification.mock.calls[1][0]).toEqual({
             event: IoEvent.CHANGED_RECORD,
             message: { record: 'EVENT', id: event.id },
-            to: IoRoom.ALL
+            to: IoRoom.ALL,
+            toSelf: true
         });
         /* then the refused's authors and to the admins...*/
         const adminNotification = mNotification.mock.calls.map(c => c[0]).filter(c => c.to === IoRoom.ADMIN);
