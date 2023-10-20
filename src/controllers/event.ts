@@ -55,13 +55,18 @@ export const setState: RequestHandler<{}, any, { data: { ids: string[], state: E
         const audience = new Set<IoRoom | string>(events.map(e => e.event.authorId));
         const affectedSemesterIds = await prisma.semester.findMany({
             where: {
-                OR: updated.reduce((acc, curr) => {
+                OR: updated.map((e) => {
                     return [
-                        ...acc,
-                        { start: { lte: curr.end } },
-                        { end: { gte: curr.start } }
+                        {start: {gte: e.start, lte: e.end}},
+                        {end: {gte: e.start, lte: e.end}},
+                        {
+                            AND: {
+                                start: {lte: e.start},
+                                end: {gte: e.end},
+                            }
+                        }
                     ]
-                }, [] as ({ start: { lte: Date }} | { end: { gte: Date } })[])
+                }).flat()
             },
             select: {
                 id: true
