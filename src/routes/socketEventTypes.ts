@@ -6,9 +6,10 @@ export enum IoEvent {
     CHANGED_RECORD = 'CHANGED_RECORD',
     CHANGED_STATE = 'CHANGED_STATE',
     DELETED_RECORD = 'DELETED_RECORD',
+    RELOAD_AFFECTING_EVENTS = 'RELOAD_AFFECTING_EVENTS',
 }
 
-type RecordTypes = 'EVENT' | 'USER' | 'JOB' | 'DEPARTMENT' | 'SEMESTER' | 'REGISTRATION_PERIOD' | 'USER_EVENT_GROUP';
+type RecordTypes = 'EVENT' | 'USER' | 'JOB' | 'DEPARTMENT' | 'SEMESTER' | 'REGISTRATION_PERIOD' | 'USER_EVENT_GROUP' | 'RELOAD_AFFECTING_EVENTS';
 
 export interface NewRecord {
     record: RecordTypes;
@@ -23,9 +24,12 @@ export interface ChangedState {
     state: EventState;
     ids: string[];
 }
+export interface ReloadAffectingEvents {
+    semesterIds: string[];
+}
 
 export interface Notification {
-    message: NewRecord | ChangedRecord | ChangedState;
+    message: NewRecord | ChangedRecord | ChangedState | ReloadAffectingEvents;
     event: IoEvent;
     to: IoRoom | string;
     toSelf?: true | boolean;

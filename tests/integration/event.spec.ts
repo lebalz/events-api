@@ -503,10 +503,19 @@ describe(`POST ${API_URL}/event/change_state`, () => {
              * edit2[:draft/id:2]                                                                                    edit2[:draft/id:2]
              * 
              */
-            const event = await prisma.event.create({ data: generateEvent({ authorId: user.id, state: EventState.PUBLISHED }) });
-            const edit1 = await prisma.event.create({ data: generateEvent({ authorId: user.id, parentId: event.id, state: EventState.REVIEW }) });
-            const edit2 = await prisma.event.create({ data: generateEvent({ authorId: user.id, parentId: edit1.id, state: EventState.DRAFT }) });
-            const edit3 = await prisma.event.create({ data: generateEvent({ authorId: user.id, parentId: event.id, state: EventState.REVIEW }) });
+            const start = faker.date.soon();
+            const ende = new Date(start.getTime() + 365 * 24 * 60 * 60 * 1000); // + 1 year
+            const semester = await prisma.semester.create({
+                data: generateSemester({
+                    start: start,
+                    end: ende,
+                    untisSyncDate: faker.date.between({ from: start, to: ende }),
+                })
+            });
+            const event = await prisma.event.create({ data: generateEvent({ authorId: user.id, state: EventState.PUBLISHED, between: {from: start, to: ende} }) });
+            const edit1 = await prisma.event.create({ data: generateEvent({ authorId: user.id, parentId: event.id, state: EventState.REVIEW, between: {from: start, to: ende} }) });
+            const edit2 = await prisma.event.create({ data: generateEvent({ authorId: user.id, parentId: edit1.id, state: EventState.DRAFT, between: {from: start, to: ende} }) });
+            const edit3 = await prisma.event.create({ data: generateEvent({ authorId: user.id, parentId: event.id, state: EventState.REVIEW, between: {from: start, to: ende} }) });
             const result = await request(app)
                 .post(`${API_URL}/event/change_state`)
                 .set('authorization', JSON.stringify({ email: user.email }))
@@ -551,28 +560,33 @@ describe(`POST ${API_URL}/event/change_state`, () => {
             });
 
             expect(updatedEdit2).toEqual(edit2);
-            expect(mNotification).toHaveBeenCalledTimes(4);
+            expect(mNotification).toHaveBeenCalledTimes(5);
             expect(mNotification.mock.calls[0][0]).toEqual({
+                event: IoEvent.RELOAD_AFFECTING_EVENTS,
+                message: { semesterIds: [semester.id] },
+                to: IoRoom.ALL
+            });
+            expect(mNotification.mock.calls[1][0]).toEqual({
                 event: IoEvent.CHANGED_STATE,
                 message: { state: EventState.PUBLISHED, ids: [edit3.id] },
                 to: IoRoom.ALL
             });
             /* first the original event */
-            expect(mNotification.mock.calls[1][0]).toEqual({
+            expect(mNotification.mock.calls[2][0]).toEqual({
                 event: IoEvent.CHANGED_RECORD,
                 message: { record: 'EVENT', id: event.id },
                 to: IoRoom.ALL,
                 toSelf: true
             });
             /* then the refused's author */
-            expect(mNotification.mock.calls[2][0]).toEqual({
+            expect(mNotification.mock.calls[3][0]).toEqual({
                 event: IoEvent.CHANGED_RECORD,
                 message: { record: 'EVENT', id: edit1.id },
                 to: edit1.authorId,
                 toSelf: true
             });
             /* finally admins */
-            expect(mNotification.mock.calls[3][0]).toEqual({
+            expect(mNotification.mock.calls[4][0]).toEqual({
                 event: IoEvent.CHANGED_RECORD,
                 message: { record: 'EVENT', id: edit1.id },
                 to: IoRoom.ADMIN,
@@ -648,15 +662,22 @@ describe(`POST ${API_URL}/event/change_state`, () => {
             state: EventState.REFUSED,
             updatedAt: expect.any(Date),
         });
-        expect(mNotification).toHaveBeenCalledTimes(6);
-        /* first the newly published version */
+        expect(mNotification).toHaveBeenCalledTimes(7);
+        
         expect(mNotification.mock.calls[0][0]).toEqual({
+            event: IoEvent.RELOAD_AFFECTING_EVENTS,
+            message: { semesterIds: [] },
+            to: IoRoom.ALL
+        });
+
+        /* first the newly published version */
+        expect(mNotification.mock.calls[1][0]).toEqual({
             event: IoEvent.CHANGED_STATE,
             message: { state: EventState.PUBLISHED, ids: [edit3.id] },
             to: IoRoom.ALL
         });
         /* second the original event */
-        expect(mNotification.mock.calls[1][0]).toEqual({
+        expect(mNotification.mock.calls[2][0]).toEqual({
             event: IoEvent.CHANGED_RECORD,
             message: { record: 'EVENT', id: event.id },
             to: IoRoom.ALL,

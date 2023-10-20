@@ -1,9 +1,9 @@
 import { Prisma } from "@prisma/client";
 import {faker} from '@faker-js/faker';
 
-export const generateEvent = (props: (Partial<Prisma.EventUncheckedCreateInput> & {authorId: string})): Prisma.EventCreateInput => {
-    const start = faker.date.future({years: 1});
-    const end = faker.date.future({refDate: start, years: 1});
+export const generateEvent = (props: (Partial<Prisma.EventUncheckedCreateInput> & {authorId: string, between?: {from: Date, to: Date}})): Prisma.EventCreateInput => {
+    const start = props.between ? faker.date.between(props.between) : faker.date.future({years: 1});
+    const end = props.between ? faker.date.between({from: start, to: props.between.to}) : faker.date.future({refDate: start, years: 1});
     const {authorId, parentId} = props;
 
     if (authorId) {
@@ -11,6 +11,9 @@ export const generateEvent = (props: (Partial<Prisma.EventUncheckedCreateInput> 
     }
     if (parentId) {
         delete (props as any).parentId;
+    }
+    if (props.between) {
+        delete (props as any).between;
     }
 	const event: Prisma.EventCreateInput = {
         start: start,

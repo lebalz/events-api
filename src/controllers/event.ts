@@ -53,7 +53,23 @@ export const setState: RequestHandler<{}, any, { data: { ids: string[], state: E
         const updated = events.map(e => e.affected).flat();
 
         const audience = new Set<IoRoom | string>(events.map(e => e.event.authorId));
+        const affectedSemesterIds = await prisma.semester.findMany({
+            where: {
+                OR: updated.reduce((acc, curr) => {
+                    return [
+                        ...acc,
+                        { start: { lte: curr.end } },
+                        { end: { gte: curr.start } }
+                    ]
+                }, [] as ({ start: { lte: Date }} | { end: { gte: Date } })[])
+            },
+            select: {
+                id: true
+            },
+            distinct: ['id']
+        });
 
+        res.notifications = [];
         /** NOTIFICATIONS */
         switch (state) {
             /** DRAFT is not possible, since DRAFT -> DRAFT is not allowed */
@@ -61,12 +77,20 @@ export const setState: RequestHandler<{}, any, { data: { ids: string[], state: E
             case EventState.REFUSED:
                 audience.add(IoRoom.ADMIN);
                 break;
-                case EventState.PUBLISHED:
+            case EventState.PUBLISHED:
                 audience.clear();
                 audience.add(IoRoom.ALL);
+                if (updated.length > 0) {
+                    res.notifications.push({
+                        message: {
+                            semesterIds: affectedSemesterIds.map(s => s.id)
+                        },
+                        event: IoEvent.RELOAD_AFFECTING_EVENTS,
+                        to: IoRoom.ALL
+                    });
+                }
                 break;
         }
-        res.notifications = [];
         [...audience].forEach((to) => {
             res.notifications!.push({
                 message: { state: state, ids: newStateIds },
