@@ -28,9 +28,13 @@ const AccessRules = createAccessRules(authConfig.accessMatrix);
 const app = express();
 export const API_VERSION = 'v1';
 export const API_URL = `/api/${API_VERSION}`;
-export const ICAL_DIR = process.env.EXPORT_DIR 
-    ? process.env.EXPORT_DIR 
-    : process.env.NODE_ENV === 'test' ? `${__dirname}/../../tests/test-data/ical` : `${__dirname}/../../ical`;
+const ICAL_DEFAULT = process.env.EXPORT_DIR || `${__dirname}/../../ical`;
+const ICAL_DEFAULT_DIRS = {
+    'test': `${__dirname}/../tests/test-data/ical`,
+    'development': ICAL_DEFAULT,
+    'production': ICAL_DEFAULT,
+}
+export const ICAL_DIR = ICAL_DEFAULT_DIRS[process.env.NODE_ENV as keyof typeof ICAL_DEFAULT_DIRS] || ICAL_DEFAULT;
 
 
 app.use(compression(), express.json({ limit: "5mb" }));
