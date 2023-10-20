@@ -28,6 +28,10 @@ const AccessRules = createAccessRules(authConfig.accessMatrix);
 const app = express();
 export const API_VERSION = 'v1';
 export const API_URL = `/api/${API_VERSION}`;
+export const ICAL_DIR = process.env.EXPORT_DIR 
+    ? process.env.EXPORT_DIR 
+    : process.env.NODE_ENV === 'test' ? `${__dirname}/../../tests/test-data/ical` : `${__dirname}/../../ical`;
+
 
 app.use(compression(), express.json({ limit: "5mb" }));
 
@@ -95,8 +99,8 @@ passport.deserializeUser(async (id, done) => {
 });
 
 /** Static folders */
-app.use('/ical', express.static(path.join(__dirname, '..', 'ical')));
-// Serve the static files from the React app
+app.use('/ical', express.static(ICAL_DIR));
+// Serve the static files to be accessed by the docs app
 app.use(express.static(path.join(__dirname,'..', 'docs')));
 
 // Public Endpoints

@@ -221,6 +221,9 @@ dokku config:set hfr-events-api EVENTS_APP_URL="https://domain.ch"
 dokku storage:ensure-directory hfr-events-api
 dokku storage:mount hfr-events-api /var/lib/dokku/data/storage/hfr-events-api/ical:/app/ical
 
+dokku config:set hfr-events-api EXPORT_DIR="/app/ical"
+
+
 dokku nginx:set events-api client-max-body-size 5mb
 
 # deploy the app
@@ -231,6 +234,15 @@ dokku letsencrypt:enable events-api
 ```sh
 git remote add dokku dokku@<your-ip>:events-api
 git push -u dokku
+```
+
+optionally, to get the effectivly user stats behind nginx and cloudflare:
+
+```bash
+dokku nginx:set hfr-events-api x-forwarded-proto-value '$http_x_forwarded_proto'
+dokku nginx:set hfr-events-api x-forwarded-for-value '$http_x_forwarded_for'
+dokku nginx:set hfr-events-api x-forwarded-port-value '$http_x_forwarded_port'
+
 ```
 
 ## VS Code Config
