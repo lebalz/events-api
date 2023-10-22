@@ -3,7 +3,7 @@
 [![Node CI](https://github.com/lebalz/events-api/actions/workflows/main.yml/badge.svg)](https://github.com/lebalz/events-api/actions/workflows/main.yml) [![codecov](https://codecov.io/gh/lebalz/events-api/graph/badge.svg?token=O9E8JNGEHN)](https://codecov.io/gh/lebalz/events-api)
 
 ## Assumptions
-- a teacher can be a klp of maximum one class (eventsAffectingUser.query)$
+- a teacher can be a klp of maximum one class (`view__UsersAffectedByEvent`)
 - klp teaches a lesson 'KS' or 'MC' in it's class
 
 
@@ -173,9 +173,9 @@ yarn run prisma db pull
 psql -d postgres -h localhost -U events_api -d events_api
 
 # check if migration exists and only delete if it does
-select * from _prisma_migrations where migration_name ilike '%{migration_name}%'
+select * from _prisma_migrations where migration_name ilike '%name%';
 # delete migration record from db
-delete from _prisma_migrations where migration_name ilike '%{migration_name}%'
+delete from _prisma_migrations where migration_name ilike '%name%';
 
 # undo your migration, e.g. drop a view
 drop view view_name;

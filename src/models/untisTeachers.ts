@@ -1,8 +1,5 @@
-import { Event, PrismaClient, Role, User } from "@prisma/client";
-import { default as createIcsFile } from '../services/createIcs';
-import { default as queryAffectedEvents } from "../services/assets/eventsAffectingUser.query";
+import { PrismaClient } from "@prisma/client";
 import prisma from "../prisma";
-import { HTTP403Error, HTTP404Error } from "../utils/errors/Errors";
 
 function UntisTeachers(db: PrismaClient['untisTeacher']) {
     return Object.assign(db, {

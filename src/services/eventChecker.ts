@@ -1,8 +1,11 @@
 import type { Event } from "@prisma/client";
 import prisma from "../prisma";
-import query from "./assets/eventChecker.query";
 
-export const checkEvent = async (eventId: string, userId?: string) => {
-    const result = await prisma.$queryRaw<Event>(query(eventId, userId));
-    return result;
+export const checkEvent = async (eventId: string, semesterId: string) => {
+    const result = await prisma.view_LessonsAffectedByEvents.findMany({
+        where: {
+            eventId: eventId,
+            semesterId: semesterId
+        }
+    });
 }

@@ -214,6 +214,65 @@ Table users_teaching_view {
   departmentNames String[] [not null]
 }
 
+Table view__affected_by_events {
+  userId String [not null]
+  eventId String [not null]
+  semesterId String [not null]
+  classId Int [not null]
+  lessonId Int [not null]
+
+  indexes {
+    (userId, eventId, semesterId, classId, lessonId) [unique]
+  }
+}
+
+Table view__users_affected_by_events {
+  userId String [not null]
+  semesterId String [not null]
+  id String [pk]
+  authorId String [not null]
+  start DateTime [not null]
+  end DateTime [not null]
+  location String [not null]
+  description String [not null]
+  descriptionLong String [not null]
+  state EventState [not null, default: 'DRAFT']
+  cloned Boolean [not null, default: false]
+  jobId String
+  parentId String
+  userGroupId String
+  classes String[] [not null]
+  classGroups String[] [not null]
+  audience EventAudience [not null, default: 'STUDENTS']
+  subjects String[] [not null]
+  teachingAffected TeachingAffected [not null, default: 'YES']
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [default: `now()`, not null]
+  deletedAt DateTime
+
+  indexes {
+    (id, userId, semesterId) [unique]
+  }
+}
+
+Table view__lessons_affected_by_events {
+  id Int [pk, increment]
+  eventId String [not null]
+  semesterId String [not null]
+  room String [not null]
+  subject String [not null]
+  description String [not null]
+  semesterNr Int [not null]
+  year Int [not null]
+  weekDay Int [not null]
+  startHHMM Int [not null]
+  endHHMM Int [not null]
+
+  indexes {
+    (id, eventId, semesterId) [unique]
+  }
+}
+
 Enum Role {
   USER
   ADMIN

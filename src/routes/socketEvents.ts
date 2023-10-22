@@ -28,18 +28,18 @@ const EventRouter = (io: Server) => {
 
         socket.join(user.id);
 
-        socket.on('checkEvent', async ({ event_id }: { event_id: string }) => {
+        socket.on('checkEvent', async ({ event_id, semester_id }: { event_id: string, semester_id: string }) => {
             try {
-                const result = await checkEvent(event_id, user.id);
+                const result = await checkEvent(event_id, semester_id);
                 socket.emit('checkEvent', { state: 'success', result });
             } catch (error) /* istanbul ignore next */ {
                 Logger.error(error);
                 socket.emit('checkEvent', { state: 'error', result: {} });
             }
         })
-        socket.on('checkUnpersistedEvent', async ({ event }: { event: Event }) => {
+        socket.on('checkUnpersistedEvent', async ({ event, semester_id }: { event: Event, semester_id: string }) => {
             try {
-                const result = await checkUnpersisted(event, user.id);
+                const result = await checkUnpersisted(event, semester_id);
                 socket.emit('checkEvent', { state: 'success', result });
             } catch (error) /* istanbul ignore next */ {
                 Logger.error(error);

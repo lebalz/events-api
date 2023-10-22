@@ -1,9 +1,9 @@
-import { Event, PrismaClient, Role, User as Users } from "@prisma/client";
+import { Event, EventState, PrismaClient, Role, User as Users } from "@prisma/client";
 import {default as createIcsFile} from '../services/createIcs';
-import { default as queryAffectedEvents} from "../services/assets/eventsAffectingUser.query";
 import prisma from "../prisma";
 import { HTTP400Error, HTTP403Error, HTTP404Error } from "../utils/errors/Errors";
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
+import { ApiEvent, prepareEvent } from "./event.helpers";
 
 function Users(db: PrismaClient['user']) {
     return Object.assign(db, {
@@ -59,7 +59,7 @@ function Users(db: PrismaClient['user']) {
             }
             return await createIcsFile(userId, '');
         },
-        async affectedEvents(actor: Users, userId: string, semesterId?: string): Promise<Event[]> {
+        async affectedEvents(actor: Users, userId: string, semesterId?: string): Promise<ApiEvent[]> {
             if (actor.id !== userId && actor.role !== Role.ADMIN) {
                 throw new HTTP403Error('Not authorized');
             }
@@ -78,14 +78,15 @@ function Users(db: PrismaClient['user']) {
             if (!semester) {
                 throw new HTTP404Error('Semester not found');
             }
-            const events = await prisma.$queryRaw<Event[]>(
-                queryAffectedEvents(user.id, { 
-                    type: "absolute", 
-                    from: semester.start,
-                    to: semester.end
-                })
-            );
-            return events;
+            const events = await prisma.view_UsersAffectedByEvents.findMany({
+                where: {
+                    userId: user.id,
+                    semesterId: semester.id,
+                    parentId: null,
+                    state: EventState.PUBLISHED
+                }
+            });
+            return events.map(e => prepareEvent(e));
         }
     })
 }

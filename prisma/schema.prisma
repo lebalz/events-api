@@ -278,6 +278,77 @@ view UsersTeachingView {
     @@map("users_teaching_view")
 }
 
+view view_AffectedByEvents {
+    userId         String   @map("u_id") @db.Uuid
+    eventId        String   @map("e_id") @db.Uuid
+    semesterId     String   @map("s_id") @db.Uuid
+    classId        Int      @map("c_id")
+    lessonId       Int      @map("l_id")
+    
+    @@unique([userId, eventId, semesterId, classId, lessonId])
+    @@map("view__affected_by_events")
+}
+
+view view_UsersAffectedByEvents {
+    userId         String   @map("u_id") @db.Uuid
+    semesterId     String   @map("s_id") @db.Uuid
+
+    id       String @id @default(uuid()) @db.Uuid
+    authorId String @map("author_id") @db.Uuid()
+
+    start DateTime
+    end   DateTime
+
+    location        String
+    description     String
+    descriptionLong String @map("description_long")
+
+    state EventState @default(DRAFT)
+    cloned Boolean    @default(false)
+
+    jobId String? @map("import_id") @db.Uuid()
+
+    parentId String?    @map("parent_id") @db.Uuid()
+
+    userGroupId String?          @map("user_group_id") @db.Uuid
+
+    // Filter Criterias
+    classes      String[]     @default([])
+    // wildcard class names
+    classGroups  String[]     @default([]) @map("class_groups")
+
+    audience     EventAudience @default(STUDENTS)
+    // teachers with this subject
+    subjects     String[]     @default([])
+
+    teachingAffected TeachingAffected @default(YES) @map("teaching_affected")
+
+    createdAt DateTime  @default(now()) @map("created_at")
+    updatedAt DateTime  @updatedAt @default(now()) @map("updated_at")
+    deletedAt DateTime? @map("deleted_at")
+
+    @@unique([id, userId, semesterId])
+    @@map("view__users_affected_by_events")
+}
+
+view view_LessonsAffectedByEvents {
+    eventId     String   @map("e_id") @db.Uuid
+    semesterId  String   @map("s_id") @db.Uuid
+
+    id          Int      @id
+    room        String
+    subject     String
+    description String
+    semesterNr  Int            @map("semester_nr")
+    year        Int
+    weekDay     Int            @map("week_day")
+    startHHMM   Int            @map("start_hhmm")
+    endHHMM     Int            @map("end_hhmm")
+
+    @@unique([id, eventId, semesterId])
+    @@map("view__lessons_affected_by_events")
+}
+
 enum Role {
     USER
     ADMIN

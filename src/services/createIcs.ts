@@ -1,8 +1,7 @@
 import prisma from '../prisma';
 import { v4 as uuidv4 } from 'uuid';
 import { createEvents, DateArray, EventAttributes } from 'ics';
-import query from './assets/eventsAffectingUser.query';
-import { Event } from '@prisma/client';
+import { Event, EventState } from '@prisma/client';
 import { writeFileSync } from 'fs';
 import _ from 'lodash';
 import { toCamelCase } from './helpers/rawQueryKeys';
@@ -11,6 +10,7 @@ import { ICAL_DIR } from '../app';
 
 export const SEC_2_MS = 1000;
 export const MINUTE_2_MS = 60 * SEC_2_MS;
+const MONTH_TO_MS = 31 * 24 * 60 * MINUTE_2_MS;
 
 export const toDateArray = (date: Date): DateArray => {   
     return [date.getUTCFullYear(), date.getUTCMonth() + 1, date.getUTCDate(), date.getUTCHours(), date.getUTCMinutes()];
@@ -50,7 +50,21 @@ export default async function createIcs(userId: string, jobId: string) {
     const user = await prisma.user.findUnique({
         where: { id: userId }
     });
-    const publicEventsRaw = await prisma.$queryRaw<Event[]>(query(userId, {type: 'relative', monthForward: 15, monthBackward: 1}));
+    
+    const today = new Date();
+    const _1MonthAgo = new Date(today.getTime() - MONTH_TO_MS);
+    const _15MonthForward = new Date(today.getTime() + 15 * MONTH_TO_MS);
+    const publicEventsRaw = await prisma.view_UsersAffectedByEvents.findMany({
+        where: {
+            userId: userId,
+            parentId: null,
+            state: EventState.PUBLISHED,
+            OR: [
+                {start: { lte: _15MonthForward }},
+                {end: { gte: _1MonthAgo }}
+            ]
+        }
+    });
     const publicEvents = toCamelCase(publicEventsRaw);
     const fileName = user?.icsLocator || `${uuidv4()}.ics`;
     if (fileName && publicEvents.length > 0) {
