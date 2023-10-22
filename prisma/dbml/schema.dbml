@@ -154,30 +154,30 @@ Table session {
   expire DateTime [not null]
 }
 
-Table users_untis_view {
-  uId String [not null]
-  uEmail String [not null]
-  cId Int [not null]
-  cName String [not null]
-  cNameLegacy String [not null]
-  lId Int [not null]
-  lSubject String [not null]
-  lStartHHMM Int [not null]
-  lEndHHMM Int [not null]
-  lWeekDay Int [not null]
-  lSemesterId String [not null]
-  dId String [not null]
-  dName String [not null]
+Table view__users_teaching {
+  userId String [not null]
+  userEmail String [not null]
+  classId Int [not null]
+  className String [not null]
+  classNameLegacy String [not null]
+  lessonId Int [not null]
+  lessonSubject String [not null]
+  lessonStartHHMM Int [not null]
+  lessonEndHHMM Int [not null]
+  lessonWeekDay Int [not null]
+  lessonSemesterId String [not null]
+  departmentId String [not null]
+  departmentName String [not null]
   klp String
   klpDepartmentId String
 
   indexes {
-    (uId, cId, lId, dId) [unique]
+    (userId, classId, lessonId, departmentId) [unique]
   }
 }
 
-Table events_view {
-  e_id String [not null]
+Table view__events {
+  eventId String [not null]
   start DateTime [not null]
   end DateTime [not null]
   state EventState [not null]
@@ -187,23 +187,21 @@ Table events_view {
   audience EventAudience [not null]
   subjects String[] [not null]
   department_ids String[] [not null]
-  year_s Decimal [not null]
-  year_e Decimal [not null]
-  start_week_day Decimal [not null]
-  end_week_day Decimal [not null]
-  start_offset_m Decimal [not null]
-  end_offset_m Decimal [not null]
+  yearStart Decimal [not null]
+  yearEnd Decimal [not null]
+  startWeekDay Decimal [not null]
+  endWeekDay Decimal [not null]
+  startOffset_m Decimal [not null]
+  endOffset_m Decimal [not null]
   duration_m Decimal [not null]
-  s_id String [not null]
+  semesterId String [not null]
 
   indexes {
-    (s_id, e_id) [unique]
+    (eventId, semesterId) [unique]
   }
-
-  Note: 'The underlying view does not contain a valid unique identifier and can therefore currently not be handled by the Prisma Client.'
 }
 
-Table users_teaching_view {
+Table view__users_teaching_agg {
   uId String [not null]
   lSemesterId String [unique, not null]
   classIds Int[] [not null]
@@ -256,9 +254,9 @@ Table view__users_affected_by_events {
 }
 
 Table view__lessons_affected_by_events {
-  id Int [pk, increment]
   eventId String [not null]
   semesterId String [not null]
+  id Int [pk]
   room String [not null]
   subject String [not null]
   description String [not null]

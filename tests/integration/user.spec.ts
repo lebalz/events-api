@@ -291,7 +291,7 @@ describe(`POST ${API_URL}/user/:id/create_ics`, () => {
             updatedAt: expect.any(String)
         });
         expect(existsSync(`${__dirname}/../test-data/ical/${result.body.icsLocator}`)).toBeTruthy();
-        const ical = readFileSync(`${__dirname}/../test-data/ical/${result.body.icsLocator}`, { encoding: 'utf8' });
+        const ical = readFileSync(`${__dirname}/../test-data/ical/${result.body.icsLocator}`, { encoding: 'utf-8' });
         const ics = createEvents([prepareEvent(event)]);
         expect(ical).toEqual(
             ics.value

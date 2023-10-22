@@ -78,7 +78,7 @@ export default async function createIcs(userId: string, jobId: string) {
                     Logger.error(error);
                     return resolve(false);
                 }            
-                writeFileSync(`${ICAL_DIR}/${fileName}`, value, { encoding: 'utf8', flag: 'w' })
+                writeFileSync(`${ICAL_DIR}/${fileName}`, value, { encoding: 'utf-8', flag: 'w' })
                 resolve(true);
             }
         )});
