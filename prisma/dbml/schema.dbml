@@ -170,6 +170,7 @@ Table view__users_teaching {
   departmentName String [not null]
   klp String
   klpDepartmentId String
+  untis_teacher_id Int
 
   indexes {
     (userId, classId, lessonId, departmentId) [unique]
@@ -265,6 +266,8 @@ Table view__lessons_affected_by_events {
   weekDay Int [not null]
   startHHMM Int [not null]
   endHHMM Int [not null]
+  teacherIds Int[] [not null]
+  classIds Int[] [not null]
 
   indexes {
     (id, eventId, semesterId) [unique]

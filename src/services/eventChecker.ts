@@ -8,4 +8,5 @@ export const checkEvent = async (eventId: string, semesterId: string) => {
             semesterId: semesterId
         }
     });
+    return result;
 }

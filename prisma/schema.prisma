@@ -234,6 +234,7 @@ view view_UsersTeaching {
     departmentName      String @map("d_name")
     klp                 String? @map("klp")
     klpDepartmentId     String? @map("klp_department_id")
+    untis_teacher_id    Int?    @map("untis_teacher_id")
 
     @@unique([userId, classId, lessonId, departmentId])
     @@map("view__users_teaching")
@@ -343,6 +344,9 @@ view view_LessonsAffectedByEvents {
     weekDay     Int            @map("week_day")
     startHHMM   Int            @map("start_hhmm")
     endHHMM     Int            @map("end_hhmm")
+
+    teacherIds  Int[]          @map("teacher_ids")
+    classIds    Int[]          @map("class_ids")
 
     @@unique([id, eventId, semesterId])
     @@map("view__lessons_affected_by_events")
