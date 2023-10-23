@@ -25,7 +25,7 @@ export const teacher: RequestHandler = async (req, res, next) => {
 
 export const classes: RequestHandler = async (req, res, next) => {
     try {
-        const clsx = await UntisClasses.all();
+        const clsx = await UntisClasses.all(req.user);
         res.json(clsx);
     } catch (error) /* istanbul ignore next */ {
         next(error);

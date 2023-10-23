@@ -1,24 +1,28 @@
-import { PrismaClient } from "@prisma/client";
+import { PrismaClient, User } from "@prisma/client";
 import prisma from "../prisma";
 
 function UntisClasses(db: PrismaClient['untisClass']) {
     return Object.assign(db, {
-        async all() {
-            const models = await prisma.untisClass.findMany({
-                include: {
-                    teachers: {
-                        select: {
-                            id: true,
-                        }
-                    },
-                    lessons: {
-                        select: {
-                            id: true,
+        async all(actor?: User) {
+            if (actor) {
+                const models = await prisma.untisClass.findMany({
+                    include: {
+                        teachers: {
+                            select: {
+                                id: true,
+                            }
+                        },
+                        lessons: {
+                            select: {
+                                id: true,
+                            }
                         }
                     }
-                }
-            });
-            return models;
+                });
+                return models;
+            }
+            const models = await prisma.untisClass.findMany();
+            return models.map((m) => ({...m, teachers: [], lessons: []}));
         }
         
     })

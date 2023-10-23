@@ -128,10 +128,19 @@ describe(`GET ${API_URL}/untis/teacher/:id`, () => {
 });
 
 describe(`GET ${API_URL}/untis/class/all`, () => {
-    it("prevents public user to fetch untis classes", async () => {
+    it("allows public user to fetch untis classes (without relations)", async () => {
+        const klasses = await prisma.untisClass.findMany({include: {lessons: true, teachers: true}});
+        expect(klasses.length).toEqual(2);
+        expect(klasses.map((k) => k.lessons).flat().length).toEqual(3);
+        expect(klasses.map((k) => k.teachers).flat().length).toEqual(2);
         const result = await request(app)
             .get(`${API_URL}/untis/class/all`);
-        expect(result.statusCode).toEqual(401);
+        expect(result.statusCode).toEqual(200);
+
+        expect(result.body.map((d: UntisTeacher) => d.id).sort()).toEqual(klasses.map(d => d.id).sort());
+        expect(result.body.map((k: {lessons: any[]}) => k.lessons).flat().length).toEqual(0);
+        expect(result.body.map((k: {teachers: any[]}) => k.teachers).flat().length).toEqual(0);
+        expect(mNotification).toHaveBeenCalledTimes(0);
     });
     it("returns all classes for user", async () => {
         const user = await prisma.user.create({ data: generateUser({}) });

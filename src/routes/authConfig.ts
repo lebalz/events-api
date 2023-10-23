@@ -41,6 +41,8 @@ export const PUBLIC_ROUTES = [
     '/department/all',
     '/semester',
     '/semester/all',
+    '/semester/all',
+    '/untis/class/all',
 ];
 
 /**
