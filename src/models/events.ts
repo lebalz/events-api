@@ -1,10 +1,11 @@
-import { Department, Event, EventState, Job, JobState, JobType, Prisma, PrismaClient, Role, User } from "@prisma/client";
+import { Department, Event, EventState, Job, JobState, JobType, Prisma, PrismaClient, Role, Semester, User } from "@prisma/client";
 import prisma from "../prisma";
 import { createDataExtractor } from "../controllers/helpers";
 import { ApiEvent, clonedProps, prepareEvent } from "./event.helpers";
 import { HTTP400Error, HTTP403Error, HTTP404Error } from "../utils/errors/Errors";
 import { importExcel } from "../services/importExcel";
 import Logger from "../utils/logger";
+import semesters from "./semesters";
 const getData = createDataExtractor<Prisma.EventUncheckedUpdateInput>(
     [
         'audience',
@@ -298,31 +299,65 @@ function Events(db: PrismaClient['event']) {
             }
             return this._forceDestroy(record);
         },
-        async all(actor?: User | undefined): Promise<ApiEvent[]> {
-            const condition: AllEventQueryCondition = [];
+        async all(actor?: User | undefined, semesterId?: string): Promise<ApiEvent[]> {
+            const orConditions: AllEventQueryCondition = [];
             if (actor) {
-                condition.push({ authorId: actor.id });
+                orConditions.push({ authorId: actor.id });
             }
             if (actor?.role === Role.ADMIN) {
-                condition.push({ state: EventState.REVIEW });
-                condition.push({ state: EventState.REFUSED });
+                orConditions.push({ state: EventState.REVIEW });
+                orConditions.push({ state: EventState.REFUSED });
             }
-            const events = await db.findMany({
-                include: { departments: true, children: true },
-                where: {
-                    OR: [
-                        {
-                            AND: [
-                                {state: EventState.PUBLISHED},
-                                {parentId: null}
-                            ]
-                        },
-                        ...condition
-                    ]
+            let events: Event[];
+            let semester: Semester | undefined;
+            if (semesterId) {
+                try {
+                    semester = await semesters.findModel(semesterId);
+                } catch (e) {
+                    /** do nothing - return everything... */
                 }
-            });
-            const e = events;
-            const p = e.map(prepareEvent);
+            }
+            if (semester) {
+                events = await db.findMany({
+                    include: { departments: true, children: true },
+                    where: {
+                        AND: [
+                            { start: { lte: semester.end } },
+                            { end: { gte: semester.start } },
+                            {
+                                OR: [
+                                    {
+                                        AND: [
+                                            { state: EventState.PUBLISHED },
+                                            { parentId: null },
+                                        ],
+                                    },
+                                    ...orConditions
+                                ]
+                            }
+                        ]
+                    }
+                });
+            } else {
+                events = await db.findMany({
+                    include: { departments: true, children: true },
+                    where: {
+                        AND: [
+                            {
+                                OR: [
+                                    {
+                                        AND: [
+                                            {state: EventState.PUBLISHED},
+                                            {parentId: null}
+                                        ]
+                                    },
+                                    ...orConditions
+                                ]
+                            },
+                        ]
+                    }
+                });
+            }
             return events.map(prepareEvent);
         },
         async createModel(actor: User, start: Date, end: Date): Promise<ApiEvent> {

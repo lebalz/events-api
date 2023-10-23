@@ -154,9 +154,9 @@ export const destroy: RequestHandler = async (req, res, next) => {
 }
 
 
-export const all: RequestHandler = async (req, res, next) => {
+export const all: RequestHandler<any, any, any, {semesterId?: string}> = async (req, res, next) => {
     try {
-        const events = await Events.all(req.user);
+        const events = await Events.all(req.user, req.query.semesterId);
         res.json(events);
     } catch (error) /* istanbul ignore next */ {
         next(error);
