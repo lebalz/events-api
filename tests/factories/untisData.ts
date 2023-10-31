@@ -2,7 +2,7 @@ import { WebUntisElementType } from "webuntis"
 import { UntisData } from "../../src/services/fetchUntis"
 import { DAYS } from "../../src/services/createExcel";
 
-const MONDAY = 20231016; /* the 16.10.2023 is a monday */
+const SUNDAY = 20231015; /* the 15.10.2023 is a sunday */
 export interface UntisDataProps {
     schoolyear: {start: number},
     subjects: {name: string, longName: string}[],
@@ -169,7 +169,7 @@ export const generateUntisData = (props: UntisDataProps): UntisData => {
             }],
             students: [],
             substText: '',
-            date: MONDAY + DAYS.indexOf(l.day),
+            date: SUNDAY + DAYS.indexOf(l.day),
             elements: [],
             is: {event: false},
             roomCapacity: 25,

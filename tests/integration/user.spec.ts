@@ -897,7 +897,7 @@ describe(`GET ${API_URL}/user/:id/affected-event-ids`, () => {
                     });
                     ['abc', 'xyz'].forEach(async (name: string) => {
                         it(`displays the event for ${name}`, async () => {
-                            const user = (await prisma.user.findFirst({ where: { firstName: name }, include: {untis: {include: {classes: true}}}}))!;
+                            const user = (await prisma.user.findFirst({ where: { firstName: name }, include: {untis: {include: {classes: true, lessons: true}}}}))!;
                             expect(user.untis!.classes.map(c => c.name)).toContain('26Ge');
                             const result = await request(app)
                                 .get(`${API_URL}/user/${user.id}/affected-event-ids?semesterId=${semester.id}`)

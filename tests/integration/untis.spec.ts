@@ -88,7 +88,7 @@ describe(`GET ${API_URL}/untis/teacher/:id`, () => {
                     id: 999,
                     room: "D207",
                     semesterId: expect.any(String),
-                    semesterNr: 2,
+                    semesterNr: 1,
                     startHHMM: 1455,
                     subject: "M",
                     teachers: [
@@ -110,7 +110,7 @@ describe(`GET ${API_URL}/untis/teacher/:id`, () => {
                     id: 1001,
                     room: "D207",
                     semesterId: expect.any(String),
-                    semesterNr: 2,
+                    semesterNr: 1,
                     startHHMM: 1550,
                     subject: "IN",
                     teachers: [

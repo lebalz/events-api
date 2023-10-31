@@ -187,7 +187,7 @@ export const syncUntis2DB = async (semesterId: string, fetchUntis: (semester: Se
             id: lesson.id,
             room: lesson.rooms.map((r) => r.element.name).join(', '),
             ...findSubject(lesson.subjects[0].id), /** there is always only one subject */
-            semesterNr: (semester.untisSyncDate.getMonth() > 7 && semester.untisSyncDate.getMonth() < 2) ? 1 : 2,
+            semesterNr: semester.start.getMonth() > 6 ? 1 : 2, /** getMonth() returns zero-based month, e.g. january->0, february->1,... */
             year: semester.untisSyncDate.getFullYear(),
             semesterId: semesterId,
             weekDay: date.getUTCDay(),
