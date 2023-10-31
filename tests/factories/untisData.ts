@@ -1,8 +1,8 @@
 import { WebUntisElementType } from "webuntis"
 import { UntisData } from "../../src/services/fetchUntis"
+import { DAYS } from "../../src/services/createExcel";
 
 const MONDAY = 20231016; /* the 16.10.2023 is a monday */
-const WEEKDAYS = ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'] as const;
 export interface UntisDataProps {
     schoolyear: {start: number},
     subjects: {name: string, longName: string}[],
@@ -10,7 +10,7 @@ export interface UntisDataProps {
     classes: {name: string, sf: string}[],
     lessons: {
         subject: string, 
-        day: typeof WEEKDAYS[number],
+        day: typeof DAYS[number],
         teachers: string[], 
         classes: string[], 
         start: number, 
@@ -169,7 +169,7 @@ export const generateUntisData = (props: UntisDataProps): UntisData => {
             }],
             students: [],
             substText: '',
-            date: MONDAY + WEEKDAYS.indexOf(l.day),
+            date: MONDAY + DAYS.indexOf(l.day),
             elements: [],
             is: {event: false},
             roomCapacity: 25,

@@ -89,6 +89,22 @@ In the example, the password is `password`.
 
 👉 https://socket.io/docs/v4/admin-ui/#available-options
 
+
+
+#### First time
+
+1. Edit the `.env` file and fill in at least the the values that are relevant for development (see above).
+2. Setup the database (see above).
+3. Run
+```bash
+yarn install
+yarn run prisma migrate dev
+yarn run db:reset
+yarn run dev
+```
+
+If you have troubles with npm or yarn, try to delete the `node_modules` folder and run `yarn install` again.
+
 ### Setup Test DB
 
 Once you created your test db, you can run the migrations with:

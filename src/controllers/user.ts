@@ -81,7 +81,7 @@ export const createIcs: RequestHandler<{ id: string }, any, any> = async (req, r
 
 
 
-export const affectedEvents: RequestHandler<{ id: string }, string[] | {message: string}, any, {semesterId?: string}> = async (req, res, next) => {
+export const affectedEventIds: RequestHandler<{ id: string }, string[] | {message: string}, any, {semesterId?: string}> = async (req, res, next) => {
     try {
         const events = await Users.affectedEvents(req.user!, req.params.id, req.query.semesterId);
         res.status(200).json(events.map((e) => e.id));
