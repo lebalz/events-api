@@ -80,8 +80,8 @@ const bree = new Bree({
     jobs: [
         {
             name: 'sync-ics',
-            interval: 'every 5 minutes',
-            timeout: '10 secondes'
+            timeout: '10 secondes',
+            interval: 'every 4 hours'
         },
     ],
     /**
