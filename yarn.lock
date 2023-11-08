@@ -1459,6 +1459,11 @@
   resolved "https://registry.yarnpkg.com/@types/retry/-/retry-0.12.0.tgz#2b35eccfcee7d38cd72ad99232fbd58bffb3c84d"
   integrity sha512-wWKOClTTiizcZhXnPY4wikVAwmdYHp8q6DmC+EJUzAMsycb7HB32Kh9RN4+0gExjmPmZSAQjgURXIGATPegAvA==
 
+"@types/safe-timers@^1.1.2":
+  version "1.1.2"
+  resolved "https://registry.yarnpkg.com/@types/safe-timers/-/safe-timers-1.1.2.tgz#08872e0c15ef65106e9222400bc8b92cbc19afe0"
+  integrity sha512-NkLK2vnHShzLyef0eCMT5ocUJOQNB3Ppq3nKOCHPoxCs5PAJV/AH5DyWTKYHpaGlicE9qmC3MwNRNvt3oML76w==
+
 "@types/send@*":
   version "0.17.3"
   resolved "https://registry.yarnpkg.com/@types/send/-/send-0.17.3.tgz#81b2ea5a3a18aad357405af2d643ccbe5a09020b"
