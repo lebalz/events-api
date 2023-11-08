@@ -6,6 +6,8 @@ import { instrument } from "@socket.io/admin-ui";
 import passport from "passport";
 import EventRouter from "./routes/socketEvents";
 import { NextFunction, Request, Response } from "express";
+import Bree from 'bree';
+import path from "path";
 
 const PORT = process.env.PORT || 3002;
 
@@ -71,3 +73,32 @@ server.listen(PORT || 3002, () => {
     Logger.info(`application is running at: http://localhost:${PORT}`);
     Logger.info('Press Ctrl+C to quit.')
 });
+
+const bree = new Bree({
+    logger: Logger,
+    root: path.join(__dirname, 'jobs'),
+    jobs: [
+        {
+            name: 'sync-ics',
+            interval: 'every 5 minutes',
+            timeout: '10 secondes'
+        },
+    ],
+    /**
+     * We only need the default extension to be "ts"
+     * when we are running the app with ts-node - otherwise
+     * the compiled-to-js code still needs to use JS
+     */
+    defaultExtension: process.env.TS_NODE ? 'ts' : 'js',
+});
+
+bree.on('worker created', (name) => {
+    console.log('worker created', name);
+});
+
+bree.on('worker deleted', (name) => {
+    console.log('worker deleted', name);
+});
+
+// top-level await supported in Node v14.8+
+bree.start();
