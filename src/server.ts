@@ -100,5 +100,6 @@ bree.on('worker deleted', (name) => {
     console.log('worker deleted', name);
 });
 
-// top-level await supported in Node v14.8+
-bree.start();
+if (process.env.NODE_ENV !== 'test') {
+    bree.start();
+}
