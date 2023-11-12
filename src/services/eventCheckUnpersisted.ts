@@ -6,12 +6,12 @@ import { ApiEvent } from "../models/event.helpers";
 export const checkEvent = async (event: Event, semesterId: string) => {
     const tempId = uuidv4();
     try {
-        const { departmentIds, versionIds } = event as ApiEvent;        
+        const { departmentIds, publishedVersionIds } = event as ApiEvent;        
         if (departmentIds) {
             delete (event as any).departmentIds;
         }
-        if (versionIds) {
-            delete (event as any).versionIds;
+        if (publishedVersionIds) {
+            delete (event as any).publishedVersionIds;
         }
 
         const tempEvent = await prisma.event.create({

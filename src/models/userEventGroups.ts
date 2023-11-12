@@ -104,7 +104,7 @@ function UserEventGroups(db: PrismaClient['userEventGroup']) {
         },
         async events(actor: User, id: string) {
             const model = await this.findModel(actor, id, { include: { departments: true, children: true }});
-            return model.events.map(e => prepareEvent(e));
+            return (model.events as (Event & { children: Event[] })[]).map(e => prepareEvent(e));
         }
     })
 }

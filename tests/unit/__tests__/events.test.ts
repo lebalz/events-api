@@ -29,7 +29,7 @@ describe('find event', () => {
 			departmentIds: [],
 			job: undefined,
 			children: undefined,
-			versionIds: []
+			publishedVersionIds: []
 		});
 	});
 	test('admin can get review event', async () => {
@@ -176,7 +176,7 @@ describe('setState transitions', () => {
 				departmentIds: [],
 				job: undefined,
 				children: undefined,
-				versionIds: []
+				publishedVersionIds: []
 			},
 			affected: []
 		});
@@ -237,7 +237,7 @@ describe('setState transitions', () => {
 				departmentIds: [],
 				job: undefined,
 				children: undefined,
-				versionIds: []
+				publishedVersionIds: []
 			},
 			affected: []
 		});
@@ -264,7 +264,7 @@ describe('setState transitions', () => {
 				job: undefined,
 				children: undefined,
 				parentId: ancestor1.id,
-				versionIds: []
+				publishedVersionIds: []
 			},
 			affected: []
 		});
@@ -278,14 +278,14 @@ describe('setState transitions', () => {
 		
 		const newCurrent = {
 			...nextCurrent,
+			id: current.id,
 			updatedAt: expect.any(Date),
 			state: EventState.PUBLISHED,
-			id: current.id,
 			departments: undefined,
 			departmentIds: [],
 			children: undefined,
 			parentId: null,
-			versionIds: ['child']
+			publishedVersionIds: ['child']
 		};
 
 		const oldCurrent = {
@@ -294,10 +294,10 @@ describe('setState transitions', () => {
 			updatedAt: expect.any(Date),
 			departmentIds: [],
 			parentId: current.id,
-			versionIds: []
+			publishedVersionIds: []
 		};
-
-		await expect(Events.setState(admin, nextCurrent.id, EventState.PUBLISHED)).resolves.toEqual({
+		const result = await Events.setState(admin, nextCurrent.id, EventState.PUBLISHED);
+		await expect(result).toEqual({
 			event: oldCurrent,
 			affected: [newCurrent]
 		});

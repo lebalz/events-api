@@ -20,7 +20,7 @@ const mNotification = <jest.Mock<typeof notify>>notify;
 const prepareEvent = (event: Event): any => {
     const prepared = {
         departmentIds: [],
-        versionIds: [],
+        publishedVersionIds: [],
         ...event,
         start: event.start.toISOString(),
         end: event.end.toISOString(),

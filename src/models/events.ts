@@ -200,7 +200,8 @@ function Events(db: PrismaClient['event']) {
                                     { id: { not: record.id } },
                                     { state: EventState.REVIEW }
                                 ]
-                            }
+                            },
+                            include: { children: true }
                         });
                         await prisma.$transaction([
                             /** update the parent (already published) to receive the new props */
@@ -308,7 +309,7 @@ function Events(db: PrismaClient['event']) {
                 orConditions.push({ state: EventState.REVIEW });
                 orConditions.push({ state: EventState.REFUSED });
             }
-            let events: Event[];
+            let events: (Event & { children: Event[] })[];
             let semester: Semester | undefined;
             if (semesterId) {
                 try {
@@ -367,7 +368,8 @@ function Events(db: PrismaClient['event']) {
                     end: end,
                     state: EventState.DRAFT,
                     authorId: actor.id,
-                }
+                },
+                include: { children: true }
             });
             return prepareEvent(model);
         },
@@ -381,7 +383,7 @@ function Events(db: PrismaClient['event']) {
             }
             const newEvent = await db.create({
                 data: {...clonedProps(record, actor.id), cloned: true},
-                include: { departments: true }
+                include: { departments: true, children: true }
             });
             return prepareEvent(newEvent);
         },

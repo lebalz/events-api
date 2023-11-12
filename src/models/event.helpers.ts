@@ -9,13 +9,14 @@ export interface ApiEvent extends Omit<Event, 'jobId'> {
     departments: undefined;
     departmentIds: string[];
     children: undefined;
-    versionIds: string[];
+    publishedVersionIds: string[];
 }
 
 export const prepareEvent = (event: (Event & {
     children?: Event[];
     departments?: Department[];
 })): ApiEvent => {
+    const children = event?.children || [];
     const prepared = {
         ...event,
         job: undefined,
@@ -23,7 +24,7 @@ export const prepareEvent = (event: (Event & {
         departments: undefined,
         departmentIds: event?.departments?.map((d) => d.id) || [],
         children: undefined,
-        versionIds: event?.children?.sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime()).map((c) => c.id) || [],
+        publishedVersionIds: children.filter(e => e.state === EventState.PUBLISHED).sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime()).map((c) => c.id),
     };
     ['author', 'departments', 'children', 'job'].forEach((key) => {
         delete (prepared as any)[key];
