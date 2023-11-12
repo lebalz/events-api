@@ -14,6 +14,25 @@ interface AccessRegexRule {
     }[];
 }
 
+const regexFromRoute = (route: string) => {
+    const parts = route.toLowerCase().split('/');
+    const regex = parts.map((part) => {
+        if (part.startsWith(':')) {
+            return '[^\\/]+';
+        }
+        return part;
+    }).join('\\/');
+    return new RegExp(`^${regex}$`, 'i');
+};
+
+export const PUBLIC_GET_ACCESS = new Set(PUBLIC_ROUTES.filter(route => !route.includes(':')));
+export const PUBLIC_POST_ACCESS = new Set(PUBLIC_POST_ROUTES.filter(route => !route.includes(':')));
+
+export const PUBLIC_GET_ACCESS_REGEX = PUBLIC_ROUTES.filter(route => route.includes(':')).map(regexFromRoute);
+export const PUBLIC_POST_ACCESS_REGEX = PUBLIC_POST_ROUTES.filter(route => route.includes(':')).map(regexFromRoute);
+
+
+
 export const createAccessRules = (accessMatrix: AccessMatrix): AccessRegexRule[] => {
     const accessRules = Object.values(accessMatrix);
     const maxParts = accessRules.reduce((max, accessRule) => { return Math.max(max, accessRule.path.split('/').length) }, 0);
@@ -47,7 +66,13 @@ export const createAccessRules = (accessMatrix: AccessMatrix): AccessRegexRule[]
 
 const routeGuard = (accessMatrix: AccessRegexRule[]) => {
     return (req: Request, res: Response, next: NextFunction) => {
-        if (!req.user && ![...PUBLIC_ROUTES, ...PUBLIC_POST_ROUTES].includes(req.path.toLowerCase())) {
+        const reqPath = req.path.toLowerCase();
+        if (!req.user && !(
+                PUBLIC_GET_ACCESS.has(reqPath) || 
+                PUBLIC_POST_ACCESS.has(reqPath) || 
+                PUBLIC_GET_ACCESS_REGEX.some((regex) => regex.test(reqPath)) || 
+                PUBLIC_POST_ACCESS_REGEX.some((regex) => regex.test(reqPath))
+            )) {
             return res.status(HttpStatusCode.FORBIDDEN).json({ error: 'No roles claim found!' });
         }
 
@@ -65,7 +90,7 @@ const routeGuard = (accessMatrix: AccessRegexRule[]) => {
  */
 const requestHasRequiredAttributes = (accessMatrix: AccessRegexRule[], path: string, method: string, role: Role | 'PUBLIC') => {
     if (role === 'PUBLIC') {
-        if (PUBLIC_POST_ROUTES.includes(path.toLowerCase())) {
+        if (PUBLIC_POST_ACCESS.has(path.toLowerCase()) || PUBLIC_POST_ACCESS_REGEX.some((regex) => regex.test(path))) {
             return method === 'POST';
         }
         return method === 'GET';

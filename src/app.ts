@@ -8,7 +8,7 @@ import cors from "cors";
 import morganMiddleware from './middlewares/morgan.middleware'
 import passport from "passport";
 import router from './routes/router';
-import routeGuard, { createAccessRules } from './auth/guard';
+import routeGuard, { PUBLIC_GET_ACCESS, PUBLIC_GET_ACCESS_REGEX, PUBLIC_POST_ACCESS, PUBLIC_POST_ACCESS_REGEX, createAccessRules } from './auth/guard';
 import authConfig, { PUBLIC_POST_ROUTES, PUBLIC_ROUTES } from './routes/authConfig';
 import type { User } from "@prisma/client";
 import { HttpStatusCode } from "./utils/errors/BaseError";
@@ -125,7 +125,6 @@ app.get(`${API_URL}/checklogin`,
         }
     }
 );
-
 export const configure = (_app: typeof app) => {
     /**
      * Notification Middleware
@@ -192,7 +191,12 @@ export const configure = (_app: typeof app) => {
                 return res.status(HttpStatusCode.UNAUTHORIZED).json({ error: err.message });
             }
     
-            if (!user && ![...PUBLIC_ROUTES, ...PUBLIC_POST_ROUTES].includes(req.path.toLowerCase())) {
+            if (!user && !(
+                            PUBLIC_GET_ACCESS.has(req.path.toLowerCase()) ||
+                            PUBLIC_POST_ACCESS.has(req.path.toLowerCase()) ||
+                            PUBLIC_GET_ACCESS_REGEX.some((regex) => regex.test(req.path)) ||
+                            PUBLIC_POST_ACCESS_REGEX.some((regex) => regex.test(req.path))
+                        )) {
                 // If no user object found, send a 401 response.
                 return res.status(HttpStatusCode.UNAUTHORIZED).json({ error: 'Unauthorized' });
             }

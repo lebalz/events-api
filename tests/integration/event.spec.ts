@@ -110,7 +110,7 @@ describe(`GET ${API_URL}/event/:id`, () => {
     afterEach(() => {
         return truncate();
     });
-    it("unauthorized user can not fetch public event", async () => {
+    it("unauthorized user can fetch public event", async () => {
         const user = await prisma.user.create({
             data: generateUser({ email: 'foo@bar.ch' })
         });
@@ -118,7 +118,8 @@ describe(`GET ${API_URL}/event/:id`, () => {
         const result = await request(app)
             .get(`${API_URL}/event/${event.id}`)
             .set('authorization', JSON.stringify({ noAuth: true }));
-        expect(result.statusCode).toEqual(401);
+        expect(result.statusCode).toEqual(200);
+        expect(result.body).toEqual(prepareEvent(event));
         expect(mNotification).toHaveBeenCalledTimes(0);
     });
     it("authorized user can fetch public event", async () => {

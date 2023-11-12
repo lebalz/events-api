@@ -37,6 +37,7 @@ interface Config {
  */
 export const PUBLIC_ROUTES = [
     '/event',
+    '/event/:id',
     '/event/all',
     '/department/all',
     '/semester',
