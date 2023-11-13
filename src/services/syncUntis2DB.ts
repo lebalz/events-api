@@ -291,9 +291,13 @@ export const syncUntis2DB = async (semesterId: string, fetchUntis: (semester: Se
         syncedWeek: semester.untisSyncDate.toISOString().slice(0, 10)
     };
     Object.keys(data).forEach((key) => {
-        const len = (data as any)[key].length;
-        if (len) {
-            summary[`#${key}`] = len;
+        if (key === 'timetable') {
+            summary['#lessons'] = lessonIdSet.size;
+        } else {
+            const len = (data as any)[key].length;
+            if (len) {
+                summary[`#${key}`] = len;
+            }
         }
     });
     /* istanbul ignore next */
