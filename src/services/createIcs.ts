@@ -16,24 +16,36 @@ export const toDateArray = (date: Date): DateArray => {
     return [date.getUTCFullYear(), date.getUTCMonth() + 1, date.getUTCDate(), date.getUTCHours(), date.getUTCMinutes()];
 }
 
+const TEACHING_AFFECTED = {
+    YES: '🔴',
+    NO: '🟢',
+    PARTIAL: '🟡'
+}
+
 export const prepareEvent = (event: Event): EventAttributes => {
     const start = toDateArray(new Date(event.start));
     const end = toDateArray(new Date(event.end));
     const createdAt = toDateArray(new Date(event.createdAt));
     const updatedAt = toDateArray(new Date(event.updatedAt));
-    const descriptionLong = `${event.descriptionLong || ''}
-
-    ${event.classes.length > 0 ? 'Klassen: ' + event.classes.join(', ') : ''}
-    ${event.deletedAt ? 'Gelöscht am: ' + event.deletedAt : ''}
-    ${event.location ? 'Ort: ' + event.location : ''}
-
-    👉 ${process.env.EVENTS_APP_URL}/event?id=${event.id}`;
+    const description: string[] = [];
+    if (event.descriptionLong) {
+        description.push(event.descriptionLong);
+    }
+    if (event.classes || event.classGroups) {
+        description.push(`🧑‍🎓 ${[...(event.classes || []), ...(event.classGroups || [])].join(', ')}`);
+    }
+    if (event.deletedAt) {
+        description.push('🗑️' + event.deletedAt);
+    }
+    description.push(`👉 ${process.env.EVENTS_APP_URL}/event?id=${event.id}`);
+    event.teachingAffected
+    const title = event.deletedAt ? `❌ ${event.description} ${TEACHING_AFFECTED[event.teachingAffected]}` : `${event.description} ${TEACHING_AFFECTED[event.teachingAffected]}`;	
 
     return {
-        title: event.description,
+        title: title,
         start: start,
         end: end,
-        description: descriptionLong,
+        description: description.join('\n'),
         location: event.location,
         uid: event.id,
         startInputType: 'utc',
