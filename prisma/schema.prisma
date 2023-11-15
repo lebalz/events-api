@@ -68,8 +68,6 @@ model Event {
     departments  Department[] @relation("events_to_departments")
 
     audience     EventAudience @default(STUDENTS)
-    // teachers with this subject
-    subjects     String[]     @default([])
 
     teachingAffected TeachingAffected @default(YES) @map("teaching_affected")
 
@@ -249,7 +247,6 @@ view view_Events {
     description     String           @map("description")
     class_groups    String[]         @map("class_groups")
     audience        EventAudience    @map("audience")
-    subjects        String[]         @map("subjects")
     department_ids  String[]         @map("department_ids") @db.Uuid
     yearStart       Decimal          @map("year_s") @db.Decimal
     yearEnd         Decimal          @map("year_e") @db.Decimal
@@ -318,8 +315,6 @@ view view_UsersAffectedByEvents {
     classGroups  String[]     @default([]) @map("class_groups")
 
     audience     EventAudience @default(STUDENTS)
-    // teachers with this subject
-    subjects     String[]     @default([])
 
     teachingAffected TeachingAffected @default(YES) @map("teaching_affected")
 

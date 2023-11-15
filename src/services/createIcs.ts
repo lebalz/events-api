@@ -103,22 +103,27 @@ export const prepareEvent = (event: Event, lang: 'de' | 'fr'): EventAttributes =
     }
 }
 
-export default async function createIcs(userId: string, jobId: string) {
+const getTimeRange = () => {
+    const today = new Date();
+    const _1MonthAgo = new Date(today.getTime() - MONTH_TO_MS);
+    const _15MonthForward = new Date(today.getTime() + 15 * MONTH_TO_MS);
+    return {from: _1MonthAgo, to: _15MonthForward};
+}
+
+export const createIcs = async (userId: string, jobId: string) => {
+    const timeRange = getTimeRange();
     const user = await prisma.user.findUnique({
         where: { id: userId }
     });
     
-    const today = new Date();
-    const _1MonthAgo = new Date(today.getTime() - MONTH_TO_MS);
-    const _15MonthForward = new Date(today.getTime() + 15 * MONTH_TO_MS);
     const publicEventsRaw = await prisma.view_UsersAffectedByEvents.findMany({
         where: {
             userId: userId,
             parentId: null,
             state: EventState.PUBLISHED,
             OR: [
-                {start: { lte: _15MonthForward }},
-                {end: { gte: _1MonthAgo }}
+                {start: { lte: timeRange.to }},
+                {end: { gte: timeRange.from }}
             ]
         }
     });
@@ -172,4 +177,28 @@ export default async function createIcs(userId: string, jobId: string) {
         return updated;
     }
     throw new Error('Could not create ics file');
+}
+
+export const createIcsForClasses = async () => {
+    const today = new Date();
+    const untisClasses = await prisma.untisClass.findMany({
+        where: {
+            year: {gte: today.getFullYear()}
+        }
+    });
+    
+    // const publicEventsRaw = await prisma.view_UsersAffectedByEvents.findMany({
+    //     where: {
+    //         userId: userId,
+    //         parentId: null,
+    //         state: EventState.PUBLISHED,
+    //         OR: [
+    //             {start: { lte: timeRange.to }},
+    //             {end: { gte: timeRange.from }}
+    //         ]
+    //     }
+    // });
+}
+
+export const createIcsForDepartments = async () => {
 }
