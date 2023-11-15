@@ -18,8 +18,7 @@ const getData = createDataExtractor<Prisma.EventUncheckedUpdateInput>(
         'classGroups',
         'userGroupId',
         'descriptionLong',
-        'teachingAffected',
-        'subjects'
+        'teachingAffected'
     ]
 );
 
