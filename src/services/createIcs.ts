@@ -75,8 +75,8 @@ export const prepareEvent = (event: Event, lang: 'de' | 'fr'): EventAttributes =
     if (event.descriptionLong) {
         description.push(event.descriptionLong);
     }
-    if (event.classes || event.classGroups) {
-        description.push(`${translate('classes', lang)}: ${[...(event.classes || []), ...(event.classGroups || [])].join(', ')}`);
+    if (event.classes.length > 0 || event.classGroups.length > 0) {
+        description.push(`${translate('classes', lang)}: ${[...event.classes, ...event.classGroups].join(', ')}`);
     }
     if (event.deletedAt) {
         description.push(`${translate('deletedAt', lang)}: ${event.deletedAt}`);
