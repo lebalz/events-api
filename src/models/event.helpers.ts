@@ -50,7 +50,7 @@ export const clonedProps = (event: Event & {departments: Department[]}, uid: str
             connect: event.departments.map((d) => ({ id: d.id }))
         }
     }
-    const arrKeys: (keyof Event)[] = ['classGroups', 'classes', 'subjects'];
+    const arrKeys: (keyof Event)[] = ['classGroups', 'classes'];
     arrKeys.forEach((key) => {
         if (event[key]) {
             (props as any)[key] = [...(event[key] as string[])]
