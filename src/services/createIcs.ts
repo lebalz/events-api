@@ -22,7 +22,51 @@ const TEACHING_AFFECTED = {
     PARTIAL: '🟡'
 }
 
-export const prepareEvent = (event: Event): EventAttributes => {
+interface i18nMessage {
+    de: string;
+    fr: string;
+}
+
+const i18n = {
+    audience: {
+        de: 'Zielgruppe',
+        fr: 'Participant·e·s'
+    },
+    classes: {
+        de: 'Klassen',
+        fr: 'Classes'
+    },
+    description: {
+        de: 'Beschreibung',
+        fr: 'Description'
+    },
+    deletedAt: {
+        de: 'Gelöscht am',
+        fr: 'Supprimé le'
+    },
+    teachingAffected: {
+        de: 'Unterricht betroffen?',
+        fr: 'Enseignement concerné?'
+    },
+    YES: {
+        de: 'Ja',
+        fr: 'Oui'
+    },
+    NO: {
+        de: 'Nein',
+        fr: 'Non'
+    },
+    PARTIAL: {
+        de: 'Teilweise',
+        fr: 'Partiellement'
+    }
+} as const;
+
+const translate = (key: keyof typeof i18n, language: 'de' | 'fr') => {
+    return i18n[key][language];
+}
+
+export const prepareEvent = (event: Event, lang: 'de' | 'fr'): EventAttributes => {
     const start = toDateArray(new Date(event.start));
     const end = toDateArray(new Date(event.end));
     const createdAt = toDateArray(new Date(event.createdAt));
@@ -32,14 +76,15 @@ export const prepareEvent = (event: Event): EventAttributes => {
         description.push(event.descriptionLong);
     }
     if (event.classes || event.classGroups) {
-        description.push(`🧑‍🎓 ${[...(event.classes || []), ...(event.classGroups || [])].join(', ')}`);
+        description.push(`${translate('classes', lang)}: ${[...(event.classes || []), ...(event.classGroups || [])].join(', ')}`);
     }
     if (event.deletedAt) {
-        description.push('🗑️' + event.deletedAt);
+        description.push(`${translate('deletedAt', lang)}: ${event.deletedAt}`);
     }
-    description.push(`👉 ${process.env.EVENTS_APP_URL}/event?id=${event.id}`);
-    event.teachingAffected
-    const title = event.deletedAt ? `❌ ${event.description} ${TEACHING_AFFECTED[event.teachingAffected]}` : `${event.description} ${TEACHING_AFFECTED[event.teachingAffected]}`;	
+    description.push(`${translate('teachingAffected', lang)} ${translate(event.teachingAffected, lang)} ${TEACHING_AFFECTED[event.teachingAffected]}`)
+    description.push(`👉 ${process.env.EVENTS_APP_URL}/${lang === 'fr' ? 'fr/' : ''}event?id=${event.id}`);
+
+    const title = event.deletedAt ? `❌ ${event.description} ${TEACHING_AFFECTED[event.teachingAffected]}` : `${event.description} ${TEACHING_AFFECTED[event.teachingAffected]}`;
 
     return {
         title: title,
@@ -80,21 +125,34 @@ export default async function createIcs(userId: string, jobId: string) {
     const publicEvents = toCamelCase(publicEventsRaw);
     const fileName = user?.icsLocator || `${uuidv4()}.ics`;
     if (fileName && publicEvents.length > 0) {
-        const events: EventAttributes[] = [];
+        const eventsDe: EventAttributes[] = [];
+        const eventsFr: EventAttributes[] = [];
         publicEvents.forEach(event => {
-            events.push(prepareEvent(event));
+            eventsDe.push(prepareEvent(event, 'de'));
+            eventsFr.push(prepareEvent(event, 'fr'));
         });
-        const fileCreated: boolean = await new Promise((resolve, reject) => {
-            createEvents(events, (error, value) => {
+        const fileCreatedDe = new Promise<boolean>((resolve, reject) => {
+            createEvents(eventsDe, (error, value) => {
                 if (error) {
                     Logger.error(error);
                     return resolve(false);
                 }            
-                writeFileSync(`${ICAL_DIR}/${fileName}`, value, { encoding: 'utf-8', flag: 'w' })
+                writeFileSync(`${ICAL_DIR}/de/${fileName}`, value, { encoding: 'utf-8', flag: 'w' })
                 resolve(true);
             }
         )});
-        if (fileCreated) {
+        const fileCreatedFr = new Promise<boolean>((resolve, reject) => {
+            createEvents(eventsFr, (error, value) => {
+                if (error) {
+                    Logger.error(error);
+                    return resolve(false);
+                }            
+                writeFileSync(`${ICAL_DIR}/fr/${fileName}`, value, { encoding: 'utf-8', flag: 'w' })
+                resolve(true);
+            }
+        )});
+        const filesCreated = await Promise.all([fileCreatedDe, fileCreatedFr]);
+        if (filesCreated.every((res) => !!res)) {
             const updated = await prisma.user.update({
                 where: { id: userId },
                 data: {

@@ -6,11 +6,11 @@ export const truncate = async () => {
     if (!DATABASE_URL) {
         throw new Error('DATABASE_URL not set');
     }
-    ['uploads', 'ical', 'exports'].forEach(dir => {
+    ['uploads', 'ical/de', 'ical/fr', 'exports'].forEach(dir => {
         const path = `${__dirname}/../../test-data/${dir}`;
         try {
             rmSync(path, { recursive: true });
-            mkdirSync(path);
+            mkdirSync(path, { recursive: true });
             writeFileSync(`${path}/.gitkeep`, '');
         } catch (error) {
             console.warn(error);

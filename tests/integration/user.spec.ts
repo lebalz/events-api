@@ -290,11 +290,16 @@ describe(`POST ${API_URL}/user/:id/create_ics`, () => {
             icsLocator: expect.any(String),
             updatedAt: expect.any(String)
         });
-        expect(existsSync(`${__dirname}/../test-data/ical/${result.body.icsLocator}`)).toBeTruthy();
-        const ical = readFileSync(`${__dirname}/../test-data/ical/${result.body.icsLocator}`, { encoding: 'utf-8' });
-        const ics = createEvents([prepareEvent(event)]);
-        expect(ical).toEqual(
-            ics.value
+        expect(existsSync(`${__dirname}/../test-data/ical/de/${result.body.icsLocator}`)).toBeTruthy();
+        expect(existsSync(`${__dirname}/../test-data/ical/fr/${result.body.icsLocator}`)).toBeTruthy();
+        const icalDe = readFileSync(`${__dirname}/../test-data/ical/de/${result.body.icsLocator}`, { encoding: 'utf-8' });
+        const icalFr = readFileSync(`${__dirname}/../test-data/ical/fr/${result.body.icsLocator}`, { encoding: 'utf-8' });
+        const icsDe = createEvents([prepareEvent(event, 'de')]);
+        const icsFr = createEvents([prepareEvent(event, 'fr')]);
+        expect(icalDe).toEqual(
+            icsDe.value
+        );expect(icalFr).toEqual(
+            icsFr.value
         );
         expect(mNotification).toHaveBeenCalledTimes(1);
         expect(mNotification.mock.calls[0][0]).toEqual({
