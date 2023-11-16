@@ -347,6 +347,48 @@ view view_LessonsAffectedByEvents {
     @@map("view__lessons_affected_by_events")
 }
 
+
+view view_EventsClasses {
+    classId     Int   @map("klass_id")
+    className   String   @map("klass_name")
+    departmentId     String   @map("department_id") @db.Uuid
+
+    id       String @id @db.Uuid
+    authorId String @map("author_id") @db.Uuid()
+
+    start DateTime
+    end   DateTime
+
+    location        String
+    description     String
+    descriptionLong String @map("description_long")
+
+    state EventState @default(DRAFT)
+    cloned Boolean    @default(false)
+
+    jobId String? @map("import_id") @db.Uuid()
+
+    parentId String?    @map("parent_id") @db.Uuid()
+
+    userGroupId String?          @map("user_group_id") @db.Uuid
+
+    // Filter Criterias
+    classes      String[]     @default([])
+    // wildcard class names
+    classGroups  String[]     @default([]) @map("class_groups")
+
+    audience     EventAudience @default(STUDENTS)
+
+    teachingAffected TeachingAffected @default(YES) @map("teaching_affected")
+
+    createdAt DateTime  @default(now()) @map("created_at")
+    updatedAt DateTime  @updatedAt @default(now()) @map("updated_at")
+    deletedAt DateTime? @map("deleted_at")
+
+    @@unique([id, classId, departmentId])
+    @@map("view__events_classes")
+}
+
 enum Role {
     USER
     ADMIN

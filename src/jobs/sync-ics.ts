@@ -1,6 +1,7 @@
 import { parentPort } from "worker_threads";
 import prisma from "../prisma";
 import Users from "../models/users";
+import { createIcsForClasses, createIcsForDepartments } from "../services/createIcs";
 
 (async () => {
     /** sync personal ics files  */
@@ -15,9 +16,10 @@ import Users from "../models/users";
     }));
 
     /** sync class ics files  */
+    await createIcsForClasses();
     
     /** sync department ics files  */
-
+    await createIcsForDepartments();
 
     // signal to parent that the job is done
     if (parentPort) {

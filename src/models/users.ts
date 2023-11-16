@@ -57,7 +57,7 @@ function Users(db: PrismaClient['user']) {
             if (actor.id !== userId) {
                 throw new HTTP403Error('Not authorized');
             }
-            return await createIcsFile(userId, '');
+            return await createIcsFile(userId);
         },
         async affectedEvents(actor: Users, userId: string, semesterId?: string): Promise<ApiEvent[]> {
             if (actor.id !== userId && actor.role !== Role.ADMIN) {

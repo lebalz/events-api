@@ -110,7 +110,41 @@ const getTimeRange = () => {
     return {from: _1MonthAgo, to: _15MonthForward};
 }
 
-export const createIcs = async (userId: string, jobId: string) => {
+const exportIcs = async (events: Event[], filename: string) => {
+    if (events.length === 0 || !filename) {
+        return Promise.resolve(false);
+    }
+    const eventsDe: EventAttributes[] = [];
+    const eventsFr: EventAttributes[] = [];
+    events.forEach(event => {
+        eventsDe.push(prepareEvent(event, 'de'));
+        eventsFr.push(prepareEvent(event, 'fr'));
+    });
+    const fileCreatedDe = new Promise<boolean>((resolve, reject) => {
+        createEvents(eventsDe, (error, value) => {
+            if (error) {
+                Logger.error(error);
+                return resolve(false);
+            }            
+            writeFileSync(`${ICAL_DIR}/de/${filename}`, value, { encoding: 'utf-8', flag: 'w' })
+            resolve(true);
+        }
+    )});
+    const fileCreatedFr = new Promise<boolean>((resolve, reject) => {
+        createEvents(eventsFr, (error, value) => {
+            if (error) {
+                Logger.error(error);
+                return resolve(false);
+            }            
+            writeFileSync(`${ICAL_DIR}/fr/${filename}`, value, { encoding: 'utf-8', flag: 'w' })
+            resolve(true);
+        }
+    )});
+    const filesCreated = await Promise.all([fileCreatedDe, fileCreatedFr]);
+    return filesCreated.every((res) => !!res);
+}
+
+export const createIcs = async (userId: string) => {
     const timeRange = getTimeRange();
     const user = await prisma.user.findUnique({
         where: { id: userId }
@@ -127,45 +161,17 @@ export const createIcs = async (userId: string, jobId: string) => {
             ]
         }
     });
-    const publicEvents = toCamelCase(publicEventsRaw);
+    // const publicEvents = toCamelCase(publicEventsRaw);
     const fileName = user?.icsLocator || `${uuidv4()}.ics`;
-    if (fileName && publicEvents.length > 0) {
-        const eventsDe: EventAttributes[] = [];
-        const eventsFr: EventAttributes[] = [];
-        publicEvents.forEach(event => {
-            eventsDe.push(prepareEvent(event, 'de'));
-            eventsFr.push(prepareEvent(event, 'fr'));
+    const fileCreated = await exportIcs(publicEventsRaw, fileName);
+    if (fileCreated) {
+        const updated = await prisma.user.update({
+            where: { id: userId },
+            data: {
+                icsLocator: fileName
+            }
         });
-        const fileCreatedDe = new Promise<boolean>((resolve, reject) => {
-            createEvents(eventsDe, (error, value) => {
-                if (error) {
-                    Logger.error(error);
-                    return resolve(false);
-                }            
-                writeFileSync(`${ICAL_DIR}/de/${fileName}`, value, { encoding: 'utf-8', flag: 'w' })
-                resolve(true);
-            }
-        )});
-        const fileCreatedFr = new Promise<boolean>((resolve, reject) => {
-            createEvents(eventsFr, (error, value) => {
-                if (error) {
-                    Logger.error(error);
-                    return resolve(false);
-                }            
-                writeFileSync(`${ICAL_DIR}/fr/${fileName}`, value, { encoding: 'utf-8', flag: 'w' })
-                resolve(true);
-            }
-        )});
-        const filesCreated = await Promise.all([fileCreatedDe, fileCreatedFr]);
-        if (filesCreated.every((res) => !!res)) {
-            const updated = await prisma.user.update({
-                where: { id: userId },
-                data: {
-                    icsLocator: fileName
-                }
-            });
-            return updated;
-        }
+        return updated;
     } else {
         // no events found - delete the ics file, since empty ics files are not valid
         const updated = await prisma.user.update({
@@ -176,29 +182,55 @@ export const createIcs = async (userId: string, jobId: string) => {
         });
         return updated;
     }
-    throw new Error('Could not create ics file');
 }
 
 export const createIcsForClasses = async () => {
+    const timeRange = getTimeRange();
     const today = new Date();
     const untisClasses = await prisma.untisClass.findMany({
         where: {
             year: {gte: today.getFullYear()}
         }
     });
-    
-    // const publicEventsRaw = await prisma.view_UsersAffectedByEvents.findMany({
-    //     where: {
-    //         userId: userId,
-    //         parentId: null,
-    //         state: EventState.PUBLISHED,
-    //         OR: [
-    //             {start: { lte: timeRange.to }},
-    //             {end: { gte: timeRange.from }}
-    //         ]
-    //     }
-    // });
+
+    for (const untisClass of untisClasses) {
+        const publicEvents = await prisma.view_EventsClasses.findMany({
+            where: {
+                classId: untisClass.id,
+                parentId: null,
+                state: EventState.PUBLISHED,
+                OR: [
+                    {start: { lte: timeRange.to }},
+                    {end: { gte: timeRange.from }}
+                ]
+            }
+        });
+        const fileCreated = await exportIcs(publicEvents, `${untisClass.name}.ics`);
+        if (!fileCreated) {
+            Logger.error(`Could not create ics file for class ${untisClass.name}`);
+        }
+    }    
 }
 
 export const createIcsForDepartments = async () => {
+    const timeRange = getTimeRange();
+    const departments = await prisma.department.findMany();
+
+    for (const department of departments) {
+        const publicEvents = await prisma.view_EventsClasses.findMany({
+            where: {
+                departmentId: department.id,
+                parentId: null,
+                state: EventState.PUBLISHED,
+                OR: [
+                    {start: { lte: timeRange.to }},
+                    {end: { gte: timeRange.from }}
+                ]
+            }
+        });
+        const fileCreated = await exportIcs(publicEvents, `${department.name.replaceAll('/','_')}.ics`);
+        if (!fileCreated) {
+            Logger.error(`Could not create ics file for department ${department.name.replaceAll('/','_')}`);
+        }
+    }   
 }

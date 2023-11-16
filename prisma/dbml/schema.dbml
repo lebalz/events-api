@@ -271,6 +271,35 @@ Table view__lessons_affected_by_events {
   }
 }
 
+Table view__events_classes {
+  classId Int [not null]
+  className String [not null]
+  departmentId String [not null]
+  id String [pk]
+  authorId String [not null]
+  start DateTime [not null]
+  end DateTime [not null]
+  location String [not null]
+  description String [not null]
+  descriptionLong String [not null]
+  state EventState [not null, default: 'DRAFT']
+  cloned Boolean [not null, default: false]
+  jobId String
+  parentId String
+  userGroupId String
+  classes String[] [not null]
+  classGroups String[] [not null]
+  audience EventAudience [not null, default: 'STUDENTS']
+  teachingAffected TeachingAffected [not null, default: 'YES']
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [default: `now()`, not null]
+  deletedAt DateTime
+
+  indexes {
+    (id, classId, departmentId) [unique]
+  }
+}
+
 Enum Role {
   USER
   ADMIN
