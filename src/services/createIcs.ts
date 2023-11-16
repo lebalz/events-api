@@ -1,7 +1,7 @@
 import prisma from '../prisma';
 import { v4 as uuidv4 } from 'uuid';
 import { createEvents, DateArray, EventAttributes } from 'ics';
-import { Event, EventState } from '@prisma/client';
+import { Event, EventAudience, EventState } from '@prisma/client';
 import { writeFileSync } from 'fs';
 import _ from 'lodash';
 import { toCamelCase } from './helpers/rawQueryKeys';
@@ -199,6 +199,7 @@ export const createIcsForClasses = async () => {
                 classId: untisClass.id,
                 parentId: null,
                 state: EventState.PUBLISHED,
+                audience: {in: [EventAudience.ALL, EventAudience.STUDENTS]},
                 OR: [
                     {start: { lte: timeRange.to }},
                     {end: { gte: timeRange.from }}
