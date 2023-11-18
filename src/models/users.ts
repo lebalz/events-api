@@ -4,6 +4,8 @@ import prisma from "../prisma";
 import { HTTP400Error, HTTP403Error, HTTP404Error } from "../utils/errors/Errors";
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
 import { ApiEvent, prepareEvent } from "./event.helpers";
+import { existsSync, rmSync } from "fs";
+import { ICAL_DIR } from '../app';
 
 function Users(db: PrismaClient['user']) {
     return Object.assign(db, {
@@ -21,15 +23,35 @@ function Users(db: PrismaClient['user']) {
             if (actor.role !== Role.ADMIN && actor.id !== userId) {
                 throw new HTTP403Error('Not authorized');
             }
+            const { icsLocator } = actor;
             try {
                 const res = await db.update({
                     where: {
                         id: userId
                     },
                     data: {
-                        untisId: untisId || null
+                        untisId: untisId || null,
+                        icsLocator: untisId ? (icsLocator || null) : null
                     }
                 });
+                if (untisId) {
+                    try {
+                        await createIcsFile(userId);
+                    } catch (err) {
+                        console.error(`ICS-Sync after linking to untis failed for ${actor.email}`, err);
+                    }
+                } else {
+                    try {
+                        if (existsSync(`${ICAL_DIR}/de/${icsLocator}`)) {
+                            rmSync(`${ICAL_DIR}/de/${icsLocator}`);
+                        }
+                        if (existsSync(`${ICAL_DIR}/fr/${icsLocator}`)) {
+                            rmSync(`${ICAL_DIR}/fr/${icsLocator}`);
+                        }
+                    } catch (err) {
+                        console.error(`ICS-Sync after unlinking from untis failed for ${actor.email}`, err);
+                    }
+                }
                 return res;
             } catch (err: unknown) {
                 const error = err as PrismaClientKnownRequestError;

@@ -1,7 +1,7 @@
 import { EventState } from "@prisma/client";
 import prisma from "../prisma"
 import Excel from 'exceljs';
-import {existsSync, readdir, readdirSync, rmSync} from 'fs';
+import {existsSync, readdirSync, rmSync} from 'fs';
 import Logger from "../utils/logger";
 
 
