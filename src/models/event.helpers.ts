@@ -38,6 +38,10 @@ export const clonedUpdateProps = (event: Event & {departments: Department[]}, ui
         cloned.departments = {
             set: cloned.departments.connect
         }
+    } else {
+        cloned.departments = {
+            set: []
+        }
     }
     return cloned;
 }

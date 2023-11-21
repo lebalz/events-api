@@ -13,6 +13,7 @@ import { notify } from '../../src/middlewares/notify.nop';
 import { IoEvent } from '../../src/routes/socketEventTypes';
 import { IoRoom } from '../../src/routes/socketEvents';
 import _ from 'lodash';
+import { generateDepartment } from '../factories/department';
 
 jest.mock('../../src/middlewares/notify.nop');
 const mNotification = <jest.Mock<typeof notify>>notify;
@@ -717,6 +718,36 @@ describe(`POST ${API_URL}/event/change_state`, () => {
             to: IoRoom.ADMIN,
             toSelf: true
         });
+    });
+
+    it(`lets versioned REVIEWS become PUBLISHED and keeps updated departments`, async () => {
+        const user = await prisma.user.create({
+            data: generateUser({ email: 'foo@bar.ch', role: Role.ADMIN })
+        });
+        /** 
+         * event[:published/id:0]
+         *  ^                  
+         *  | 
+         * edit1[:review/id:1]
+         * 
+         */
+        const department = await prisma.department.create({data: generateDepartment({name: 'GBSL'})});
+        const event = await prisma.event.create({ data: generateEvent({ authorId: user.id, state: EventState.PUBLISHED, departments: {connect: [{id: department.id}]} }) });
+        const edit1 = await prisma.event.create({ data: generateEvent({ authorId: user.id, parentId: event.id, state: EventState.REVIEW }) });
+        const result = await request(app)
+            .post(`${API_URL}/event/change_state`)
+            .set('authorization', JSON.stringify({ email: user.email }))
+            .send({ data: { ids: [edit1.id], state: EventState.PUBLISHED } });
+        expect(result.statusCode).toEqual(201);
+        expect(result.body.length).toEqual(1);
+        expect(result.body[0].state).toEqual(EventState.PUBLISHED);
+        expect(result.body[0].id).toEqual(edit1.id);
+        expect(result.body[0].description).toEqual(event.description);
+        expect(result.body[0].departmentIds).toHaveLength(1);
+
+        const updatedEvent = await prisma.event.findUnique({ where: { id: event.id }, include: {departments: true} });
+        expect(updatedEvent?.departments).toHaveLength(0);
+
     });
 });
 
