@@ -203,7 +203,6 @@ function Events(db: PrismaClient['event']) {
                             include: { children: true }
                         });
                         const props = clonedUpdateProps(record, record.authorId, {full: true});
-                        console.log('PROPS', props);
                         await prisma.$transaction([
                             /** update the parent (already published) to receive the new props */
                             db.update({  /** <-- now the current version */
