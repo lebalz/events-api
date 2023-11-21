@@ -1,7 +1,7 @@
 import { Department, Event, EventState, Job, JobState, JobType, Prisma, PrismaClient, Role, Semester, User } from "@prisma/client";
 import prisma from "../prisma";
 import { createDataExtractor } from "../controllers/helpers";
-import { ApiEvent, clonedProps, prepareEvent } from "./event.helpers";
+import { ApiEvent, clonedProps, clonedUpdateProps, prepareEvent } from "./event.helpers";
 import { HTTP400Error, HTTP403Error, HTTP404Error } from "../utils/errors/Errors";
 import { importExcel } from "../services/importExcel";
 import Logger from "../utils/logger";
@@ -207,7 +207,7 @@ function Events(db: PrismaClient['event']) {
                             db.update({  /** <-- now the current version */
                                 where: { id: parent.id },
                                 data: {
-                                    ...clonedProps(record, record.authorId, {full: true}),
+                                    ...clonedUpdateProps(record, record.authorId, {full: true}),
                                     state: EventState.PUBLISHED,
                                     updatedAt: undefined
                                 }
@@ -216,7 +216,7 @@ function Events(db: PrismaClient['event']) {
                             db.update({  /** version --> the previous published event, now accessible under the id of the former review candidate */
                                 where: { id: record.id },
                                 data: {
-                                    ...clonedProps(parent, parent.authorId, {full: true}),
+                                    ...clonedUpdateProps(parent, parent.authorId, {full: true}),
                                     updatedAt: undefined
                                 }
                             }),

@@ -32,6 +32,16 @@ export const prepareEvent = (event: (Event & {
     return prepared;
 }
 
+export const clonedUpdateProps = (event: Event & {departments: Department[]}, uid: string, options: {full?: boolean, cloneUserGroup?: boolean} = {}): Prisma.EventUpdateInput => {
+    const cloned: Prisma.EventUpdateInput = clonedProps(event, uid, options);
+    if (cloned.departments) {
+        cloned.departments = {
+            set: cloned.departments.connect
+        }
+    }
+    return cloned;
+}
+
 export const clonedProps = (event: Event & {departments: Department[]}, uid: string, options: {full?: boolean, cloneUserGroup?: boolean} = {}): Prisma.EventCreateInput => {
     const props: Prisma.EventCreateInput = {
         start: event.start,
