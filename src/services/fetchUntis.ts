@@ -7,6 +7,8 @@ import { Semester } from '@prisma/client';
 import { chunks } from './helpers/splitInChunks';
 import { getClassYear } from './helpers/untisKlasse';
 
+const OPTIONAL_COURSE_REGEX = /FA[KC]/;
+
 /**
  * @docs https://webuntis.noim.me/
  * @url https://www.npmjs.com/package/webuntis
@@ -112,8 +114,15 @@ export const fetchUntis = async (semester: Semester): Promise<UntisData> => {
                 return [] as WebAPITimetable[][];
             });
             const [tt] = await Promise.all([s1]);
-            const flattend_tt = tt.reduce((clx, val) => clx.concat(val), []).filter((t) => t.lessonCode === 'LESSON');
-            return { ...data, timetable: flattend_tt };
+            const flattend_tt = tt.flat().filter((t) => t.lessonCode === 'LESSON');
+            /** Fak Kurse */
+            const optLessonIds = data.subjects.filter((s) => OPTIONAL_COURSE_REGEX.test(s.name)).map(s => s.id);
+            const optLessons: WebAPITimetable[] = [];
+            for (const id of optLessonIds) {
+                const fakTT = await untis.getTimetableForWeek(semester.untisSyncDate, id, Base.TYPES.SUBJECT, 2, true);
+                optLessons.push(...fakTT.filter((t) => t.lessonCode === 'LESSON'));
+            }
+            return { ...data, timetable: [...flattend_tt, ...optLessons] };
         }).then((data) => {
             Object.keys(data).forEach((key) => {
                 const len = (data as any)[key].length;
