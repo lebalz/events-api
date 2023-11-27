@@ -3,6 +3,7 @@ import prisma from "../prisma"
 import Excel from 'exceljs';
 import {existsSync, readdirSync, rmSync} from 'fs';
 import Logger from "../utils/logger";
+import moment from "moment";
 
 
 export const SEC_2_MS = 1000;
@@ -87,9 +88,9 @@ const createExcel = async (semesterId: string) => {
             kw: getKW(e.start),
             weekday: DAYS_LONG[e.start.getDay()],
             description: e.description,
-            date_s: formatDate(e.start),
+            date_s: new Date(e.start.getTime() - (e.start.getTimezoneOffset() * MINUTE_2_MS)),
             time_s: formatTime(e.start),
-            date_e: formatDate(e.end),
+            date_e: new Date(e.end.getTime() - (e.end.getTimezoneOffset() * MINUTE_2_MS)),
             time_e: formatTime(e.end),
             location: e.location,
             lps: '',
@@ -108,9 +109,9 @@ const createExcel = async (semesterId: string) => {
         { header: 'KW', key: 'kw', width: 7, outlineLevel: 1 },
         { header: 'Wochentag', key: 'weekday', width: 15, outlineLevel: 1 },
         { header: 'Stichworte', key: 'description', width: 42, outlineLevel: 1 },
-        { header: 'Datum Beginn', key: 'date_s', width: 15, outlineLevel: 1 },
+        { header: 'Datum Beginn', key: 'date_s', width: 15, outlineLevel: 1, numFmt: 'YYYY-MM-DD' },
         { header: 'Zeit Beginn', key: 'time_s', width: 12, outlineLevel: 1 },
-        { header: 'Datum Ende', key: 'date_e', width: 15, outlineLevel: 1 },
+        { header: 'Datum Ende', key: 'date_e', width: 15, outlineLevel: 1, numFmt: 'YYYY-MM-DD' },
         { header: 'Zeit Ende', key: 'time_e', width: 12, outlineLevel: 1 },
         { header: 'Ort', key: 'location', width: 20, outlineLevel: 1 },
         { header: 'Betroffene Lehrkräfte', key: 'lps', width: 20, outlineLevel: 1 },
@@ -121,6 +122,7 @@ const createExcel = async (semesterId: string) => {
         { header: 'Jahrgangsstufe', key: 'year', width: 10, outlineLevel: 1 },
         { header: 'Einzelne Klassen', key: 'classes', width: 32, outlineLevel: 1 },
     ];
+
     worksheet.addTable({
         name: 'Termine',
         ref: 'A1',
