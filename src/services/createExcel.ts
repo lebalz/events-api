@@ -3,7 +3,7 @@ import prisma from "../prisma"
 import Excel from 'exceljs';
 import {existsSync, readdirSync, rmSync} from 'fs';
 import Logger from "../utils/logger";
-import moment from "moment";
+import { translate } from "./helpers/i18n";
 
 
 export const SEC_2_MS = 1000;
@@ -19,7 +19,7 @@ const EXPORT_DIR = process.env.EXPORT_DIR
     ? process.env.EXPORT_DIR 
     : process.env.NODE_ENV === 'test' ? `${__dirname}/../../tests/test-data/exports` : `${__dirname}/../../exports`;
 
-export const getKW = (date: Date) => {
+const getKW = (date: Date) => {
     const utcDate = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate(), 0, 0, 0, 0));
     const dayNumber = date.getUTCDay() || 7;
     utcDate.setUTCDate(date.getUTCDate() + 4 - dayNumber);
@@ -27,16 +27,16 @@ export const getKW = (date: Date) => {
     return Math.ceil(((utcDate.getTime() - yearStart.getTime()) / DAY_2_MS + 1) / 7);
 }
 
-export const formatTime = (date: Date) => {
-    const hours = `${date.getHours()}`.padStart(2, '0');
-    const minutes = `${date.getMinutes()}`.padStart(2, '0');
+const formatTime = (date: Date) => {
+    const hours = `${date.getUTCHours()}`.padStart(2, '0');
+    const minutes = `${date.getUTCMinutes()}`.padStart(2, '0');
     return `${hours}:${minutes}`;
 }
 
-export const formatDate = (date: Date) => {
-    const day = `${date.getDate()}`.padStart(2, '0');
-    const month = `${date.getMonth() + 1}`.padStart(2, '0');
-    const year = `${date.getFullYear()}`.padStart(4, '0');
+const formatDate = (date: Date) => {
+    const day = `${date.getUTCDate()}`.padStart(2, '0');
+    const month = `${date.getUTCMonth() + 1}`.padStart(2, '0');
+    const year = `${date.getUTCFullYear()}`.padStart(4, '0');
 
     return `${day}.${month}.${year}`;
 }
@@ -88,9 +88,9 @@ const createExcel = async (semesterId: string) => {
             kw: getKW(e.start),
             weekday: DAYS_LONG[e.start.getDay()],
             description: e.description,
-            date_s: new Date(e.start.getTime() - (e.start.getTimezoneOffset() * MINUTE_2_MS)),
+            date_s: formatDate(e.start),
             time_s: formatTime(e.start),
-            date_e: new Date(e.end.getTime() - (e.end.getTimezoneOffset() * MINUTE_2_MS)),
+            date_e: formatDate(e.end),
             time_e: formatTime(e.end),
             location: e.location,
             lps: '',
@@ -99,7 +99,10 @@ const createExcel = async (semesterId: string) => {
             wms: e.departments.filter(d => ['W', 'c'].includes(d.letter)).map(d => d.name).join(', '),
             descriptionLong: e.descriptionLong,
             year: e.classGroups.join(', '),
-            classes: e.classes.join(', ')
+            classes: e.classes.join(', '),
+            audience: e.audience,
+            teachingAffected: e.teachingAffected,
+            deletedAt: e.deletedAt ? formatDate(e.deletedAt) : ''
         }
     });
 
@@ -109,9 +112,9 @@ const createExcel = async (semesterId: string) => {
         { header: 'KW', key: 'kw', width: 7, outlineLevel: 1 },
         { header: 'Wochentag', key: 'weekday', width: 15, outlineLevel: 1 },
         { header: 'Stichworte', key: 'description', width: 42, outlineLevel: 1 },
-        { header: 'Datum Beginn', key: 'date_s', width: 15, outlineLevel: 1, numFmt: 'YYYY-MM-DD' },
+        { header: 'Datum Beginn', key: 'date_s', width: 15, outlineLevel: 1 },
         { header: 'Zeit Beginn', key: 'time_s', width: 12, outlineLevel: 1 },
-        { header: 'Datum Ende', key: 'date_e', width: 15, outlineLevel: 1, numFmt: 'YYYY-MM-DD' },
+        { header: 'Datum Ende', key: 'date_e', width: 15, outlineLevel: 1 },
         { header: 'Zeit Ende', key: 'time_e', width: 12, outlineLevel: 1 },
         { header: 'Ort', key: 'location', width: 20, outlineLevel: 1 },
         { header: 'Betroffene Lehrkräfte', key: 'lps', width: 20, outlineLevel: 1 },
@@ -121,6 +124,9 @@ const createExcel = async (semesterId: string) => {
         { header: 'Beschreibung', key: 'descriptionLong', width: 42, outlineLevel: 1 },
         { header: 'Jahrgangsstufe', key: 'year', width: 10, outlineLevel: 1 },
         { header: 'Einzelne Klassen', key: 'classes', width: 32, outlineLevel: 1 },
+        { header: translate('audience', 'de'), key: 'audience', width: 5, outlineLevel: 1 },
+        { header: translate('teachingAffected', 'de'), key: 'teachingAffected', width: 5, outlineLevel: 1 },
+        { header: translate('deletedAt', 'de'), key: 'deletedAt', width: 5, outlineLevel: 1 },
     ];
 
     worksheet.addTable({
@@ -148,8 +154,11 @@ const createExcel = async (semesterId: string) => {
             { name: 'Beschreibung', filterButton: true },
             { name: 'Jahrgangsstufe', filterButton: true },
             { name: 'Einzelne Klassen', filterButton: true },
+            { name: translate('audience', 'de'), filterButton: true },
+            { name: translate('teachingAffected', 'de'), filterButton: true },
+            { name: translate('deletedAt', 'de'), filterButton: true },
         ],
-        rows: data.map(i => Object.values(i))
+        rows: data.map(i => Object.values(i)),
       });
     
     await workbook.xlsx.writeFile(file);

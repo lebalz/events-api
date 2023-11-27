@@ -7,6 +7,7 @@ import _ from 'lodash';
 import { toCamelCase } from './helpers/rawQueryKeys';
 import Logger from '../utils/logger';
 import { ICAL_DIR } from '../app';
+import { translate } from './helpers/i18n';
 
 export const SEC_2_MS = 1000;
 export const MINUTE_2_MS = 60 * SEC_2_MS;
@@ -22,49 +23,7 @@ const TEACHING_AFFECTED = {
     PARTIAL: '🟡'
 }
 
-interface i18nMessage {
-    de: string;
-    fr: string;
-}
 
-const i18n = {
-    audience: {
-        de: 'Zielgruppe',
-        fr: 'Participant·e·s'
-    },
-    classes: {
-        de: 'Klassen',
-        fr: 'Classes'
-    },
-    description: {
-        de: 'Beschreibung',
-        fr: 'Description'
-    },
-    deletedAt: {
-        de: 'Gelöscht am',
-        fr: 'Supprimé le'
-    },
-    teachingAffected: {
-        de: 'Unterricht betroffen?',
-        fr: 'Enseignement concerné?'
-    },
-    YES: {
-        de: 'Ja',
-        fr: 'Oui'
-    },
-    NO: {
-        de: 'Nein',
-        fr: 'Non'
-    },
-    PARTIAL: {
-        de: 'Teilweise',
-        fr: 'Partiellement'
-    }
-} as const;
-
-const translate = (key: keyof typeof i18n, language: 'de' | 'fr') => {
-    return i18n[key][language];
-}
 
 export const prepareEvent = (event: Event, lang: 'de' | 'fr'): EventAttributes => {
     const start = toDateArray(new Date(event.start));

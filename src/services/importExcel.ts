@@ -1,7 +1,8 @@
-import { EventState } from "@prisma/client";
+import { EventAudience, EventState, TeachingAffected } from "@prisma/client";
 import readXlsxFile from 'read-excel-file/node';
 import prisma from '../prisma';
 import { KlassName, mapLegacyClassName } from "./helpers/klassNames";
+import { MINUTE_2_MS } from "./createExcel";
 
 const COLUMNS = {
   KW: 0,
@@ -18,7 +19,10 @@ const COLUMNS = {
   wms: 11,
   descriptionLong: 12,
   classYears: 13,
-  classes: 14
+  classes: 14,
+  audience: 15,
+  teachingAffected: 16,
+  deletedAt: 17
 }
 
 const extractTime = (time: string): [number, number] => {
@@ -34,10 +38,27 @@ const extractTime = (time: string): [number, number] => {
   return [hours, minutes];
 }
 
+const toDate = (date: Date | string): Date => {
+  if (typeof date === 'string') {
+    const dummy = new Date();
+    const [dd, mm, yyyy] = date.split('.');
+    return new Date(Date.parse(`${yyyy}-${mm}-${dd}T00:00:00.000Z`));
+  }
+  date.setUTCHours(0);
+  date.setUTCMinutes(0);
+  date.setUTCSeconds(0);
+  date.setUTCMilliseconds(0);
+  return date;
+}
+
 export const importExcel = async (file: string, userId: string, jobId: string) => {
   const xlsx = await readXlsxFile(file, { dateFormat: 'YYYY-MM-DD' });
   const imports = xlsx.slice(1).map(async (e) => {
-    const start = e[COLUMNS.startDate] as any as Date;
+    if (!!e[COLUMNS.deletedAt]) {
+      /** do not import deleted events... */
+      return;
+    }
+    const start = toDate(e[COLUMNS.startDate] as string);
     const startTime = e[COLUMNS.startTime] as string;
     let allDay = !startTime;
     if (startTime) {
@@ -45,7 +66,7 @@ export const importExcel = async (file: string, userId: string, jobId: string) =
       start.setUTCHours(hours);
       start.setUTCMinutes(minutes);
     }
-    let ende = e[COLUMNS.endDate] as any as Date;
+    let ende = toDate(e[COLUMNS.endDate] as string);
     if (!ende) {
       ende = start
     }
@@ -56,7 +77,6 @@ export const importExcel = async (file: string, userId: string, jobId: string) =
       }
       ende.setUTCHours(23);
       ende.setUTCMinutes(59);
-      ende.setUTCSeconds(59);
     } else if (!!endTime) {
       const [hours, minutes] = extractTime(endTime);
       ende.setUTCHours(hours);
@@ -96,7 +116,9 @@ export const importExcel = async (file: string, userId: string, jobId: string) =
         },
         job: {
           connect: { id: jobId }
-        }
+        },
+        teachingAffected: e[COLUMNS.teachingAffected] as TeachingAffected || TeachingAffected.YES,
+        audience: e[COLUMNS.audience] as EventAudience || EventAudience.STUDENTS,
       }
     });
   });
