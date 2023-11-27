@@ -38,7 +38,10 @@ const extractTime = (time: string): [number, number] => {
   return [hours, minutes];
 }
 
-const toDate = (date: Date | string): Date => {
+const toDate = (date: Date | string): Date | undefined => {
+  if (!date) {
+    return undefined;
+  }
   if (typeof date === 'string') {
     const dummy = new Date();
     const [dd, mm, yyyy] = date.split('.');
@@ -58,7 +61,7 @@ export const importExcel = async (file: string, userId: string, jobId: string) =
       /** do not import deleted events... */
       return;
     }
-    const start = toDate(e[COLUMNS.startDate] as string);
+    const start = toDate(e[COLUMNS.startDate] as string)!;
     const startTime = e[COLUMNS.startTime] as string;
     let allDay = !startTime;
     if (startTime) {
