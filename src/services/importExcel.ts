@@ -1,8 +1,6 @@
-import { EventAudience, EventState, TeachingAffected } from "@prisma/client";
+import { EventAudience, TeachingAffected } from "@prisma/client";
 import readXlsxFile from 'read-excel-file/node';
-import prisma from '../prisma';
-import { KlassName, mapLegacyClassName } from "./helpers/klassNames";
-import { MINUTE_2_MS } from "./createExcel";
+import { ImportRawEvent } from "./importEvents";
 
 const COLUMNS = {
   KW: 0,
@@ -54,13 +52,9 @@ const toDate = (date: Date | string): Date | undefined => {
   return date;
 }
 
-export const importExcel = async (file: string, userId: string, jobId: string) => {
+export const importExcel = async (file: string): Promise<ImportRawEvent[]> => {
   const xlsx = await readXlsxFile(file, { dateFormat: 'YYYY-MM-DD' });
-  const imports = xlsx.slice(1).map(async (e) => {
-    if (!!e[COLUMNS.deletedAt]) {
-      /** do not import deleted events... */
-      return;
-    }
+  return xlsx.slice(1).filter((e => !!e[COLUMNS.deletedAt])).map((e) => {
     const start = toDate(e[COLUMNS.startDate] as string)!;
     const startTime = e[COLUMNS.startTime] as string;
     let allDay = !startTime;
@@ -85,45 +79,15 @@ export const importExcel = async (file: string, userId: string, jobId: string) =
       ende.setUTCHours(hours);
       ende.setUTCMinutes(minutes);
     }
-
-    
-    const classesRaw = e[COLUMNS.classes] as string || '';
-
-    /**
-     * \d matches a digit (equivalent to [0-9])
-     * \d matches a digit (equivalent to [0-9])
-     * [a-zA-Z] matches any alphabetical character
-     */
-    const singleClasses = classesRaw.match(/(\d\d[a-zA-Z][a-zA-Z]?)($|\W+)/g)?.map((c) => c).map(c => c.replace(/\W+/g, ''));
-    const groupedClasses = classesRaw.match(/(\d\d)[a-zA-Z][a-zA-Z][a-zA-Z]+/g)?.map((c) => c)?.map((c) => {
-      if (!c || c.length < 3) {
-        return;
-      }
-      const yr = c.substring(0, 2);
-      const cls = c.substring(2).split('').map((c) => `${yr}${c}`);
-      return cls;
-    }).filter(c => !!c).reduce((a, b) => a!.concat(b!), []);
-    const classes = [...new Set((singleClasses || []).concat(groupedClasses || []))].map(c => mapLegacyClassName(c)).filter(c => !!c) as KlassName[];
-
-    return prisma.event.create({
-      data: {
-        description: e[COLUMNS.description] as string || '',
-        descriptionLong: e[COLUMNS.descriptionLong] as string || '',
-        location: e[COLUMNS.location] as string || '',
-        start: start,
-        end: ende || start,
-        state: EventState.DRAFT,
-        classes: classes,
-        author: {
-          connect: { id: userId }
-        },
-        job: {
-          connect: { id: jobId }
-        },
-        teachingAffected: e[COLUMNS.teachingAffected] as TeachingAffected || TeachingAffected.YES,
-        audience: e[COLUMNS.audience] as EventAudience || EventAudience.STUDENTS,
-      }
-    });
+    return {
+      description: e[COLUMNS.description] as string || '',
+      descriptionLong: e[COLUMNS.descriptionLong] as string || '',
+      location: e[COLUMNS.location] as string || '',
+      start: start,
+      end: ende || start,
+      classesRaw: e[COLUMNS.classes] as string || '',
+      teachingAffected: e[COLUMNS.teachingAffected] as TeachingAffected,
+      audience: e[COLUMNS.audience] as EventAudience,
+    } as ImportRawEvent;
   });
-  return await Promise.all(imports);
 }

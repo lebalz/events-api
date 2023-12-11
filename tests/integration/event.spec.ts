@@ -757,7 +757,7 @@ describe(`POST ${API_URL}/event/import`, () => {
     afterEach(() => {
         return truncate();
     });
-    it("lets admins import events", async () => {
+    it("lets admins import events: legacy format", async () => {
         const admin = await prisma.user.create({
             data: generateUser({ email: 'admin@bar.ch', role: Role.ADMIN })
         });
@@ -802,8 +802,8 @@ describe(`POST ${API_URL}/event/import`, () => {
         const event1 = events.find(e => e.description === '1. Schultag gemäss Programm');
         expect(event1?.descriptionLong).toEqual('');
         expect(event1?.location).toEqual('GBSL');
-        expect(event1?.start.toISOString()).toEqual('2023-08-21T23:59:59.000Z');
-        expect(event1?.end.toISOString()).toEqual('2023-08-21T23:59:59.000Z');
+        expect(event1?.start.toISOString()).toEqual('2023-08-21T23:59:00.000Z');
+        expect(event1?.end.toISOString()).toEqual('2023-08-21T23:59:00.000Z');
         expect(event1?.classes).toEqual([]);
 
 
@@ -825,7 +825,7 @@ describe(`POST ${API_URL}/event/import`, () => {
         expect(event4?.descriptionLong).toEqual('Die Lehrpersonen informieren die Klasse in einer der Lektionen über den Zeitpunkt und Ablauf des IDAF-Moduls');
         expect(event4?.location).toEqual('');
         expect(event4?.start.toISOString()).toEqual('2023-08-28T00:00:00.000Z');
-        expect(event4?.end.toISOString()).toEqual('2023-09-01T23:59:59.000Z');
+        expect(event4?.end.toISOString()).toEqual('2023-09-01T23:59:00.000Z');
         expect(event4?.classes).toEqual(['26Wa']);
     });
 
@@ -919,3 +919,13 @@ describe(`POST ${API_URL}/event/export`, () => {
         expect(result.body).toEqual({});
     });
 });
+
+
+// describe('Export and reimport', () => {
+//     afterEach(() => {
+//         return truncate();
+//     });
+//     it('Exports and reimports the same events', async () => {
+//         const admin = await prisma.user.create({
+//             data: generateUser({ email: '
+// })
