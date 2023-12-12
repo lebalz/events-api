@@ -3,7 +3,7 @@ import prisma from "../prisma";
 import { createDataExtractor } from "../controllers/helpers";
 import { ApiEvent, clonedProps, clonedUpdateProps, prepareEvent } from "./event.helpers";
 import { HTTP400Error, HTTP403Error, HTTP404Error } from "../utils/errors/Errors";
-import { importExcel } from "../services/importExcel";
+import { importEvents as importService, ImportType } from "../services/importEvents";
 import Logger from "../utils/logger";
 import semesters from "./semesters";
 const getData = createDataExtractor<Prisma.EventUncheckedUpdateInput>(
@@ -387,7 +387,7 @@ function Events(db: PrismaClient['event']) {
             });
             return prepareEvent(newEvent);
         },
-        async importEvents(actor: User, filepath: string, filename: string): Promise<{job: Job, importer: Promise<Job>}> {
+        async importEvents(actor: User, filepath: string, filename: string, type: ImportType): Promise<{job: Job, importer: Promise<Job>}> {
             const importJob = await prisma.job.create({
                 data: {
                     type: JobType.IMPORT,
@@ -395,7 +395,7 @@ function Events(db: PrismaClient['event']) {
                     filename: filename,
                 }
             });
-            const importer = importExcel(filepath, actor.id, importJob.id).then(async (events) => {
+            const importer = importService(filepath, actor.id, importJob.id, type).then(async (events) => {
                 return await prisma.job.update({
                     where: { id: importJob.id },
                     data: {

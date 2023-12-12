@@ -14,6 +14,7 @@ import { IoEvent } from '../../src/routes/socketEventTypes';
 import { IoRoom } from '../../src/routes/socketEvents';
 import _ from 'lodash';
 import { generateDepartment } from '../factories/department';
+import { ImportType } from '../../src/services/importEvents';
 
 jest.mock('../../src/middlewares/notify.nop');
 const mNotification = <jest.Mock<typeof notify>>notify;
@@ -763,7 +764,7 @@ describe(`POST ${API_URL}/event/import`, () => {
         });
 
         const result = await request(app)
-            .post(`${API_URL}/event/import`)
+            .post(`${API_URL}/event/import?type=${ImportType.GBSL_XLSX}`)
             .set('authorization', JSON.stringify({ email: admin.email }))
             .attach('terminplan', `${__dirname}/stubs/terminplan-import.xlsx`)
         expect(result.statusCode).toEqual(200);

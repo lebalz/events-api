@@ -1,11 +1,13 @@
 import { EventAudience, EventState, TeachingAffected } from "@prisma/client";
-import { importExcel } from "./importExcel";
+import { importExcel as importGBSL_xlsx } from "./importGBSL_xlsx";
 import prisma from "../prisma";
 import { KlassName, mapLegacyClassName } from "./helpers/klassNames";
+import { importCsv as importGBJB_csv } from "./importGBJB_csv";
 
 export enum ImportType {
-    EXCEL_GBSL = 'EXCEL_GBSL',
-    CSV_GBJB = 'CSV_GBJB'
+    GBSL_XLSX = 'GBSL_XLSX',
+    GBJB_CSV = 'GBJB_CSV',
+    EVENTS_XLSX = 'EVENTS_XLSX',
 }
 
 export interface ImportRawEvent {
@@ -23,12 +25,13 @@ export interface ImportRawEvent {
 
 export const importEvents = async (file: string, userId: string, jobId: string, type: ImportType) => {
     let data: ImportRawEvent[] = [];
+
     switch (type) {
-        case ImportType.EXCEL_GBSL:
-            data = await importExcel(file);
+        case ImportType.GBSL_XLSX:
+            data = await importGBSL_xlsx(file);
             break;
-        case ImportType.CSV_GBJB:
-            // data = await importCsv(file);
+        case ImportType.GBJB_CSV:
+            data = await importGBJB_csv(file);
             break;
     }
 

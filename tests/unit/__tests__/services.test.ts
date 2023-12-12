@@ -1,4 +1,4 @@
-import { importCsv } from "../../../src/services/importCsv";
+import { importCsv } from "../../../src/services/importGBJB_csv";
 
 describe('import csv gbjb', () => {
     test('can extract raw event data', async () => {
