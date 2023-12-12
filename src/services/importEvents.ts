@@ -42,8 +42,9 @@ export const importEvents = async (file: string, userId: string, jobId: string, 
          * \d matches a digit (equivalent to [0-9])
          * [a-zA-Z] matches any alphabetical character
          */
-        const singleClasses = classesRaw.match(/(\d\d[a-zA-Z][a-zA-Z]?)($|\W+)/g)?.map((c) => c).map(c => c.replace(/\W+/g, ''));
-        const groupedClasses = classesRaw.match(/(\d\d)[a-zA-Z][a-zA-Z][a-zA-Z]+/g)?.map((c) => c)?.map((c) => {
+        const singleClasses = classesRaw.match(/(\d\d[a-z][A-Z]?|\d\d[A-Z][a-z]?)($|\W+)/g)?.map((c) => c).map(c => c.replace(/\W+/g, ''));
+        /*                                  e.g.  24hi              24KL         24hiKL     */
+        const groupedClasses = classesRaw.match(/(\d\d)([a-z][a-z]|[A-Z][A-Z]|[a-zA-Z][a-zA-Z][a-zA-Z]+)[a-zA-Z]*/g)?.map((c) => c)?.map((c) => {
             if (!c || c.length < 3) {
                 return;
             }

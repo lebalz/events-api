@@ -31,7 +31,6 @@ const toDate = (dateString: string): Date => {
 const KLASS_REGEX = /2\d[a-zA-Z][a-zA-Z]*/;
 
 export const importCsv = async (file: string) => {
-    console.log('Import: ', file)
     const rawEvents: ImportRawEvent[] = [];
     const parser = fs
         .createReadStream(file)

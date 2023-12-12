@@ -1,0 +1,5 @@
+"ID","COORDINATION","WORK","PLANNING","WSTEACHERID","GYM_CODE","DESCRIPTION","DETAILS","STARTDATE","ENDDATE","LOCATION","PROVISORY","TITLE","APILANGUAGE_CODE"
+37207,1,0,0,"TR_AUB","GF","Rentrée des classes:",,2023-08-21 00:00:00,2023-08-21 00:00:00,,0,"rentrée des classes","FR"
+38592,0,0,1,"TR_gil","GBSL","GBSL: Beginn des Fakultativunterrichts",,2023-08-28 07:30:00,2023-08-28 18:00:00,,0,"GBSL: Beginn des Fakultativunterrichts","DE"
+37223,1,1,1,"TR_AEL","GF","Classes GYM 3 et GYM4: ","début de l\'enseignement des disciplines de l\'OC, selon horaire",2023-08-25 14:55:00,2023-08-25 15:40:00,,0,"début OC/EF","FR"
+37247,0,1,1,"TR_LAN","GBSL","Présentation des offres du GBJB autour de l\'orientation professionnelle, à l\'aula:","Classes de GYM4 (24A à 24H et 24KL): 8h25-9h10\r\nClasses de GYM3 (25A à 25M et 25KL): 9h20-10h05\r\nClasses de GYM2 (26A à 26I et 26KLP): 11h20-12h05",2023-08-29 08:25:00,2023-08-29 12:05:00,,0,"Présentation OP","FR"
