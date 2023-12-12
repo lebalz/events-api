@@ -836,7 +836,7 @@ describe(`POST ${API_URL}/event/import`, () => {
         });
 
         const result = await request(app)
-            .post(`${API_URL}/event/import`)
+            .post(`${API_URL}/event/import?type=${ImportType.GBSL_XLSX}`)
             .set('authorization', JSON.stringify({ email: user.email }))
             .attach('terminplan', `${__dirname}/stubs/terminplan-import.xlsx`);
         expect(result.statusCode).toEqual(403);
@@ -851,7 +851,7 @@ describe(`POST ${API_URL}/event/import`, () => {
 
         /** expect the logger to report an [error]: invalid signature: 0x73206f6e */
         const result = await request(app)
-            .post(`${API_URL}/event/import`)
+            .post(`${API_URL}/event/import?type=${ImportType.GBSL_XLSX}`)
             .set('authorization', JSON.stringify({ email: admin.email }))
             .attach('terminplan', `${__dirname}/stubs/terminplan-corrupted.xlsx`);
         expect(result.statusCode).toEqual(200);
