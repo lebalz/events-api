@@ -9,6 +9,7 @@ import createExcel from "../services/createExcel";
 import Events from "../models/events";
 import path from "path";
 import { HTTP400Error } from "../utils/errors/Errors";
+import { ImportType } from "../services/importEvents";
 
 const NAME = 'EVENT';
 
@@ -200,9 +201,9 @@ export const clone: RequestHandler<{ id: string }, any, any> = async (req, res, 
 }
 
 
-export const importEvents: RequestHandler = async (req, res, next) => {
+export const importEvents: RequestHandler<any, any, any, {type: ImportType}> = async (req, res, next) => {
     try {
-        const {job, importer} = await Events.importEvents(req.user!, req.file!.path, req.file!.originalname);
+        const {job, importer} = await Events.importEvents(req.user!, req.file!.path, req.file!.originalname, req.query.type);
  
         importer.finally(() => {
             notifyChangedRecord(req.io, { record: 'JOB', id: job.id });
