@@ -928,11 +928,11 @@ describe(`POST ${API_URL}/event/import`, () => {
                 expect(e.start.getTime()).toBeLessThanOrEqual(e.end.getTime());
                 expect(e.classGroups).toEqual([]);
             });
-            const event1 = events.find(e => e.description === 'GBSL: Beginn des Fakultativunterrichts');
-            expect(event1?.descriptionLong).toEqual('GBSL: Beginn des Fakultativunterrichts');
+            const event1 = events.find(e => e.description === 'Dispense');
+            expect(event1?.descriptionLong).toEqual('Dispense de cours pour les élèves participant au concert de bienvenue');
             expect(event1?.location).toEqual('');
-            expect(event1?.start.toISOString()).toEqual('2023-08-28T07:30:00.000Z');
-            expect(event1?.end.toISOString()).toEqual('2023-08-28T18:00:00.000Z');
+            expect(event1?.start.toISOString()).toEqual('2023-08-22T10:25:00.000Z');
+            expect(event1?.end.toISOString()).toEqual('2023-08-22T12:05:00.000Z');
             expect(event1?.classes).toEqual([]);
 
 

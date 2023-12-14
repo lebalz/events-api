@@ -44,6 +44,9 @@ export const importCsv = async (file: string) => {
             if (record.COORDINATION === '1' && record.WORK === '0' && record.PLANNING === '0') {
                 continue;
             }
+            if (record.GYM_CODE !== 'GF') {
+                continue;
+            }
             let description2klasses = `${record.DETAILS} ${record.DESCRIPTION}`
             const klasses: string[] = []
             let match: RegExpMatchArray | null;

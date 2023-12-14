@@ -6,10 +6,10 @@ describe('import csv gbjb', () => {
         // even the csv has 4 data rows, only 3 are valid (coordination = 1, work = 0, planning = 0 are skipped)
         expect(result).toHaveLength(3)
         expect(result[0]).toEqual({
-            description: 'GBSL: Beginn des Fakultativunterrichts',
-            descriptionLong: 'GBSL: Beginn des Fakultativunterrichts',
-            start: new Date('2023-08-28T07:30:00.000Z'),
-            end: new Date('2023-08-28T18:00:00.000Z'),
+            description: 'Dispense',
+            descriptionLong: 'Dispense de cours pour les élèves participant au concert de bienvenue',
+            start: new Date('2023-08-22T10:25:00.000Z'),
+            end: new Date('2023-08-22T12:05:00.000Z'),
             location: '',
             classesRaw: '',
         });
