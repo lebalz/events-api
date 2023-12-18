@@ -275,6 +275,7 @@ describe(`POST ${API_URL}/user/:id/create_ics`, () => {
                         id: department.id
                     }
                 },
+                audience: EventAudience.ALL,
                 teachingAffected: TeachingAffected.YES,
                 start: new Date(semStart.getTime() + 1000),
                 end: new Date(semStart.getTime() + 1000 * 60 * 60),
