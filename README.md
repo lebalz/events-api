@@ -176,6 +176,8 @@ yarn run dev
 
 ```bash
 yarn run prisma migrate dev --create-only
+#shortcut with name of migration
+yarn run prisma migrate dev -n add-events-classes-view --create-only
 # add your view definition
 yarn run prisma migrate dev
 # pull the model definitions to your schema

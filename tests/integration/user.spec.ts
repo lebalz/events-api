@@ -298,7 +298,7 @@ describe(`POST ${API_URL}/user/:id/create_ics`, () => {
         const icsFr = createEvents([prepareEvent(event, 'fr')]);
         expect(icalDe).toEqual(
             icsDe.value
-        );expect(icalFr).toEqual(
+        ); expect(icalFr).toEqual(
             icsFr.value
         );
         expect(mNotification).toHaveBeenCalledTimes(1);
@@ -412,31 +412,34 @@ describe(`GET ${API_URL}/user/:id/affected-event-ids`, () => {
         let departments: Department[];
         let untisTeachers: UntisTeacher[];
         const _data: UntisDataProps = {
-            schoolyear: {start: 2023},
+            schoolyear: { start: 2023 },
             subjects: [
-                {name: 'M', longName: 'Mathematik'},
-                {name: 'IN', longName: 'Informatik'},
-                {name: 'EFIN', longName: 'EF Informatik'},
-                {name: 'E', longName: 'Englisch'}
+                { name: 'M', longName: 'Mathematik' },
+                { name: 'IN', longName: 'Informatik' },
+                { name: 'EFIN', longName: 'EF Informatik' },
+                { name: 'E', longName: 'Englisch' }
             ],
             teachers: [
-                {name: 'abc', longName: 'Ambrosio Clark', sex: 'M'},
-                {name: 'xyz', longName: 'Xavianda Zorro', sex: 'F'}
+                { name: 'abc', longName: 'Ambrosio Clark [GBSL, GBJB]', sex: 'M' },
+                { name: 'xyz', longName: 'Xavianda Zorro [GBSL]', sex: 'F' },
+                { name: 'aaa', longName: 'Louise Bommeraux [GBJB]', sex: 'F'}
             ],
             classes: [
-                {name: '24i', sf: 'BG/WR'},
-                {name: '24a', sf: 'PAM'},
-                {name: '26e', sf: 'PAM/BG'},
-                {name: '26P', sf: 'WR'}
+                { name: '24i', sf: 'BG/WR' },
+                { name: '24a', sf: 'PAM' },
+                { name: '26e', sf: 'PAM/BG' },
+                { name: '25B', sf: 'BC' },
+                { name: '26P', sf: 'WR' }
             ],
             lessons: [
-                {subject: 'IN', day: 'Di', teachers: ['abc'], classes: ['26e'], start: 1120, end: 1205, room: 'D114'},
-                {subject: 'M', day: 'Di', teachers: ['abc'], classes: ['24i'], start: 1550, end: 1635, room: 'G001'},
-                {subject: 'E', day: 'Mi', teachers: ['xyz'], classes: ['24i'], start: 730, end: 815, room: 'D113'},
-                {subject: 'IN', day: 'Mi', teachers: ['abc'], classes: ['26e'], start: 730, end: 815, room: 'D216'},
-                {subject: 'IN', day: 'Mi', teachers: ['abc'], classes: ['26P'], start: 1215, end: 1300, room: 'D113'},
-                {subject: 'M', day: 'Mi', teachers: ['abc'], classes: ['24i'], start: 1025, end: 1110, room: 'D103'},
-                {subject: 'EFIN', day: 'Fr', teachers: ['abc'], classes: ['24a', '24i'], start: 1305, end: 1350, room: 'D206'},
+                { subject: 'IN', day: 'Di', teachers: ['abc'], classes: ['26e'], start: 1120, end: 1205, room: 'D114' },
+                { subject: 'M', day: 'Di', teachers: ['abc'], classes: ['24i'], start: 1550, end: 1635, room: 'G001' },
+                { subject: 'E', day: 'Mi', teachers: ['xyz'], classes: ['24i'], start: 730, end: 815, room: 'D113' },
+                { subject: 'IN', day: 'Mi', teachers: ['abc'], classes: ['26e'], start: 730, end: 815, room: 'D216' },
+                { subject: 'IN', day: 'Mi', teachers: ['aaa'], classes: ['25B'], start: 730, end: 815, room: 'F207' },
+                { subject: 'IN', day: 'Mi', teachers: ['abc'], classes: ['26P'], start: 1215, end: 1300, room: 'D113' },
+                { subject: 'M', day: 'Mi', teachers: ['abc'], classes: ['24i'], start: 1025, end: 1110, room: 'D103' },
+                { subject: 'EFIN', day: 'Fr', teachers: ['abc'], classes: ['24a', '24i'], start: 1305, end: 1350, room: 'D206' },
             ]
         };
         let data: UntisDataProps = _.cloneDeep(_data);
@@ -487,7 +490,7 @@ describe(`GET ${API_URL}/user/:id/affected-event-ids`, () => {
             });
         })
         describe('selected by department', () => {
-            it('respects departments of teached classes', async () => {   
+            it('respects departments of teached classes', async () => {
                 /**
                  * 10 events, audience[LP], 5 for GBSL, 5 for GBJB
                  * 
@@ -528,14 +531,14 @@ describe(`GET ${API_URL}/user/:id/affected-event-ids`, () => {
                         })
                     });
                 }))
-                
+
                 const resultGbslTeacher = await request(app)
                     .get(`${API_URL}/user/${gbslTeacher.id}/affected-event-ids?semesterId=${semester.id}`)
                     .set('authorization', JSON.stringify({ email: gbslTeacher.email }));
                 expect(resultGbslTeacher.statusCode).toEqual(200);
                 expect(resultGbslTeacher.body).toHaveLength(5);
                 expect(resultGbslTeacher.body.sort()).toEqual(gbslEvents.map((e: Event) => e.id).sort());
-                
+
                 const resultGbslGbjbTeacher = await request(app)
                     .get(`${API_URL}/user/${gbslGbjbTeacher.id}/affected-event-ids?semesterId=${semester.id}`)
                     .set('authorization', JSON.stringify({ email: gbslGbjbTeacher.email }));
@@ -543,6 +546,262 @@ describe(`GET ${API_URL}/user/:id/affected-event-ids`, () => {
                 expect(resultGbslGbjbTeacher.body).toHaveLength(10);
                 expect(resultGbslGbjbTeacher.body.sort()).toEqual([...gbslEvents, ...gbjbEvents].map((e: Event) => e.id).sort());
                 expect(mNotification).toHaveBeenCalledTimes(0);
+            });
+            describe('filtered by audience', () => {
+                let audience: EventAudience = EventAudience.ALL;
+                let author: User;
+                let abc: User;
+                let xyz: User;
+                let aaa: User;
+                let affectingEvent: Event;
+                beforeEach(async () => {
+                    const gbsl = departments.find((d) => d.name === 'GBSL' && d.letter === 'G')!;
+                    author = await prisma.user.create({ data: generateUser() });
+                    abc = await prisma.user.create({ data: generateUser({ firstName: 'abc', untisId: untisTeachers.find(t => t.name === 'abc')!.id }) });
+                    aaa = await prisma.user.create({ data: generateUser({ firstName: 'aaa', untisId: untisTeachers.find(t => t.name === 'aaa')!.id }) });
+                    xyz = await prisma.user.create({ data: generateUser({ firstName: 'xyz', untisId: untisTeachers.find(t => t.name === 'xyz')!.id }) });
+                    affectingEvent = await prisma.event.create({
+                        data: generateEvent({
+                            authorId: author.id,
+                            start: new Date('2023-10-18T08:00'), /* 18.10.2023 is a Mittwoch */
+                            end: new Date('2023-10-18T12:00'),
+                            state: EventState.PUBLISHED,
+                            departments: {
+                                connect: { id: gbsl.id }
+                            },
+                            audience: audience
+                        })
+                    });
+                });
+                describe('audience: ALL', () => {
+                    beforeAll(() => {
+                        audience = EventAudience.ALL;
+                    });
+                    afterEach(() => {
+                        data = _.cloneDeep(_data);
+                    });
+                    describe('does list the event for teachers of the gbsl', () => {
+                        let hij: User;
+                        beforeEach(async () => {
+                            // xyz teaches the class on a different day
+                            data.lessons.push({ subject: 'E', day: 'Do', teachers: ['xyz'], classes: ['26e'], start: 825, end: 910, room: 'D113' });
+                            // hij does not teach the class...
+                            data.teachers.push({ name: 'hij', longName: 'Jimmy Hermann', sex: 'M' });
+                            data.subjects.push({ name: 'F', longName: 'Französisch' });
+                            data.classes.push({ name: '26a', sf: 'WR' });
+                            data.lessons.push({ subject: 'F', day: 'Mo', teachers: ['hij'], classes: ['26a'], start: 1120, end: 1205, room: 'D112' });
+                            await syncUntis2DB(semester!.id, (sem: Semester) => fetchUntis(sem, generateUntisData(data)));
+                            const untisHij = await prisma.untisTeacher.findUnique({ where: { name: 'hij' } });
+                            hij = await prisma.user.create({ data: generateUser({ firstName: 'hij', untisId: untisHij!.id }) });
+                        });
+                        ['xyz', 'abc', 'hij'].forEach(async (name: string) => {
+                            it(`displays the event for gbsl teacher ${name}`, async () => {
+                                const user = (await prisma.user.findFirst({ where: { firstName: name }, include: { untis: { include: { classes: true } } } }))!;
+                                const result = await request(app)
+                                    .get(`${API_URL}/user/${user.id}/affected-event-ids?semesterId=${semester.id}`)
+                                    .set('authorization', JSON.stringify({ email: user.email }));
+                                expect(result.statusCode).toEqual(200);
+                                expect(result.body).toHaveLength(1);
+                                expect(result.body).toEqual([affectingEvent.id]);
+                            })
+                        });
+                        ['aaa'].forEach(async (name: string) => {
+                            it(`does not display non-gbsl teacher ${name}`, async () => {
+                                const user = (await prisma.user.findFirst({ where: { firstName: name }, include: { untis: { include: { classes: true } } } }))!;
+                                const result = await request(app)
+                                    .get(`${API_URL}/user/${user.id}/affected-event-ids?semesterId=${semester.id}`)
+                                    .set('authorization', JSON.stringify({ email: user.email }));
+                                expect(result.statusCode).toEqual(200);
+                                expect(result.body).toHaveLength(0);
+                            })
+                        });
+                    })
+                });
+    
+                describe('audience: KLP', () => {
+                    beforeAll(() => {
+                        audience = EventAudience.KLP;
+                    });
+                    afterAll(() => {
+                        data = _.cloneDeep(_data);
+                    });
+                    it('does not list the event for non-klp teachers', async () => {
+                        const resultAbc = await request(app)
+                            .get(`${API_URL}/user/${abc.id}/affected-event-ids?semesterId=${semester.id}`)
+                            .set('authorization', JSON.stringify({ email: abc.email }));
+                        expect(resultAbc.statusCode).toEqual(200);
+                        expect(resultAbc.body).toHaveLength(0);
+                    });
+                    describe('does list the event for the KLP of the class 26Ge', () => {
+                        let thisData: UntisDataProps;
+                        beforeAll(async () => {
+                            data.subjects.push({ name: 'KS', longName: 'Klassenstunde' });
+                            // abc is KLP of 26Ge
+                            data.lessons.push({ subject: 'KS', day: 'Do', teachers: ['abc'], classes: ['26e'], start: 1120, end: 1205, room: 'D114' });
+                            // xyz is KLP (KS or MC) of 25B
+                            data.lessons.push({ subject: 'KS', day: 'Do', teachers: ['xyz'], classes: ['25B'], start: 1120, end: 1205, room: 'D115' });
+                            // xyz teaches the class within the event
+                            data.lessons.push({ subject: 'E', day: 'Mi', teachers: ['xyz'], classes: ['26e'], start: 1120, end: 1205, room: 'D113' });
+                            // hij does not teach the class...
+                            data.teachers.push({ name: 'hij', longName: 'Jimmy Hermann', sex: 'M' });
+                            data.subjects.push({ name: 'F', longName: 'Französisch' });
+                            data.classes.push({ name: '26a', sf: 'WR' });
+                            data.lessons.push({ subject: 'F', day: 'Mo', teachers: ['hij'], classes: ['26a'], start: 1120, end: 1205, room: 'D112' });
+                            thisData = _.cloneDeep(data);
+                        });
+                        beforeEach(async () => {
+                            await prisma.user.create({ data: generateUser({ firstName: 'hij', untisId: untisTeachers.find(t => t.name === 'hij')!.id }) });
+                        });
+                        afterEach(() => {
+                            data = _.cloneDeep(thisData);
+                        });
+                        afterAll(() => {
+                            data = _.cloneDeep(_data);
+                        });
+                        ['abc'].forEach(async (name: string) => {
+                            it(`displays the event for ${name}`, async () => {
+                                const user = (await prisma.user.findFirst({ where: { firstName: name }, include: { untis: { include: { classes: true } } } }))!;
+                                const result = await request(app)
+                                    .get(`${API_URL}/user/${user.id}/affected-event-ids?semesterId=${semester.id}`)
+                                    .set('authorization', JSON.stringify({ email: user.email }));
+                                expect(result.statusCode).toEqual(200);
+                                expect(result.body).toHaveLength(1);
+                                expect(result.body).toEqual([affectingEvent.id]);
+                            })
+                        });
+                        ['hij', 'aaa', 'xyz'].forEach(async (name: string) => {
+                            it(`does not display for others (here: ${name}) except klp[abc] of 26Ge`, async () => {
+                                const user = (await prisma.user.findFirst({ where: { firstName: name }, include: { untis: { include: { classes: true } } } }))!;
+                                const result = await request(app)
+                                    .get(`${API_URL}/user/${user.id}/affected-event-ids?semesterId=${semester.id}`)
+                                    .set('authorization', JSON.stringify({ email: user.email }));
+                                expect(result.statusCode).toEqual(200);
+                                expect(result.body).toHaveLength(0);
+                            })
+                        });    
+                    })
+                });
+    
+                describe('audience: STUDENTS', () => {
+                    beforeAll(() => {
+                        audience = EventAudience.STUDENTS;
+                    });
+                    afterAll(() => {
+                        data = _.cloneDeep(_data);
+                    });
+                    describe('does list the event for the KLP and affected LPs of the department gbsl', () => {
+                        let thisData: UntisDataProps;
+                        let infoElternabend: Event;
+                        beforeAll(async () => {
+                            data.subjects.push({ name: 'KS', longName: 'Klassenstunde' });
+                            // abc is KLP of 26Ge
+                            data.lessons.push({ subject: 'KS', day: 'Do', teachers: ['abc'], classes: ['26e'], start: 1120, end: 1205, room: 'D114' });
+                            // xyz teaches the class within the event
+                            data.lessons.push({ subject: 'E', day: 'Mi', teachers: ['xyz'], classes: ['26e'], start: 1120, end: 1205, room: 'D113' });
+                            // hij does teach the class, but not within the event...
+                            data.teachers.push({ name: 'hij', longName: 'Jimmy Hermann', sex: 'M' });
+                            data.subjects.push({ name: 'F', longName: 'Französisch' });
+                            data.lessons.push({ subject: 'F', day: 'Mo', teachers: ['hij'], classes: ['26e'], start: 1120, end: 1205, room: 'D112' });
+                            thisData = _.cloneDeep(data);
+                        });
+                        beforeEach(async () => {
+                            await prisma.user.create({ data: generateUser({ firstName: 'hij', untisId: untisTeachers.find(t => t.name === 'hij')!.id }) });
+                            const gbsl = departments.find((d) => d.name === 'GBSL' && d.letter === 'G')!;
+                            /* add a second event for 26Ge, that does not affect lessons */
+                            infoElternabend = await prisma.event.create({
+                                data: generateEvent({
+                                    authorId: author.id,
+                                    start: new Date('2023-10-18T20:00'), /* 18.10.2023 is a Mittwoch */
+                                    end: new Date('2023-10-18T21:30'),
+                                    description: 'Informations-Elternabend', /** not realistic, since Elternabend would have audience ALL */
+                                    state: EventState.PUBLISHED,
+                                    departments: {
+                                        connect: { id: gbsl.id }
+                                    },
+                                    audience: EventAudience.STUDENTS
+                                })
+                            });
+                        });
+                        afterEach(() => {
+                            data = _.cloneDeep(thisData);
+                        });
+                        afterAll(() => {
+                            data = _.cloneDeep(_data);
+                        });
+                        ['abc', 'xyz'].forEach(async (name: string) => {
+                            it(`displays the event for gbsl teacher ${name}`, async () => {
+                                const user = (await prisma.user.findFirst({ where: { firstName: name }, include: { untis: { include: { classes: true, lessons: true } } } }))!;
+                                const result = await request(app)
+                                    .get(`${API_URL}/user/${user.id}/affected-event-ids?semesterId=${semester.id}`)
+                                    .set('authorization', JSON.stringify({ email: user.email }));
+                                expect(result.statusCode).toEqual(200);
+                                if (name === 'abc') { /* KLP */
+                                    expect(result.body).toHaveLength(2);
+                                    expect(result.body.sort()).toEqual([infoElternabend.id, affectingEvent.id].sort());
+                                } else {
+                                    expect(result.body).toHaveLength(1);
+                                    expect(result.body).toEqual([affectingEvent.id]);
+                                }
+                            })
+                        });
+                        /* hij and aaa does not teach gbsl students during the event */
+                        ['hij', 'aaa'].forEach(async (name: string) => {
+                            it(`does not display for teacher ${name}`, async () => {
+                                const user = (await prisma.user.findFirst({ where: { firstName: name }, include: { untis: { include: { classes: true } } } }))!;
+                                const result = await request(app)
+                                    .get(`${API_URL}/user/${user.id}/affected-event-ids?semesterId=${semester.id}`)
+                                    .set('authorization', JSON.stringify({ email: user.email }));
+                                expect(result.statusCode).toEqual(200);
+                                expect(result.body).toHaveLength(0);
+                            })
+                        });
+                    })
+                });
+    
+                describe('audience: LP', () => {
+                    beforeAll(() => {
+                        audience = EventAudience.LP;
+                    });
+                    afterEach(() => {
+                        data = _.cloneDeep(_data);
+                    });
+                    describe('does list the event for teachers of gbsl', () => {
+                        beforeEach(async () => {
+                            // xyz teaches the class on a different day
+                            data.lessons.push({ subject: 'E', day: 'Do', teachers: ['xyz'], classes: ['26e'], start: 825, end: 910, room: 'D113' });
+                            // hij does not teach the class...
+                            data.teachers.push({ name: 'hij', longName: 'Jimmy Hermann', sex: 'M' });
+                            data.subjects.push({ name: 'F', longName: 'Französisch' });
+                            data.classes.push({ name: '26a', sf: 'WR' });
+                            data.lessons.push({ subject: 'F', day: 'Mo', teachers: ['hij'], classes: ['26a'], start: 1120, end: 1205, room: 'D112' });
+                            await syncUntis2DB(semester!.id, (sem: Semester) => fetchUntis(sem, generateUntisData(data)));
+                            const untisHij = await prisma.untisTeacher.findUnique({ where: { name: 'hij' } });
+                            await prisma.user.create({ data: generateUser({ firstName: 'hij', untisId: untisHij!.id }) });
+                        });
+                        ['xyz', 'abc', 'hij'].forEach(async (name: string) => {
+                            it(`displays the event for ${name}`, async () => {
+                                const user = (await prisma.user.findFirst({ where: { firstName: name }, include: { untis: { include: { classes: true } } } }))!;
+                                const result = await request(app)
+                                    .get(`${API_URL}/user/${user.id}/affected-event-ids?semesterId=${semester.id}`)
+                                    .set('authorization', JSON.stringify({ email: user.email }));
+                                expect(result.statusCode).toEqual(200);
+                                expect(result.body).toHaveLength(1);
+                                expect(result.body).toEqual([affectingEvent.id]);
+                            })
+                        });
+                        ['aaa'].forEach(async (name: string) => {
+                            it(`does not display non-class team member ${name}`, async () => {
+                                const user = (await prisma.user.findFirst({ where: { firstName: name }, include: { untis: { include: { classes: true } } } }))!;
+                                const result = await request(app)
+                                    .get(`${API_URL}/user/${user.id}/affected-event-ids?semesterId=${semester.id}`)
+                                    .set('authorization', JSON.stringify({ email: user.email }));
+                                expect(result.statusCode).toEqual(200);
+                                expect(result.body).toHaveLength(0);
+                            })
+                        });
+    
+                    })
+                });
             });
         })
         describe('selected by class', () => {
@@ -552,13 +811,13 @@ describe(`GET ${API_URL}/user/:id/affected-event-ids`, () => {
             let xyz: User;
             let affectingEvent: Event;
             beforeEach(async () => {
-                author = await prisma.user.create({data: generateUser()});
+                author = await prisma.user.create({ data: generateUser() });
                 abc = await prisma.user.create({ data: generateUser({ firstName: 'abc', untisId: untisTeachers.find(t => t.name === 'abc')!.id }) });
                 affectingEvent = await prisma.event.create({
                     data: generateEvent({
                         authorId: author.id,
                         start: new Date('2023-10-18T08:00'), /* 18.10.2023 is a Mittwoch */
-                        end:  new Date('2023-10-18T12:00'),
+                        end: new Date('2023-10-18T12:00'),
                         state: EventState.PUBLISHED,
                         classes: ['26Ge'],
                         teachingAffected: teachingAffected,
@@ -569,7 +828,7 @@ describe(`GET ${API_URL}/user/:id/affected-event-ids`, () => {
                     data: generateEvent({
                         authorId: author.id,
                         start: new Date('2023-10-18T08:00'), /* 18.10.2023 is a Mittwoch */
-                        end:  new Date('2023-10-18T12:00'),
+                        end: new Date('2023-10-18T12:00'),
                         state: EventState.PUBLISHED,
                         classes: ['24Ga'],
                         teachingAffected: TeachingAffected.YES,
@@ -593,7 +852,7 @@ describe(`GET ${API_URL}/user/:id/affected-event-ids`, () => {
                     expect(resultAbc.statusCode).toEqual(200);
                     expect(resultAbc.body).toHaveLength(1);
                     expect(resultAbc.body).toEqual([affectingEvent.id]);
-        
+
                     const resultXyz = await request(app)
                         .get(`${API_URL}/user/${xyz.id}/affected-event-ids?semesterId=${semester.id}`)
                         .set('authorization', JSON.stringify({ email: xyz.email }));
@@ -605,7 +864,7 @@ describe(`GET ${API_URL}/user/:id/affected-event-ids`, () => {
                 beforeAll(() => {
                     teachingAffected = TeachingAffected.NO;
                 });
-                it('respects field', async () => {  
+                it('respects field', async () => {
                     /**
                      * 1 event with "teachingAffected=false" during a lesson of abc, is displayed
                      * abc -> one affected event
@@ -622,7 +881,7 @@ describe(`GET ${API_URL}/user/:id/affected-event-ids`, () => {
                 beforeAll(() => {
                     teachingAffected = TeachingAffected.PARTIAL;
                 });
-                it('respects field', async () => {   
+                it('respects field', async () => {
                     /**
                      * 1 event that is during a lesson of abc, and affects the teaching partially
                      * abc -> one affected event
@@ -636,7 +895,7 @@ describe(`GET ${API_URL}/user/:id/affected-event-ids`, () => {
                 });
             })
         });
-        
+
         describe('selected by class group', () => {
             let classGroups: string[] = ['26G'];
             let author: User;
@@ -646,17 +905,17 @@ describe(`GET ${API_URL}/user/:id/affected-event-ids`, () => {
             let affectingEvent: Event;
             beforeAll(() => {
                 // add one more teacher and make xyz a teacher of a 26G class
-                data.teachers.push({name: 'hij', longName: 'Jimmy Hermann', sex: 'M'});
-                data.subjects.push({name: 'F', longName: 'Französisch'});
-                data.classes.push({name: '26a', sf: 'WR'});
-                data.lessons.push({subject: 'E', day: 'Do', teachers: ['xyz'], classes: ['26a'], start: 1120, end: 1205, room: 'D118'});
-                data.lessons.push({subject: 'F', day: 'Mo', teachers: ['hij'], classes: ['24i'], start: 1120, end: 1205, room: 'D112'})
+                data.teachers.push({ name: 'hij', longName: 'Jimmy Hermann', sex: 'M' });
+                data.subjects.push({ name: 'F', longName: 'Französisch' });
+                data.classes.push({ name: '26a', sf: 'WR' });
+                data.lessons.push({ subject: 'E', day: 'Do', teachers: ['xyz'], classes: ['26a'], start: 1120, end: 1205, room: 'D118' });
+                data.lessons.push({ subject: 'F', day: 'Mo', teachers: ['hij'], classes: ['24i'], start: 1120, end: 1205, room: 'D112' })
             });
             afterAll(() => {
                 data = _.cloneDeep(_data);
             });
             beforeEach(async () => {
-                author = await prisma.user.create({data: generateUser()});
+                author = await prisma.user.create({ data: generateUser() });
                 abc = await prisma.user.create({ data: generateUser({ untisId: untisTeachers.find(t => t.name === 'abc')!.id }) });
                 xyz = await prisma.user.create({ data: generateUser({ untisId: untisTeachers.find(t => t.name === 'xyz')!.id }) });
                 hij = await prisma.user.create({ data: generateUser({ untisId: untisTeachers.find(t => t.name === 'hij')!.id }) });
@@ -664,7 +923,7 @@ describe(`GET ${API_URL}/user/:id/affected-event-ids`, () => {
                     data: generateEvent({
                         authorId: author.id,
                         start: new Date('2023-10-18T08:00'), /* 18.10.2023 is a Mittwoch */
-                        end:  new Date('2023-10-18T12:00'),
+                        end: new Date('2023-10-18T12:00'),
                         state: EventState.PUBLISHED,
                         classGroups: classGroups,
                         audience: EventAudience.ALL
@@ -685,7 +944,7 @@ describe(`GET ${API_URL}/user/:id/affected-event-ids`, () => {
                 expect(resultXyz.statusCode).toEqual(200);
                 expect(resultXyz.body).toHaveLength(1);
                 expect(resultXyz.body).toEqual([affectingEvent.id]);
-                
+
                 const resultHij = await request(app)
                     .get(`${API_URL}/user/${hij.id}/affected-event-ids?semesterId=${semester.id}`)
                     .set('authorization', JSON.stringify({ email: hij.email }));
@@ -702,14 +961,14 @@ describe(`GET ${API_URL}/user/:id/affected-event-ids`, () => {
             let xyz: User;
             let affectingEvent: Event;
             beforeEach(async () => {
-                author = await prisma.user.create({data: generateUser()});
+                author = await prisma.user.create({ data: generateUser() });
                 abc = await prisma.user.create({ data: generateUser({ firstName: 'abc', untisId: untisTeachers.find(t => t.name === 'abc')!.id }) });
                 xyz = await prisma.user.create({ data: generateUser({ firstName: 'xyz', untisId: untisTeachers.find(t => t.name === 'xyz')!.id }) });
                 affectingEvent = await prisma.event.create({
                     data: generateEvent({
                         authorId: author.id,
                         start: new Date('2023-10-18T08:00'), /* 18.10.2023 is a Mittwoch */
-                        end:  new Date('2023-10-18T12:00'),
+                        end: new Date('2023-10-18T12:00'),
                         state: EventState.PUBLISHED,
                         classes: ['26Ge'],
                         audience: audience
@@ -727,19 +986,19 @@ describe(`GET ${API_URL}/user/:id/affected-event-ids`, () => {
                     let hij: User;
                     beforeEach(async () => {
                         // xyz teaches the class on a different day
-                        data.lessons.push({subject: 'E', day: 'Do', teachers: ['xyz'], classes: ['26e'], start: 825, end: 910, room: 'D113'});
+                        data.lessons.push({ subject: 'E', day: 'Do', teachers: ['xyz'], classes: ['26e'], start: 825, end: 910, room: 'D113' });
                         // hij does not teach the class...
-                        data.teachers.push({name: 'hij', longName: 'Jimmy Hermann', sex: 'M'});
-                        data.subjects.push({name: 'F', longName: 'Französisch'});
-                        data.classes.push({name: '26a', sf: 'WR'});
-                        data.lessons.push({subject: 'F', day: 'Mo', teachers: ['hij'], classes: ['26a'], start: 1120, end: 1205, room: 'D112'});
+                        data.teachers.push({ name: 'hij', longName: 'Jimmy Hermann', sex: 'M' });
+                        data.subjects.push({ name: 'F', longName: 'Französisch' });
+                        data.classes.push({ name: '26a', sf: 'WR' });
+                        data.lessons.push({ subject: 'F', day: 'Mo', teachers: ['hij'], classes: ['26a'], start: 1120, end: 1205, room: 'D112' });
                         await syncUntis2DB(semester!.id, (sem: Semester) => fetchUntis(sem, generateUntisData(data)));
                         const untisHij = await prisma.untisTeacher.findUnique({ where: { name: 'hij' } });
-                        hij = await prisma.user.create({ data: generateUser({firstName: 'hij', untisId: untisHij!.id }) });
+                        hij = await prisma.user.create({ data: generateUser({ firstName: 'hij', untisId: untisHij!.id }) });
                     });
                     ['xyz', 'abc'].forEach(async (name: string) => {
                         it(`displays the event for ${name}`, async () => {
-                            const user = (await prisma.user.findFirst({ where: { firstName: name }, include: {untis: {include: {classes: true}}}}))!;
+                            const user = (await prisma.user.findFirst({ where: { firstName: name }, include: { untis: { include: { classes: true } } } }))!;
                             expect(user.untis!.classes.map(c => c.name)).toContain('26Ge');
                             const result = await request(app)
                                 .get(`${API_URL}/user/${user.id}/affected-event-ids?semesterId=${semester.id}`)
@@ -751,7 +1010,7 @@ describe(`GET ${API_URL}/user/:id/affected-event-ids`, () => {
                     });
                     ['hij'].forEach(async (name: string) => {
                         it(`does not display non-class team member ${name}`, async () => {
-                            const user = (await prisma.user.findFirst({ where: { firstName: name }, include: {untis: {include: {classes: true}}} }))!;
+                            const user = (await prisma.user.findFirst({ where: { firstName: name }, include: { untis: { include: { classes: true } } } }))!;
                             expect(user.untis!.classes.map(c => c.name)).not.toContain('26Ge');
                             const result = await request(app)
                                 .get(`${API_URL}/user/${user.id}/affected-event-ids?semesterId=${semester.id}`)
@@ -762,7 +1021,7 @@ describe(`GET ${API_URL}/user/:id/affected-event-ids`, () => {
                     });
                 })
             });
-                        
+
             describe('audience: KLP', () => {
                 beforeAll(() => {
                     audience = EventAudience.KLP;
@@ -780,22 +1039,22 @@ describe(`GET ${API_URL}/user/:id/affected-event-ids`, () => {
                 describe('does list the event for the KLP of the class 26Ge', () => {
                     let thisData: UntisDataProps;
                     beforeAll(async () => {
-                        data.subjects.push({name: 'KS', longName: 'Klassenstunde'});
+                        data.subjects.push({ name: 'KS', longName: 'Klassenstunde' });
                         // abc is KLP of 26Ge
-                        data.lessons.push({subject: 'KS', day: 'Do', teachers: ['abc'], classes: ['26e'], start: 1120, end: 1205, room: 'D114'});
+                        data.lessons.push({ subject: 'KS', day: 'Do', teachers: ['abc'], classes: ['26e'], start: 1120, end: 1205, room: 'D114' });
                         // xyz is KLP of 24i
-                        data.lessons.push({subject: 'KS', day: 'Do', teachers: ['xyz'], classes: ['24i'], start: 1120, end: 1205, room: 'D115'});
+                        data.lessons.push({ subject: 'KS', day: 'Do', teachers: ['xyz'], classes: ['24i'], start: 1120, end: 1205, room: 'D115' });
                         // xyz teaches the class within the event
-                        data.lessons.push({subject: 'E', day: 'Mi', teachers: ['xyz'], classes: ['26e'], start: 1120, end: 1205, room: 'D113'});
+                        data.lessons.push({ subject: 'E', day: 'Mi', teachers: ['xyz'], classes: ['26e'], start: 1120, end: 1205, room: 'D113' });
                         // hij does not teach the class...
-                        data.teachers.push({name: 'hij', longName: 'Jimmy Hermann', sex: 'M'});
-                        data.subjects.push({name: 'F', longName: 'Französisch'});
-                        data.classes.push({name: '26a', sf: 'WR'});
-                        data.lessons.push({subject: 'F', day: 'Mo', teachers: ['hij'], classes: ['26a'], start: 1120, end: 1205, room: 'D112'});
+                        data.teachers.push({ name: 'hij', longName: 'Jimmy Hermann', sex: 'M' });
+                        data.subjects.push({ name: 'F', longName: 'Französisch' });
+                        data.classes.push({ name: '26a', sf: 'WR' });
+                        data.lessons.push({ subject: 'F', day: 'Mo', teachers: ['hij'], classes: ['26a'], start: 1120, end: 1205, room: 'D112' });
                         thisData = _.cloneDeep(data);
                     });
                     beforeEach(async () => {
-                        await prisma.user.create({ data: generateUser({firstName: 'hij', untisId: untisTeachers.find(t => t.name === 'hij')!.id }) });
+                        await prisma.user.create({ data: generateUser({ firstName: 'hij', untisId: untisTeachers.find(t => t.name === 'hij')!.id }) });
                     });
                     afterEach(() => {
                         data = _.cloneDeep(thisData);
@@ -805,7 +1064,7 @@ describe(`GET ${API_URL}/user/:id/affected-event-ids`, () => {
                     });
                     ['abc'].forEach(async (name: string) => {
                         it(`displays the event for ${name}`, async () => {
-                            const user = (await prisma.user.findFirst({ where: { firstName: name }, include: {untis: {include: {classes: true}}}}))!;
+                            const user = (await prisma.user.findFirst({ where: { firstName: name }, include: { untis: { include: { classes: true } } } }))!;
                             expect(user.untis!.classes.map(c => c.name)).toContain('26Ge');
                             const result = await request(app)
                                 .get(`${API_URL}/user/${user.id}/affected-event-ids?semesterId=${semester.id}`)
@@ -818,8 +1077,8 @@ describe(`GET ${API_URL}/user/:id/affected-event-ids`, () => {
                     ['xyz', 'hij'].forEach(async (name: string) => {
                         it(`does not display for others (here: ${name}) except klp[abc] of 26Ge`, async () => {
                             // await prisma.user.create({ data: generateUser({firstName: 'hij', untisId: untisTeachers.find(t => t.name === 'hij')!.id }) });
-                            
-                            const user = (await prisma.user.findFirst({ where: { firstName: name }, include: {untis: {include: {classes: true}}} }))!;
+
+                            const user = (await prisma.user.findFirst({ where: { firstName: name }, include: { untis: { include: { classes: true } } } }))!;
                             if (name === 'xyz') {
                                 expect(user.untis!.classes.map(c => c.name)).toContain('26Ge');
                             } else {
@@ -837,18 +1096,18 @@ describe(`GET ${API_URL}/user/:id/affected-event-ids`, () => {
                             data: generateEvent({
                                 authorId: author.id,
                                 start: new Date('2023-10-18T20:00'), /* 18.10.2023 is a Mittwoch */
-                                end:  new Date('2023-10-18T21:30'),
+                                end: new Date('2023-10-18T21:30'),
                                 description: 'Elternabend',
                                 state: EventState.PUBLISHED,
                                 classes: ['26Ge'],
                                 audience: EventAudience.KLP
                             })
                         });
-                        const user = (await prisma.user.findFirst({ where: { firstName: 'abc' }, include: {untis: {include: {classes: true}}}}))!;
+                        const user = (await prisma.user.findFirst({ where: { firstName: 'abc' }, include: { untis: { include: { classes: true } } } }))!;
                         expect(user.untis!.classes.map(c => c.name)).toContain('26Ge');
                         const result = await request(app)
-                                .get(`${API_URL}/user/${user.id}/affected-event-ids?semesterId=${semester.id}`)
-                                .set('authorization', JSON.stringify({ email: user.email }));
+                            .get(`${API_URL}/user/${user.id}/affected-event-ids?semesterId=${semester.id}`)
+                            .set('authorization', JSON.stringify({ email: user.email }));
                         expect(result.statusCode).toEqual(200);
                         expect(result.body).toHaveLength(2);
                         expect(result.body.sort()).toEqual([affectingEvent.id, other.id].sort());
@@ -868,25 +1127,25 @@ describe(`GET ${API_URL}/user/:id/affected-event-ids`, () => {
                     let thisData: UntisDataProps;
                     let infoElternabend: Event;
                     beforeAll(async () => {
-                        data.subjects.push({name: 'KS', longName: 'Klassenstunde'});
+                        data.subjects.push({ name: 'KS', longName: 'Klassenstunde' });
                         // abc is KLP of 26Ge
-                        data.lessons.push({subject: 'KS', day: 'Do', teachers: ['abc'], classes: ['26e'], start: 1120, end: 1205, room: 'D114'});
+                        data.lessons.push({ subject: 'KS', day: 'Do', teachers: ['abc'], classes: ['26e'], start: 1120, end: 1205, room: 'D114' });
                         // xyz teaches the class within the event
-                        data.lessons.push({subject: 'E', day: 'Mi', teachers: ['xyz'], classes: ['26e'], start: 1120, end: 1205, room: 'D113'});
+                        data.lessons.push({ subject: 'E', day: 'Mi', teachers: ['xyz'], classes: ['26e'], start: 1120, end: 1205, room: 'D113' });
                         // hij does teach the class, but not within the event...
-                        data.teachers.push({name: 'hij', longName: 'Jimmy Hermann', sex: 'M'});
-                        data.subjects.push({name: 'F', longName: 'Französisch'});
-                        data.lessons.push({subject: 'F', day: 'Mo', teachers: ['hij'], classes: ['26e'], start: 1120, end: 1205, room: 'D112'});
+                        data.teachers.push({ name: 'hij', longName: 'Jimmy Hermann', sex: 'M' });
+                        data.subjects.push({ name: 'F', longName: 'Französisch' });
+                        data.lessons.push({ subject: 'F', day: 'Mo', teachers: ['hij'], classes: ['26e'], start: 1120, end: 1205, room: 'D112' });
                         thisData = _.cloneDeep(data);
                     });
                     beforeEach(async () => {
-                        await prisma.user.create({ data: generateUser({firstName: 'hij', untisId: untisTeachers.find(t => t.name === 'hij')!.id }) });
+                        await prisma.user.create({ data: generateUser({ firstName: 'hij', untisId: untisTeachers.find(t => t.name === 'hij')!.id }) });
                         /* add a second event for 26Ge, that does not affect lessons */
                         infoElternabend = await prisma.event.create({
                             data: generateEvent({
                                 authorId: author.id,
                                 start: new Date('2023-10-18T20:00'), /* 18.10.2023 is a Mittwoch */
-                                end:  new Date('2023-10-18T21:30'),
+                                end: new Date('2023-10-18T21:30'),
                                 description: 'Informations-Elternabend',
                                 state: EventState.PUBLISHED,
                                 classes: ['26Ge'],
@@ -902,7 +1161,7 @@ describe(`GET ${API_URL}/user/:id/affected-event-ids`, () => {
                     });
                     ['abc', 'xyz'].forEach(async (name: string) => {
                         it(`displays the event for ${name}`, async () => {
-                            const user = (await prisma.user.findFirst({ where: { firstName: name }, include: {untis: {include: {classes: true, lessons: true}}}}))!;
+                            const user = (await prisma.user.findFirst({ where: { firstName: name }, include: { untis: { include: { classes: true, lessons: true } } } }))!;
                             expect(user.untis!.classes.map(c => c.name)).toContain('26Ge');
                             const result = await request(app)
                                 .get(`${API_URL}/user/${user.id}/affected-event-ids?semesterId=${semester.id}`)
@@ -920,7 +1179,7 @@ describe(`GET ${API_URL}/user/:id/affected-event-ids`, () => {
                     /* hij does not teach the class during the event */
                     ['hij'].forEach(async (name: string) => {
                         it(`does not display for ${name}`, async () => {
-                            const user = (await prisma.user.findFirst({ where: { firstName: name }, include: {untis: {include: {classes: true}}} }))!;
+                            const user = (await prisma.user.findFirst({ where: { firstName: name }, include: { untis: { include: { classes: true } } } }))!;
                             expect(user.untis!.classes.map(c => c.name)).toContain('26Ge');
                             const result = await request(app)
                                 .get(`${API_URL}/user/${user.id}/affected-event-ids?semesterId=${semester.id}`)
@@ -931,7 +1190,7 @@ describe(`GET ${API_URL}/user/:id/affected-event-ids`, () => {
                     });
                 })
             });
-            
+
             describe('audience: LP', () => {
                 beforeAll(() => {
                     audience = EventAudience.LP;
@@ -942,19 +1201,19 @@ describe(`GET ${API_URL}/user/:id/affected-event-ids`, () => {
                 describe('does list the event for teachers of the class team 26Ge', () => {
                     beforeEach(async () => {
                         // xyz teaches the class on a different day
-                        data.lessons.push({subject: 'E', day: 'Do', teachers: ['xyz'], classes: ['26e'], start: 825, end: 910, room: 'D113'});
+                        data.lessons.push({ subject: 'E', day: 'Do', teachers: ['xyz'], classes: ['26e'], start: 825, end: 910, room: 'D113' });
                         // hij does not teach the class...
-                        data.teachers.push({name: 'hij', longName: 'Jimmy Hermann', sex: 'M'});
-                        data.subjects.push({name: 'F', longName: 'Französisch'});
-                        data.classes.push({name: '26a', sf: 'WR'});
-                        data.lessons.push({subject: 'F', day: 'Mo', teachers: ['hij'], classes: ['26a'], start: 1120, end: 1205, room: 'D112'});
+                        data.teachers.push({ name: 'hij', longName: 'Jimmy Hermann', sex: 'M' });
+                        data.subjects.push({ name: 'F', longName: 'Französisch' });
+                        data.classes.push({ name: '26a', sf: 'WR' });
+                        data.lessons.push({ subject: 'F', day: 'Mo', teachers: ['hij'], classes: ['26a'], start: 1120, end: 1205, room: 'D112' });
                         await syncUntis2DB(semester!.id, (sem: Semester) => fetchUntis(sem, generateUntisData(data)));
                         const untisHij = await prisma.untisTeacher.findUnique({ where: { name: 'hij' } });
-                        await prisma.user.create({ data: generateUser({firstName: 'hij', untisId: untisHij!.id }) });
+                        await prisma.user.create({ data: generateUser({ firstName: 'hij', untisId: untisHij!.id }) });
                     });
                     ['xyz', 'abc'].forEach(async (name: string) => {
                         it(`displays the event for ${name}`, async () => {
-                            const user = (await prisma.user.findFirst({ where: { firstName: name }, include: {untis: {include: {classes: true}}}}))!;
+                            const user = (await prisma.user.findFirst({ where: { firstName: name }, include: { untis: { include: { classes: true } } } }))!;
                             expect(user.untis!.classes.map(c => c.name)).toContain('26Ge');
                             const result = await request(app)
                                 .get(`${API_URL}/user/${user.id}/affected-event-ids?semesterId=${semester.id}`)
@@ -966,7 +1225,7 @@ describe(`GET ${API_URL}/user/:id/affected-event-ids`, () => {
                     });
                     ['hij'].forEach(async (name: string) => {
                         it(`does not display non-class team member ${name}`, async () => {
-                            const user = (await prisma.user.findFirst({ where: { firstName: name }, include: {untis: {include: {classes: true}}} }))!;
+                            const user = (await prisma.user.findFirst({ where: { firstName: name }, include: { untis: { include: { classes: true } } } }))!;
                             expect(user.untis!.classes.map(c => c.name)).not.toContain('26Ge');
                             const result = await request(app)
                                 .get(`${API_URL}/user/${user.id}/affected-event-ids?semesterId=${semester.id}`)
