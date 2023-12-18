@@ -430,7 +430,7 @@ describe(`GET ${API_URL}/user/:id/affected-event-ids`, () => {
                 { name: '24a', sf: 'PAM' },
                 { name: '26e', sf: 'PAM/BG' },
                 { name: '25B', sf: 'BC' },
-                { name: '26P', sf: 'WR' }
+                { name: '26A', sf: 'WR' }
             ],
             lessons: [
                 { subject: 'IN', day: 'Di', teachers: ['abc'], classes: ['26e'], start: 1120, end: 1205, room: 'D114' },
@@ -438,7 +438,7 @@ describe(`GET ${API_URL}/user/:id/affected-event-ids`, () => {
                 { subject: 'E', day: 'Mi', teachers: ['xyz'], classes: ['24i'], start: 730, end: 815, room: 'D113' },
                 { subject: 'IN', day: 'Mi', teachers: ['abc'], classes: ['26e'], start: 730, end: 815, room: 'D216' },
                 { subject: 'IN', day: 'Mi', teachers: ['aaa'], classes: ['25B'], start: 730, end: 815, room: 'F207' },
-                { subject: 'IN', day: 'Mi', teachers: ['abc'], classes: ['26P'], start: 1215, end: 1300, room: 'D113' },
+                { subject: 'IN', day: 'Mi', teachers: ['abc'], classes: ['26A'], start: 1215, end: 1300, room: 'D113' },
                 { subject: 'M', day: 'Mi', teachers: ['abc'], classes: ['24i'], start: 1025, end: 1110, room: 'D103' },
                 { subject: 'EFIN', day: 'Fr', teachers: ['abc'], classes: ['24a', '24i'], start: 1305, end: 1350, room: 'D206' },
             ]

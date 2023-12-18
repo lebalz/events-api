@@ -948,7 +948,7 @@ describe(`POST ${API_URL}/event/import`, () => {
             expect(event3?.location).toEqual('');
             expect(event3?.start.toISOString()).toEqual('2023-08-29T08:25:00.000Z');
             expect(event3?.end.toISOString()).toEqual('2023-08-29T12:05:00.000Z');
-            expect(event3?.classes?.sort()).toEqual(['24mA', '24mH', '24mT', '24mU', '25mA', '25mM', '25mT', '25mU', '26mA', '26mI', '26mT', '26mU', '26mP'].sort());
+            expect(event3?.classes?.sort()).toEqual(['24mA', '24mH', '24mT', '24mU', '25mA', '25mM', '25mT', '25mU', '26mA', '26mI', '26mT', '26mU', '26mV'].sort());
         });
 
     });
