@@ -66,10 +66,14 @@ export const mapLegacyClassName: (name: string) => `${number}${DepartmentLetter}
             return `${year}${DepartmentLetter.PASSERELLE}${newLetter}`;
         }
         if (['K', 'L'].includes(id)) {
-            // Maturité Bili --> 27mT (T-V)
-            // K = T, L = U, M = V...
+            // Maturité Bili --> 27mT (T-V) nop
+            // K = T, L = U, M = V
             const newLetter = String.fromCharCode(id.charCodeAt(0) + 9);
             return `${year}${DepartmentLetter.GYMF}${newLetter}`;
+        }
+        if (name === '26P') {
+            // special case, 26P is a Biligual Maturité, assign it to 26mV (no 26M class in the legacy format present...)
+            return `26mV`;
         }
         // if (['msA', 'msB'].includes(id)) {
         //     // spécialisé??
