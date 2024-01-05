@@ -68,6 +68,8 @@ model Event {
     departments  Department[] @relation("events_to_departments")
 
     audience     EventAudience @default(STUDENTS)
+    // wheter the bilinguale teachers of the classes are affected
+    affectsDepartment2 Boolean?   @default(false) @map("affects_department2")
 
     teachingAffected TeachingAffected @default(YES) @map("teaching_affected")
 
@@ -98,6 +100,14 @@ model Department {
     description  String   @default("")
     letter       String   @default("")
     classLetters String[] @default([])
+    
+    department1_Id  String?    @map("department1_id") @db.Uuid() @unique
+    department1   Department? @relation("Department1", fields: [department1_Id], references: [id])
+    childDepartment1   Department? @relation("Department1")
+
+    department2_Id  String?    @map("department2_id") @db.Uuid() @unique
+    department2   Department? @relation("Department2", fields: [department2_Id], references: [id])
+    childDepartment2   Department? @relation("Department2")
 
     classes UntisClass[]
     events  Event[]      @relation("events_to_departments")
@@ -229,6 +239,7 @@ view view_UsersTeaching {
     lessonWeekDay       Int    @map("l_week_day")
     lessonSemesterId    String @map("l_semester_id") @db.Uuid
     departmentId        String @map("d_id") @db.Uuid
+    departmentSchoolId  String @map("d_school_id")
     departmentName      String @map("d_name")
     klp                 String? @map("klp")
     klpDepartmentId     String? @map("klp_department_id")
@@ -247,7 +258,8 @@ view view_Events {
     description     String           @map("description")
     class_groups    String[]         @map("class_groups")
     audience        EventAudience    @map("audience")
-    department_ids  String[]         @map("department_ids") @db.Uuid
+    departmentIds   String[]         @map("department_ids") @db.Uuid
+    departmentSchoolIds  String[]    @map("department_school_ids") @db.Uuid
     yearStart       Decimal          @map("year_s") @db.Decimal
     yearEnd         Decimal          @map("year_e") @db.Decimal
     startWeekDay    Decimal          @map("start_week_day") @db.Decimal
@@ -269,6 +281,7 @@ view view_UsersTeachingAggregated {
     legacyClassNames String[] @map("legacy_class_names")
     subjects         String[] @map("subjects")
     departmentIds    String[] @map("department_ids") @db.Uuid
+    departmentSchoolIds    String[] @map("department_school_ids") @db.Uuid
     departmentNames  String[] @map("department_names")
 
     @@unique([lSemesterId])
@@ -296,9 +309,9 @@ view view_UsersAffectedByEvents {
     start DateTime
     end   DateTime
 
-    location        String
-    description     String
-    descriptionLong String @map("description_long")
+    location        String @default("")
+    description     String @default("")
+    descriptionLong String @default("") @map("description_long")
 
     state EventState @default(DRAFT)
     cloned Boolean    @default(false)
@@ -315,6 +328,8 @@ view view_UsersAffectedByEvents {
     classGroups  String[]     @default([]) @map("class_groups")
 
     audience     EventAudience @default(STUDENTS)
+    // wheter the bilinguale teachers of the classes are affected
+    affectsDepartment2 Boolean?   @default(false) @map("affects_department2")
 
     teachingAffected TeachingAffected @default(YES) @map("teaching_affected")
 
@@ -380,6 +395,8 @@ view view_EventsClasses {
     audience     EventAudience @default(STUDENTS)
 
     teachingAffected TeachingAffected @default(YES) @map("teaching_affected")
+    // wheter the bilinguale teachers of the classes are affected
+    affectsDepartment2 Boolean?   @default(false) @map("affects_department2")
 
     createdAt DateTime  @default(now()) @map("created_at")
     updatedAt DateTime  @updatedAt @default(now()) @map("updated_at")

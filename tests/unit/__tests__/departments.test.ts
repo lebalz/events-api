@@ -41,6 +41,42 @@ describe('Departments', () => {
             });
         });
 
+        
+        test('admin can update belonging departments', async () => {
+            const admin = await createUser({role: Role.ADMIN});
+            const department = await createDepartment({});
+            const parent1 = await createDepartment({});
+            const parent2 = await createDepartment({});
+            prismock.department.findMany = jest.fn().mockResolvedValueOnce([]);
+            await expect(Departments.updateModel(
+                admin, 
+                department.id, 
+                {
+                    department1_Id: parent1.id,
+                    department2_Id: parent2.id
+                }
+            )).resolves.toEqual({
+                ...department,
+                department1_Id: parent1.id,
+                department2_Id: parent2.id
+            });
+        });
+
+        test('department can not belong two times to the same department', async () => {
+            const admin = await createUser({role: Role.ADMIN});
+            const department = await createDepartment({});
+            const parent1 = await createDepartment({});
+            await expect(Departments.updateModel(
+                    admin, 
+                    department.id, 
+                    {
+                        department1_Id: parent1.id,
+                        department2_Id: parent1.id
+                    }
+                )).rejects.toEqual(new HTTP400Error('Cannot belong to the same department twice'));
+        });
+        
+
         test('detects invalid letter combinations', async () => {
             const admin = await createUser({role: Role.ADMIN});
             const depAB = await createDepartment({name: 'depAB-', classLetters: ['A', 'B']});
@@ -65,6 +101,8 @@ describe('Departments', () => {
                 description: '',
                 name: 'new name',
                 letter: '',
+                department1_Id: null,
+                department2_Id: null,
                 updatedAt: expect.any(Date),
                 createdAt: expect.any(Date)
             });

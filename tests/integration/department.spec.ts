@@ -106,6 +106,33 @@ describe(`PUT ${API_URL}/department/:id`, () => {
             to: 'all'
         });
     });
+    
+    it('can not update child department to have common dep-ids', async () => {
+        /**
+         * state:
+         *  DepA
+         *      \
+         *      DepB
+         *      
+         *  forbidden: add:
+         *   DepA
+         *      \
+         *       current
+         * 
+         */
+        const admin = await prisma.user.create({data: generateUser({role: Role.ADMIN})});
+        const deps = await prisma.department.findMany();
+        const depA = deps[0];
+        const depB = deps[1];
+        await prisma.department.update({data: {department1_Id: depA.id}, where: {id: depB.id}});
+        const current = deps[2];
+        const result = await request(app)
+            .put(`${API_URL}/department/${current!.id}`)
+            .set('authorization', JSON.stringify({email: admin.email}))
+            .send({data: {department1_Id: depA.id}});
+        expect(result.statusCode).toEqual(400);
+        expect(mNotification).toHaveBeenCalledTimes(0);
+    });
     it("can not update department with common letter to have overlapping classLetters", async () => {
         /**
          * GHIJ -> Letter G, classLetters[a-s]

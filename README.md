@@ -16,7 +16,7 @@
 | `EXPORT_DIR` | Directory to export .xlsx files to    | `./export`  |
 | `UPLOAD_DIR` | Directory to upload excels for import | `./uploads` |
 
-for development only:
+for development only (for seeding the db):
 
 | Name          | Description                               | Example                                |
 |:--------------|:------------------------------------------|:---------------------------------------|
@@ -127,7 +127,7 @@ dotenv -e .test.env -- yarn run test:db:create
 Start the dev server with
 
 ```bash
-NODE_ENV=test yarn run dev
+TEST_USER_ID="user@gbsl.ch" yarn run dev
 ```
 
 This will use the [mock strategy](src/auth/mock.ts) for authentication. To work as intended, you need to set the env-variable `TEST_USER_ID` containing the id of the test user (e.g. in the [.env](.env) file).
