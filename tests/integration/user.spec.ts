@@ -865,7 +865,7 @@ describe(`GET ${API_URL}/user/:id/affected-event-ids`, () => {
                     expect(kl26mT!.department!.department2_Id).toEqual(gbsl.id);
                     expect(affectingEvent.affectsDepartment2).toBeFalsy();
                 });
-                describe('audience: ALl', () => {
+                describe('audience: ALL', () => {
                     beforeAll(() => {
                         audience = EventAudience.ALL;
                         day = 'Do';
@@ -875,6 +875,11 @@ describe(`GET ${API_URL}/user/:id/affected-event-ids`, () => {
                             affectsDepartment2 = false;
                         });
                         it(`displays the event only for gbjb teacher`, async () => {
+                            const ev = await prisma.event.findFirst({ where: { id: affectingEvent.id }, include: {departments: true} });
+                            console.log('affected', ev);
+                            const view = await prisma.view_UsersAffectedByEvents.findMany();
+                            console.log('view', view)
+
                             const gbjbResult = await request(app)
                                 .get(`${API_URL}/user/${VWZ.id}/affected-event-ids?semesterId=${semester.id}`)
                                 .set('authorization', JSON.stringify({ email: VWZ.email }));
