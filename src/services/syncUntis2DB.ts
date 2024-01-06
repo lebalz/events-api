@@ -1,7 +1,7 @@
 import { WebAPITimetable } from 'webuntis';
 import type { Department, Prisma, Semester, UntisLesson } from "@prisma/client";
 import prisma from '../prisma';
-import { ClassLetterMap, Colors, DepartmentLetterMap, Departments } from './helpers/departmentNames';
+import { ClassLetterMap, Colors, DepartmentLetterMap, Departments, SchoolDepartments } from './helpers/departmentNames';
 import { KlassName, mapLegacyClassName } from './helpers/klassNames';
 import Logger from '../utils/logger';
 import { UntisData, fetchUntis as defaultFetchUntis } from './fetchUntis';
@@ -34,24 +34,56 @@ export const syncUntis2DB = async (semesterId: string, fetchUntis: (semester: Se
 
     /** UPSERT DEPARTMENTS */
     const upsertDepPromise: Prisma.PrismaPromise<Department>[] = [];
-    (Object.keys(Departments) as (keyof typeof Departments)[]).forEach((d) => {
-        const name = Departments[d];
+    (Object.keys(SchoolDepartments) as (keyof typeof Departments)[]).forEach((d) => {
+        const school = SchoolDepartments[d];
         const color = Colors[d];
         const letter = DepartmentLetterMap[d];
         const clsLetters = ClassLetterMap[d];
+        if (school.dep_1 || school.dep_2) {
+            return
+        }
         upsertDepPromise.push(prisma.department.upsert({
-            where: { name: name },
+            where: { name: school.main },
             update: {},
             create: {
-                name: name,
+                name: school.main,
                 color: color,
                 letter: letter,
                 classLetters: [...clsLetters]
             }
         }))
-    })
+    });
+    await Promise.all(upsertDepPromise);
+    const schoolDepartments = await prisma.department.findMany({});
+    upsertDepPromise.splice(0, upsertDepPromise.length);
+
+    (Object.keys(SchoolDepartments) as (keyof typeof Departments)[]).forEach((d) => {
+        const school = SchoolDepartments[d];
+        const color = Colors[d];
+        const letter = DepartmentLetterMap[d];
+        const clsLetters = ClassLetterMap[d];
+        if (!school.dep_1 && !school.dep_2) {
+            return
+        }
+        const dep1 = schoolDepartments.find((dep) => dep.name === school.dep_1);
+        const dep2 = schoolDepartments.find((dep) => dep.name === school.dep_2);
+        upsertDepPromise.push(prisma.department.upsert({
+            where: { name: school.main },
+            update: {},
+            create: {
+                name: school.main,
+                color: color,
+                letter: letter,
+                classLetters: [...clsLetters],
+                department1: dep1 ? { connect: { id: dep1.id } } : undefined,
+                department2: dep2 ? { connect: { id: dep2.id } } : undefined
+            }
+        }))
+    });
+
     await Promise.all(upsertDepPromise);
     const departments = await prisma.department.findMany({});
+
     const dbTransactions: Prisma.PrismaPromise<any>[] = [];
     /** DELETE CURRENT DB STATE */
     const dropLessons = prisma.untisLesson.deleteMany({ where: { semesterId: semesterId } });

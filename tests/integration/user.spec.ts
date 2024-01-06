@@ -423,7 +423,7 @@ describe(`GET ${API_URL}/user/:id/affected-event-ids`, () => {
             teachers: [
                 { name: 'abc', longName: 'Ambrosio Clark [GBSL, GBJB]', sex: 'M' },
                 { name: 'xyz', longName: 'Xavianda Zorro [GBSL]', sex: 'F' },
-                { name: 'aaa', longName: 'Louise Bommeraux [GBJB]', sex: 'F'}
+                { name: 'AAA', longName: 'Louise Bommeraux [GBJB]', sex: 'F'}
             ],
             classes: [
                 { name: '24i', sf: 'BG/WR' },
@@ -437,7 +437,7 @@ describe(`GET ${API_URL}/user/:id/affected-event-ids`, () => {
                 { subject: 'M', day: 'Di', teachers: ['abc'], classes: ['24i'], start: 1550, end: 1635, room: 'G001' },
                 { subject: 'E', day: 'Mi', teachers: ['xyz'], classes: ['24i'], start: 730, end: 815, room: 'D113' },
                 { subject: 'IN', day: 'Mi', teachers: ['abc'], classes: ['26e'], start: 730, end: 815, room: 'D216' },
-                { subject: 'IN', day: 'Mi', teachers: ['aaa'], classes: ['25B'], start: 730, end: 815, room: 'F207' },
+                { subject: 'IN', day: 'Mi', teachers: ['AAA'], classes: ['25B'], start: 730, end: 815, room: 'F207' },
                 { subject: 'IN', day: 'Mi', teachers: ['abc'], classes: ['26A'], start: 1215, end: 1300, room: 'D113' },
                 { subject: 'M', day: 'Mi', teachers: ['abc'], classes: ['24i'], start: 1025, end: 1110, room: 'D103' },
                 { subject: 'EFIN', day: 'Fr', teachers: ['abc'], classes: ['24a', '24i'], start: 1305, end: 1350, room: 'D206' },
@@ -553,13 +553,13 @@ describe(`GET ${API_URL}/user/:id/affected-event-ids`, () => {
                 let author: User;
                 let abc: User;
                 let xyz: User;
-                let aaa: User;
+                let AAA: User;
                 let affectingEvent: Event;
                 beforeEach(async () => {
                     const gbsl = departments.find((d) => d.name === 'GBSL' && d.letter === 'G')!;
                     author = await prisma.user.create({ data: generateUser() });
                     abc = await prisma.user.create({ data: generateUser({ firstName: 'abc', untisId: untisTeachers.find(t => t.name === 'abc')!.id }) });
-                    aaa = await prisma.user.create({ data: generateUser({ firstName: 'aaa', untisId: untisTeachers.find(t => t.name === 'aaa')!.id }) });
+                    AAA = await prisma.user.create({ data: generateUser({ firstName: 'AAA', untisId: untisTeachers.find(t => t.name === 'AAA')!.id }) });
                     xyz = await prisma.user.create({ data: generateUser({ firstName: 'xyz', untisId: untisTeachers.find(t => t.name === 'xyz')!.id }) });
                     affectingEvent = await prisma.event.create({
                         data: generateEvent({
@@ -606,7 +606,7 @@ describe(`GET ${API_URL}/user/:id/affected-event-ids`, () => {
                                 expect(result.body).toEqual([affectingEvent.id]);
                             })
                         });
-                        ['aaa'].forEach(async (name: string) => {
+                        ['AAA'].forEach(async (name: string) => {
                             it(`does not display non-gbsl teacher ${name}`, async () => {
                                 const user = (await prisma.user.findFirst({ where: { firstName: name }, include: { untis: { include: { classes: true } } } }))!;
                                 const result = await request(app)
@@ -670,7 +670,7 @@ describe(`GET ${API_URL}/user/:id/affected-event-ids`, () => {
                                 expect(result.body).toEqual([affectingEvent.id]);
                             })
                         });
-                        ['hij', 'aaa', 'xyz'].forEach(async (name: string) => {
+                        ['hij', 'AAA', 'xyz'].forEach(async (name: string) => {
                             it(`does not display for others (here: ${name}) except klp[abc] of 26Ge`, async () => {
                                 const user = (await prisma.user.findFirst({ where: { firstName: name }, include: { untis: { include: { classes: true } } } }))!;
                                 const result = await request(app)
@@ -745,8 +745,8 @@ describe(`GET ${API_URL}/user/:id/affected-event-ids`, () => {
                                 }
                             })
                         });
-                        /* hij and aaa does not teach gbsl students during the event */
-                        ['hij', 'aaa'].forEach(async (name: string) => {
+                        /* hij and AAA does not teach gbsl students during the event */
+                        ['hij', 'AAA'].forEach(async (name: string) => {
                             it(`does not display for teacher ${name}`, async () => {
                                 const user = (await prisma.user.findFirst({ where: { firstName: name }, include: { untis: { include: { classes: true } } } }))!;
                                 const result = await request(app)
@@ -790,7 +790,7 @@ describe(`GET ${API_URL}/user/:id/affected-event-ids`, () => {
                                 expect(result.body).toEqual([affectingEvent.id]);
                             })
                         });
-                        ['aaa'].forEach(async (name: string) => {
+                        ['AAA'].forEach(async (name: string) => {
                             it(`does not display non-class team member ${name}`, async () => {
                                 const user = (await prisma.user.findFirst({ where: { firstName: name }, include: { untis: { include: { classes: true } } } }))!;
                                 const result = await request(app)
@@ -803,6 +803,262 @@ describe(`GET ${API_URL}/user/:id/affected-event-ids`, () => {
     
                     })
                 });
+            });
+            describe('filtered by affectsDepartment2', () => {
+                let audience: EventAudience = EventAudience.ALL;
+                let author: User;
+                let hij: User;
+                let VWZ: User;
+                let klp: User;
+                let day: 'Mi' | 'Do' = 'Mi'
+                let affectingEvent: Event;
+                let affectsDepartment2 = false;
+                let thisData: UntisDataProps;
+                beforeEach(async () => {
+                    const gbjbBili = departments.find((d) => d.name === 'GBJB/GBSL' && d.letter === 'm')!;
+
+                    data.teachers.push({ name: 'hij', longName: 'Jimmy Hermann', sex: 'M' });
+                    data.teachers.push({ name: 'VWZ', longName: 'Vinny Zimmer', sex: 'M' });
+                    data.teachers.push({ name: 'klp', longName: 'Klassenlehrperson', sex: 'F' }); /** not realistic that the KS is not from the main department, anhow... */
+                    
+                    data.subjects.push({ name: 'KS', longName: 'Klassenstunde' });
+                    // bilingue class
+                    data.classes.push({ name: '26mT', sf: 'Bilingue FR' });
+                    
+                    data.lessons.push({ subject: 'E', day: day, teachers: ['hij'], classes: ['26mT'], start: 825, end: 910, room: 'D113' });
+                    data.lessons.push({ subject: 'M', day: day, teachers: ['VWZ'], classes: ['26mT'], start: 920, end: 1005, room: 'D113' });
+                    // klp is KLP of 26mT
+                    data.lessons.push({ subject: 'KS', day: day, teachers: ['klp'], classes: ['26mT'], start: 1120, end: 1205, room: 'D114' });
+
+                    thisData = _.cloneDeep(data);
+                    await syncUntis2DB(semester!.id, (sem: Semester) => fetchUntis(sem, generateUntisData(data)));
+                    untisTeachers = await prisma.untisTeacher.findMany();
+                    hij = await prisma.user.create({ data: generateUser({ firstName: 'hij', untisId: untisTeachers.find(t => t.name === 'hij')!.id }) });
+                    VWZ = await prisma.user.create({ data: generateUser({ firstName: 'VWZ', untisId: untisTeachers.find(t => t.name === 'VWZ')!.id }) });
+                    klp = await prisma.user.create({ data: generateUser({ firstName: 'klp', untisId: untisTeachers.find(t => t.name === 'klp')!.id }) });
+                    author = await prisma.user.create({ data: generateUser() });
+
+                    affectingEvent = await prisma.event.create({
+                        data: generateEvent({
+                            authorId: author.id,
+                            start: new Date('2023-10-18T08:00'), /* 18.10.2023 is a Mittwoch */
+                            end: new Date('2023-10-18T12:00'),
+                            state: EventState.PUBLISHED,
+                            departments: {
+                                connect: { id: gbjbBili.id }
+                            },
+                            audience: audience,
+                            affectsDepartment2: affectsDepartment2
+                        }),
+                        include: {departments: true}
+                    });
+                });
+                afterEach(() => {
+                    data = _.cloneDeep(_data);
+                });
+                it('sets up the data correctly', async () => {
+                    const gbsl = departments.find((d) => d.name === 'GBSL' && d.letter === 'G')!;
+                    const gbjb = departments.find((d) => d.name === 'GBJB' && d.letter === 'm')!;
+                    const gbjbBili = departments.find((d) => d.name === 'GBJB/GBSL' && d.letter === 'm')!;
+                    const kl26mT = await prisma.untisClass.findFirst({ where: { name: '26mT' }, include: {department: true, teachers: true} });
+                    expect(kl26mT!.department!.name).toEqual('GBJB/GBSL');
+                    expect(kl26mT!.department!.id).toEqual(gbjbBili.id);
+                    expect(kl26mT!.department!.department1_Id).toEqual(gbjb.id);
+                    expect(kl26mT!.department!.department2_Id).toEqual(gbsl.id);
+                    expect(affectingEvent.affectsDepartment2).toBeFalsy();
+                });
+                describe('audience: ALl', () => {
+                    beforeAll(() => {
+                        audience = EventAudience.ALL;
+                        day = 'Do';
+                    });
+                    describe('affectsDepartment2: false', () => {
+                        beforeAll(() => {
+                            affectsDepartment2 = false;
+                        });
+                        it(`displays the event only for gbjb teacher`, async () => {
+                            const gbjbResult = await request(app)
+                                .get(`${API_URL}/user/${VWZ.id}/affected-event-ids?semesterId=${semester.id}`)
+                                .set('authorization', JSON.stringify({ email: VWZ.email }));
+                            expect(gbjbResult.statusCode).toEqual(200);
+                            expect(gbjbResult.body).toHaveLength(1);
+                            expect(gbjbResult.body).toEqual([affectingEvent.id]);
+    
+                            const gbslResult = await request(app)
+                                .get(`${API_URL}/user/${hij.id}/affected-event-ids?semesterId=${semester.id}`)
+                                .set('authorization', JSON.stringify({ email: hij.email }));
+                            expect(gbslResult.statusCode).toEqual(200);
+                            expect(gbslResult.body).toHaveLength(0);
+                        });
+                    });
+                    describe('affectsDepartment2: true', () => {
+                        beforeAll(() => {
+                            affectsDepartment2 = true;
+                        });
+                        it(`displays the event only gbjb and gbsl teachers`, async () => {
+                            const gbjbResult = await request(app)
+                                .get(`${API_URL}/user/${VWZ.id}/affected-event-ids?semesterId=${semester.id}`)
+                                .set('authorization', JSON.stringify({ email: VWZ.email }));
+                            expect(gbjbResult.statusCode).toEqual(200);
+                            expect(gbjbResult.body).toHaveLength(1);
+                            expect(gbjbResult.body).toEqual([affectingEvent.id]);
+    
+                            const gbslResult = await request(app)
+                                .get(`${API_URL}/user/${hij.id}/affected-event-ids?semesterId=${semester.id}`)
+                                .set('authorization', JSON.stringify({ email: hij.email }));
+                            expect(gbslResult.statusCode).toEqual(200);
+                            expect(gbslResult.body).toHaveLength(1);
+                            expect(gbslResult.body).toEqual([affectingEvent.id]);
+                        });
+                    });
+                })
+                describe('audience: LP', () => {
+                    beforeAll(() => {
+                        audience = EventAudience.LP;
+                        day = 'Do';
+                    });
+                    describe('affectsDepartment2: false', () => {
+                        beforeAll(() => {
+                            affectsDepartment2 = false;
+                        });
+                        it(`displays the event only for gbjb teacher`, async () => {
+                            const gbjbResult = await request(app)
+                                .get(`${API_URL}/user/${VWZ.id}/affected-event-ids?semesterId=${semester.id}`)
+                                .set('authorization', JSON.stringify({ email: VWZ.email }));
+                            expect(gbjbResult.statusCode).toEqual(200);
+                            expect(gbjbResult.body).toHaveLength(1);
+                            expect(gbjbResult.body).toEqual([affectingEvent.id]);
+    
+                            const gbslResult = await request(app)
+                                .get(`${API_URL}/user/${hij.id}/affected-event-ids?semesterId=${semester.id}`)
+                                .set('authorization', JSON.stringify({ email: hij.email }));
+                            expect(gbslResult.statusCode).toEqual(200);
+                            expect(gbslResult.body).toHaveLength(0);
+                        });
+                    });
+                    describe('affectsDepartment2: true', () => {
+                        beforeAll(() => {
+                            affectsDepartment2 = true;
+                        });
+                        it(`displays the event only gbjb and gbsl teachers`, async () => {
+                            const gbjbResult = await request(app)
+                                .get(`${API_URL}/user/${VWZ.id}/affected-event-ids?semesterId=${semester.id}`)
+                                .set('authorization', JSON.stringify({ email: VWZ.email }));
+                            expect(gbjbResult.statusCode).toEqual(200);
+                            expect(gbjbResult.body).toHaveLength(1);
+                            expect(gbjbResult.body).toEqual([affectingEvent.id]);
+    
+                            const gbslResult = await request(app)
+                                .get(`${API_URL}/user/${hij.id}/affected-event-ids?semesterId=${semester.id}`)
+                                .set('authorization', JSON.stringify({ email: hij.email }));
+                            expect(gbslResult.statusCode).toEqual(200);
+                            expect(gbslResult.body).toHaveLength(1);
+                            expect(gbslResult.body).toEqual([affectingEvent.id]);
+                        });
+                    });
+                })
+                describe('audience: STUDENTS', () => {
+                    beforeAll(() => {
+                        audience = EventAudience.STUDENTS;
+                        day = 'Mi';
+                    });
+                    describe('affectsDepartment2: false', () => {
+                        beforeAll(() => {
+                            affectsDepartment2 = false;
+                        });
+                        it(`displays the event for for gbsl and gbjb teacher, since both hav affected lessons`, async () => {
+                            const gbjbResult = await request(app)
+                                .get(`${API_URL}/user/${VWZ.id}/affected-event-ids?semesterId=${semester.id}`)
+                                .set('authorization', JSON.stringify({ email: VWZ.email }));
+                            expect(gbjbResult.statusCode).toEqual(200);
+                            expect(gbjbResult.body).toHaveLength(1);
+                            expect(gbjbResult.body).toEqual([affectingEvent.id]);
+    
+                            const gbslResult = await request(app)
+                                .get(`${API_URL}/user/${hij.id}/affected-event-ids?semesterId=${semester.id}`)
+                                .set('authorization', JSON.stringify({ email: hij.email }));
+                            expect(gbslResult.statusCode).toEqual(200);
+                            expect(gbslResult.body).toHaveLength(1);
+                            expect(gbslResult.body).toEqual([affectingEvent.id]);
+                        });
+                    });
+                    describe('affectsDepartment2: true', () => {
+                        beforeAll(() => {
+                            affectsDepartment2 = true;
+                        });
+                        it(`displays the event only gbjb and gbsl teachers`, async () => {
+                            const gbjbResult = await request(app)
+                                .get(`${API_URL}/user/${VWZ.id}/affected-event-ids?semesterId=${semester.id}`)
+                                .set('authorization', JSON.stringify({ email: VWZ.email }));
+                            expect(gbjbResult.statusCode).toEqual(200);
+                            expect(gbjbResult.body).toHaveLength(1);
+                            expect(gbjbResult.body).toEqual([affectingEvent.id]);
+    
+                            const gbslResult = await request(app)
+                                .get(`${API_URL}/user/${hij.id}/affected-event-ids?semesterId=${semester.id}`)
+                                .set('authorization', JSON.stringify({ email: hij.email }));
+                            expect(gbslResult.statusCode).toEqual(200);
+                            expect(gbslResult.body).toHaveLength(1);
+                            expect(gbslResult.body).toEqual([affectingEvent.id]);
+                        });
+                    });
+                })
+                describe('audience: KLP', () => {
+                    beforeAll(() => {
+                        audience = EventAudience.KLP;
+                        day = 'Do';
+                    });
+                    describe('affectsDepartment2: false', () => {
+                        beforeAll(() => {
+                            affectsDepartment2 = false;
+                        });
+                        it(`displays the event for for gbsl and gbjb teacher, since both hav affected lessons`, async () => {
+                            const klpResult = await request(app)
+                                .get(`${API_URL}/user/${klp.id}/affected-event-ids?semesterId=${semester.id}`)
+                                .set('authorization', JSON.stringify({ email: klp.email }));
+                            expect(klpResult.statusCode).toEqual(200);
+                            expect(klpResult.body).toHaveLength(1);
+                            expect(klpResult.body).toEqual([affectingEvent.id]);
+    
+                            const gbslResult = await request(app)
+                                .get(`${API_URL}/user/${hij.id}/affected-event-ids?semesterId=${semester.id}`)
+                                .set('authorization', JSON.stringify({ email: hij.email }));
+                            expect(gbslResult.statusCode).toEqual(200);
+                            expect(gbslResult.body).toHaveLength(0);
+
+                            const gbjbResult = await request(app)
+                                .get(`${API_URL}/user/${VWZ.id}/affected-event-ids?semesterId=${semester.id}`)
+                                .set('authorization', JSON.stringify({ email: VWZ.email }));
+                            expect(gbjbResult.statusCode).toEqual(200);
+                            expect(gbjbResult.body).toHaveLength(0);
+                        });
+                    });
+                    describe('affectsDepartment2: true', () => {
+                        beforeAll(() => {
+                            affectsDepartment2 = true;
+                        });
+                        it(`displays the event for for gbsl and gbjb teacher, since both hav affected lessons`, async () => {
+                            const klpResult = await request(app)
+                                .get(`${API_URL}/user/${klp.id}/affected-event-ids?semesterId=${semester.id}`)
+                                .set('authorization', JSON.stringify({ email: klp.email }));
+                            expect(klpResult.statusCode).toEqual(200);
+                            expect(klpResult.body).toHaveLength(1);
+                            expect(klpResult.body).toEqual([affectingEvent.id]);
+    
+                            const gbslResult = await request(app)
+                                .get(`${API_URL}/user/${hij.id}/affected-event-ids?semesterId=${semester.id}`)
+                                .set('authorization', JSON.stringify({ email: hij.email }));
+                            expect(gbslResult.statusCode).toEqual(200);
+                            expect(gbslResult.body).toHaveLength(0);
+
+                            const gbjbResult = await request(app)
+                                .get(`${API_URL}/user/${VWZ.id}/affected-event-ids?semesterId=${semester.id}`)
+                                .set('authorization', JSON.stringify({ email: VWZ.email }));
+                            expect(gbjbResult.statusCode).toEqual(200);
+                            expect(gbjbResult.body).toHaveLength(0);
+                        });
+                    });
+                })
             });
         })
         describe('selected by class', () => {
