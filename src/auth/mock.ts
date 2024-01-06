@@ -20,7 +20,7 @@ class MockStrat extends Strategy {
                 const auth = JSON.parse(req.headers.authorization) as { email: string };           
                 where = { email: auth.email || 'anonymous@user.ch'};
             } catch (err) {
-                Logger.error('Bearer Verify Error', err);
+                Logger.warn('Bearer Verify Error', err);
                 return this.fail('Could not parse authorization header');
             }
         }

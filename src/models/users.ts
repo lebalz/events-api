@@ -108,7 +108,6 @@ function Users(db: PrismaClient['user']) {
                     state: EventState.PUBLISHED
                 }
             });
-            console.log(events);
             return events.map(e => prepareEvent(e));
         }
     })

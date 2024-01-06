@@ -813,7 +813,6 @@ describe(`GET ${API_URL}/user/:id/affected-event-ids`, () => {
                 let day: 'Mi' | 'Do' = 'Mi'
                 let affectingEvent: Event;
                 let affectsDepartment2 = false;
-                let thisData: UntisDataProps;
                 beforeEach(async () => {
                     const gbjbBili = departments.find((d) => d.name === 'GBJB/GBSL' && d.letter === 'm')!;
 
@@ -830,7 +829,6 @@ describe(`GET ${API_URL}/user/:id/affected-event-ids`, () => {
                     // klp is KLP of 26mT
                     data.lessons.push({ subject: 'KS', day: day, teachers: ['klp'], classes: ['26mT'], start: 1120, end: 1205, room: 'D114' });
 
-                    thisData = _.cloneDeep(data);
                     await syncUntis2DB(semester!.id, (sem: Semester) => fetchUntis(sem, generateUntisData(data)));
                     untisTeachers = await prisma.untisTeacher.findMany();
                     hij = await prisma.user.create({ data: generateUser({ firstName: 'hij', untisId: untisTeachers.find(t => t.name === 'hij')!.id }) });
@@ -922,6 +920,7 @@ describe(`GET ${API_URL}/user/:id/affected-event-ids`, () => {
                             affectsDepartment2 = false;
                         });
                         it(`displays the event only for gbjb teacher`, async () => {
+                            expect(affectingEvent.affectsDepartment2).toBeFalsy();
                             const gbjbResult = await request(app)
                                 .get(`${API_URL}/user/${VWZ.id}/affected-event-ids?semesterId=${semester.id}`)
                                 .set('authorization', JSON.stringify({ email: VWZ.email }));
@@ -941,6 +940,7 @@ describe(`GET ${API_URL}/user/:id/affected-event-ids`, () => {
                             affectsDepartment2 = true;
                         });
                         it(`displays the event only gbjb and gbsl teachers`, async () => {
+                            expect(affectingEvent.affectsDepartment2).toBeTruthy();
                             const gbjbResult = await request(app)
                                 .get(`${API_URL}/user/${VWZ.id}/affected-event-ids?semesterId=${semester.id}`)
                                 .set('authorization', JSON.stringify({ email: VWZ.email }));
