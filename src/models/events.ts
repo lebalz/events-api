@@ -337,7 +337,8 @@ function Events(db: PrismaClient['event']) {
                                 ]
                             }
                         ]
-                    }
+                    },
+                    orderBy: { start: 'asc' }
                 });
             } else {
                 events = await db.findMany({
@@ -356,7 +357,8 @@ function Events(db: PrismaClient['event']) {
                                 ]
                             },
                         ]
-                    }
+                    },
+                    orderBy: { start: 'asc' }
                 });
             }
             return events.map(prepareEvent);

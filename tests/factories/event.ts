@@ -4,7 +4,7 @@ import {faker} from '@faker-js/faker';
 export const generateEvent = (props: (Partial<Prisma.EventUncheckedCreateInput> & {authorId: string, between?: {from: Date, to: Date}})): Prisma.EventCreateInput => {
     const start = props.between ? faker.date.between(props.between) : faker.date.future({years: 1});
     const end = props.between ? faker.date.between({from: start, to: props.between.to}) : faker.date.future({refDate: start, years: 1});
-    const {authorId, parentId} = props;
+    const {authorId, parentId, jobId} = props;
 
     if (authorId) {
         delete (props as any).authorId;
@@ -15,6 +15,9 @@ export const generateEvent = (props: (Partial<Prisma.EventUncheckedCreateInput> 
     if (props.between) {
         delete (props as any).between;
     }
+    if (props.jobId) {
+        delete (props as any).jobId;
+    }
 	const event: Prisma.EventCreateInput = {
         start: start,
         end: end,
@@ -23,7 +26,8 @@ export const generateEvent = (props: (Partial<Prisma.EventUncheckedCreateInput> 
         location: faker.location.city(),
         ...props,
         author: {connect: { id: authorId }},
-        parent: parentId ? {connect: { id: parentId }} : undefined
+        parent: parentId ? {connect: { id: parentId }} : undefined,
+        job: jobId ? {connect: { id: jobId }} : undefined
 	};
     return event;
 };

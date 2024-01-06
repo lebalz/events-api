@@ -3,7 +3,7 @@ import app, { API_URL } from '../../src/app';
 import prisma from '../../src/prisma';
 import { generateUser } from '../factories/user';
 import { Event, EventAudience, EventState, JobState, Role, TeachingAffected } from '@prisma/client';
-import { truncate } from './helpers/db';
+import { truncate } from '../helpers/db';
 import Jobs from '../../src/models/jobs';
 import { eventSequence, generateEvent } from '../factories/event';
 import { HttpStatusCode } from '../../src/utils/errors/BaseError';

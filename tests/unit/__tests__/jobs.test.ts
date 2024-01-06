@@ -1,6 +1,6 @@
 import { JobType, Prisma, Role, User } from "@prisma/client";
 import Jobs from "../../../src/models/jobs";
-import prismock from "../__mocks__/prismockClient";
+import prisma from '../../../src/prisma';
 import { createUser } from "./users.test";
 import { HTTP403Error, HTTP404Error } from "../../../src/utils/errors/Errors";
 import { createEvent } from "./events.test";
@@ -9,7 +9,7 @@ import { prepareEvent } from "../../../src/models/event.helpers";
 import { generateJob } from "../../factories/job";
 
 export const createJob = async (props: Partial<Prisma.JobUncheckedCreateInput> & { userId: string, type: 'IMPORT' }) => {
-    return await prismock.job.create({
+    return await prisma.job.create({
         data: generateJob(props)
     });
 }
@@ -43,8 +43,8 @@ describe('Jobs', () => {
         });
         test('throws on not existing record', async () => {
             const user = await createUser({ firstName: 'Reto' });
-            await expect(Jobs.findModel(user, 'i-dont-exist!')).rejects.toEqual(
-                new HTTP404Error('Job with id i-dont-exist! not found')
+            await expect(Jobs.findModel(user, '1434b208-2a2c-40ab-9473-a0cd947e4fe4')).rejects.toEqual(
+                new HTTP404Error('Job with id a4aa5e33-9041-4e09-8518-339e4d211c4f! not found')
             );
         });
     });
@@ -69,7 +69,8 @@ describe('Jobs', () => {
             await expect(Jobs.updateModel(user, job.id, { description: 'FooBar' })).resolves.toEqual({
                 ...job,
                 events: [],
-                description: 'FooBar'
+                description: 'FooBar',
+                updatedAt: expect.any(Date)
             });
         });
         test('user can only update description', async () => {
@@ -92,7 +93,8 @@ describe('Jobs', () => {
             await expect(Jobs.updateModel(admin, job.id, { description: 'FooBar' })).resolves.toEqual({
                 ...job,
                 events: [],
-                description: 'FooBar'
+                description: 'FooBar',
+                updatedAt: expect.any(Date)
             });
         });
     });
@@ -123,23 +125,28 @@ describe('Jobs', () => {
             const reviewed = await createEvent({authorId: user.id, jobId: job.id, state: 'REVIEW' });
             const refused = await createEvent({authorId: user.id, jobId: job.id, state: 'REFUSED' });
             const published = await createEvent({authorId: user.id, jobId: job.id, state: 'PUBLISHED' });
-            await expect(Jobs.destroy(user, job.id)).resolves.toEqual({
+            const result = await Jobs.destroy(user, job.id);
+            expect(result).toEqual({
                 ...job,
-                events: [
+                events: expect.arrayContaining([
                     {
                         ...prepareEvent(reviewed),
-                        deletedAt: expect.any(Date)
+                        deletedAt: expect.any(Date),
+                        updatedAt: expect.any(Date),
                     },
                     {
                         ...prepareEvent(refused),
-                        deletedAt: expect.any(Date)
+                        deletedAt: expect.any(Date),
+                        updatedAt: expect.any(Date),
                     },
                     {
                         ...prepareEvent(published),
-                        deletedAt: expect.any(Date)
+                        deletedAt: expect.any(Date),
+                        updatedAt: expect.any(Date),
                     }
-                ]
+                ])
             });
+            expect(result.events).toHaveLength(3)
         });
     });
 

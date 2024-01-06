@@ -1,25 +1,26 @@
 import { Prisma, Role } from "@prisma/client";
 import Departments from "../../../src/models/departments";
-import prismock from "../__mocks__/prismockClient";
+import prisma from '../../../src/prisma';
 import { createUser } from "./users.test";
 import { HTTP400Error, HTTP403Error } from "../../../src/utils/errors/Errors";
 import { generateDepartment } from "../../factories/department";
+import { truncate } from "lodash";
 
 export const createDepartment = async (props: Partial<Prisma.DepartmentUncheckedCreateInput>) => {
-    return await prismock.department.create({ 
+    return await prisma.department.create({ 
         data: generateDepartment(props)
     });
 }
 
 describe('Departments', () => {
     test('find department', async () => {
-        const department = await prismock.department.create({ data: {name: 'test'}});
+        const department = await prisma.department.create({ data: {name: 'test'}});
         await expect(Departments.findModel(department.id)).resolves.toEqual(department);
     });
     test('find all', async () => {
         await expect(Departments.all()).resolves.toHaveLength(0);
-        const department1 = await prismock.department.create({ data: {name: 'd1'}});
-        const department2 = await prismock.department.create({ data: {name: 'd2'}});
+        const department1 = await prisma.department.create({ data: {name: 'd1'}});
+        const department2 = await prisma.department.create({ data: {name: 'd2'}});
         await expect(Departments.all()).resolves.toHaveLength(2);
         await expect(Departments.all()).resolves.toEqual([department1, department2]);
     });
@@ -37,7 +38,8 @@ describe('Departments', () => {
             await expect(Departments.updateModel(admin, department.id, {name: 'new name', classLetters: ['B', 'A']})).resolves.toEqual({
                 ...department,
                 name: 'new name',
-                classLetters: ['B', 'A']
+                classLetters: ['B', 'A'],
+                updatedAt: expect.any(Date)
             });
         });
 
@@ -47,7 +49,6 @@ describe('Departments', () => {
             const department = await createDepartment({});
             const parent1 = await createDepartment({});
             const parent2 = await createDepartment({});
-            prismock.department.findMany = jest.fn().mockResolvedValueOnce([]);
             await expect(Departments.updateModel(
                 admin, 
                 department.id, 
@@ -58,7 +59,8 @@ describe('Departments', () => {
             )).resolves.toEqual({
                 ...department,
                 department1_Id: parent1.id,
-                department2_Id: parent2.id
+                department2_Id: parent2.id,
+                updatedAt: expect.any(Date)
             });
         });
 
@@ -93,13 +95,14 @@ describe('Departments', () => {
                 new HTTP403Error('Not authorized')
             );
         });
-        test('admin can update department', async () => {
+        test('admin can create department', async () => {
             const admin = await createUser({role: Role.ADMIN});
             await expect(Departments.createModel(admin, {name: 'new name'})).resolves.toEqual({
                 id: expect.any(String),
                 color: '#306cce',
                 description: '',
                 name: 'new name',
+                classLetters: [],
                 letter: '',
                 department1_Id: null,
                 department2_Id: null,

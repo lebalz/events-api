@@ -1,5 +1,5 @@
 import request from 'supertest';
-import { truncate } from "./helpers/db";
+import { truncate } from "../helpers/db";
 import prisma from '../../src/prisma';
 import app, { API_URL } from '../../src/app';
 import { generateUser, userSequence } from '../factories/user';
