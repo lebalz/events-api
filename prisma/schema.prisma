@@ -1,7 +1,7 @@
 datasource db {
     provider = "postgresql"
     url      = env("DATABASE_URL")
-    extensions = [pg_trgm]
+    extensions = [pg_trgm, pgcrypto]
 }
 
 generator client {
@@ -19,7 +19,7 @@ generator dbml {
 }
 
 model User {
-    id          String            @id @default(uuid()) @db.Uuid
+    id          String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
     email       String            @unique
     untis       UntisTeacher?     @relation(fields: [untisId], references: [id])
     untisId     Int?              @unique @map("untis_id")
@@ -37,7 +37,7 @@ model User {
 }
 
 model Event {
-    id       String @id @default(uuid()) @db.Uuid
+    id       String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
     author   User   @relation("events", fields: [authorId], references: [id])
     authorId String @map("author_id") @db.Uuid()
 
@@ -81,7 +81,7 @@ model Event {
 }
 
 model UserEventGroup {
-    id          String  @id @default(uuid()) @db.Uuid
+    id          String  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
     name        String  @default("")
     description String  @default("")
     user        User    @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -95,7 +95,7 @@ model UserEventGroup {
 }
 
 model Department {
-    id           String   @id @default(uuid()) @db.Uuid
+    id           String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
     name         String   @unique
     description  String   @default("")
     letter       String   @default("")
@@ -120,7 +120,7 @@ model Department {
 }
 
 model Semester {
-    id            String        @id @default(uuid()) @db.Uuid
+    id            String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
     name          String
     start         DateTime
     end           DateTime
@@ -134,7 +134,7 @@ model Semester {
 }
 
 model RegistrationPeriod {
-    id        String   @id @default(uuid()) @db.Uuid
+    id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
     name      String
     start     DateTime
     end       DateTime
@@ -145,7 +145,7 @@ model RegistrationPeriod {
 }
 
 model Job {
-    id    String   @id @default(uuid()) @db.Uuid
+    id    String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
     type  JobType
     state JobState @default(PENDING)
 
@@ -303,7 +303,7 @@ view view_UsersAffectedByEvents {
     userId         String   @map("u_id") @db.Uuid
     semesterId     String   @map("s_id") @db.Uuid
 
-    id       String @id @default(uuid()) @db.Uuid
+    id       String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
     authorId String @map("author_id") @db.Uuid()
 
     start DateTime
