@@ -231,7 +231,7 @@ view view_UsersTeaching {
     userEmail           String @map("u_email")
     classId             Int    @map("c_id")
     className           String @map("c_name")
-    classNameLegacy     String @map("c_name_legacy")
+    classNameLegacy     String? @map("c_name_legacy")
     lessonId            Int    @map("l_id")
     lessonSubject       String @map("l_subject")
     lessonStartHHMM     Int    @map("l_start_hhmm")
@@ -241,8 +241,6 @@ view view_UsersTeaching {
     departmentId        String @map("d_id") @db.Uuid
     departmentSchoolId  String @map("d_school_id")
     departmentName      String @map("d_name")
-    klp                 String? @map("klp")
-    klpDepartmentId     String? @map("klp_department_id")
     untis_teacher_id    Int?    @map("untis_teacher_id")
 
     @@unique([userId, classId, lessonId, departmentId])
@@ -278,11 +276,12 @@ view view_UsersTeachingAggregated {
     lSemesterId      String   @map("l_semester_id") @db.Uuid
     classIds         Int[]    @map("class_ids")
     classNames       String[] @map("class_names")
-    legacyClassNames String[] @map("legacy_class_names")
     subjects         String[] @map("subjects")
     departmentIds    String[] @map("department_ids") @db.Uuid
     departmentSchoolIds    String[] @map("department_school_ids") @db.Uuid
     departmentNames  String[] @map("department_names")
+    klp                 String? @map("klp")
+    klpDepartmentId     String? @map("klp_department_id")
 
     @@unique([lSemesterId])
     @@map("view__users_teaching_agg")

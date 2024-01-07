@@ -878,6 +878,12 @@ describe(`GET ${API_URL}/user/:id/affected-event-ids`, () => {
                             const ev = await prisma.event.findFirst({ where: { id: affectingEvent.id }, include: {departments: true} });
                             console.log('affected', ev);
                             console.log('VWZ', VWZ);
+                            const ut = await prisma.view_UsersTeaching.findMany();
+                            const utAgg = await prisma.view_UsersTeachingAggregated.findMany();
+                            const evV = await prisma.view_Events.findMany();
+                            console.log('Users Teaching', ut);
+                            console.log('Users Teaching Agg', utAgg);
+                            console.log('Event View', evV);
                             const view1 = await prisma.view_AffectedByEvents.findMany();
                             const view2 = await prisma.view_UsersAffectedByEvents.findMany();
                             console.log('view1', view1);

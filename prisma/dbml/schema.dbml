@@ -165,7 +165,7 @@ Table view__users_teaching {
   userEmail String [not null]
   classId Int [not null]
   className String [not null]
-  classNameLegacy String [not null]
+  classNameLegacy String
   lessonId Int [not null]
   lessonSubject String [not null]
   lessonStartHHMM Int [not null]
@@ -175,8 +175,6 @@ Table view__users_teaching {
   departmentId String [not null]
   departmentSchoolId String [not null]
   departmentName String [not null]
-  klp String
-  klpDepartmentId String
   untis_teacher_id Int
 
   indexes {
@@ -214,11 +212,12 @@ Table view__users_teaching_agg {
   lSemesterId String [unique, not null]
   classIds Int[] [not null]
   classNames String[] [not null]
-  legacyClassNames String[] [not null]
   subjects String[] [not null]
   departmentIds String[] [not null]
   departmentSchoolIds String[] [not null]
   departmentNames String[] [not null]
+  klp String
+  klpDepartmentId String
 }
 
 Table view__affected_by_events {
