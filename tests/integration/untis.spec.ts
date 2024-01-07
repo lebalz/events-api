@@ -76,53 +76,54 @@ describe(`GET ${API_URL}/untis/teacher/:id`, () => {
         expect(result.statusCode).toEqual(200);
         expect(result.body).toEqual({
             ...teachers[0],
-            lessons: expect.arrayContaining([
-                {
-                    classes: [
-                        {
-                            id: 1,
-                        },
-                    ],
-                    description: "Mathematik",
-                    endHHMM: 1540,
-                    id: 999,
-                    room: "D207",
-                    semesterId: expect.any(String),
-                    semesterNr: 1,
-                    startHHMM: 1455,
-                    subject: "M",
-                    teachers: [
-                        {
-                            id: 1,
-                        },
-                    ],
-                    weekDay: 2,
-                    year: 2023,
-                },
-                {
-                    classes: [
-                        {
-                            id: 1,
-                        },
-                    ],
-                    description: "Informatik",
-                    endHHMM: 1635,
-                    id: 1001,
-                    room: "D207",
-                    semesterId: expect.any(String),
-                    semesterNr: 1,
-                    startHHMM: 1550,
-                    subject: "IN",
-                    teachers: [
-                        {
-                            id: 1,
-                        },
-                    ],
-                    weekDay: 2,
-                    year: 2023,
-                },
-            ])
+            lessons: expect.any(Array)
         });
+        expect(_.orderBy(result.body.lessons, ['id'], 'asc')).toEqual([
+            {
+                classes: [
+                    {
+                        id: 1,
+                    },
+                ],
+                description: "Mathematik",
+                endHHMM: 1540,
+                id: 999,
+                room: "D207",
+                semesterId: expect.any(String),
+                semesterNr: 1,
+                startHHMM: 1455,
+                subject: "M",
+                teachers: [
+                    {
+                        id: 1,
+                    },
+                ],
+                weekDay: 2,
+                year: 2023,
+            },
+            {
+                classes: [
+                    {
+                        id: 1,
+                    },
+                ],
+                description: "Informatik",
+                endHHMM: 1635,
+                id: 1001,
+                room: "D207",
+                semesterId: expect.any(String),
+                semesterNr: 1,
+                startHHMM: 1550,
+                subject: "IN",
+                teachers: [
+                    {
+                        id: 1,
+                    },
+                ],
+                weekDay: 2,
+                year: 2023,
+            },
+        ])
         expect(mNotification).toHaveBeenCalledTimes(0);
     });
 });

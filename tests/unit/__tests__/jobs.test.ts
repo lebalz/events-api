@@ -7,6 +7,7 @@ import { createEvent } from "./events.test";
 import Events from "../../../src/models/events";
 import { prepareEvent } from "../../../src/models/event.helpers";
 import { generateJob } from "../../factories/job";
+import _ from "lodash";
 
 export const createJob = async (props: Partial<Prisma.JobUncheckedCreateInput> & { userId: string, type: 'IMPORT' }) => {
     return await prisma.job.create({
@@ -53,7 +54,9 @@ describe('Jobs', () => {
             const user = await createUser({ firstName: 'Reto' });
             const job1 = await createJob({ userId: user.id, type: JobType.IMPORT });
             const job2 = await createJob({ userId: user.id, type: JobType.IMPORT });
-            await expect(Jobs.all(user)).resolves.toEqual([job1, job2]);
+            const jobs = await Jobs.all(user);
+            expect(jobs).toHaveLength(2);
+            expect(_.orderBy(jobs, ['id'])).toEqual(_.orderBy([job1, job2], ['id']));
         });
 
         test('find all jobs returns empty when no jobs are present', async () => {
@@ -128,25 +131,25 @@ describe('Jobs', () => {
             const result = await Jobs.destroy(user, job.id);
             expect(result).toEqual({
                 ...job,
-                events: expect.arrayContaining([
-                    {
-                        ...prepareEvent(reviewed),
-                        deletedAt: expect.any(Date),
-                        updatedAt: expect.any(Date),
-                    },
-                    {
-                        ...prepareEvent(refused),
-                        deletedAt: expect.any(Date),
-                        updatedAt: expect.any(Date),
-                    },
-                    {
-                        ...prepareEvent(published),
-                        deletedAt: expect.any(Date),
-                        updatedAt: expect.any(Date),
-                    }
-                ])
+                events: expect.any(Array)
             });
-            expect(result.events).toHaveLength(3)
+            expect(_.orderBy(result.events, ['id'])).toEqual(_.orderBy([
+                {
+                    ...prepareEvent(reviewed),
+                    deletedAt: expect.any(Date),
+                    updatedAt: expect.any(Date),
+                },
+                {
+                    ...prepareEvent(refused),
+                    deletedAt: expect.any(Date),
+                    updatedAt: expect.any(Date),
+                },
+                {
+                    ...prepareEvent(published),
+                    deletedAt: expect.any(Date),
+                    updatedAt: expect.any(Date),
+                }
+            ], ['id']));
         });
     });
 

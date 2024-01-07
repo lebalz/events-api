@@ -7,6 +7,7 @@ import untisTeachers from "../../../src/models/untisTeachers";
 import { createSemester } from "./semesters.test";
 import { generateUntisLesson } from "../../factories/untisLesson";
 import { generateUntisTeacher } from "../../factories/untisTeacher";
+import _ from "lodash";
 
 export const createUntisLesson = async (props: Partial<Prisma.UntisLessonUncheckedCreateInput>) => {
     let sid: string = '';
@@ -73,9 +74,9 @@ describe('UntisTeacher', () => {
                 longName: 'Foo Bar',
                 name: 'abc',
                 title: 'M',
-                lessons: expect.arrayContaining([lesson_m, lesson_in])
+                lessons: expect.any(Array)
             });
-            expect(result!.lessons).toHaveLength(2);
+            expect(_.orderBy(result!.lessons, ['id'])).toEqual(_.orderBy([lesson_m, lesson_in], ['id']));
         });
     })
 });
