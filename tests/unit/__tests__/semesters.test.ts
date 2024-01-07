@@ -1,12 +1,12 @@
 import { Prisma, Role } from "@prisma/client";
 import Semesters from "../../../src/models/semesters";
-import prismock from "../__mocks__/prismockClient";
+import prisma from '../../../src/prisma';
 import { createUser } from "./users.test";
 import { HTTP400Error, HTTP403Error, HTTP404Error } from "../../../src/utils/errors/Errors";
 import { generateSemester } from "../../factories/semester";
 
 export const createSemester = async (props: Partial<Prisma.SemesterUncheckedCreateInput>) => {
-    return await prismock.semester.create({
+    return await prisma.semester.create({
         data: generateSemester(props)
     });
 }
@@ -27,8 +27,8 @@ describe('Semester', () => {
             });
         });
         test('throws on not existing record', async () => {
-            await expect(Semesters.findModel('i-dont-exist!')).rejects.toEqual(
-                new HTTP404Error('Semester with id i-dont-exist! not found')
+            await expect(Semesters.findModel('5bb04f7b-dec6-4335-9a84-bdf5fa5e2b87')).rejects.toEqual(
+                new HTTP404Error('Semester with id 5bb04f7b-dec6-4335-9a84-bdf5fa5e2b87! not found')
             );
         });
     });
@@ -92,7 +92,8 @@ describe('Semester', () => {
                 name: 'HS 2024',
                 start,
                 end,
-                untisSyncDate: syncDate
+                untisSyncDate: syncDate,
+                updatedAt: expect.any(Date)
             });
         });
         test('can not set end < start or start > end', async () => {
@@ -136,9 +137,9 @@ describe('Semester', () => {
         });
         test('delete semester removes lessons too', async () => {
             const admin = await createUser({ role: Role.ADMIN });
-            const klass = await prismock.untisClass.create({data: {name: '25h', sf: 'E', year: 2025}});
+            const klass = await prisma.untisClass.create({data: {name: '25h', sf: 'E', year: 2025}});
             const semester = await createSemester({});
-            const lesson = await prismock.untisLesson.create({
+            const lesson = await prisma.untisLesson.create({
                 data: {
                     description: 'Math', 
                     endHHMM: 1005,
@@ -158,8 +159,8 @@ describe('Semester', () => {
             await expect(Semesters.findModel(semester.id)).rejects.toEqual(
                 new HTTP404Error(`Semester with id ${semester.id} not found`)
             );
-            await expect(prismock.untisLesson.findUnique({where: {id: lesson.id}})).resolves.toEqual(null);
-            await expect(prismock.untisClass.findUnique({where: {id: klass.id}})).resolves.toEqual(klass);
+            await expect(prisma.untisLesson.findUnique({where: {id: lesson.id}})).resolves.toEqual(null);
+            await expect(prisma.untisClass.findUnique({where: {id: klass.id}})).resolves.toEqual(klass);
         });
     });
 });

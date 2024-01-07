@@ -17,7 +17,7 @@ export const prepareEvent = (event: (Event & {
     departments?: Department[];
 })): ApiEvent => {
     const children = event?.children || [];
-    const prepared = {
+    const prepared: ApiEvent = {
         ...event,
         job: undefined,
         author: undefined,

@@ -3,23 +3,24 @@ import { createDepartment } from './departments.test';
 import Events from '../../../src/models/events'
 import { prepareEvent } from '../../../src/models/event.helpers';
 import { HTTP400Error, HTTP403Error, HTTP404Error } from '../../../src/utils/errors/Errors';
-import prismock from '../__mocks__/prismockClient';
+import prisma from '../../../src/prisma';
 import { createUser } from './users.test';
 import { generateEvent } from '../../factories/event';
 import { setTimeout } from 'timers/promises';
+import _ from 'lodash';
 
 export const createEvent = async (props: (Partial<Prisma.EventUncheckedCreateInput> & {authorId: string})) => {
-	return await prismock.event.create({
+	return await prisma.event.create({
 		data: generateEvent(props)
 	});
 }
 
 describe('find event', () => {
 	test('returns event', async () => {
-		const user = await createUser({ id: 'user-1' })
-		const event = await createEvent({ id: 'event-1', authorId: user.id })
+		const user = await createUser({ id: 'd40f9b00-c6de-4a36-b976-a4218c22b599' })
+		const event = await createEvent({ id: 'a3ab1beb-34df-4fd1-8b3a-b96af77dd722', authorId: user.id })
 
-		await expect(Events.findModel(user, 'event-1')).resolves.toEqual({
+		await expect(Events.findModel(user, 'a3ab1beb-34df-4fd1-8b3a-b96af77dd722')).resolves.toEqual({
 			/** expect the prepared event to be returned
 			 * @see event.helpers.ts#prepareEvent 
 			 */
@@ -33,28 +34,28 @@ describe('find event', () => {
 		});
 	});
 	test('admin can get review event', async () => {
-		const user = await createUser({ id: 'user-1' })
-		const admin = await createUser({ id: 'admin', role: Role.ADMIN });
-		const event = await createEvent({ id: 'event-1', authorId: user.id, state: EventState.REVIEW });
+		const user = await createUser({})
+		const admin = await createUser({ role: Role.ADMIN });
+		const event = await createEvent({ authorId: user.id, state: EventState.REVIEW });
 		await expect(Events.findModel(admin, event.id)).resolves.toEqual(prepareEvent(event));
 	});
 	test('admin can get refused event', async () => {
-		const user = await createUser({ id: 'user-1' })
-		const admin = await createUser({ id: 'admin', role: Role.ADMIN });
-		const event = await createEvent({ id: 'event-1', authorId: user.id, state: EventState.REFUSED });
+		const user = await createUser({ })
+		const admin = await createUser({ role: Role.ADMIN });
+		const event = await createEvent({ authorId: user.id, state: EventState.REFUSED });
 
 		await expect(Events.findModel(admin, event.id)).resolves.toEqual(prepareEvent(event));
 	});
 	test('admin can not get draft event', async () => {
-		const user = await createUser({ id: 'user-1' })
-		const admin = await createUser({ id: 'admin', role: Role.ADMIN });
-		const event = await createEvent({ id: 'event-1', authorId: user.id, state: EventState.DRAFT });
+		const user = await createUser({})
+		const admin = await createUser({role: Role.ADMIN });
+		const event = await createEvent({authorId: user.id, state: EventState.DRAFT });
 
 		await expect(Events.findModel(admin, event.id)).rejects.toEqual(new HTTP403Error('Not authorized'));
 	});
 	test('throws 404 if event not found', async () => {
-		const user = await createUser({ id: 'user-1' })
-		await expect(Events.findModel(user, 'event-1')).rejects.toEqual(
+		const user = await createUser({})
+		await expect(Events.findModel(user, '7cf72375-4ee7-4a13-afeb-8d68883acdf4')).rejects.toEqual(
 			new HTTP404Error('Event not found')
 		);
 	})
@@ -62,20 +63,20 @@ describe('find event', () => {
 
 describe('updateEvent', () => {
 	test('update DRAFT', async () => {
-		const user = await createUser({ id: 'user-1' })
-		const event = await createEvent({ id: 'event-1', authorId: user.id, state: EventState.DRAFT })
+		const user = await createUser({})
+		const event = await createEvent({authorId: user.id, state: EventState.DRAFT })
 
 
 		await expect(Events.updateModel(user, event.id, { description: 'hello' })).resolves.toEqual(prepareEvent({
 			...event,
-			description: 'hello'
+			description: 'hello',
+			updatedAt: expect.any(Date)
 		}));
 	});
 	test('can add departments to a draft', async () => {
-		const user = await createUser({ id: 'user-1' })
-		const dep1 = await createDepartment({ id: 'dep-1' });
+		const user = await createUser({})
+		const dep1 = await createDepartment({});
 		const event = await createEvent({
-			id: 'event-1',
 			authorId: user.id,
 			state: EventState.DRAFT,
 			departments: {
@@ -88,53 +89,55 @@ describe('updateEvent', () => {
 			...event,
 			description: 'hello',
 			departments: [dep1],
+			updatedAt: expect.any(Date)
 		}));
 	});
 	test('can not update not existant event', async () => {
-		const user = await createUser({ id: 'user-1' })
+		const user = await createUser({})
 
-		await expect(Events.updateModel(user, 'event-1', {})).rejects.toEqual(
+		await expect(Events.updateModel(user, '7cf72375-4ee7-4a13-afeb-8d68883acdf4', {})).rejects.toEqual(
 			new HTTP404Error('Event not found')
 		);
 	});
 	test('can not update another users events', async () => {
-		const user = await createUser({ id: 'user-1' })
-		const event = await createEvent({ id: 'event-1', authorId: 'felix', state: EventState.DRAFT })
+		const user = await createUser({ });
+		const malory = await createUser({ });
+		const event = await createEvent({ authorId: user.id, state: EventState.DRAFT })
 
 
-		await expect(Events.updateModel(user, 'event-1', { description: 'hello' })).rejects.toEqual(
+		await expect(Events.updateModel(malory, event.id, { description: 'hello' })).rejects.toEqual(
 			new HTTP403Error('Not authorized')
 		);
 	});
 
 	test('update PUBLISHED creates a version', async () => {
-		const user = await createUser({ id: 'user-1' })
-		const event = await createEvent({ id: 'event-1', authorId: user.id, state: EventState.PUBLISHED, description: 'published' })
+		const user = await createUser({})
+		const event = await createEvent({authorId: user.id, state: EventState.PUBLISHED, description: 'published' })
 
 
-		await expect(Events.updateModel(user, 'event-1', { description: 'hello' })).resolves.toEqual(prepareEvent({
+		await expect(Events.updateModel(user, event.id, { description: 'hello' })).resolves.toEqual(prepareEvent({
 			...event,
 			id: expect.any(String),
 			state: EventState.DRAFT,
 			createdAt: expect.any(Date),
 			updatedAt: expect.any(Date),
-			parentId: 'event-1',
+			parentId: event.id,
 			description: 'hello'
 		}));
 	});
 
 	test('update PUBLISHED with departments creates a version', async () => {
-		const user = await createUser({ id: 'user-1' })
-		const department = await createDepartment({ id: 'dep-1' });
-		const event = await createEvent({ id: 'event-1', authorId: user.id, state: EventState.PUBLISHED, description: 'published', departments: { connect: { id: department.id } } })
+		const user = await createUser({ id: '3535b2ee-806f-425c-a4f5-394d8b16f6f9' })
+		const department = await createDepartment({ id: 'ed588f55-0e3b-425c-8adf-87cb15b80ac2' });
+		const event = await createEvent({ id: '7cf72375-4ee7-4a13-afeb-8d68883acdf4', authorId: user.id, state: EventState.PUBLISHED, description: 'published', departments: { connect: { id: department.id } } })
 
-		await expect(Events.updateModel(user, 'event-1', { description: 'hello', departmentIds: [department.id] })).resolves.toEqual(prepareEvent({
+		await expect(Events.updateModel(user, '7cf72375-4ee7-4a13-afeb-8d68883acdf4', { description: 'hello', departmentIds: [department.id] })).resolves.toEqual(prepareEvent({
 			...event,
 			id: expect.any(String),
 			state: EventState.DRAFT,
 			createdAt: expect.any(Date),
 			updatedAt: expect.any(Date),
-			parentId: 'event-1',
+			parentId: '7cf72375-4ee7-4a13-afeb-8d68883acdf4',
 			description: 'hello',
 			departments: [department]
 		}));
@@ -144,15 +147,15 @@ describe('updateEvent', () => {
 describe('setState transitions', () => {
 
 	test('thorws on not found event', async () => {
-		const user = await createUser({ id: 'user-1' })
-		await expect(Events.setState(user, 'event-1', EventState.REVIEW)).rejects.toEqual(
+		const user = await createUser({ id: '3535b2ee-806f-425c-a4f5-394d8b16f6f9' })
+		await expect(Events.setState(user, '7cf72375-4ee7-4a13-afeb-8d68883acdf4', EventState.REVIEW)).rejects.toEqual(
 			new HTTP404Error('Event not found')
 		);
 	});
 
 	test('thorws when not the author', async () => {
-		const user = await createUser({ id: 'user-1' })
-		const malory = await createUser({ id: 'malory' })
+		const user = await createUser({ id: '3535b2ee-806f-425c-a4f5-394d8b16f6f9' })
+		const malory = await createUser({ id: 'e470e2cf-2a8c-453a-92d8-e04d21ea1547' })
 		const event = await createEvent({authorId: user.id});
 
 		await expect(Events.setState(malory, event.id, EventState.REVIEW)).rejects.toEqual(
@@ -161,69 +164,64 @@ describe('setState transitions', () => {
 	});
 
 	test('DRAFT -> REVIEW', async () => {
-		const user = await createUser({ id: 'user-1' })
-		const event = await createEvent({ id: 'event-1', authorId: user.id, state: EventState.DRAFT })
+		const user = await createUser({ id: '3535b2ee-806f-425c-a4f5-394d8b16f6f9' })
+		const event = await createEvent({ id: '7cf72375-4ee7-4a13-afeb-8d68883acdf4', authorId: user.id, state: EventState.DRAFT })
 
-		await expect(Events.setState(user, 'event-1', EventState.REVIEW)).resolves.toEqual({
+		await expect(Events.setState(user, '7cf72375-4ee7-4a13-afeb-8d68883acdf4', EventState.REVIEW)).resolves.toEqual({
 			event: {
 				/** expect the prepared event to be returned
 				 * @see event.helpers.ts#prepareEvent 
 				 */
 				...event,
 				state: EventState.REVIEW,
-				author: undefined,
-				departments: undefined,
 				departmentIds: [],
-				job: undefined,
-				children: undefined,
-				publishedVersionIds: []
+				publishedVersionIds: [],
+				updatedAt: expect.any(Date)
 			},
 			affected: []
 		});
 	});
 
 	test('DRAFT -> PUBLISHED', async () => {
-		const user = await createUser({ id: 'user-1' })
-		const event = await createEvent({ id: 'event-1', authorId: user.id, state: EventState.DRAFT })
+		const user = await createUser({ id: '3535b2ee-806f-425c-a4f5-394d8b16f6f9' })
+		const event = await createEvent({ id: '7cf72375-4ee7-4a13-afeb-8d68883acdf4', authorId: user.id, state: EventState.DRAFT })
 
-		await expect(Events.setState(user, 'event-1', EventState.PUBLISHED)).rejects.toEqual(
+		await expect(Events.setState(user, '7cf72375-4ee7-4a13-afeb-8d68883acdf4', EventState.PUBLISHED)).rejects.toEqual(
 			new HTTP400Error('Draft can only be set to review')
 		);
 	});
 
 	test('DRAFT -> REFUSED', async () => {
-		const user = await createUser({ id: 'user-1' })
-		const event = await createEvent({ id: 'event-1', authorId: user.id, state: EventState.DRAFT })
+		const user = await createUser({ id: '3535b2ee-806f-425c-a4f5-394d8b16f6f9' })
+		const event = await createEvent({ id: '7cf72375-4ee7-4a13-afeb-8d68883acdf4', authorId: user.id, state: EventState.DRAFT })
 
-		await expect(Events.setState(user, 'event-1', EventState.REFUSED)).rejects.toEqual(
+		await expect(Events.setState(user, '7cf72375-4ee7-4a13-afeb-8d68883acdf4', EventState.REFUSED)).rejects.toEqual(
 			new HTTP400Error('Draft can only be set to review')
 		);
 	});
 
 	test('REFUSED -> PUBLISHED', async () => {
-		const user = await createUser({ id: 'user-1' })
-		const event = await createEvent({ id: 'event-1', authorId: user.id, state: EventState.REFUSED })
+		const user = await createUser({ id: '3535b2ee-806f-425c-a4f5-394d8b16f6f9' })
+		const event = await createEvent({ id: '7cf72375-4ee7-4a13-afeb-8d68883acdf4', authorId: user.id, state: EventState.REFUSED })
 
-		await expect(Events.setState(user, 'event-1', EventState.PUBLISHED)).rejects.toEqual(
+		await expect(Events.setState(user, '7cf72375-4ee7-4a13-afeb-8d68883acdf4', EventState.PUBLISHED)).rejects.toEqual(
 			new HTTP400Error('REFUSED state is immutable')
 		);
 	});
 
 	test('PUBLISHED -> REFUSED', async () => {
-		const user = await createUser({ id: 'user-1' })
-		const event = await createEvent({ id: 'event-1', authorId: user.id, state: EventState.PUBLISHED })
+		const user = await createUser({ id: '3535b2ee-806f-425c-a4f5-394d8b16f6f9' })
+		const event = await createEvent({ id: '7cf72375-4ee7-4a13-afeb-8d68883acdf4', authorId: user.id, state: EventState.PUBLISHED })
 
-		await expect(Events.setState(user, 'event-1', EventState.REFUSED)).rejects.toEqual(
+		await expect(Events.setState(user, '7cf72375-4ee7-4a13-afeb-8d68883acdf4', EventState.REFUSED)).rejects.toEqual(
 			new HTTP400Error('PUBLISHED state is immutable')
 		);
 	});
 
 	test('versioned DRAFT -> REVIEW', async () => {
-		const user = await createUser({ id: 'user-1' })
-		const parent = await createEvent({ id: 'parent', authorId: user.id, state: EventState.PUBLISHED })
-		const event = await createEvent({ id: 'child', authorId: user.id, state: EventState.DRAFT, parentId: parent.id })
-
-		prismock.$queryRaw = jest.fn().mockResolvedValueOnce([{ id: parent.id, parent_id: null }]);
+		const user = await createUser({ id: '3535b2ee-806f-425c-a4f5-394d8b16f6f9' })
+		const parent = await createEvent({ id: '85858beb-1a47-45cd-9c3f-e89834064e2a', authorId: user.id, state: EventState.PUBLISHED })
+		const event = await createEvent({ id: '0755243d-10b4-4450-a239-30478df36b71', authorId: user.id, state: EventState.DRAFT, parentId: parent.id })
 
 		/** expect the prepared event to be returned
 		 * @see event.helpers.ts#prepareEvent 
@@ -232,24 +230,19 @@ describe('setState transitions', () => {
 			event: {
 				...event,
 				state: EventState.REVIEW,
-				author: undefined,
-				departments: undefined,
 				departmentIds: [],
-				job: undefined,
-				children: undefined,
-				publishedVersionIds: []
+				publishedVersionIds: [],
+				updatedAt: expect.any(Date)
 			},
 			affected: []
 		});
 	});
 
 	test('versioned DRAFT of old version -> REVIEW', async () => {
-		const user = await createUser({ id: 'user-1' });
-		const ancestor1 = await createEvent({ id: 'ancestor1', authorId: user.id, state: EventState.PUBLISHED });
-		const ancestor2 = await createEvent({ id: 'ancestor2', authorId: user.id, state: EventState.PUBLISHED, parentId: ancestor1.id });
-		const event = await createEvent({ id: 'child', authorId: user.id, state: EventState.DRAFT, parentId: ancestor2.id });
-
-		prismock.$queryRaw = jest.fn().mockResolvedValueOnce([{ id: ancestor1.id, parent_id: null }]);
+		const user = await createUser({ id: '3535b2ee-806f-425c-a4f5-394d8b16f6f9' });
+		const ancestor1 = await createEvent({ id: 'e1a38f26-8da7-43b4-be5d-49ee81d20490', authorId: user.id, state: EventState.PUBLISHED });
+		const ancestor2 = await createEvent({ id: 'b026edeb-819b-42e0-bd5f-e3d897b8e7ab', authorId: user.id, state: EventState.PUBLISHED, parentId: ancestor1.id });
+		const event = await createEvent({ id: 'b793261c-b6cd-4d4d-94d0-7bffbc671a76', authorId: user.id, state: EventState.DRAFT, parentId: ancestor2.id });
 
 		/** expect the prepared event to be returned
 		 * @see event.helpers.ts#prepareEvent 
@@ -258,22 +251,19 @@ describe('setState transitions', () => {
 			event: {
 				...event,
 				state: EventState.REVIEW,
-				author: undefined,
-				departments: undefined,
 				departmentIds: [],
-				job: undefined,
-				children: undefined,
 				parentId: ancestor1.id,
-				publishedVersionIds: []
+				publishedVersionIds: [],
+				updatedAt: expect.any(Date)
 			},
 			affected: []
 		});
 	});
 	test('versioned REVIEW version -> PUBLISHED', async () => {
-		const user = await createUser({ id: 'user-1' })
-		const current = await createEvent({ id: 'ancestor1', authorId: user.id, description: 'hello', state: EventState.PUBLISHED })
-		const nextCurrent = await createEvent({ id: 'child', authorId: user.id, description: 'fancy hello', state: EventState.REVIEW, parentId: current.id })
-		const admin = await createUser({ id: 'admin', role: Role.ADMIN });
+		const user = await createUser({ id: '3535b2ee-806f-425c-a4f5-394d8b16f6f9' })
+		const current = await createEvent({ id: 'edbef86b-c527-4fda-aaa0-b4638618dde3', authorId: user.id, description: 'hello', state: EventState.PUBLISHED })
+		const nextCurrent = await createEvent({ id: '0c9a59a4-0be9-40a8-80bc-b5a9c228166d', authorId: user.id, description: 'fancy hello', state: EventState.REVIEW, parentId: current.id })
+		const admin = await createUser({ id: '1dc09750-e026-4f81-923f-0d50202297c7', role: Role.ADMIN });
 		await setTimeout(100);
 		
 		const newCurrent = {
@@ -285,7 +275,7 @@ describe('setState transitions', () => {
 			departmentIds: [],
 			children: undefined,
 			parentId: null,
-			publishedVersionIds: ['child']
+			publishedVersionIds: [nextCurrent.id]
 		};
 
 		const oldCurrent = {
@@ -307,56 +297,60 @@ describe('setState transitions', () => {
 
 describe('destroyEvent', () => {
 	test('destroy DRAFT', async () => {
-		const user = await createUser({ id: 'user-1' })
-		const event = await createEvent({ id: 'event-1', authorId: user.id, state: EventState.DRAFT })
+		const user = await createUser({ id: '3535b2ee-806f-425c-a4f5-394d8b16f6f9' })
+		const event = await createEvent({ id: '7cf72375-4ee7-4a13-afeb-8d68883acdf4', authorId: user.id, state: EventState.DRAFT })
 
 		await expect(Events.destroy(user, event.id)).resolves.toEqual(prepareEvent(event));
 	});
 	test('destroy REVIEW', async () => {
-		const user = await createUser({ id: 'user-1' })
-		const event = await createEvent({ id: 'event-1', authorId: user.id, state: EventState.REVIEW })
+		const user = await createUser({ id: '3535b2ee-806f-425c-a4f5-394d8b16f6f9' })
+		const event = await createEvent({ id: '7cf72375-4ee7-4a13-afeb-8d68883acdf4', authorId: user.id, state: EventState.REVIEW })
 
 		await expect(Events.destroy(user, event.id)).resolves.toEqual(prepareEvent({
 			...event,
-			deletedAt: expect.any(Date)
+			deletedAt: expect.any(Date),
+			updatedAt: expect.any(Date)
 		}));
 	});
 	test('destroy REFUSED', async () => {
-		const user = await createUser({ id: 'user-1' })
-		const event = await createEvent({ id: 'event-1', authorId: user.id, state: EventState.REFUSED })
+		const user = await createUser({ id: '3535b2ee-806f-425c-a4f5-394d8b16f6f9' })
+		const event = await createEvent({ id: '7cf72375-4ee7-4a13-afeb-8d68883acdf4', authorId: user.id, state: EventState.REFUSED })
 
 		await expect(Events.destroy(user, event.id)).resolves.toEqual(prepareEvent({
 			...event,
-			deletedAt: expect.any(Date)
+			deletedAt: expect.any(Date),
+			updatedAt: expect.any(Date)
 		}));
 	});
 	test('destroy PUBLISHED', async () => {
-		const user = await createUser({ id: 'user-1' })
-		const event = await createEvent({ id: 'event-1', authorId: user.id, state: EventState.PUBLISHED })
+		const user = await createUser({ id: '3535b2ee-806f-425c-a4f5-394d8b16f6f9' })
+		const event = await createEvent({ id: '7cf72375-4ee7-4a13-afeb-8d68883acdf4', authorId: user.id, state: EventState.PUBLISHED })
 
 		await expect(Events.destroy(user, event.id)).resolves.toEqual(prepareEvent({
 			...event,
-			deletedAt: expect.any(Date)
+			deletedAt: expect.any(Date),
+			updatedAt: expect.any(Date)
 		}));
 	});
 
 	test('user can not delete other users event', async () => {
-		const user = await createUser({ id: 'user-1' })
-		const malory = await createUser({ id: 'malory' })
-		const event = await createEvent({ id: 'event-1', authorId: user.id, state: EventState.PUBLISHED })
+		const user = await createUser({ id: '3535b2ee-806f-425c-a4f5-394d8b16f6f9' })
+		const malory = await createUser({ id: '10f61d90-22dd-495d-80b0-76f50f8bd3eb' })
+		const event = await createEvent({ id: '7cf72375-4ee7-4a13-afeb-8d68883acdf4', authorId: user.id, state: EventState.PUBLISHED })
 
 		await expect(Events.destroy(malory, event.id)).rejects.toEqual(
 			new HTTP403Error('Not authorized')
 		);
 	});
 	test('admin can delete users event', async () => {
-		const user = await createUser({ id: 'user-1' })
-		const admin = await createUser({ id: 'malory', role: Role.ADMIN })
-		const event = await createEvent({ id: 'event-1', authorId: user.id, state: EventState.PUBLISHED })
+		const user = await createUser({ id: '3535b2ee-806f-425c-a4f5-394d8b16f6f9' })
+		const admin = await createUser({ id: 'ccccbd50-99ee-4e75-bb83-d6517ea604b2', role: Role.ADMIN })
+		const event = await createEvent({ id: '7cf72375-4ee7-4a13-afeb-8d68883acdf4', authorId: user.id, state: EventState.PUBLISHED })
 
 		await expect(Events.destroy(admin, event.id)).resolves.toEqual(prepareEvent({
 			...event,
-			deletedAt: expect.any(Date)
+			deletedAt: expect.any(Date),
+			updatedAt: expect.any(Date)
 		}));
 	});
 
@@ -364,20 +358,21 @@ describe('destroyEvent', () => {
 
 describe('allEvents', () => {
 	const setup = async () => {
-		const maria = await createUser({ id: 'maria' });
-		const jack = await createUser({ id: 'jack', role: Role.ADMIN });
+		const maria = await createUser({ id: 'ef7ff841-7ed6-40ef-aad3-98c10b74d46d' });
+		const jack = await createUser({ id: '3014d09d-0561-40f6-bd54-e625f4e85866', role: Role.ADMIN });
 
-		const pub1 = await createEvent({ id: 'pub-1', authorId: maria.id, state: EventState.PUBLISHED });
-		const draft1 = await createEvent({ id: 'draft-1', authorId: maria.id, state: EventState.DRAFT });
-		const refused1 = await createEvent({ id: 'refused-1', authorId: maria.id, state: EventState.REFUSED });
-		const review1 = await createEvent({ id: 'review-1', authorId: maria.id, state: EventState.REVIEW });
+		const pub1 = await createEvent({ id: '76d34384-1097-4943-92d4-735a4961a50d', start: new Date('2023-12-01'), authorId: maria.id, state: EventState.PUBLISHED });
+		const draft1 = await createEvent({ id: '01b68072-ecba-4664-83cb-2fe18040d0de', start: new Date('2023-12-02'), authorId: maria.id, state: EventState.DRAFT });
+		const refused1 = await createEvent({ id: '15389d02-9c3c-4e40-aeb9-8af7c69536f2', start: new Date('2023-12-03'), authorId: maria.id, state: EventState.REFUSED });
+		const review1 = await createEvent({ id: '8affc252-9a39-427c-9fe6-393e4408b070', start: new Date('2023-12-04'), authorId: maria.id, state: EventState.REVIEW });
 
-		const pub2 = await createEvent({ id: 'pub-2', authorId: jack.id, state: EventState.PUBLISHED });
-		const draft2 = await createEvent({ id: 'draft-2', authorId: jack.id, state: EventState.DRAFT });
+		const pub2 = await createEvent({ id: '38e9cae1-760c-487b-8780-20657136a5bd', start: new Date('2023-12-29'), authorId: jack.id, state: EventState.PUBLISHED });
+		const draft2 = await createEvent({ id: '2f33669b-e359-45fa-81d8-164b80d390c3', start: new Date('2023-12-30'), authorId: jack.id, state: EventState.DRAFT });
 		return { maria, jack, pub1, draft1, refused1, review1, pub2, draft2};
 	};
 	test('all published Events for anonyme user', async () => {
 		const {pub1, pub2} = await setup();
+
 		await expect(Events.all()).resolves.toEqual([
 			prepareEvent(pub1),
 			prepareEvent(pub2),
@@ -407,9 +402,9 @@ describe('allEvents', () => {
 
 describe('cloneEvent', () => {
 	test('clone Event', async () => {
-		const reto = await createUser({ id: 'user-1' })
-		const maria = await createUser({ id: 'user-2' })
-		const event = await createEvent({ id: 'event-1', authorId: maria.id, state: EventState.PUBLISHED, createdAt: new Date(2021, 1, 1), updatedAt: new Date(2021, 1, 2) })
+		const reto = await createUser({ id: '3535b2ee-806f-425c-a4f5-394d8b16f6f9' })
+		const maria = await createUser({ id: '8b2774ad-a9e7-4e49-850b-8a36ed6cef0a' })
+		const event = await createEvent({ id: '7cf72375-4ee7-4a13-afeb-8d68883acdf4', authorId: maria.id, state: EventState.PUBLISHED, createdAt: new Date(2021, 1, 1), updatedAt: new Date(2021, 1, 2) })
 
 		const clone = await Events.cloneModel(reto, event.id);
 		expect(clone).toHaveProperty('id', expect.any(String));
@@ -426,12 +421,12 @@ describe('cloneEvent', () => {
 		}));
 	});
 	test('clone Event with departments', async () => {
-		const reto = await await createUser({ id: 'user-1' })
-		const maria = await await createUser({ id: 'user-1' })
-		const dep1 = await createDepartment({ id: 'dep-1' });
-		const dep2 = await createDepartment({ id: 'dep-2' });
+		const reto = await await createUser({ id: '3535b2ee-806f-425c-a4f5-394d8b16f6f9' })
+		const maria = await await createUser({ id: 'b48d8aa1-e83b-4e02-b01b-7f06cc188c99' })
+		const dep1 = await createDepartment({ id: 'ed588f55-0e3b-425c-8adf-87cb15b80ac2' });
+		const dep2 = await createDepartment({ id: '326ab517-582d-4bc5-bd42-44c23b622abf' });
 		const event = await createEvent({
-			id: 'event-1',
+			id: '7cf72375-4ee7-4a13-afeb-8d68883acdf4',
 			authorId: maria.id,
 			state: EventState.PUBLISHED,
 			createdAt: new Date(2021, 1, 1),

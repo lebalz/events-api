@@ -1,7 +1,7 @@
 datasource db {
     provider = "postgresql"
     url      = env("DATABASE_URL")
-    extensions = [pg_trgm]
+    extensions = [pg_trgm, pgcrypto]
 }
 
 generator client {
@@ -19,7 +19,7 @@ generator dbml {
 }
 
 model User {
-    id          String            @id @default(uuid()) @db.Uuid
+    id          String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
     email       String            @unique
     untis       UntisTeacher?     @relation(fields: [untisId], references: [id])
     untisId     Int?              @unique @map("untis_id")
@@ -37,7 +37,7 @@ model User {
 }
 
 model Event {
-    id       String @id @default(uuid()) @db.Uuid
+    id       String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
     author   User   @relation("events", fields: [authorId], references: [id])
     authorId String @map("author_id") @db.Uuid()
 
@@ -68,6 +68,8 @@ model Event {
     departments  Department[] @relation("events_to_departments")
 
     audience     EventAudience @default(STUDENTS)
+    // wheter the bilinguale teachers of the classes are affected
+    affectsDepartment2 Boolean?   @default(false) @map("affects_department2")
 
     teachingAffected TeachingAffected @default(YES) @map("teaching_affected")
 
@@ -79,7 +81,7 @@ model Event {
 }
 
 model UserEventGroup {
-    id          String  @id @default(uuid()) @db.Uuid
+    id          String  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
     name        String  @default("")
     description String  @default("")
     user        User    @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -93,11 +95,19 @@ model UserEventGroup {
 }
 
 model Department {
-    id           String   @id @default(uuid()) @db.Uuid
+    id           String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
     name         String   @unique
     description  String   @default("")
     letter       String   @default("")
     classLetters String[] @default([])
+    
+    department1_Id  String?    @map("department1_id") @db.Uuid() @unique
+    department1   Department? @relation("Department1", fields: [department1_Id], references: [id])
+    childDepartment1   Department? @relation("Department1")
+
+    department2_Id  String?    @map("department2_id") @db.Uuid() @unique
+    department2   Department? @relation("Department2", fields: [department2_Id], references: [id])
+    childDepartment2   Department? @relation("Department2")
 
     classes UntisClass[]
     events  Event[]      @relation("events_to_departments")
@@ -110,7 +120,7 @@ model Department {
 }
 
 model Semester {
-    id            String        @id @default(uuid()) @db.Uuid
+    id            String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
     name          String
     start         DateTime
     end           DateTime
@@ -124,7 +134,7 @@ model Semester {
 }
 
 model RegistrationPeriod {
-    id        String   @id @default(uuid()) @db.Uuid
+    id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
     name      String
     start     DateTime
     end       DateTime
@@ -135,7 +145,7 @@ model RegistrationPeriod {
 }
 
 model Job {
-    id    String   @id @default(uuid()) @db.Uuid
+    id    String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
     type  JobType
     state JobState @default(PENDING)
 
@@ -216,27 +226,6 @@ model Session {
   @@map("session")
 }
 
-view view_UsersTeaching {
-    userId              String @map("u_id") @db.Uuid
-    userEmail           String @map("u_email")
-    classId             Int    @map("c_id")
-    className           String @map("c_name")
-    classNameLegacy     String @map("c_name_legacy")
-    lessonId            Int    @map("l_id")
-    lessonSubject       String @map("l_subject")
-    lessonStartHHMM     Int    @map("l_start_hhmm")
-    lessonEndHHMM       Int    @map("l_end_hhmm")
-    lessonWeekDay       Int    @map("l_week_day")
-    lessonSemesterId    String @map("l_semester_id") @db.Uuid
-    departmentId        String @map("d_id") @db.Uuid
-    departmentName      String @map("d_name")
-    klp                 String? @map("klp")
-    klpDepartmentId     String? @map("klp_department_id")
-    untis_teacher_id    Int?    @map("untis_teacher_id")
-
-    @@unique([userId, classId, lessonId, departmentId])
-    @@map("view__users_teaching")
-}
 
 view view_Events {
     eventId         String           @map("e_id") @db.Uuid
@@ -247,7 +236,8 @@ view view_Events {
     description     String           @map("description")
     class_groups    String[]         @map("class_groups")
     audience        EventAudience    @map("audience")
-    department_ids  String[]         @map("department_ids") @db.Uuid
+    departmentIds   String[]         @map("department_ids") @db.Uuid
+    departmentSchoolIds  String[]    @map("department_school_ids") @db.Uuid
     yearStart       Decimal          @map("year_s") @db.Decimal
     yearEnd         Decimal          @map("year_e") @db.Decimal
     startWeekDay    Decimal          @map("start_week_day") @db.Decimal
@@ -261,15 +251,38 @@ view view_Events {
     @@map("view__events")
 }
 
+view view_UsersTeaching {
+    userId              String @map("u_id") @db.Uuid
+    userEmail           String @map("u_email")
+    classId             Int    @map("c_id")
+    className           String @map("c_name")
+    classNameLegacy     String? @map("c_name_legacy")
+    lessonId            Int    @map("l_id")
+    lessonSubject       String @map("l_subject")
+    lessonStartHHMM     Int    @map("l_start_hhmm")
+    lessonEndHHMM       Int    @map("l_end_hhmm")
+    lessonWeekDay       Int    @map("l_week_day")
+    lessonSemesterId    String @map("l_semester_id") @db.Uuid
+    departmentId        String @map("d_id") @db.Uuid
+    departmentSchoolId  String @map("d_school_id")
+    departmentName      String @map("d_name")
+    untis_teacher_id    Int?    @map("untis_teacher_id")
+
+    @@unique([userId, classId, lessonId, departmentId])
+    @@map("view__users_teaching")
+}
+
 view view_UsersTeachingAggregated {
     uId              String   @map("u_id") @db.Uuid
     lSemesterId      String   @map("l_semester_id") @db.Uuid
     classIds         Int[]    @map("class_ids")
     classNames       String[] @map("class_names")
-    legacyClassNames String[] @map("legacy_class_names")
     subjects         String[] @map("subjects")
     departmentIds    String[] @map("department_ids") @db.Uuid
+    departmentSchoolIds    String[] @map("department_school_ids") @db.Uuid
     departmentNames  String[] @map("department_names")
+    klp                 String? @map("klp")
+    klpDepartmentId     String? @map("klp_department_id")
 
     @@unique([lSemesterId])
     @@map("view__users_teaching_agg")
@@ -290,15 +303,15 @@ view view_UsersAffectedByEvents {
     userId         String   @map("u_id") @db.Uuid
     semesterId     String   @map("s_id") @db.Uuid
 
-    id       String @id @default(uuid()) @db.Uuid
+    id       String @id @db.Uuid
     authorId String @map("author_id") @db.Uuid()
 
     start DateTime
     end   DateTime
 
-    location        String
-    description     String
-    descriptionLong String @map("description_long")
+    location        String @default("")
+    description     String @default("")
+    descriptionLong String @default("") @map("description_long")
 
     state EventState @default(DRAFT)
     cloned Boolean    @default(false)
@@ -315,6 +328,8 @@ view view_UsersAffectedByEvents {
     classGroups  String[]     @default([]) @map("class_groups")
 
     audience     EventAudience @default(STUDENTS)
+    // wheter the bilinguale teachers of the classes are affected
+    affectsDepartment2 Boolean?   @default(false) @map("affects_department2")
 
     teachingAffected TeachingAffected @default(YES) @map("teaching_affected")
 
@@ -380,6 +395,8 @@ view view_EventsClasses {
     audience     EventAudience @default(STUDENTS)
 
     teachingAffected TeachingAffected @default(YES) @map("teaching_affected")
+    // wheter the bilinguale teachers of the classes are affected
+    affectsDepartment2 Boolean?   @default(false) @map("affects_department2")
 
     createdAt DateTime  @default(now()) @map("created_at")
     updatedAt DateTime  @updatedAt @default(now()) @map("updated_at")

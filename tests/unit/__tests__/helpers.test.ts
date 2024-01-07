@@ -3,7 +3,8 @@ import { getNameFromEmail } from "../../../src/helpers/email";
 import { Departments, toDepartmentName } from "../../../src/services/helpers/departmentNames";
 import { KlassName } from "../../../src/services/helpers/klassNames";
 import { chunks } from "../../../src/services/helpers/splitInChunks";
-import prismock from "../__mocks__/prismockClient";
+import prisma from '../../../src/prisma';
+
 
 describe('Split In Chunks', () => {
 	test('fn chunks', async () => {
@@ -52,9 +53,9 @@ describe('findUser from auth info', () => {
             name: 'Dorodan Zingaro Maximilian',
             oid: 'a8407e9c-be32-46af-a69d-e35a569f76ad'
         };
-        await expect(prismock.user.findMany()).resolves.toEqual([]);
+        await expect(prisma.user.findMany()).resolves.toEqual([]);
         await findUser(authInfo);
-        await expect(prismock.user.findMany()).resolves.toEqual([{
+        await expect(prisma.user.findMany()).resolves.toEqual([{
             id: 'a8407e9c-be32-46af-a69d-e35a569f76ad',
             email: 'maximilian.dorodan@abcd.ch',
             firstName: 'Maximilian',
@@ -71,9 +72,9 @@ describe('findUser from auth info', () => {
             preferred_username: 'Maximilian.Dorodan@abcd.ch',
             oid: 'a8407e9c-be32-46af-a69d-e35a569f76ad'
         };
-        await expect(prismock.user.findMany()).resolves.toEqual([]);
+        await expect(prisma.user.findMany()).resolves.toEqual([]);
         await findUser(authInfo);
-        await expect(prismock.user.findMany()).resolves.toEqual([{
+        await expect(prisma.user.findMany()).resolves.toEqual([{
             id: 'a8407e9c-be32-46af-a69d-e35a569f76ad',
             email: 'maximilian.dorodan@abcd.ch',
             firstName: 'Maximilian',
@@ -86,7 +87,7 @@ describe('findUser from auth info', () => {
         }]);
     });
     test('updates user', async () => {
-        await prismock.user.create({
+        await prisma.user.create({
             data: {
                 id: 'a8407e9c-be32-46af-a69d-e35a569f76ad',
                 email: 'Maximilian.Dorodan@abcd.ch',
@@ -94,7 +95,7 @@ describe('findUser from auth info', () => {
                 lastName: 'Dorodan'
             }
         });
-        const old = await prismock.user.findFirst();
+        const old = await prisma.user.findFirst();
         expect(old?.lastName).toEqual('Dorodan');
 
         const authInfo = {
@@ -103,7 +104,7 @@ describe('findUser from auth info', () => {
             oid: 'a8407e9c-be32-46af-a69d-e35a569f76ad'
         };
         await findUser(authInfo);
-        await expect(prismock.user.findMany()).resolves.toEqual([{
+        await expect(prisma.user.findMany()).resolves.toEqual([{
             id: 'a8407e9c-be32-46af-a69d-e35a569f76ad',
             email: 'maximilian.dorodan@abcd.ch',
             firstName: 'Maximilian',

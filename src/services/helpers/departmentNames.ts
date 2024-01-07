@@ -56,6 +56,56 @@ export const Departments = {
   GYMDBilingual: 'GBSL/GBJB',
   PASSERELLE: 'Passerelle',
 }
+export const SchoolDepartments: {[key in keyof typeof Departments]: {main: typeof Departments[key], dep_1?: typeof Departments[key], dep_2?: typeof Departments[key]}} = {
+    WMS: {
+        main: Departments.WMS,
+    },
+    ESC: {
+        main: Departments.ESC,
+    },
+    ECG: {
+        main: Departments.ECG,
+    },
+    FMPaed: {
+        main: Departments.FMPaed,
+    },
+    MSOP: {
+        main: Departments.MSOP,
+    },
+    FMS: {
+        main: Departments.FMS,
+    },
+    GYMD: {
+        main: Departments.GYMD,
+    },
+    GYMF: {
+        main: Departments.GYMF,
+    },
+    PASSERELLE: {
+        main: Departments.PASSERELLE
+    },
+    /** bilingue departments must come last */
+    ECGBilingual: {
+        main: Departments.ECGBilingual,
+        dep_1: Departments.ECG,
+        dep_2: Departments.FMS,
+    },
+    GYMFBilingual: {
+        main: Departments.GYMFBilingual,
+        dep_1: Departments.GYMF,
+        dep_2: Departments.GYMD,
+    },
+    GYMDBilingual: {
+        main: Departments.GYMDBilingual,
+        dep_1: Departments.GYMD,
+        dep_2: Departments.GYMF,
+    },
+    FMSBilingual: {
+        main: Departments.FMSBilingual,
+        dep_1: Departments.FMS,
+        dep_2: Departments.ECG,
+    },
+}
 
 export const Colors: {[key in keyof typeof Departments]: string} = {
     WMS: '#31a555',

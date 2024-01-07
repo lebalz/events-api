@@ -40,6 +40,7 @@ Table events {
   classGroups String[] [not null]
   departments departments [not null]
   audience EventAudience [not null, default: 'STUDENTS']
+  affectsDepartment2 Boolean [default: false]
   teachingAffected TeachingAffected [not null, default: 'YES']
   createdAt DateTime [default: `now()`, not null]
   updatedAt DateTime [default: `now()`, not null]
@@ -63,6 +64,12 @@ Table departments {
   description String [not null, default: '']
   letter String [not null, default: '']
   classLetters String[] [not null]
+  department1_Id String [unique]
+  department1 departments
+  childDepartment1 departments
+  department2_Id String [unique]
+  department2 departments
+  childDepartment2 departments
   classes untis_classes [not null]
   events events [not null]
   color String [not null, default: '#306cce']
@@ -153,29 +160,6 @@ Table session {
   expire DateTime [not null]
 }
 
-Table view__users_teaching {
-  userId String [not null]
-  userEmail String [not null]
-  classId Int [not null]
-  className String [not null]
-  classNameLegacy String [not null]
-  lessonId Int [not null]
-  lessonSubject String [not null]
-  lessonStartHHMM Int [not null]
-  lessonEndHHMM Int [not null]
-  lessonWeekDay Int [not null]
-  lessonSemesterId String [not null]
-  departmentId String [not null]
-  departmentName String [not null]
-  klp String
-  klpDepartmentId String
-  untis_teacher_id Int
-
-  indexes {
-    (userId, classId, lessonId, departmentId) [unique]
-  }
-}
-
 Table view__events {
   eventId String [not null]
   start DateTime [not null]
@@ -185,7 +169,8 @@ Table view__events {
   description String [not null]
   class_groups String[] [not null]
   audience EventAudience [not null]
-  department_ids String[] [not null]
+  departmentIds String[] [not null]
+  departmentSchoolIds String[] [not null]
   yearStart Decimal [not null]
   yearEnd Decimal [not null]
   startWeekDay Decimal [not null]
@@ -200,15 +185,39 @@ Table view__events {
   }
 }
 
+Table view__users_teaching {
+  userId String [not null]
+  userEmail String [not null]
+  classId Int [not null]
+  className String [not null]
+  classNameLegacy String
+  lessonId Int [not null]
+  lessonSubject String [not null]
+  lessonStartHHMM Int [not null]
+  lessonEndHHMM Int [not null]
+  lessonWeekDay Int [not null]
+  lessonSemesterId String [not null]
+  departmentId String [not null]
+  departmentSchoolId String [not null]
+  departmentName String [not null]
+  untis_teacher_id Int
+
+  indexes {
+    (userId, classId, lessonId, departmentId) [unique]
+  }
+}
+
 Table view__users_teaching_agg {
   uId String [not null]
   lSemesterId String [unique, not null]
   classIds Int[] [not null]
   classNames String[] [not null]
-  legacyClassNames String[] [not null]
   subjects String[] [not null]
   departmentIds String[] [not null]
+  departmentSchoolIds String[] [not null]
   departmentNames String[] [not null]
+  klp String
+  klpDepartmentId String
 }
 
 Table view__affected_by_events {
@@ -230,9 +239,9 @@ Table view__users_affected_by_events {
   authorId String [not null]
   start DateTime [not null]
   end DateTime [not null]
-  location String [not null]
-  description String [not null]
-  descriptionLong String [not null]
+  location String [not null, default: '']
+  description String [not null, default: '']
+  descriptionLong String [not null, default: '']
   state EventState [not null, default: 'DRAFT']
   cloned Boolean [not null, default: false]
   jobId String
@@ -241,6 +250,7 @@ Table view__users_affected_by_events {
   classes String[] [not null]
   classGroups String[] [not null]
   audience EventAudience [not null, default: 'STUDENTS']
+  affectsDepartment2 Boolean [default: false]
   teachingAffected TeachingAffected [not null, default: 'YES']
   createdAt DateTime [default: `now()`, not null]
   updatedAt DateTime [default: `now()`, not null]
@@ -291,6 +301,7 @@ Table view__events_classes {
   classGroups String[] [not null]
   audience EventAudience [not null, default: 'STUDENTS']
   teachingAffected TeachingAffected [not null, default: 'YES']
+  affectsDepartment2 Boolean [default: false]
   createdAt DateTime [default: `now()`, not null]
   updatedAt DateTime [default: `now()`, not null]
   deletedAt DateTime
@@ -349,6 +360,10 @@ Ref: events.parentId - events.id [delete: Cascade]
 Ref: events.userGroupId > user_event_groups.id
 
 Ref: user_event_groups.userId > users.id [delete: Cascade]
+
+Ref: departments.department1_Id - departments.id
+
+Ref: departments.department2_Id - departments.id
 
 Ref: jobs.userId > users.id [delete: Cascade]
 

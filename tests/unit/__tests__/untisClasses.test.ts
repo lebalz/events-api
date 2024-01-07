@@ -1,10 +1,10 @@
 import { Prisma } from "@prisma/client";
 import UntisClasses from "../../../src/models/untisClasses";
-import prismock from "../__mocks__/prismockClient";
+import prisma from '../../../src/prisma';
 import { generateUntisClass } from "../../factories/untisClass";
 
 export const createUntisClass = async (props: Partial<Prisma.UntisClassUncheckedCreateInput>) => {
-    return await prismock.untisClass.create({
+    return await prisma.untisClass.create({
         data: generateUntisClass(props)
     });
 }

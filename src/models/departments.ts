@@ -4,7 +4,7 @@ import { HTTP400Error, HTTP403Error, HTTP404Error } from "../utils/errors/Errors
 import { createDataExtractor } from "../controllers/helpers";
 import { invalidLetterCombinations } from "./departments.helpers";
 
-const getData = createDataExtractor<Prisma.DepartmentUncheckedUpdateInput>(['name', 'description', 'color', 'letter', 'classLetters']);
+const getData = createDataExtractor<Prisma.DepartmentUncheckedUpdateInput>(['name', 'description', 'color', 'letter', 'classLetters', 'department1_Id', 'department2_Id']);
 
 function Departments(db: PrismaClient['department']) {
     return Object.assign(db, {
@@ -31,11 +31,39 @@ function Departments(db: PrismaClient['department']) {
             if (invalidLetters.length > 0) {
                 throw new HTTP400Error(`Unique Letters Constraint Error: invalid combinations: ${invalidLetters.join(', ')}`);
             }
+            const current = await this.findModel(id);
+            if (sanitized.department1_Id || sanitized.department2_Id) {
+                if (sanitized.department1_Id === undefined) {
+                    sanitized.department1_Id = current.department1_Id;
+                }
+                if (sanitized.department2_Id === undefined) {
+                    sanitized.department2_Id = current.department2_Id;
+                }
+                if (sanitized.department1_Id === sanitized.department2_Id) {
+                    throw new HTTP400Error('Cannot belong to the same department twice');
+                }
+                const queryOr: Prisma.DepartmentWhereInput[] = [];
+                if (typeof sanitized.department1_Id === 'string') {
+                    queryOr.push({department1_Id: sanitized.department1_Id});
+                }
+                if (typeof sanitized.department2_Id === 'string') {
+                    queryOr.push({department2_Id: sanitized.department2_Id});
+                }
+                const existingRelations = await db.findMany({where: {
+                    AND: [
+                        {NOT: {id: id}},
+                        {OR: queryOr}
+                    ]
+                }});
+                if (existingRelations.length > 0) {
+                    throw new HTTP400Error('Cannot relate a department twice');
+                }
+            }
             const model = await db.update({
                 where: {
                     id: id,
                 },
-                data
+                data: sanitized
             });
             return model;
         },

@@ -16,6 +16,11 @@ export const reset = () => {
     abbrevs.clear();
 }
 
+const nextTeacherId = (() => {
+    let id = 1;
+    return () => id++;
+})();
+
 export const generateUntisTeacher = (props: Partial<Prisma.UntisTeacherUncheckedCreateInput> = {}): Prisma.UntisTeacherCreateInput => {
 	return {
         name: nextAbbrev(),

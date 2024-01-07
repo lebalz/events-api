@@ -4,7 +4,7 @@ import prisma from '../../src/prisma';
 import { generateUser } from '../factories/user';
 import { generateImportJob, generateSyncJob, jobSequence } from '../factories/job';
 import { generateSemester } from '../factories/semester';
-import { truncate } from './helpers/db';
+import { truncate } from '../helpers/db';
 import { EventState, Job } from '@prisma/client';
 import { eventSequence } from '../factories/event';
 import { notify } from '../../src/middlewares/notify.nop';

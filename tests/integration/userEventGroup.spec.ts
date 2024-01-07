@@ -2,7 +2,7 @@ import request from 'supertest';
 import app, { API_URL } from '../../src/app';
 import prisma from '../../src/prisma';
 import { generateUser } from '../factories/user';
-import { truncate } from './helpers/db';
+import { truncate } from '../helpers/db';
 import { UserEventGroup, Role } from '@prisma/client';
 import _ from 'lodash';
 import { notify } from '../../src/middlewares/notify.nop';
