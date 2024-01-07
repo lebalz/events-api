@@ -877,11 +877,15 @@ describe(`GET ${API_URL}/user/:id/affected-event-ids`, () => {
                         it(`displays the event only for gbjb teacher`, async () => {
                             const ev = await prisma.event.findFirst({ where: { id: affectingEvent.id }, include: {departments: true} });
                             console.log('affected', ev);
-                            const view = await prisma.view_UsersAffectedByEvents.findMany();
                             console.log('VWZ', VWZ);
-                            console.log('view', view);
-                            const view2 = await prisma.$queryRaw(Prisma.sql`SELECT * FROM view__users_affected_by_events`);
+                            const view1 = await prisma.view_AffectedByEvents.findMany();
+                            const view2 = await prisma.view_UsersAffectedByEvents.findMany();
+                            console.log('view1', view1);
                             console.log('view2', view2);
+                            const viewDef1 = await prisma.$queryRaw(Prisma.sql`select definition from pg_views where viewname = 'view__affected_by_events'`);
+                            const viewDef2 = await prisma.$queryRaw(Prisma.sql`select definition from pg_views where viewname = 'view__users_affected_by_events'`);
+                            console.log('viewDef1', viewDef1);
+                            console.log('viewDef2', viewDef2);
 
                             const gbjbResult = await request(app)
                                 .get(`${API_URL}/user/${VWZ.id}/affected-event-ids?semesterId=${semester.id}`)
