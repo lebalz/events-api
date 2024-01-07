@@ -303,7 +303,7 @@ view view_UsersAffectedByEvents {
     userId         String   @map("u_id") @db.Uuid
     semesterId     String   @map("s_id") @db.Uuid
 
-    id       String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+    id       String @id @db.Uuid
     authorId String @map("author_id") @db.Uuid()
 
     start DateTime
