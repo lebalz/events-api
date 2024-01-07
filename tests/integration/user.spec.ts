@@ -3,7 +3,7 @@ import { truncate } from "../helpers/db";
 import prisma from '../../src/prisma';
 import app, { API_URL } from '../../src/app';
 import { generateUser, userSequence } from '../factories/user';
-import { Department, Event, EventAudience, EventState, Role, Semester, TeachingAffected, UntisTeacher, User } from '@prisma/client';
+import { Department, Event, EventAudience, EventState, Prisma, Role, Semester, TeachingAffected, UntisTeacher, User } from '@prisma/client';
 import { generateUntisTeacher } from '../factories/untisTeacher';
 import { generateEvent } from '../factories/event';
 import { generateSemester } from '../factories/semester';
@@ -880,6 +880,8 @@ describe(`GET ${API_URL}/user/:id/affected-event-ids`, () => {
                             const view = await prisma.view_UsersAffectedByEvents.findMany();
                             console.log('VWZ', VWZ);
                             console.log('view', view);
+                            const view2 = await prisma.$queryRaw(Prisma.sql`SELECT * FROM view__users_affected_by_events`);
+                            console.log('view2', view2);
 
                             const gbjbResult = await request(app)
                                 .get(`${API_URL}/user/${VWZ.id}/affected-event-ids?semesterId=${semester.id}`)
