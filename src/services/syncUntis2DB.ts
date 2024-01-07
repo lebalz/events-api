@@ -125,7 +125,9 @@ export const syncUntis2DB = async (semesterId: string, fetchUntis: (semester: Se
         });
         dbTransactions.push(klass);
     });
-    Logger.info('Classes: idMap', classIdMap);
+    if (process.env.NODE_ENV !== 'test') {
+        Logger.info('Classes: idMap', classIdMap);
+    }
 
     const unknownClassDepartments: { [key: string]: any } = {};
 
@@ -205,7 +207,9 @@ export const syncUntis2DB = async (semesterId: string, fetchUntis: (semester: Se
             description: sub?.longName || 'Unbekannt',
         }
     }
-    Logger.info(`Next ID: ${nextId}`);
+    if (process.env.NODE_ENV !== 'test') {
+        Logger.info(`Next ID: ${nextId}`);
+    }
     const extractLesson = (lesson: WebAPITimetable): UntisLesson | undefined => {
         const year = lesson.date / 10000;
         const month = (lesson.date % 10000) / 100;
@@ -316,7 +320,9 @@ export const syncUntis2DB = async (semesterId: string, fetchUntis: (semester: Se
         });
         dbTransactions.push(update);
     });
-    Logger.info(`TRANSACTION COUNT: ${dbTransactions.length}`);
+    if (process.env.NODE_ENV !== 'test') {
+        Logger.info(`TRANSACTION COUNT: ${dbTransactions.length}`);
+    }
     await prisma.$transaction(dbTransactions);
     const summary: { [key: string]: number | string | Object } = {
         schoolyear: `${data.schoolyear.name} [${data.schoolyear.startDate.toISOString().slice(0, 10)} - ${data.schoolyear.endDate.toISOString().slice(0, 10)}]`,
@@ -336,6 +342,8 @@ export const syncUntis2DB = async (semesterId: string, fetchUntis: (semester: Se
     if (Object.keys(unknownClassDepartments).length > 0) {
         summary['unknownClassDepartments'] = unknownClassDepartments;
     }
-    Logger.info('Summary', summary);
+    if (process.env.NODE_ENV !== 'test') {
+        Logger.info('Summary', summary);
+    }
     return summary;
 }

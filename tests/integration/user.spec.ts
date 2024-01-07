@@ -813,6 +813,7 @@ describe(`GET ${API_URL}/user/:id/affected-event-ids`, () => {
                 let day: 'Mi' | 'Do' = 'Mi'
                 let affectingEvent: Event;
                 let affectsDepartment2 = false;
+                let thisData: UntisDataProps;
                 beforeEach(async () => {
                     const gbjbBili = departments.find((d) => d.name === 'GBJB/GBSL' && d.letter === 'm')!;
 
@@ -828,7 +829,7 @@ describe(`GET ${API_URL}/user/:id/affected-event-ids`, () => {
                     data.lessons.push({ subject: 'M', day: day, teachers: ['VWZ'], classes: ['26mT'], start: 920, end: 1005, room: 'D113' });
                     // klp is KLP of 26mT
                     data.lessons.push({ subject: 'KS', day: day, teachers: ['klp'], classes: ['26mT'], start: 1120, end: 1205, room: 'D114' });
-
+                    thisData = _.cloneDeep(data);
                     await syncUntis2DB(semester!.id, (sem: Semester) => fetchUntis(sem, generateUntisData(data)));
                     untisTeachers = await prisma.untisTeacher.findMany();
                     hij = await prisma.user.create({ data: generateUser({ firstName: 'hij', untisId: untisTeachers.find(t => t.name === 'hij')!.id }) });
@@ -909,6 +910,86 @@ describe(`GET ${API_URL}/user/:id/affected-event-ids`, () => {
                             expect(gbslResult.body).toEqual([affectingEvent.id]);
                         });
                     });
+                    describe('When a GBJB class is listed as part of an EF, GBJB events wont appear for this teacher', () => {
+                        beforeEach(async () => {
+                            affectsDepartment2 = false;
+                            data = _.cloneDeep(thisData);
+                            data.subjects.push({ name: 'EFP', longName: 'EF Physik' });
+                            data.classes.push({ name: '26mA', sf: 'GBJB Class' });
+                            data.lessons.push({ subject: 'EFP', day: day, teachers: ['hij'], classes: ['26mT', '26mA'], start: 1025, end: 1110, room: 'D113' });
+                            await syncUntis2DB(semester!.id, (sem: Semester) => fetchUntis(sem, generateUntisData(data)));
+                        });
+                        it('has setup the scenario correctly', async () => {
+                            const lessons = await prisma.untisLesson.findMany({ where: {subject: 'EFP'} });
+                            const kl = await prisma.untisClass.findFirst({ where: { name: '26mA' }, include: {department: true, teachers: true} });
+                            expect(lessons).toHaveLength(1);
+                            expect(kl!.department!.name).toEqual('GBJB');
+                        });
+                        it(`displays the event only for gbjb teacher`, async () => {
+                            const gbjbResult = await request(app)
+                                .get(`${API_URL}/user/${VWZ.id}/affected-event-ids?semesterId=${semester.id}`)
+                                .set('authorization', JSON.stringify({ email: VWZ.email }));
+                            expect(gbjbResult.statusCode).toEqual(200);
+                            expect(gbjbResult.body).toHaveLength(1);
+                            expect(gbjbResult.body).toEqual([affectingEvent.id]);
+    
+                            const gbslResult = await request(app)
+                                .get(`${API_URL}/user/${hij.id}/affected-event-ids?semesterId=${semester.id}`)
+                                .set('authorization', JSON.stringify({ email: hij.email }));
+                            expect(gbslResult.statusCode).toEqual(200);
+                            expect(gbslResult.body).toHaveLength(0);
+                        });
+                    })
+                    describe('When a GBSL class is listed as part of an OC, GBSL events wont appear for this teacher', () => {
+                        let gbslBiliEvent: Event;
+                        beforeEach(async () => {
+                            affectsDepartment2 = false;
+                            data = _.cloneDeep(thisData);
+                            const gbslBili = departments.find((d) => d.name === 'GBSL/GBJB' && d.letter === 'G')!;
+                            data.subjects.push({ name: 'OCIN', longName: 'OC Informatique' });
+                            data.classes.push({ name: '26Ga', sf: 'GBSL Class' });
+                            data.lessons.push({ subject: 'OCIN', day: day, teachers: ['VWZ'], classes: ['26mT', '26Ga'], start: 1025, end: 1110, room: 'D113' });
+                            await syncUntis2DB(semester!.id, (sem: Semester) => fetchUntis(sem, generateUntisData(data)));
+                            await prisma.event.deleteMany();
+                            gbslBiliEvent = await prisma.event.create({
+                                data: generateEvent({
+                                    authorId: author.id,
+                                    start: new Date('2023-10-18T08:00'), /* 18.10.2023 is a Mittwoch */
+                                    end: new Date('2023-10-18T12:00'),
+                                    state: EventState.PUBLISHED,
+                                    departments: {
+                                        connect: { id: gbslBili.id }
+                                    },
+                                    audience: EventAudience.ALL,
+                                    affectsDepartment2: false
+                                }),
+                                include: {departments: true}
+                            });
+                        });
+                        it('did setup the scenario correctly', async () => {
+                            expect(affectingEvent.id).not.toEqual(gbslBiliEvent.id);
+                            const lessons = await prisma.untisLesson.findMany({ where: {subject: 'OCIN'} });
+                            const kl = await prisma.untisClass.findFirst({ where: { name: '26Ga' }, include: {department: true, teachers: true} });
+                            expect(lessons).toHaveLength(1);
+                            expect(kl!.department!.name).toEqual('GBSL');
+                            expect(kl!.teachers).toHaveLength(1);
+                            expect(kl!.teachers[0].name).toEqual('VWZ');
+                        });
+                        it(`displays the event only for gbsl teacher`, async () => {
+                            const gbslResult = await request(app)
+                                .get(`${API_URL}/user/${hij.id}/affected-event-ids?semesterId=${semester.id}`)
+                                .set('authorization', JSON.stringify({ email: hij.email }));
+                            expect(gbslResult.statusCode).toEqual(200);
+                            expect(gbslResult.body).toHaveLength(1);
+                            expect(gbslResult.body).toEqual([gbslBiliEvent.id]);
+
+                            const gbjbResult = await request(app)
+                                .get(`${API_URL}/user/${VWZ.id}/affected-event-ids?semesterId=${semester.id}`)
+                                .set('authorization', JSON.stringify({ email: VWZ.email }));
+                            expect(gbjbResult.statusCode).toEqual(200);
+                            expect(gbjbResult.body).toHaveLength(0);
+                        });
+                    })
                 })
                 describe('audience: LP', () => {
                     beforeAll(() => {
@@ -966,7 +1047,7 @@ describe(`GET ${API_URL}/user/:id/affected-event-ids`, () => {
                         beforeAll(() => {
                             affectsDepartment2 = false;
                         });
-                        it(`displays the event for for gbsl and gbjb teacher, since both hav affected lessons`, async () => {
+                        it(`displays the event for for gbsl and gbjb teacher, since both have affected lessons`, async () => {
                             const gbjbResult = await request(app)
                                 .get(`${API_URL}/user/${VWZ.id}/affected-event-ids?semesterId=${semester.id}`)
                                 .set('authorization', JSON.stringify({ email: VWZ.email }));
