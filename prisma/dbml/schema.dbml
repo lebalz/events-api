@@ -160,28 +160,6 @@ Table session {
   expire DateTime [not null]
 }
 
-Table view__users_teaching {
-  userId String [not null]
-  userEmail String [not null]
-  classId Int [not null]
-  className String [not null]
-  classNameLegacy String
-  lessonId Int [not null]
-  lessonSubject String [not null]
-  lessonStartHHMM Int [not null]
-  lessonEndHHMM Int [not null]
-  lessonWeekDay Int [not null]
-  lessonSemesterId String [not null]
-  departmentId String [not null]
-  departmentSchoolId String [not null]
-  departmentName String [not null]
-  untis_teacher_id Int
-
-  indexes {
-    (userId, classId, lessonId, departmentId) [unique]
-  }
-}
-
 Table view__events {
   eventId String [not null]
   start DateTime [not null]
@@ -204,6 +182,28 @@ Table view__events {
 
   indexes {
     (eventId, semesterId) [unique]
+  }
+}
+
+Table view__users_teaching {
+  userId String [not null]
+  userEmail String [not null]
+  classId Int [not null]
+  className String [not null]
+  classNameLegacy String
+  lessonId Int [not null]
+  lessonSubject String [not null]
+  lessonStartHHMM Int [not null]
+  lessonEndHHMM Int [not null]
+  lessonWeekDay Int [not null]
+  lessonSemesterId String [not null]
+  departmentId String [not null]
+  departmentSchoolId String [not null]
+  departmentName String [not null]
+  untis_teacher_id Int
+
+  indexes {
+    (userId, classId, lessonId, departmentId) [unique]
   }
 }
 
