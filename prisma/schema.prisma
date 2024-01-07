@@ -226,26 +226,6 @@ model Session {
   @@map("session")
 }
 
-view view_UsersTeaching {
-    userId              String @map("u_id") @db.Uuid
-    userEmail           String @map("u_email")
-    classId             Int    @map("c_id")
-    className           String @map("c_name")
-    classNameLegacy     String? @map("c_name_legacy")
-    lessonId            Int    @map("l_id")
-    lessonSubject       String @map("l_subject")
-    lessonStartHHMM     Int    @map("l_start_hhmm")
-    lessonEndHHMM       Int    @map("l_end_hhmm")
-    lessonWeekDay       Int    @map("l_week_day")
-    lessonSemesterId    String @map("l_semester_id") @db.Uuid
-    departmentId        String @map("d_id") @db.Uuid
-    departmentSchoolId  String @map("d_school_id")
-    departmentName      String @map("d_name")
-    untis_teacher_id    Int?    @map("untis_teacher_id")
-
-    @@unique([userId, classId, lessonId, departmentId])
-    @@map("view__users_teaching")
-}
 
 view view_Events {
     eventId         String           @map("e_id") @db.Uuid
@@ -269,6 +249,27 @@ view view_Events {
 
     @@unique([eventId, semesterId])
     @@map("view__events")
+}
+
+view view_UsersTeaching {
+    userId              String @map("u_id") @db.Uuid
+    userEmail           String @map("u_email")
+    classId             Int    @map("c_id")
+    className           String @map("c_name")
+    classNameLegacy     String? @map("c_name_legacy")
+    lessonId            Int    @map("l_id")
+    lessonSubject       String @map("l_subject")
+    lessonStartHHMM     Int    @map("l_start_hhmm")
+    lessonEndHHMM       Int    @map("l_end_hhmm")
+    lessonWeekDay       Int    @map("l_week_day")
+    lessonSemesterId    String @map("l_semester_id") @db.Uuid
+    departmentId        String @map("d_id") @db.Uuid
+    departmentSchoolId  String @map("d_school_id")
+    departmentName      String @map("d_name")
+    untis_teacher_id    Int?    @map("untis_teacher_id")
+
+    @@unique([userId, classId, lessonId, departmentId])
+    @@map("view__users_teaching")
 }
 
 view view_UsersTeachingAggregated {

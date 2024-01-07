@@ -878,9 +878,11 @@ describe(`GET ${API_URL}/user/:id/affected-event-ids`, () => {
                             const ev = await prisma.event.findFirst({ where: { id: affectingEvent.id }, include: {departments: true} });
                             console.log('affected', ev);
                             console.log('VWZ', VWZ);
-                            const ut = await prisma.view_UsersTeaching.findMany();
-                            const utAgg = await prisma.view_UsersTeachingAggregated.findMany();
-                            const evV = await prisma.view_Events.findMany();
+                            const deps = await prisma.$queryRaw(Prisma.sql`select * from departments`);
+                            const ut = await prisma.$queryRaw(Prisma.sql`select * from view__users_teaching`);
+                            const utAgg = await prisma.$queryRaw(Prisma.sql`select * from view__users_teaching_agg`);
+                            const evV = await prisma.$queryRaw(Prisma.sql`select * from view__events`);
+                            console.log('Departments', deps)
                             console.log('Users Teaching', ut);
                             console.log('Users Teaching Agg', utAgg);
                             console.log('Event View', evV);
