@@ -60,7 +60,9 @@ export const createAccessRules = (accessMatrix: AccessMatrix): AccessRegexRule[]
     });
     const rules = accessRulesWithRegex.sort((a, b) => b.weight - a.weight);
     Object.freeze(rules);
-    Logger.info('Access Rules created');
+    if (process.env.NODE_ENV !== 'test') {
+        Logger.info('Access Rules created');
+    }
     return rules;
 }
 
