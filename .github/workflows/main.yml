@@ -26,9 +26,9 @@ jobs:
           # Maps tcp port 5432 on service container to the host
           - 5432:5432
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
     - name: Use Node.js ${{ matrix.node-version }}
-      uses: actions/setup-node@v3
+      uses: actions/setup-node@v4
       with:
         node-version: ${{ matrix.node-version }}
         cache: 'yarn'
@@ -52,7 +52,7 @@ jobs:
       # Label used to access the service container
       postgres:
         # Docker Hub image
-        image: postgres:15
+        image: postgres
         # Provide the password for postgres
         env:
           POSTGRES_PASSWORD: postgres
