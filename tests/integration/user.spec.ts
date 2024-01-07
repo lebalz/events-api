@@ -878,7 +878,8 @@ describe(`GET ${API_URL}/user/:id/affected-event-ids`, () => {
                             const ev = await prisma.event.findFirst({ where: { id: affectingEvent.id }, include: {departments: true} });
                             console.log('affected', ev);
                             const view = await prisma.view_UsersAffectedByEvents.findMany();
-                            console.log('view', view)
+                            console.log('VWZ', VWZ);
+                            console.log('view', view);
 
                             const gbjbResult = await request(app)
                                 .get(`${API_URL}/user/${VWZ.id}/affected-event-ids?semesterId=${semester.id}`)

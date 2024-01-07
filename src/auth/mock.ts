@@ -15,6 +15,9 @@ class MockStrat extends Strategy {
         options?: any
     ) {
         let where: { email: string } | { id: string } = { id: process.env.TEST_USER_ID || '-1' };
+        if (where.id === '-1') {
+            return this.fail('No User provided in request');
+        }
         if (process.env.NODE_ENV === 'test' && req.headers.authorization) {
             try {
                 const auth = JSON.parse(req.headers.authorization) as { email: string };           
