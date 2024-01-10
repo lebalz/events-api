@@ -358,16 +358,16 @@ describe('destroyEvent', () => {
 
 describe('allEvents', () => {
 	const setup = async () => {
-		const maria = await createUser({ id: 'ef7ff841-7ed6-40ef-aad3-98c10b74d46d' });
-		const jack = await createUser({ id: '3014d09d-0561-40f6-bd54-e625f4e85866', role: Role.ADMIN });
+		const maria = await createUser({});
+		const jack = await createUser({role: Role.ADMIN });
 
-		const pub1 = await createEvent({ id: '76d34384-1097-4943-92d4-735a4961a50d', start: new Date('2023-12-01'), authorId: maria.id, state: EventState.PUBLISHED });
-		const draft1 = await createEvent({ id: '01b68072-ecba-4664-83cb-2fe18040d0de', start: new Date('2023-12-02'), authorId: maria.id, state: EventState.DRAFT });
-		const refused1 = await createEvent({ id: '15389d02-9c3c-4e40-aeb9-8af7c69536f2', start: new Date('2023-12-03'), authorId: maria.id, state: EventState.REFUSED });
-		const review1 = await createEvent({ id: '8affc252-9a39-427c-9fe6-393e4408b070', start: new Date('2023-12-04'), authorId: maria.id, state: EventState.REVIEW });
+		const pub1 = await createEvent({ start: new Date('2023-12-01'), authorId: maria.id, state: EventState.PUBLISHED });
+		const draft1 = await createEvent({  start: new Date('2023-12-02'), authorId: maria.id, state: EventState.DRAFT });
+		const refused1 = await createEvent({ start: new Date('2023-12-03'), authorId: maria.id, state: EventState.REFUSED });
+		const review1 = await createEvent({ start: new Date('2023-12-04'), authorId: maria.id, state: EventState.REVIEW });
 
-		const pub2 = await createEvent({ id: '38e9cae1-760c-487b-8780-20657136a5bd', start: new Date('2023-12-29'), authorId: jack.id, state: EventState.PUBLISHED });
-		const draft2 = await createEvent({ id: '2f33669b-e359-45fa-81d8-164b80d390c3', start: new Date('2023-12-30'), authorId: jack.id, state: EventState.DRAFT });
+		const pub2 = await createEvent({ start: new Date('2023-12-29'), authorId: jack.id, state: EventState.PUBLISHED });
+		const draft2 = await createEvent({ start: new Date('2023-12-30'), authorId: jack.id, state: EventState.DRAFT });
 		return { maria, jack, pub1, draft1, refused1, review1, pub2, draft2};
 	};
 	test('all published Events for anonyme user', async () => {
