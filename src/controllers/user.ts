@@ -29,10 +29,10 @@ export const all: RequestHandler = async (req, res, next) => {
     }
 }
 
-export const events: RequestHandler<any, any, any, {semesterId?: string}> = async (req, res, next) => {
+export const events: RequestHandler = async (req, res, next) => {
     try {
         const user = req.user!;
-        const events = await Events.forUser(user, req.query.semesterId);
+        const events = await Events.forUser(user);
         res.json(events);
     } catch (error) /* istanbul ignore next */ {
         next(error)

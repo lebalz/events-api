@@ -321,15 +321,12 @@ function Events(db: PrismaClient['event']) {
             });
             return events.map(prepareEvent);
         },
-        async forUser(user: User, semesterId?: string): Promise<ApiEvent[]> {
+        async forUser(user: User): Promise<ApiEvent[]> {
             const isAdmin = user.role === Role.ADMIN;
-            const semester = await (semesterId ? Semesters.findModel(semesterId) : Semesters.current());
             const events = await db.findMany({
                 include: { departments: true, children: true },
                 where: {
                     AND: [
-                        { start: { lte: semester.end } },
-                        { end: { gte: semester.start } },
                         {
                             NOT: {
                                 AND: [
@@ -355,7 +352,7 @@ function Events(db: PrismaClient['event']) {
             if (!actor) {
                 return this.published(semesterId);
             }
-            return [...await this.published(semesterId), ...await this.forUser(actor, semesterId)];
+            return [...await this.published(semesterId), ...await this.forUser(actor)];
         },
         async createModel(actor: User, start: Date, end: Date): Promise<ApiEvent> {
             const model = await db.create({
