@@ -182,6 +182,7 @@ export const configure = (_app: typeof app) => {
     
     _app.use(`${API_URL}`, (req, res, next) => {
         passport.authenticate('oauth-bearer', { session: true }, (err: Error, user: User, info: any) => {
+            console.log('user', user, err, info);
             if (err) {
                 /**
                  * An error occurred during authorization. Send a Not Autohrized 

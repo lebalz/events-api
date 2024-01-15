@@ -20,6 +20,7 @@ for development only (for seeding the db):
 
 | Name          | Description                               | Example                                |
 |:--------------|:------------------------------------------|:---------------------------------------|
+| `TEST_USER_ID`| the user used for an unauthorized backend | `97786ad4-9a6c-4fa7-83b6-a07df1f8a8db` |
 | `USER_ID`     | id of the test user (no admin privileges) | `97786ad4-9a6c-4fa7-83b6-a07df1f8a8db` |
 | `USER_EMAIL`  | email of the test user                    | `foo.bar@bazz.ch`                      |
 | `ADMIN_ID`    | id of the test admin                      | `9fe3404a-f21c-4327-9f5a-c2818308fed4` |
