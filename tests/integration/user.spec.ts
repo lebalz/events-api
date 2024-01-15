@@ -74,10 +74,10 @@ describe(`GET ${API_URL}/user authorized`, () => {
 });
 
 
-describe(`GET ${API_URL}/user/all`, () => {
+describe(`GET ${API_URL}/users`, () => {
     it('rejects unauthorized users', async () => {
         const result = await request(app)
-            .get(`${API_URL}/user/all`)
+            .get(`${API_URL}/users`)
             .set('authorization', JSON.stringify({ noAuth: true }));
         expect(result.statusCode).toEqual(401);
         expect(mNotification).toHaveBeenCalledTimes(0);
@@ -92,7 +92,7 @@ describe(`GET ${API_URL}/user/all`, () => {
             });
         }));
         const result = await request(app)
-            .get(`${API_URL}/user/all`)
+            .get(`${API_URL}/users`)
             .set('authorization', JSON.stringify({ email: user.email }));
         expect(result.statusCode).toEqual(200);
         expect(result.body).toHaveLength(11);
@@ -108,13 +108,13 @@ describe(`GET ${API_URL}/user/all`, () => {
     });
 });
 
-describe(`GET ${API_URL}/user/:id authorized`, () => {
+describe(`GET ${API_URL}/users/:id authorized`, () => {
     it('returns user', async () => {
         const user = await prisma.user.create({
             data: generateUser({ email: 'foo@bar.ch' })
         });
         const result = await request(app)
-            .get(`${API_URL}/user/${user.id}`)
+            .get(`${API_URL}/users/${user.id}`)
             .set('authorization', JSON.stringify({ email: user.email }));
         expect(result.statusCode).toEqual(200);
         expect(result.body).toEqual(prepareUser(user));
@@ -128,7 +128,7 @@ describe(`GET ${API_URL}/user/:id authorized`, () => {
             data: generateUser({ email: 'other@user.ch' })
         });
         const result = await request(app)
-            .get(`${API_URL}/user/${other.id}`)
+            .get(`${API_URL}/users/${other.id}`)
             .set('authorization', JSON.stringify({ email: user.email }));
         expect(result.statusCode).toEqual(200);
         expect(result.body).toEqual(prepareUser(other));
@@ -136,7 +136,7 @@ describe(`GET ${API_URL}/user/:id authorized`, () => {
     });
 });
 
-describe(`PUT ${API_URL}/user/:id/link_to_untis`, () => {
+describe(`PUT ${API_URL}/users/:id/link_to_untis`, () => {
     it('can link self to an untis teacher', async () => {
         const user = await prisma.user.create({
             data: generateUser({ email: 'foo@bar.ch' })
@@ -145,7 +145,7 @@ describe(`PUT ${API_URL}/user/:id/link_to_untis`, () => {
             data: generateUntisTeacher({ id: 1234 })
         });
         const result = await request(app)
-            .put(`${API_URL}/user/${user.id}/link_to_untis`)
+            .put(`${API_URL}/users/${user.id}/link_to_untis`)
             .set('authorization', JSON.stringify({ email: user.email }))
             .send({ data: { untisId: untisUser.id } });
         expect(result.statusCode).toEqual(200);
@@ -172,7 +172,7 @@ describe(`PUT ${API_URL}/user/:id/link_to_untis`, () => {
             data: generateUser({ email: 'foo@bar.ch' })
         });
         const result = await request(app)
-            .put(`${API_URL}/user/${user.id}/link_to_untis`)
+            .put(`${API_URL}/users/${user.id}/link_to_untis`)
             .set('authorization', JSON.stringify({ email: user.email }))
             .send({ data: { untisId: untisUser.id } });
         expect(result.statusCode).toEqual(400);
@@ -190,7 +190,7 @@ describe(`PUT ${API_URL}/user/:id/link_to_untis`, () => {
         });
 
         const result = await request(app)
-            .put(`${API_URL}/user/${user.id}/link_to_untis`)
+            .put(`${API_URL}/users/${user.id}/link_to_untis`)
             .set('authorization', JSON.stringify({ email: reto.email }))
             .send({ data: { untisId: untisUser.id } });
         expect(result.statusCode).toEqual(403);
@@ -208,7 +208,7 @@ describe(`PUT ${API_URL}/user/:id/link_to_untis`, () => {
         });
 
         const result = await request(app)
-            .put(`${API_URL}/user/${user.id}/link_to_untis`)
+            .put(`${API_URL}/users/${user.id}/link_to_untis`)
             .set('authorization', JSON.stringify({ email: admin.email }))
             .send({ data: { untisId: untisUser.id } });
         expect(result.statusCode).toEqual(200);
@@ -226,7 +226,7 @@ describe(`PUT ${API_URL}/user/:id/link_to_untis`, () => {
     });
 });
 
-describe(`POST ${API_URL}/user/:id/create_ics`, () => {
+describe(`POST ${API_URL}/users/:id/create_ics`, () => {
     it('can create an ics for the users calendar', async () => {
         const semStart = faker.date.soon();
         const semEnd = faker.date.future({ refDate: semStart, years: 1 });
@@ -283,7 +283,7 @@ describe(`POST ${API_URL}/user/:id/create_ics`, () => {
         });
 
         const result = await request(app)
-            .post(`${API_URL}/user/${user.id}/create_ics`)
+            .post(`${API_URL}/users/${user.id}/create_ics`)
             .set('authorization', JSON.stringify({ email: user.email }));
         expect(result.statusCode).toEqual(200);
         expect(result.body).toEqual({
@@ -297,10 +297,11 @@ describe(`POST ${API_URL}/user/:id/create_ics`, () => {
         const icalFr = readFileSync(`${__dirname}/../test-data/ical/fr/${result.body.icsLocator}`, { encoding: 'utf-8' });
         const icsDe = createEvents([prepareEvent(event, 'de')]);
         const icsFr = createEvents([prepareEvent(event, 'fr')]);
-        expect(icalDe).toEqual(
-            icsDe.value
-        ); expect(icalFr).toEqual(
-            icsFr.value
+        expect(icalDe.normalize()).toEqual(
+            icsDe.value?.normalize()
+        );
+        expect(icalFr.normalize()).toEqual(
+            icsFr.value?.normalize()
         );
         expect(mNotification).toHaveBeenCalledTimes(1);
         expect(mNotification.mock.calls[0][0]).toEqual({
@@ -312,13 +313,13 @@ describe(`POST ${API_URL}/user/:id/create_ics`, () => {
     });
 });
 
-describe(`POST ${API_URL}/user/:id/set_role`, () => {
+describe(`POST ${API_URL}/users/:id/set_role`, () => {
     it('user can not set role of self', async () => {
         const user = await prisma.user.create({
             data: generateUser({ email: 'foo@bar.ch' })
         });
         const result = await request(app)
-            .put(`${API_URL}/user/${user.id}/set_role`)
+            .put(`${API_URL}/users/${user.id}/set_role`)
             .set('authorization', JSON.stringify({ email: user.email }))
             .send({ data: { role: Role.ADMIN } });
         expect(result.statusCode).toEqual(403);
@@ -329,7 +330,7 @@ describe(`POST ${API_URL}/user/:id/set_role`, () => {
             data: generateUser({ email: 'admin@bar.ch', role: Role.ADMIN })
         });
         const result = await request(app)
-            .put(`${API_URL}/user/${admin.id}/set_role`)
+            .put(`${API_URL}/users/${admin.id}/set_role`)
             .set('authorization', JSON.stringify({ email: admin.email }))
             .send({ data: { role: Role.USER } });
         expect(result.statusCode).toEqual(200);
@@ -354,7 +355,7 @@ describe(`POST ${API_URL}/user/:id/set_role`, () => {
             data: generateUser({ email: 'admin@bar.ch', role: Role.ADMIN })
         });
         const result = await request(app)
-            .put(`${API_URL}/user/${user.id}/set_role`)
+            .put(`${API_URL}/users/${user.id}/set_role`)
             .set('authorization', JSON.stringify({ email: admin.email }))
             .send({ data: { role: Role.ADMIN } });
         expect(result.statusCode).toEqual(200);
@@ -379,7 +380,7 @@ describe(`POST ${API_URL}/user/:id/set_role`, () => {
             data: generateUser({ email: 'admin@bar.ch', role: Role.ADMIN })
         });
         const result = await request(app)
-            .put(`${API_URL}/user/${user.id}/set_role`)
+            .put(`${API_URL}/users/${user.id}/set_role`)
             .set('authorization', JSON.stringify({ email: admin.email }))
             .send({ data: { role: Role.USER } });
         expect(result.statusCode).toEqual(200);
@@ -398,11 +399,11 @@ describe(`POST ${API_URL}/user/:id/set_role`, () => {
     });
 });
 
-describe(`GET ${API_URL}/user/:id/affected-event-ids`, () => {
+describe(`GET ${API_URL}/users/:id/affected-event-ids`, () => {
     it('can not get affected event ids without a valid semester', async () => {
         const user = await prisma.user.create({ data: generateUser({}) });
         const result = await request(app)
-            .get(`${API_URL}/user/${user.id}/affected-event-ids`)
+            .get(`${API_URL}/users/${user.id}/affected-event-ids`)
             .set('authorization', JSON.stringify({ email: user.email }));
         expect(result.statusCode).toEqual(404);
         expect(mNotification).toHaveBeenCalledTimes(0);
@@ -470,7 +471,7 @@ describe(`GET ${API_URL}/user/:id/affected-event-ids`, () => {
                 });
                 const user = await prisma.user.create({ data: generateUser({}) });
                 const result = await request(app)
-                    .get(`${API_URL}/user/${user.id}/affected-event-ids`)
+                    .get(`${API_URL}/users/${user.id}/affected-event-ids`)
                     .set('authorization', JSON.stringify({ email: user.email }));
                 expect(result.statusCode).toEqual(200);
                 expect(result.body).toEqual([]);
@@ -483,7 +484,7 @@ describe(`GET ${API_URL}/user/:id/affected-event-ids`, () => {
                     return prisma.event.create({ data: generateEvent({ authorId: user.id, start: start, end: faker.date.between({ from: start, to: semester.end }) }) });
                 }))
                 const result = await request(app)
-                    .get(`${API_URL}/user/${user.id}/affected-event-ids?semesterId=${semester.id}`)
+                    .get(`${API_URL}/users/${user.id}/affected-event-ids?semesterId=${semester.id}`)
                     .set('authorization', JSON.stringify({ email: user.email }));
                 expect(result.statusCode).toEqual(200);
                 expect(result.body).toEqual([]);
@@ -534,14 +535,14 @@ describe(`GET ${API_URL}/user/:id/affected-event-ids`, () => {
                 }))
 
                 const resultGbslTeacher = await request(app)
-                    .get(`${API_URL}/user/${gbslTeacher.id}/affected-event-ids?semesterId=${semester.id}`)
+                    .get(`${API_URL}/users/${gbslTeacher.id}/affected-event-ids?semesterId=${semester.id}`)
                     .set('authorization', JSON.stringify({ email: gbslTeacher.email }));
                 expect(resultGbslTeacher.statusCode).toEqual(200);
                 expect(resultGbslTeacher.body).toHaveLength(5);
                 expect(resultGbslTeacher.body.sort()).toEqual(gbslEvents.map((e: Event) => e.id).sort());
 
                 const resultGbslGbjbTeacher = await request(app)
-                    .get(`${API_URL}/user/${gbslGbjbTeacher.id}/affected-event-ids?semesterId=${semester.id}`)
+                    .get(`${API_URL}/users/${gbslGbjbTeacher.id}/affected-event-ids?semesterId=${semester.id}`)
                     .set('authorization', JSON.stringify({ email: gbslGbjbTeacher.email }));
                 expect(resultGbslGbjbTeacher.statusCode).toEqual(200);
                 expect(resultGbslGbjbTeacher.body).toHaveLength(10);
@@ -599,7 +600,7 @@ describe(`GET ${API_URL}/user/:id/affected-event-ids`, () => {
                             it(`displays the event for gbsl teacher ${name}`, async () => {
                                 const user = (await prisma.user.findFirst({ where: { firstName: name }, include: { untis: { include: { classes: true } } } }))!;
                                 const result = await request(app)
-                                    .get(`${API_URL}/user/${user.id}/affected-event-ids?semesterId=${semester.id}`)
+                                    .get(`${API_URL}/users/${user.id}/affected-event-ids?semesterId=${semester.id}`)
                                     .set('authorization', JSON.stringify({ email: user.email }));
                                 expect(result.statusCode).toEqual(200);
                                 expect(result.body).toHaveLength(1);
@@ -610,7 +611,7 @@ describe(`GET ${API_URL}/user/:id/affected-event-ids`, () => {
                             it(`does not display non-gbsl teacher ${name}`, async () => {
                                 const user = (await prisma.user.findFirst({ where: { firstName: name }, include: { untis: { include: { classes: true } } } }))!;
                                 const result = await request(app)
-                                    .get(`${API_URL}/user/${user.id}/affected-event-ids?semesterId=${semester.id}`)
+                                    .get(`${API_URL}/users/${user.id}/affected-event-ids?semesterId=${semester.id}`)
                                     .set('authorization', JSON.stringify({ email: user.email }));
                                 expect(result.statusCode).toEqual(200);
                                 expect(result.body).toHaveLength(0);
@@ -628,7 +629,7 @@ describe(`GET ${API_URL}/user/:id/affected-event-ids`, () => {
                     });
                     it('does not list the event for non-klp teachers', async () => {
                         const resultAbc = await request(app)
-                            .get(`${API_URL}/user/${abc.id}/affected-event-ids?semesterId=${semester.id}`)
+                            .get(`${API_URL}/users/${abc.id}/affected-event-ids?semesterId=${semester.id}`)
                             .set('authorization', JSON.stringify({ email: abc.email }));
                         expect(resultAbc.statusCode).toEqual(200);
                         expect(resultAbc.body).toHaveLength(0);
@@ -663,7 +664,7 @@ describe(`GET ${API_URL}/user/:id/affected-event-ids`, () => {
                             it(`displays the event for ${name}`, async () => {
                                 const user = (await prisma.user.findFirst({ where: { firstName: name }, include: { untis: { include: { classes: true } } } }))!;
                                 const result = await request(app)
-                                    .get(`${API_URL}/user/${user.id}/affected-event-ids?semesterId=${semester.id}`)
+                                    .get(`${API_URL}/users/${user.id}/affected-event-ids?semesterId=${semester.id}`)
                                     .set('authorization', JSON.stringify({ email: user.email }));
                                 expect(result.statusCode).toEqual(200);
                                 expect(result.body).toHaveLength(1);
@@ -674,7 +675,7 @@ describe(`GET ${API_URL}/user/:id/affected-event-ids`, () => {
                             it(`does not display for others (here: ${name}) except klp[abc] of 26Ge`, async () => {
                                 const user = (await prisma.user.findFirst({ where: { firstName: name }, include: { untis: { include: { classes: true } } } }))!;
                                 const result = await request(app)
-                                    .get(`${API_URL}/user/${user.id}/affected-event-ids?semesterId=${semester.id}`)
+                                    .get(`${API_URL}/users/${user.id}/affected-event-ids?semesterId=${semester.id}`)
                                     .set('authorization', JSON.stringify({ email: user.email }));
                                 expect(result.statusCode).toEqual(200);
                                 expect(result.body).toHaveLength(0);
@@ -733,7 +734,7 @@ describe(`GET ${API_URL}/user/:id/affected-event-ids`, () => {
                             it(`displays the event for gbsl teacher ${name}`, async () => {
                                 const user = (await prisma.user.findFirst({ where: { firstName: name }, include: { untis: { include: { classes: true, lessons: true } } } }))!;
                                 const result = await request(app)
-                                    .get(`${API_URL}/user/${user.id}/affected-event-ids?semesterId=${semester.id}`)
+                                    .get(`${API_URL}/users/${user.id}/affected-event-ids?semesterId=${semester.id}`)
                                     .set('authorization', JSON.stringify({ email: user.email }));
                                 expect(result.statusCode).toEqual(200);
                                 if (name === 'abc') { /* KLP */
@@ -750,7 +751,7 @@ describe(`GET ${API_URL}/user/:id/affected-event-ids`, () => {
                             it(`does not display for teacher ${name}`, async () => {
                                 const user = (await prisma.user.findFirst({ where: { firstName: name }, include: { untis: { include: { classes: true } } } }))!;
                                 const result = await request(app)
-                                    .get(`${API_URL}/user/${user.id}/affected-event-ids?semesterId=${semester.id}`)
+                                    .get(`${API_URL}/users/${user.id}/affected-event-ids?semesterId=${semester.id}`)
                                     .set('authorization', JSON.stringify({ email: user.email }));
                                 expect(result.statusCode).toEqual(200);
                                 expect(result.body).toHaveLength(0);
@@ -783,7 +784,7 @@ describe(`GET ${API_URL}/user/:id/affected-event-ids`, () => {
                             it(`displays the event for ${name}`, async () => {
                                 const user = (await prisma.user.findFirst({ where: { firstName: name }, include: { untis: { include: { classes: true } } } }))!;
                                 const result = await request(app)
-                                    .get(`${API_URL}/user/${user.id}/affected-event-ids?semesterId=${semester.id}`)
+                                    .get(`${API_URL}/users/${user.id}/affected-event-ids?semesterId=${semester.id}`)
                                     .set('authorization', JSON.stringify({ email: user.email }));
                                 expect(result.statusCode).toEqual(200);
                                 expect(result.body).toHaveLength(1);
@@ -794,7 +795,7 @@ describe(`GET ${API_URL}/user/:id/affected-event-ids`, () => {
                             it(`does not display non-class team member ${name}`, async () => {
                                 const user = (await prisma.user.findFirst({ where: { firstName: name }, include: { untis: { include: { classes: true } } } }))!;
                                 const result = await request(app)
-                                    .get(`${API_URL}/user/${user.id}/affected-event-ids?semesterId=${semester.id}`)
+                                    .get(`${API_URL}/users/${user.id}/affected-event-ids?semesterId=${semester.id}`)
                                     .set('authorization', JSON.stringify({ email: user.email }));
                                 expect(result.statusCode).toEqual(200);
                                 expect(result.body).toHaveLength(0);
@@ -877,14 +878,14 @@ describe(`GET ${API_URL}/user/:id/affected-event-ids`, () => {
                         });
                         it(`displays the event only for gbjb teacher`, async () => {
                             const gbjbResult = await request(app)
-                                .get(`${API_URL}/user/${VWZ.id}/affected-event-ids?semesterId=${semester.id}`)
+                                .get(`${API_URL}/users/${VWZ.id}/affected-event-ids?semesterId=${semester.id}`)
                                 .set('authorization', JSON.stringify({ email: VWZ.email }));
                             expect(gbjbResult.statusCode).toEqual(200);
                             expect(gbjbResult.body).toHaveLength(1);
                             expect(gbjbResult.body).toEqual([affectingEvent.id]);
     
                             const gbslResult = await request(app)
-                                .get(`${API_URL}/user/${hij.id}/affected-event-ids?semesterId=${semester.id}`)
+                                .get(`${API_URL}/users/${hij.id}/affected-event-ids?semesterId=${semester.id}`)
                                 .set('authorization', JSON.stringify({ email: hij.email }));
                             expect(gbslResult.statusCode).toEqual(200);
                             expect(gbslResult.body).toHaveLength(0);
@@ -896,14 +897,14 @@ describe(`GET ${API_URL}/user/:id/affected-event-ids`, () => {
                         });
                         it(`displays the event only gbjb and gbsl teachers`, async () => {
                             const gbjbResult = await request(app)
-                                .get(`${API_URL}/user/${VWZ.id}/affected-event-ids?semesterId=${semester.id}`)
+                                .get(`${API_URL}/users/${VWZ.id}/affected-event-ids?semesterId=${semester.id}`)
                                 .set('authorization', JSON.stringify({ email: VWZ.email }));
                             expect(gbjbResult.statusCode).toEqual(200);
                             expect(gbjbResult.body).toHaveLength(1);
                             expect(gbjbResult.body).toEqual([affectingEvent.id]);
     
                             const gbslResult = await request(app)
-                                .get(`${API_URL}/user/${hij.id}/affected-event-ids?semesterId=${semester.id}`)
+                                .get(`${API_URL}/users/${hij.id}/affected-event-ids?semesterId=${semester.id}`)
                                 .set('authorization', JSON.stringify({ email: hij.email }));
                             expect(gbslResult.statusCode).toEqual(200);
                             expect(gbslResult.body).toHaveLength(1);
@@ -927,14 +928,14 @@ describe(`GET ${API_URL}/user/:id/affected-event-ids`, () => {
                         });
                         it(`displays the event only for gbjb teacher`, async () => {
                             const gbjbResult = await request(app)
-                                .get(`${API_URL}/user/${VWZ.id}/affected-event-ids?semesterId=${semester.id}`)
+                                .get(`${API_URL}/users/${VWZ.id}/affected-event-ids?semesterId=${semester.id}`)
                                 .set('authorization', JSON.stringify({ email: VWZ.email }));
                             expect(gbjbResult.statusCode).toEqual(200);
                             expect(gbjbResult.body).toHaveLength(1);
                             expect(gbjbResult.body).toEqual([affectingEvent.id]);
     
                             const gbslResult = await request(app)
-                                .get(`${API_URL}/user/${hij.id}/affected-event-ids?semesterId=${semester.id}`)
+                                .get(`${API_URL}/users/${hij.id}/affected-event-ids?semesterId=${semester.id}`)
                                 .set('authorization', JSON.stringify({ email: hij.email }));
                             expect(gbslResult.statusCode).toEqual(200);
                             expect(gbslResult.body).toHaveLength(0);
@@ -977,14 +978,14 @@ describe(`GET ${API_URL}/user/:id/affected-event-ids`, () => {
                         });
                         it(`displays the event only for gbsl teacher`, async () => {
                             const gbslResult = await request(app)
-                                .get(`${API_URL}/user/${hij.id}/affected-event-ids?semesterId=${semester.id}`)
+                                .get(`${API_URL}/users/${hij.id}/affected-event-ids?semesterId=${semester.id}`)
                                 .set('authorization', JSON.stringify({ email: hij.email }));
                             expect(gbslResult.statusCode).toEqual(200);
                             expect(gbslResult.body).toHaveLength(1);
                             expect(gbslResult.body).toEqual([gbslBiliEvent.id]);
 
                             const gbjbResult = await request(app)
-                                .get(`${API_URL}/user/${VWZ.id}/affected-event-ids?semesterId=${semester.id}`)
+                                .get(`${API_URL}/users/${VWZ.id}/affected-event-ids?semesterId=${semester.id}`)
                                 .set('authorization', JSON.stringify({ email: VWZ.email }));
                             expect(gbjbResult.statusCode).toEqual(200);
                             expect(gbjbResult.body).toHaveLength(0);
@@ -1003,14 +1004,14 @@ describe(`GET ${API_URL}/user/:id/affected-event-ids`, () => {
                         it(`displays the event only for gbjb teacher`, async () => {
                             expect(affectingEvent.affectsDepartment2).toBeFalsy();
                             const gbjbResult = await request(app)
-                                .get(`${API_URL}/user/${VWZ.id}/affected-event-ids?semesterId=${semester.id}`)
+                                .get(`${API_URL}/users/${VWZ.id}/affected-event-ids?semesterId=${semester.id}`)
                                 .set('authorization', JSON.stringify({ email: VWZ.email }));
                             expect(gbjbResult.statusCode).toEqual(200);
                             expect(gbjbResult.body).toHaveLength(1);
                             expect(gbjbResult.body).toEqual([affectingEvent.id]);
     
                             const gbslResult = await request(app)
-                                .get(`${API_URL}/user/${hij.id}/affected-event-ids?semesterId=${semester.id}`)
+                                .get(`${API_URL}/users/${hij.id}/affected-event-ids?semesterId=${semester.id}`)
                                 .set('authorization', JSON.stringify({ email: hij.email }));
                             expect(gbslResult.statusCode).toEqual(200);
                             expect(gbslResult.body).toHaveLength(0);
@@ -1023,14 +1024,14 @@ describe(`GET ${API_URL}/user/:id/affected-event-ids`, () => {
                         it(`displays the event only gbjb and gbsl teachers`, async () => {
                             expect(affectingEvent.affectsDepartment2).toBeTruthy();
                             const gbjbResult = await request(app)
-                                .get(`${API_URL}/user/${VWZ.id}/affected-event-ids?semesterId=${semester.id}`)
+                                .get(`${API_URL}/users/${VWZ.id}/affected-event-ids?semesterId=${semester.id}`)
                                 .set('authorization', JSON.stringify({ email: VWZ.email }));
                             expect(gbjbResult.statusCode).toEqual(200);
                             expect(gbjbResult.body).toHaveLength(1);
                             expect(gbjbResult.body).toEqual([affectingEvent.id]);
     
                             const gbslResult = await request(app)
-                                .get(`${API_URL}/user/${hij.id}/affected-event-ids?semesterId=${semester.id}`)
+                                .get(`${API_URL}/users/${hij.id}/affected-event-ids?semesterId=${semester.id}`)
                                 .set('authorization', JSON.stringify({ email: hij.email }));
                             expect(gbslResult.statusCode).toEqual(200);
                             expect(gbslResult.body).toHaveLength(1);
@@ -1049,14 +1050,14 @@ describe(`GET ${API_URL}/user/:id/affected-event-ids`, () => {
                         });
                         it(`displays the event for for gbsl and gbjb teacher, since both have affected lessons`, async () => {
                             const gbjbResult = await request(app)
-                                .get(`${API_URL}/user/${VWZ.id}/affected-event-ids?semesterId=${semester.id}`)
+                                .get(`${API_URL}/users/${VWZ.id}/affected-event-ids?semesterId=${semester.id}`)
                                 .set('authorization', JSON.stringify({ email: VWZ.email }));
                             expect(gbjbResult.statusCode).toEqual(200);
                             expect(gbjbResult.body).toHaveLength(1);
                             expect(gbjbResult.body).toEqual([affectingEvent.id]);
     
                             const gbslResult = await request(app)
-                                .get(`${API_URL}/user/${hij.id}/affected-event-ids?semesterId=${semester.id}`)
+                                .get(`${API_URL}/users/${hij.id}/affected-event-ids?semesterId=${semester.id}`)
                                 .set('authorization', JSON.stringify({ email: hij.email }));
                             expect(gbslResult.statusCode).toEqual(200);
                             expect(gbslResult.body).toHaveLength(1);
@@ -1069,14 +1070,14 @@ describe(`GET ${API_URL}/user/:id/affected-event-ids`, () => {
                         });
                         it(`displays the event only gbjb and gbsl teachers`, async () => {
                             const gbjbResult = await request(app)
-                                .get(`${API_URL}/user/${VWZ.id}/affected-event-ids?semesterId=${semester.id}`)
+                                .get(`${API_URL}/users/${VWZ.id}/affected-event-ids?semesterId=${semester.id}`)
                                 .set('authorization', JSON.stringify({ email: VWZ.email }));
                             expect(gbjbResult.statusCode).toEqual(200);
                             expect(gbjbResult.body).toHaveLength(1);
                             expect(gbjbResult.body).toEqual([affectingEvent.id]);
     
                             const gbslResult = await request(app)
-                                .get(`${API_URL}/user/${hij.id}/affected-event-ids?semesterId=${semester.id}`)
+                                .get(`${API_URL}/users/${hij.id}/affected-event-ids?semesterId=${semester.id}`)
                                 .set('authorization', JSON.stringify({ email: hij.email }));
                             expect(gbslResult.statusCode).toEqual(200);
                             expect(gbslResult.body).toHaveLength(1);
@@ -1095,20 +1096,20 @@ describe(`GET ${API_URL}/user/:id/affected-event-ids`, () => {
                         });
                         it(`displays the event for for gbsl and gbjb teacher, since both hav affected lessons`, async () => {
                             const klpResult = await request(app)
-                                .get(`${API_URL}/user/${klp.id}/affected-event-ids?semesterId=${semester.id}`)
+                                .get(`${API_URL}/users/${klp.id}/affected-event-ids?semesterId=${semester.id}`)
                                 .set('authorization', JSON.stringify({ email: klp.email }));
                             expect(klpResult.statusCode).toEqual(200);
                             expect(klpResult.body).toHaveLength(1);
                             expect(klpResult.body).toEqual([affectingEvent.id]);
     
                             const gbslResult = await request(app)
-                                .get(`${API_URL}/user/${hij.id}/affected-event-ids?semesterId=${semester.id}`)
+                                .get(`${API_URL}/users/${hij.id}/affected-event-ids?semesterId=${semester.id}`)
                                 .set('authorization', JSON.stringify({ email: hij.email }));
                             expect(gbslResult.statusCode).toEqual(200);
                             expect(gbslResult.body).toHaveLength(0);
 
                             const gbjbResult = await request(app)
-                                .get(`${API_URL}/user/${VWZ.id}/affected-event-ids?semesterId=${semester.id}`)
+                                .get(`${API_URL}/users/${VWZ.id}/affected-event-ids?semesterId=${semester.id}`)
                                 .set('authorization', JSON.stringify({ email: VWZ.email }));
                             expect(gbjbResult.statusCode).toEqual(200);
                             expect(gbjbResult.body).toHaveLength(0);
@@ -1120,20 +1121,20 @@ describe(`GET ${API_URL}/user/:id/affected-event-ids`, () => {
                         });
                         it(`displays the event for for gbsl and gbjb teacher, since both hav affected lessons`, async () => {
                             const klpResult = await request(app)
-                                .get(`${API_URL}/user/${klp.id}/affected-event-ids?semesterId=${semester.id}`)
+                                .get(`${API_URL}/users/${klp.id}/affected-event-ids?semesterId=${semester.id}`)
                                 .set('authorization', JSON.stringify({ email: klp.email }));
                             expect(klpResult.statusCode).toEqual(200);
                             expect(klpResult.body).toHaveLength(1);
                             expect(klpResult.body).toEqual([affectingEvent.id]);
     
                             const gbslResult = await request(app)
-                                .get(`${API_URL}/user/${hij.id}/affected-event-ids?semesterId=${semester.id}`)
+                                .get(`${API_URL}/users/${hij.id}/affected-event-ids?semesterId=${semester.id}`)
                                 .set('authorization', JSON.stringify({ email: hij.email }));
                             expect(gbslResult.statusCode).toEqual(200);
                             expect(gbslResult.body).toHaveLength(0);
 
                             const gbjbResult = await request(app)
-                                .get(`${API_URL}/user/${VWZ.id}/affected-event-ids?semesterId=${semester.id}`)
+                                .get(`${API_URL}/users/${VWZ.id}/affected-event-ids?semesterId=${semester.id}`)
                                 .set('authorization', JSON.stringify({ email: VWZ.email }));
                             expect(gbjbResult.statusCode).toEqual(200);
                             expect(gbjbResult.body).toHaveLength(0);
@@ -1185,14 +1186,14 @@ describe(`GET ${API_URL}/user/:id/affected-event-ids`, () => {
                      * xyz -> zero affected events
                      */
                     const resultAbc = await request(app)
-                        .get(`${API_URL}/user/${abc.id}/affected-event-ids?semesterId=${semester.id}`)
+                        .get(`${API_URL}/users/${abc.id}/affected-event-ids?semesterId=${semester.id}`)
                         .set('authorization', JSON.stringify({ email: abc.email }));
                     expect(resultAbc.statusCode).toEqual(200);
                     expect(resultAbc.body).toHaveLength(1);
                     expect(resultAbc.body).toEqual([affectingEvent.id]);
 
                     const resultXyz = await request(app)
-                        .get(`${API_URL}/user/${xyz.id}/affected-event-ids?semesterId=${semester.id}`)
+                        .get(`${API_URL}/users/${xyz.id}/affected-event-ids?semesterId=${semester.id}`)
                         .set('authorization', JSON.stringify({ email: xyz.email }));
                     expect(resultXyz.statusCode).toEqual(200);
                     expect(resultXyz.body).toHaveLength(0);
@@ -1208,7 +1209,7 @@ describe(`GET ${API_URL}/user/:id/affected-event-ids`, () => {
                      * abc -> one affected event
                      */
                     const resultAbc = await request(app)
-                        .get(`${API_URL}/user/${abc.id}/affected-event-ids?semesterId=${semester.id}`)
+                        .get(`${API_URL}/users/${abc.id}/affected-event-ids?semesterId=${semester.id}`)
                         .set('authorization', JSON.stringify({ email: abc.email }));
                     expect(resultAbc.statusCode).toEqual(200);
                     expect(resultAbc.body).toHaveLength(1);
@@ -1225,7 +1226,7 @@ describe(`GET ${API_URL}/user/:id/affected-event-ids`, () => {
                      * abc -> one affected event
                      */
                     const resultAbc = await request(app)
-                        .get(`${API_URL}/user/${abc.id}/affected-event-ids?semesterId=${semester.id}`)
+                        .get(`${API_URL}/users/${abc.id}/affected-event-ids?semesterId=${semester.id}`)
                         .set('authorization', JSON.stringify({ email: abc.email }));
                     expect(resultAbc.statusCode).toEqual(200);
                     expect(resultAbc.body).toHaveLength(1);
@@ -1270,21 +1271,21 @@ describe(`GET ${API_URL}/user/:id/affected-event-ids`, () => {
             });
             it('returns the events for all teachers of a 26G class', async () => {
                 const resultAbc = await request(app)
-                    .get(`${API_URL}/user/${abc.id}/affected-event-ids?semesterId=${semester.id}`)
+                    .get(`${API_URL}/users/${abc.id}/affected-event-ids?semesterId=${semester.id}`)
                     .set('authorization', JSON.stringify({ email: abc.email }));
                 expect(resultAbc.statusCode).toEqual(200);
                 expect(resultAbc.body).toHaveLength(1);
                 expect(resultAbc.body).toEqual([affectingEvent.id]);
 
                 const resultXyz = await request(app)
-                    .get(`${API_URL}/user/${xyz.id}/affected-event-ids?semesterId=${semester.id}`)
+                    .get(`${API_URL}/users/${xyz.id}/affected-event-ids?semesterId=${semester.id}`)
                     .set('authorization', JSON.stringify({ email: xyz.email }));
                 expect(resultXyz.statusCode).toEqual(200);
                 expect(resultXyz.body).toHaveLength(1);
                 expect(resultXyz.body).toEqual([affectingEvent.id]);
 
                 const resultHij = await request(app)
-                    .get(`${API_URL}/user/${hij.id}/affected-event-ids?semesterId=${semester.id}`)
+                    .get(`${API_URL}/users/${hij.id}/affected-event-ids?semesterId=${semester.id}`)
                     .set('authorization', JSON.stringify({ email: hij.email }));
                 expect(resultHij.statusCode).toEqual(200);
                 expect(resultHij.body).toHaveLength(0);
@@ -1339,7 +1340,7 @@ describe(`GET ${API_URL}/user/:id/affected-event-ids`, () => {
                             const user = (await prisma.user.findFirst({ where: { firstName: name }, include: { untis: { include: { classes: true } } } }))!;
                             expect(user.untis!.classes.map(c => c.name)).toContain('26Ge');
                             const result = await request(app)
-                                .get(`${API_URL}/user/${user.id}/affected-event-ids?semesterId=${semester.id}`)
+                                .get(`${API_URL}/users/${user.id}/affected-event-ids?semesterId=${semester.id}`)
                                 .set('authorization', JSON.stringify({ email: user.email }));
                             expect(result.statusCode).toEqual(200);
                             expect(result.body).toHaveLength(1);
@@ -1351,7 +1352,7 @@ describe(`GET ${API_URL}/user/:id/affected-event-ids`, () => {
                             const user = (await prisma.user.findFirst({ where: { firstName: name }, include: { untis: { include: { classes: true } } } }))!;
                             expect(user.untis!.classes.map(c => c.name)).not.toContain('26Ge');
                             const result = await request(app)
-                                .get(`${API_URL}/user/${user.id}/affected-event-ids?semesterId=${semester.id}`)
+                                .get(`${API_URL}/users/${user.id}/affected-event-ids?semesterId=${semester.id}`)
                                 .set('authorization', JSON.stringify({ email: user.email }));
                             expect(result.statusCode).toEqual(200);
                             expect(result.body).toHaveLength(0);
@@ -1369,7 +1370,7 @@ describe(`GET ${API_URL}/user/:id/affected-event-ids`, () => {
                 });
                 it('does not list the event for non-klp teachers', async () => {
                     const resultAbc = await request(app)
-                        .get(`${API_URL}/user/${abc.id}/affected-event-ids?semesterId=${semester.id}`)
+                        .get(`${API_URL}/users/${abc.id}/affected-event-ids?semesterId=${semester.id}`)
                         .set('authorization', JSON.stringify({ email: abc.email }));
                     expect(resultAbc.statusCode).toEqual(200);
                     expect(resultAbc.body).toHaveLength(0);
@@ -1405,7 +1406,7 @@ describe(`GET ${API_URL}/user/:id/affected-event-ids`, () => {
                             const user = (await prisma.user.findFirst({ where: { firstName: name }, include: { untis: { include: { classes: true } } } }))!;
                             expect(user.untis!.classes.map(c => c.name)).toContain('26Ge');
                             const result = await request(app)
-                                .get(`${API_URL}/user/${user.id}/affected-event-ids?semesterId=${semester.id}`)
+                                .get(`${API_URL}/users/${user.id}/affected-event-ids?semesterId=${semester.id}`)
                                 .set('authorization', JSON.stringify({ email: user.email }));
                             expect(result.statusCode).toEqual(200);
                             expect(result.body).toHaveLength(1);
@@ -1423,7 +1424,7 @@ describe(`GET ${API_URL}/user/:id/affected-event-ids`, () => {
                                 expect(user.untis!.classes.map(c => c.name)).not.toContain('26Ge');
                             }
                             const result = await request(app)
-                                .get(`${API_URL}/user/${user.id}/affected-event-ids?semesterId=${semester.id}`)
+                                .get(`${API_URL}/users/${user.id}/affected-event-ids?semesterId=${semester.id}`)
                                 .set('authorization', JSON.stringify({ email: user.email }));
                             expect(result.statusCode).toEqual(200);
                             expect(result.body).toHaveLength(0);
@@ -1444,7 +1445,7 @@ describe(`GET ${API_URL}/user/:id/affected-event-ids`, () => {
                         const user = (await prisma.user.findFirst({ where: { firstName: 'abc' }, include: { untis: { include: { classes: true } } } }))!;
                         expect(user.untis!.classes.map(c => c.name)).toContain('26Ge');
                         const result = await request(app)
-                            .get(`${API_URL}/user/${user.id}/affected-event-ids?semesterId=${semester.id}`)
+                            .get(`${API_URL}/users/${user.id}/affected-event-ids?semesterId=${semester.id}`)
                             .set('authorization', JSON.stringify({ email: user.email }));
                         expect(result.statusCode).toEqual(200);
                         expect(result.body).toHaveLength(2);
@@ -1502,7 +1503,7 @@ describe(`GET ${API_URL}/user/:id/affected-event-ids`, () => {
                             const user = (await prisma.user.findFirst({ where: { firstName: name }, include: { untis: { include: { classes: true, lessons: true } } } }))!;
                             expect(user.untis!.classes.map(c => c.name)).toContain('26Ge');
                             const result = await request(app)
-                                .get(`${API_URL}/user/${user.id}/affected-event-ids?semesterId=${semester.id}`)
+                                .get(`${API_URL}/users/${user.id}/affected-event-ids?semesterId=${semester.id}`)
                                 .set('authorization', JSON.stringify({ email: user.email }));
                             expect(result.statusCode).toEqual(200);
                             if (name === 'abc') { /* KLP */
@@ -1520,7 +1521,7 @@ describe(`GET ${API_URL}/user/:id/affected-event-ids`, () => {
                             const user = (await prisma.user.findFirst({ where: { firstName: name }, include: { untis: { include: { classes: true } } } }))!;
                             expect(user.untis!.classes.map(c => c.name)).toContain('26Ge');
                             const result = await request(app)
-                                .get(`${API_URL}/user/${user.id}/affected-event-ids?semesterId=${semester.id}`)
+                                .get(`${API_URL}/users/${user.id}/affected-event-ids?semesterId=${semester.id}`)
                                 .set('authorization', JSON.stringify({ email: user.email }));
                             expect(result.statusCode).toEqual(200);
                             expect(result.body).toHaveLength(0);
@@ -1554,7 +1555,7 @@ describe(`GET ${API_URL}/user/:id/affected-event-ids`, () => {
                             const user = (await prisma.user.findFirst({ where: { firstName: name }, include: { untis: { include: { classes: true } } } }))!;
                             expect(user.untis!.classes.map(c => c.name)).toContain('26Ge');
                             const result = await request(app)
-                                .get(`${API_URL}/user/${user.id}/affected-event-ids?semesterId=${semester.id}`)
+                                .get(`${API_URL}/users/${user.id}/affected-event-ids?semesterId=${semester.id}`)
                                 .set('authorization', JSON.stringify({ email: user.email }));
                             expect(result.statusCode).toEqual(200);
                             expect(result.body).toHaveLength(1);
@@ -1566,7 +1567,7 @@ describe(`GET ${API_URL}/user/:id/affected-event-ids`, () => {
                             const user = (await prisma.user.findFirst({ where: { firstName: name }, include: { untis: { include: { classes: true } } } }))!;
                             expect(user.untis!.classes.map(c => c.name)).not.toContain('26Ge');
                             const result = await request(app)
-                                .get(`${API_URL}/user/${user.id}/affected-event-ids?semesterId=${semester.id}`)
+                                .get(`${API_URL}/users/${user.id}/affected-event-ids?semesterId=${semester.id}`)
                                 .set('authorization', JSON.stringify({ email: user.email }));
                             expect(result.statusCode).toEqual(200);
                             expect(result.body).toHaveLength(0);

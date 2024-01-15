@@ -36,14 +36,11 @@ interface Config {
  * only for GET requests
  */
 export const PUBLIC_ROUTES = [
-    '/event',
-    '/event/:id',
-    '/event/all',
-    '/department/all',
-    '/semester',
-    '/semester/all',
-    '/semester/all',
-    '/untis/class/all',
+    '/events',
+    '/events/:id',
+    '/departments',
+    '/semesters',
+    '/untis/classes',
 ];
 
 /**
@@ -51,7 +48,7 @@ export const PUBLIC_ROUTES = [
  * only for POST requests
  */
 export const PUBLIC_POST_ROUTES = [
-    '/event/excel',
+    '/events/excel',
 ];
 
 const authConfig: Config = {
@@ -85,42 +82,42 @@ const authConfig: Config = {
             }]
         },
         userFind: {
-            path: '/user/:id',
+            path: '/users/:id',
             access: [{
                 methods: ['GET'],
                 roles: [Role.ADMIN, Role.USER],
             }]
         },
         userLinkToUntis: {
-            path: '/user/:id/link_to_untis',
+            path: '/users/:id/link_to_untis',
             access: [{
                 methods: ['PUT'],
                 roles: [Role.ADMIN, Role.USER],
             }]
         },
         userSetRole: {
-            path: '/user/:id/set_role',
+            path: '/users/:id/set_role',
             access: [{
                 methods: ['PUT'],
                 roles: [Role.ADMIN],
             }]
         },
         userIcs: {
-            path: '/user/:id/create_ics',
+            path: '/users/:id/create_ics',
             access: [{
                 methods: ['POST'],
                 roles: [Role.ADMIN, Role.USER],
             }]
         },
         userAffectedEventIds: {
-            path: '/user/:id/affected-event-ids',
+            path: '/users/:id/affected-event-ids',
             access: [{
                 methods: ['GET'],
                 roles: [Role.ADMIN, Role.USER],
             }]
         },
         event: {
-            path: '/event',
+            path: '/events',
             access: [
                 {
                     methods: ['GET'],
@@ -133,14 +130,14 @@ const authConfig: Config = {
             ]
         },
         eventImport: {
-            path: '/event/import',
+            path: '/events/import',
             access: [{
                 methods: ['POST'],
                 roles: [Role.ADMIN],
             }]
         },
         userEventGroup: {
-            path: '/user_event_group',
+            path: '/user_event_groups',
             access: [{
                 methods: ['GET', 'POST', 'PUT', 'DELETE'],
                 roles: [Role.USER, Role.ADMIN],
@@ -169,21 +166,21 @@ const authConfig: Config = {
             ]
         },
         job: {
-            path: '/job',
+            path: '/jobs',
             access: [{
                 methods: ['GET'],
                 roles: [Role.ADMIN, Role.USER],
             }]
         },
         findJob: {
-            path: '/job/:id',
+            path: '/jobs/:id',
             access: [{
                 methods: ['GET', 'PUT', 'DELETE'],
                 roles: [Role.ADMIN, Role.USER],
             }]
         },
         department: {
-            path: '/department',
+            path: '/departments',
             access: [{
                 methods: ['GET'],
                 roles: [Role.ADMIN, Role.USER],
@@ -193,7 +190,7 @@ const authConfig: Config = {
             }]
         },
         semester: {
-            path: '/semester',
+            path: '/semesters',
             access: [{
                 methods: ['GET'],
                 roles: [Role.ADMIN, Role.USER],
@@ -203,7 +200,7 @@ const authConfig: Config = {
             }]
         },
         registrationPeriods: {
-            path: '/registration_period',
+            path: '/registration_periods',
             access: [{
                 methods: ['GET'],
                 roles: [Role.ADMIN, Role.USER],

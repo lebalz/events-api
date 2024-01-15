@@ -17,64 +17,64 @@ const UPLOAD_DIR = process.env.UPLOAD_DIR
 const router = express.Router();
 
 router.get('/user', user);
-router.get('/user/all', allUsers);
-router.get('/user/:id', findUser);
-router.put('/user/:id/link_to_untis', linkToUntis);
-router.put('/user/:id/set_role', setRole);
-router.post('/user/:id/create_ics', createIcs);
-router.get('/user/:id/affected-event-ids', affectedEventIds);
+router.get('/users', allUsers);
+router.get('/users/:id', findUser);
+router.put('/users/:id/link_to_untis', linkToUntis);
+router.put('/users/:id/set_role', setRole);
+router.post('/users/:id/create_ics', createIcs);
+router.get('/users/:id/affected-event-ids', affectedEventIds);
 
 
-router.get('/event/all', allEvents);
-router.post('/event/excel', exportExcel);
-router.get('/event/:id', findEvent);
-router.put('/event/:id', updateEvent);
-router.post('/event/:id/clone', cloneEvent);
-router.post('/event/change_state', setEventState);
-router.delete('/event/:id', deleteEvent);
-router.post('/event', createEvent);
+router.get('/events', allEvents);
+router.post('/events/excel', exportExcel);
+router.get('/events/:id', findEvent);
+router.put('/events/:id', updateEvent);
+router.post('/events/:id/clone', cloneEvent);
+router.post('/events/change_state', setEventState);
+router.delete('/events/:id', deleteEvent);
+router.post('/events', createEvent);
 
 const upload = multer({ dest: `${UPLOAD_DIR}/` })
-router.post('/event/import', upload.single('terminplan'), importEvents);
+router.post('/events/import', upload.single('terminplan'), importEvents);
 
 
-router.get('/job/all', allJobs);
-router.get('/job/:id', findJob);
-router.put('/job/:id', updateJob);
-router.delete('/job/:id', deleteJob);
+router.get('/jobs', allJobs);
+router.get('/jobs/:id', findJob);
+router.put('/jobs/:id', updateJob);
+router.delete('/jobs/:id', deleteJob);
 
-router.get('/untis/teacher/all', teachers);
-router.get('/untis/teacher/:id', teacher);
-router.get('/untis/class/all', classes);
+router.get('/untis/teachers', teachers);
+router.get('/untis/teachers/:id', teacher);
+router.get('/untis/classes', classes);
 router.get('/untis/subjects', subjects);
 
-router.get('/department/all', allDepartments);
-router.get('/department/:id', findDepartment);
-router.put('/department/:id', updateDepartment);
-router.post('/department', createDepartment);
-router.delete('/department/:id', deleteDepartment);
+router.get('/departments', allDepartments);
+router.get('/departments/:id', findDepartment);
+router.put('/departments/:id', updateDepartment);
+router.post('/departments', createDepartment);
+router.delete('/departments/:id', deleteDepartment);
 
 
-router.get('/semester/all', allSemesters);
-router.get('/semester/:id', findSemester);
-router.post('/semester/:id/sync_untis', sync);
-router.put('/semester/:id', updateSemester);
-router.delete('/semester/:id', deleteSemester);
-router.post('/semester', createSemester);
+router.get('/semesters', allSemesters);
+router.get('/semesters/:id', findSemester);
+router.post('/semesters/:id/sync_untis', sync);
+router.put('/semesters/:id', updateSemester);
+router.delete('/semesters/:id', deleteSemester);
+router.post('/semesters', createSemester);
 
-router.get('/registration_period/all', allRegistrationPeriods);
-router.get('/registration_period/:id', findRegistrationPeriod);
-router.put('/registration_period/:id', updateRegistrationPeriod);
-router.delete('/registration_period/:id', deleteRegistrationPeriod);
-router.post('/registration_period', createRegistrationPeriod);
+router.get('/registration_periods', allRegistrationPeriods);
+router.get('/registration_periods/:id', findRegistrationPeriod);
+router.put('/registration_periods/:id', updateRegistrationPeriod);
+router.delete('/registration_periods/:id', deleteRegistrationPeriod);
+router.post('/registration_periods', createRegistrationPeriod);
 
-router.get('/user_event_group/all', usersUserEventGroup)
-router.post('/user_event_group', createUserEventGroup)
-router.get('/user_event_group/:id', findUserEventGroup)
-router.put('/user_event_group/:id', updateUserEventGroup)
-router.delete('/user_event_group/:id', deleteUserEventGroup)
-router.get('/user_event_group/:id/events', eventsFromUserEventGroup)
-router.post('/user_event_group/:id/clone', cloneUserEventGroup)
+router.get('/user_event_groups', usersUserEventGroup)
+router.post('/user_event_groups', createUserEventGroup)
+router.get('/user_event_groups/:id', findUserEventGroup)
+router.put('/user_event_groups/:id', updateUserEventGroup)
+router.delete('/user_event_groups/:id', deleteUserEventGroup)
+router.get('/user_event_groups/:id/events', eventsFromUserEventGroup)
+router.post('/user_event_groups/:id/clone', cloneUserEventGroup)
 
 
 export default router;

@@ -42,11 +42,11 @@ afterEach(() => {
     return truncate();
 });
 
-describe(`GET ${API_URL}/semester/all`, () => {
+describe(`GET ${API_URL}/semesters`, () => {
     it("returns all departments for public user", async () => {
         const semesters = await prisma.semester.findMany();
         const result = await request(app)
-            .get(`${API_URL}/semester/all`);
+            .get(`${API_URL}/semesters`);
         expect(result.statusCode).toEqual(200);
         expect(result.body.length).toEqual(4);
         expect(result.body.map((d: Semester) => d.id).sort()).toEqual(semesters.map(d => d.id).sort());
@@ -54,11 +54,11 @@ describe(`GET ${API_URL}/semester/all`, () => {
     });
 });
 
-describe(`GET ${API_URL}/semester/:id`, () => {
+describe(`GET ${API_URL}/semesters/:id`, () => {
     it("prevents public user to get department", async () => {
         const semetser = await prisma.semester.findFirst();
         const result = await request(app)
-            .get(`${API_URL}/semester/${semetser!.id}`);
+            .get(`${API_URL}/semesters/${semetser!.id}`);
         expect(result.statusCode).toEqual(401);
         expect(mNotification).toHaveBeenCalledTimes(0);
     });
@@ -66,19 +66,19 @@ describe(`GET ${API_URL}/semester/:id`, () => {
         const user = await prisma.user.create({data: generateUser({})});
         const semester = await prisma.semester.findFirst();
         const result = await request(app)
-            .get(`${API_URL}/semester/${semester!.id}`)
+            .get(`${API_URL}/semesters/${semester!.id}`)
             .set('authorization', JSON.stringify({email: user.email}));
         expect(result.statusCode).toEqual(200);
         expect(result.body).toEqual(prepareSemester(semester!));
         expect(mNotification).toHaveBeenCalledTimes(0);
     });
 });
-describe(`PUT ${API_URL}/semester/:id`, () => {
+describe(`PUT ${API_URL}/semesters/:id`, () => {
     it("prevents user to update semesters", async () => {
         const user = await prisma.user.create({data: generateUser({})});
         const dep = await prisma.semester.findFirst();
         const result = await request(app)
-            .put(`${API_URL}/semester/${dep!.id}`)
+            .put(`${API_URL}/semesters/${dep!.id}`)
             .set('authorization', JSON.stringify({email: user.email}))
             .send({data: {name: 'FOO'}});
         expect(result.statusCode).toEqual(403);
@@ -88,7 +88,7 @@ describe(`PUT ${API_URL}/semester/:id`, () => {
         const admin = await prisma.user.create({data: generateUser({role: Role.ADMIN})});
         const semester = await prisma.semester.findFirst();
         const result = await request(app)
-            .put(`${API_URL}/semester/${semester!.id}`)
+            .put(`${API_URL}/semesters/${semester!.id}`)
             .set('authorization', JSON.stringify({email: admin.email}))
             .send({data: {name: 'FOO'}});
         expect(result.statusCode).toEqual(200);
@@ -109,7 +109,7 @@ describe(`PUT ${API_URL}/semester/:id`, () => {
         const admin = await prisma.user.create({data: generateUser({role: Role.ADMIN})});
 
         const result = await request(app)
-            .put(`${API_URL}/semester/${semester!.id}`)
+            .put(`${API_URL}/semesters/${semester!.id}`)
             .set('authorization', JSON.stringify({email: admin.email}))
             .send({data: { untisSyncDate: faker.date.past({refDate: semester?.start})}});
         expect(result.statusCode).toEqual(400);
@@ -120,7 +120,7 @@ describe(`PUT ${API_URL}/semester/:id`, () => {
         const admin = await prisma.user.create({data: generateUser({role: Role.ADMIN})});
 
         const result = await request(app)
-            .put(`${API_URL}/semester/${semester!.id}`)
+            .put(`${API_URL}/semesters/${semester!.id}`)
             .set('authorization', JSON.stringify({email: admin.email}))
             .send({data: { start: faker.date.future({refDate: semester?.end})}});
         expect(result.statusCode).toEqual(400);
@@ -131,7 +131,7 @@ describe(`PUT ${API_URL}/semester/:id`, () => {
         const admin = await prisma.user.create({data: generateUser({role: Role.ADMIN})});
 
         const result = await request(app)
-            .put(`${API_URL}/semester/${semester!.id}`)
+            .put(`${API_URL}/semesters/${semester!.id}`)
             .set('authorization', JSON.stringify({email: admin.email}))
             .send({data: { start: faker.date.between({from: semester!.untisSyncDate, to: semester!.end})}});
         expect(result.statusCode).toEqual(400);
@@ -142,7 +142,7 @@ describe(`PUT ${API_URL}/semester/:id`, () => {
         const admin = await prisma.user.create({data: generateUser({role: Role.ADMIN})});
 
         const result = await request(app)
-            .put(`${API_URL}/semester/${semester!.id}`)
+            .put(`${API_URL}/semesters/${semester!.id}`)
             .set('authorization', JSON.stringify({email: admin.email}))
             .send({data: { end: faker.date.past({refDate: semester?.start})}});
         expect(result.statusCode).toEqual(400);
@@ -153,7 +153,7 @@ describe(`PUT ${API_URL}/semester/:id`, () => {
         const admin = await prisma.user.create({data: generateUser({role: Role.ADMIN})});
 
         const result = await request(app)
-            .put(`${API_URL}/semester/${semester!.id}`)
+            .put(`${API_URL}/semesters/${semester!.id}`)
             .set('authorization', JSON.stringify({email: admin.email}))
             .send({data: { end: faker.date.between({from: semester!.start, to: semester!.untisSyncDate})}});
         expect(result.statusCode).toEqual(400);
@@ -164,7 +164,7 @@ describe(`PUT ${API_URL}/semester/:id`, () => {
         const admin = await prisma.user.create({data: generateUser({role: Role.ADMIN})});
 
         const result = await request(app)
-            .put(`${API_URL}/semester/${semester!.id}`)
+            .put(`${API_URL}/semesters/${semester!.id}`)
             .set('authorization', JSON.stringify({email: admin.email}))
             .send({data: { untisSyncDate: faker.date.future({refDate: semester?.end})}});
         expect(result.statusCode).toEqual(400);
@@ -175,7 +175,7 @@ describe(`PUT ${API_URL}/semester/:id`, () => {
         const admin = await prisma.user.create({data: generateUser({role: Role.ADMIN})});
 
         const result = await request(app)
-            .put(`${API_URL}/semester/${semester!.id}`)
+            .put(`${API_URL}/semesters/${semester!.id}`)
             .set('authorization', JSON.stringify({email: admin.email}))
             .send({data: { untisSyncDate: faker.date.between({from: semester!.start, to: semester!.end})}});
         expect(result.statusCode).toEqual(200);
@@ -188,11 +188,11 @@ describe(`PUT ${API_URL}/semester/:id`, () => {
     });
 });
 
-describe(`POST ${API_URL}/semester`, () => {
+describe(`POST ${API_URL}/semesters`, () => {
     it("prevents user to create a semester", async () => {
         const user = await prisma.user.create({data: generateUser({})});
         const result = await request(app)
-            .post(`${API_URL}/semester`)
+            .post(`${API_URL}/semesters`)
             .set('authorization', JSON.stringify({email: user.email}))
             .send({name: 'FOO', description: 'BAR'});
         expect(result.statusCode).toEqual(403);
@@ -203,7 +203,7 @@ describe(`POST ${API_URL}/semester`, () => {
         const start = faker.date.soon();
         const end = faker.date.future({refDate: start});
         const result = await request(app)
-            .post(`${API_URL}/semester`)
+            .post(`${API_URL}/semesters`)
             .set('authorization', JSON.stringify({email: admin.email}))
             .send({name: 'FOO', start: start, end: end });
         expect(result.statusCode).toEqual(201);
@@ -222,12 +222,12 @@ describe(`POST ${API_URL}/semester`, () => {
     });
 });
 
-describe(`DELETE ${API_URL}/semester/:id`, () => {
+describe(`DELETE ${API_URL}/semesters/:id`, () => {
     it("prevents user to delete a department", async () => {
         const semester = await prisma.semester.findFirst();
         const user = await prisma.user.create({data: generateUser({})});
         const result = await request(app)
-            .delete(`${API_URL}/semester/${semester!.id}`)
+            .delete(`${API_URL}/semesters/${semester!.id}`)
             .set('authorization', JSON.stringify({email: user.email}));
         expect(result.statusCode).toEqual(403);
         expect(mNotification).toHaveBeenCalledTimes(0);
@@ -238,7 +238,7 @@ describe(`DELETE ${API_URL}/semester/:id`, () => {
         expect(semesters).toHaveLength(4);
         const semester = semesters[0];
         const result = await request(app)
-            .delete(`${API_URL}/semester/${semester!.id}`)
+            .delete(`${API_URL}/semesters/${semester!.id}`)
             .set('authorization', JSON.stringify({email: admin.email}));
         expect(result.statusCode).toEqual(204);
         const semestersAfter = await prisma.semester.findMany();
@@ -254,12 +254,12 @@ describe(`DELETE ${API_URL}/semester/:id`, () => {
 });
 
 
-describe(`POST ${API_URL}/semester/:id/sync_untis`, () => {
+describe(`POST ${API_URL}/semesters/:id/sync_untis`, () => {
     it("prevents user to sync with untis", async () => {
         const semester = await prisma.semester.findFirst();
         const user = await prisma.user.create({data: generateUser({})});
         const result = await request(app)
-            .post(`${API_URL}/semester/${semester!.id}/sync_untis`)
+            .post(`${API_URL}/semesters/${semester!.id}/sync_untis`)
             .set('authorization', JSON.stringify({email: user.email}));
         expect(result.statusCode).toEqual(403);
         expect(mNotification).toHaveBeenCalledTimes(0);
@@ -269,7 +269,7 @@ describe(`POST ${API_URL}/semester/:id/sync_untis`, () => {
         const admin = await prisma.user.create({data: generateUser({role: Role.ADMIN})});
 
         const result = await request(app)
-            .post(`${API_URL}/semester/${semester!.id}/sync_untis`)
+            .post(`${API_URL}/semesters/${semester!.id}/sync_untis`)
             .set('authorization', JSON.stringify({email: admin.email}));
 
         expect(result.statusCode).toEqual(201);

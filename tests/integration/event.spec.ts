@@ -32,7 +32,7 @@ const prepareEvent = (event: Event): any => {
     return prepared;
 }
 
-describe(`GET ${API_URL}/event/all`, () => {
+describe(`GET ${API_URL}/events`, () => {
     afterEach(() => {
         return truncate();
     });
@@ -46,7 +46,7 @@ describe(`GET ${API_URL}/event/all`, () => {
         const refusedEvents = await Promise.all(eventSequence(user.id, 2, { state: EventState.REFUSED }).map(e => prisma.event.create({ data: e })));
         const reviewEvents = await Promise.all(eventSequence(user.id, 4, { state: EventState.REVIEW }).map(e => prisma.event.create({ data: e })));
         const result = await request(app)
-            .get(`${API_URL}/event/all`)
+            .get(`${API_URL}/events`)
             .set('authorization', JSON.stringify({ noAuth: true }));
         expect(result.statusCode).toEqual(200);
         expect(result.body.length).toEqual(10);
@@ -74,7 +74,7 @@ describe(`GET ${API_URL}/event/all`, () => {
         expect(all.length).toEqual(29);
 
         const result = await request(app)
-            .get(`${API_URL}/event/all`)
+            .get(`${API_URL}/events`)
             .set('authorization', JSON.stringify({ email: user.email }));
         expect(result.statusCode).toEqual(200);
         expect(result.body.length).toEqual(19);
@@ -98,7 +98,7 @@ describe(`GET ${API_URL}/event/all`, () => {
         expect(all.length).toEqual(28);
 
         const result = await request(app)
-            .get(`${API_URL}/event/all`)
+            .get(`${API_URL}/events`)
             .set('authorization', JSON.stringify({ email: admin.email }));
         expect(result.statusCode).toEqual(200);
         expect(result.body.length).toEqual(21);
@@ -108,7 +108,7 @@ describe(`GET ${API_URL}/event/all`, () => {
 });
 
 
-describe(`GET ${API_URL}/event/:id`, () => {
+describe(`GET ${API_URL}/events/:id`, () => {
     afterEach(() => {
         return truncate();
     });
@@ -118,7 +118,7 @@ describe(`GET ${API_URL}/event/:id`, () => {
         });
         const event = await prisma.event.create({ data: generateEvent({ authorId: user.id, state: EventState.PUBLISHED }) });
         const result = await request(app)
-            .get(`${API_URL}/event/${event.id}`)
+            .get(`${API_URL}/events/${event.id}`)
             .set('authorization', JSON.stringify({ noAuth: true }));
         expect(result.statusCode).toEqual(200);
         expect(result.body).toEqual(prepareEvent(event));
@@ -133,7 +133,7 @@ describe(`GET ${API_URL}/event/:id`, () => {
         });
         const event = await prisma.event.create({ data: generateEvent({ authorId: other.id, state: EventState.PUBLISHED }) });
         const result = await request(app)
-            .get(`${API_URL}/event/${event.id}`)
+            .get(`${API_URL}/events/${event.id}`)
             .set('authorization', JSON.stringify({ email: user.email }));
         expect(result.statusCode).toEqual(200);
         expect(result.body).toEqual(prepareEvent(event));
@@ -142,7 +142,7 @@ describe(`GET ${API_URL}/event/:id`, () => {
 });
 
 
-describe(`PUT ${API_URL}/event/:id`, () => {
+describe(`PUT ${API_URL}/events/:id`, () => {
     afterEach(() => {
         return truncate();
     });
@@ -152,7 +152,7 @@ describe(`PUT ${API_URL}/event/:id`, () => {
         });
         const event = await prisma.event.create({ data: generateEvent({ authorId: user.id, description: 'foo bar!' }) });
         const result = await request(app)
-            .put(`${API_URL}/event/${event.id}`)
+            .put(`${API_URL}/events/${event.id}`)
             .set('authorization', JSON.stringify({ email: user.email }))
             .send({ data: { description: 'Hoo Ray!' } });
         expect(result.statusCode).toEqual(200);
@@ -173,7 +173,7 @@ describe(`PUT ${API_URL}/event/:id`, () => {
 });
 
 
-describe(`POST ${API_URL}/event`, () => {
+describe(`POST ${API_URL}/events`, () => {
     afterEach(() => {
         return truncate();
     });
@@ -186,7 +186,7 @@ describe(`POST ${API_URL}/event`, () => {
         expect(before.length).toEqual(0);
 
         const result = await request(app)
-            .post(`${API_URL}/event`)
+            .post(`${API_URL}/events`)
             .set('authorization', JSON.stringify({ email: user.email }))
             .send({ start: new Date('2023-09-20T08:25:00.000Z'), end: new Date('2023-09-20T09:10:00.000Z') });
         expect(result.statusCode).toEqual(201);
@@ -213,7 +213,7 @@ describe(`POST ${API_URL}/event`, () => {
             });
 
             const result = await request(app)
-                .post(`${API_URL}/event`)
+                .post(`${API_URL}/events`)
                 .set('authorization', JSON.stringify({ email: user.email }))
                 .send({
                     start: new Date('2023-09-20T08:25:00.000Z'),
@@ -234,7 +234,7 @@ describe(`POST ${API_URL}/event`, () => {
 });
 
 
-describe(`DELETE ${API_URL}/event/:id`, () => {
+describe(`DELETE ${API_URL}/events/:id`, () => {
     afterEach(() => {
         return truncate();
     });
@@ -245,7 +245,7 @@ describe(`DELETE ${API_URL}/event/:id`, () => {
         });
         const event = await prisma.event.create({ data: generateEvent({ authorId: user.id }) });
         const result = await request(app)
-            .delete(`${API_URL}/event/${event.id}`)
+            .delete(`${API_URL}/events/${event.id}`)
             .set('authorization', JSON.stringify({ email: user.email }));
         expect(result.statusCode).toEqual(204);
         const all = await prisma.event.findMany();
@@ -264,7 +264,7 @@ describe(`DELETE ${API_URL}/event/:id`, () => {
             });
             const event = await prisma.event.create({ data: generateEvent({ authorId: user.id, state: state }) });
             const result = await request(app)
-                .delete(`${API_URL}/event/${event.id}`)
+                .delete(`${API_URL}/events/${event.id}`)
                 .set('authorization', JSON.stringify({ email: user.email }));
             expect(result.statusCode).toEqual(204);
             const all = await prisma.event.findMany();
@@ -283,7 +283,7 @@ describe(`DELETE ${API_URL}/event/:id`, () => {
 });
 
 
-describe(`POST ${API_URL}/event/:id/clone`, () => {
+describe(`POST ${API_URL}/events/:id/clone`, () => {
     afterEach(() => {
         return truncate();
     });
@@ -294,7 +294,7 @@ describe(`POST ${API_URL}/event/:id/clone`, () => {
         });
         const event = await prisma.event.create({ data: generateEvent({ authorId: user.id, description: 'foo bar!' }) });
         const result = await request(app)
-            .post(`${API_URL}/event/${event.id}/clone`)
+            .post(`${API_URL}/events/${event.id}/clone`)
             .set('authorization', JSON.stringify({ email: user.email }));
         expect(result.statusCode).toEqual(201);
         const all = await prisma.event.findMany();
@@ -326,7 +326,7 @@ describe(`POST ${API_URL}/event/:id/clone`, () => {
         });
         const event = await prisma.event.create({ data: generateEvent({ authorId: other.id, description: 'foo bar!', state: EventState.PUBLISHED }) });
         const result = await request(app)
-            .post(`${API_URL}/event/${event.id}/clone`)
+            .post(`${API_URL}/events/${event.id}/clone`)
             .set('authorization', JSON.stringify({ email: user.email }));
         expect(result.statusCode).toEqual(201);
         const all = await prisma.event.findMany();
@@ -360,7 +360,7 @@ describe(`POST ${API_URL}/event/:id/clone`, () => {
             });
             const event = await prisma.event.create({ data: generateEvent({ authorId: other.id, description: 'foo bar!', state: state }) });
             const result = await request(app)
-                .post(`${API_URL}/event/${event.id}/clone`)
+                .post(`${API_URL}/events/${event.id}/clone`)
                 .set('authorization', JSON.stringify({ email: user.email }));
             expect(result.statusCode).toEqual(403);
             const all = await prisma.event.findMany();
@@ -373,14 +373,14 @@ describe(`POST ${API_URL}/event/:id/clone`, () => {
             data: generateUser({ email: 'foo@bar.ch' })
         });
         const result = await request(app)
-            .post(`${API_URL}/event/${faker.string.uuid()}/clone`)
+            .post(`${API_URL}/events/${faker.string.uuid()}/clone`)
             .set('authorization', JSON.stringify({ email: user.email }));
         expect(result.statusCode).toEqual(404);
         expect(mNotification).toHaveBeenCalledTimes(0);
     });
 });
 
-describe(`POST ${API_URL}/event/change_state`, () => {
+describe(`POST ${API_URL}/events/change_state`, () => {
     afterEach(() => {
         return truncate();
     });
@@ -398,7 +398,7 @@ describe(`POST ${API_URL}/event/change_state`, () => {
                     });
                     const event = await prisma.event.create({ data: generateEvent({ authorId: user.id, state: transition.from }) });
                     const result = await request(app)
-                        .post(`${API_URL}/event/change_state`)
+                        .post(`${API_URL}/events/change_state`)
                         .set('authorization', JSON.stringify({ email: user.email }))
                         .send({ data: { ids: [event.id], state: transition.to } });
                     expect(result.statusCode).toEqual(201);
@@ -443,7 +443,7 @@ describe(`POST ${API_URL}/event/change_state`, () => {
                     });
                     const event = await prisma.event.create({ data: generateEvent({ authorId: user.id, state: transition.from }) });
                     const result = await request(app)
-                        .post(`${API_URL}/event/change_state`)
+                        .post(`${API_URL}/events/change_state`)
                         .set('authorization', JSON.stringify({ email: user.email }))
                         .send({ data: { ids: [event.id], state: transition.to } });
                     expect(result.statusCode).toEqual(transition.errorCode || 400);
@@ -475,7 +475,7 @@ describe(`POST ${API_URL}/event/change_state`, () => {
             const edit1 = await prisma.event.create({ data: generateEvent({ authorId: user.id, parentId: event.id, state: EventState.DRAFT }) });
             const edit2 = await prisma.event.create({ data: generateEvent({ authorId: user.id, parentId: edit1.id, state: EventState.DRAFT }) });
             const result = await request(app)
-                .post(`${API_URL}/event/change_state`)
+                .post(`${API_URL}/events/change_state`)
                 .set('authorization', JSON.stringify({ email: user.email }))
                 .send({ data: { ids: [edit2.id], state: EventState.REVIEW } });
             expect(result.statusCode).toEqual(201);
@@ -520,7 +520,7 @@ describe(`POST ${API_URL}/event/change_state`, () => {
             const edit2 = await prisma.event.create({ data: generateEvent({ authorId: user.id, parentId: edit1.id, state: EventState.DRAFT, between: {from: start, to: ende} }) });
             const edit3 = await prisma.event.create({ data: generateEvent({ authorId: user.id, parentId: event.id, state: EventState.REVIEW, between: {from: start, to: ende} }) });
             const result = await request(app)
-                .post(`${API_URL}/event/change_state`)
+                .post(`${API_URL}/events/change_state`)
                 .set('authorization', JSON.stringify({ email: user.email }))
                 .send({ data: { ids: [edit3.id], state: EventState.PUBLISHED } });
             expect(result.statusCode).toEqual(201);
@@ -618,7 +618,7 @@ describe(`POST ${API_URL}/event/change_state`, () => {
         const edit2 = await prisma.event.create({ data: generateEvent({ authorId: user.id, parentId: edit1.id, state: EventState.REVIEW }) });
         const edit3 = await prisma.event.create({ data: generateEvent({ authorId: user.id, parentId: event.id, state: EventState.REVIEW }) });
         const result = await request(app)
-            .post(`${API_URL}/event/change_state`)
+            .post(`${API_URL}/events/change_state`)
             .set('authorization', JSON.stringify({ email: user.email }))
             .send({ data: { ids: [edit3.id], state: EventState.PUBLISHED } });
         expect(result.statusCode).toEqual(201);
@@ -736,7 +736,7 @@ describe(`POST ${API_URL}/event/change_state`, () => {
         const event = await prisma.event.create({ data: generateEvent({ authorId: user.id, state: EventState.PUBLISHED, departments: {connect: [{id: department.id}]} }) });
         const edit1 = await prisma.event.create({ data: generateEvent({ authorId: user.id, parentId: event.id, state: EventState.REVIEW }) });
         const result = await request(app)
-            .post(`${API_URL}/event/change_state`)
+            .post(`${API_URL}/events/change_state`)
             .set('authorization', JSON.stringify({ email: user.email }))
             .send({ data: { ids: [edit1.id], state: EventState.PUBLISHED } });
         expect(result.statusCode).toEqual(201);
@@ -754,7 +754,7 @@ describe(`POST ${API_URL}/event/change_state`, () => {
 
 
 
-describe(`POST ${API_URL}/event/import`, () => {
+describe(`POST ${API_URL}/events/import`, () => {
     describe('GBSL Format: ?type=GBSL_XLSX', () => {
         afterEach(() => {
             return truncate();
@@ -765,7 +765,7 @@ describe(`POST ${API_URL}/event/import`, () => {
             });
 
             const result = await request(app)
-                .post(`${API_URL}/event/import?type=${ImportType.GBSL_XLSX}`)
+                .post(`${API_URL}/events/import?type=${ImportType.GBSL_XLSX}`)
                 .set('authorization', JSON.stringify({ email: admin.email }))
                 .attach('terminplan', `${__dirname}/stubs/terminplan-import.xlsx`)
             expect(result.statusCode).toEqual(200);
@@ -837,7 +837,7 @@ describe(`POST ${API_URL}/event/import`, () => {
             });
 
             const result = await request(app)
-                .post(`${API_URL}/event/import?type=${ImportType.GBSL_XLSX}`)
+                .post(`${API_URL}/events/import?type=${ImportType.GBSL_XLSX}`)
                 .set('authorization', JSON.stringify({ email: user.email }))
                 .attach('terminplan', `${__dirname}/stubs/terminplan-import.xlsx`);
             expect(result.statusCode).toEqual(403);
@@ -852,7 +852,7 @@ describe(`POST ${API_URL}/event/import`, () => {
 
             /** expect the logger to report an [error]: invalid signature: 0x73206f6e */
             const result = await request(app)
-                .post(`${API_URL}/event/import?type=${ImportType.GBSL_XLSX}`)
+                .post(`${API_URL}/events/import?type=${ImportType.GBSL_XLSX}`)
                 .set('authorization', JSON.stringify({ email: admin.email }))
                 .attach('terminplan', `${__dirname}/stubs/terminplan-corrupted.xlsx`);
             expect(result.statusCode).toEqual(200);
@@ -892,7 +892,7 @@ describe(`POST ${API_URL}/event/import`, () => {
             });
 
             const result = await request(app)
-                .post(`${API_URL}/event/import?type=${ImportType.GBJB_CSV}`)
+                .post(`${API_URL}/events/import?type=${ImportType.GBJB_CSV}`)
                 .set('authorization', JSON.stringify({ email: admin.email }))
                 .attach('terminplan', `${__dirname}/stubs/terminplan-gbjb.csv`)
             expect(result.statusCode).toEqual(200);
@@ -955,14 +955,14 @@ describe(`POST ${API_URL}/event/import`, () => {
 });
 
 
-describe(`POST ${API_URL}/event/export`, () => {
+describe(`POST ${API_URL}/events/export`, () => {
     afterEach(() => {
         return truncate();
     });
 
     it('Throws an error if no semester is found', async () => {
         const result = await request(app)
-            .post(`${API_URL}/event/excel`);
+            .post(`${API_URL}/events/excel`);
         expect(result.statusCode).toEqual(400);
     });
     it('Lets everyone export an excel', async () => {
@@ -989,7 +989,7 @@ describe(`POST ${API_URL}/event/export`, () => {
         }
 
         const result = await request(app)
-            .post(`${API_URL}/event/excel`);
+            .post(`${API_URL}/events/excel`);
         expect(result.statusCode).toEqual(200);
         expect(result.body).toEqual({});
     });

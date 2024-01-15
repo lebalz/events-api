@@ -28,9 +28,9 @@ afterEach(() => {
     return truncate();
 });
 
-describe(`GET ${API_URL}/job/all`, () => {
+describe(`GET ${API_URL}/jobs`, () => {
     it('throws an error if visitor is not authenticated', async () => {
-        const result = await request(app).get(`${API_URL}/job/all`);
+        const result = await request(app).get(`${API_URL}/jobs`);
         expect(result.statusCode).toEqual(401);
         expect(mNotification).toHaveBeenCalledTimes(0);
     });
@@ -46,7 +46,7 @@ describe(`GET ${API_URL}/job/all`, () => {
         const syncJobsOther = await Promise.all(jobSequence(2, {userId: other.id, type: 'SYNC_UNTIS', semesterId: semester.id}).map((job) => prisma.job.create({data: job})));
 
         const result = await request(app)
-            .get(`${API_URL}/job/all`)
+            .get(`${API_URL}/jobs`)
             .set('authorization', JSON.stringify({ email: user.email }));
         expect(result.statusCode).toEqual(200);
         expect(result.body.length).toEqual(10);
@@ -56,11 +56,11 @@ describe(`GET ${API_URL}/job/all`, () => {
 });
 
 
-describe(`GET ${API_URL}/job/:id`, () => {
+describe(`GET ${API_URL}/jobs/:id`, () => {
     it('throws an error when visitor is not authenticated', async () => {
         const user = await prisma.user.create({data: generateUser()});
         const job = await prisma.job.create({data: generateImportJob({userId: user.id})});
-        const result = await request(app).get(`${API_URL}/job/${job.id}`);
+        const result = await request(app).get(`${API_URL}/jobs/${job.id}`);
         expect(result.statusCode).toEqual(401);
         expect(mNotification).toHaveBeenCalledTimes(0);
     });
@@ -69,7 +69,7 @@ describe(`GET ${API_URL}/job/:id`, () => {
         const user = await prisma.user.create({data: generateUser()});
         const job = await prisma.job.create({data: generateImportJob({userId: user.id})});
         const result = await request(app)
-            .get(`${API_URL}/job/${job.id}`)
+            .get(`${API_URL}/jobs/${job.id}`)
             .set('authorization', JSON.stringify({ email: user.email }));
         expect(result.statusCode).toEqual(200);
         expect(result.body).toEqual(prepareJob(job, true));
@@ -80,7 +80,7 @@ describe(`GET ${API_URL}/job/:id`, () => {
         const user = await prisma.user.create({data: generateUser()});
         const job = await prisma.job.create({data: generateImportJob({userId: user.id})});
         const result = await request(app)
-            .get(`${API_URL}/job/efce93f5-0ead-4d5d-8143-0fd7267db689`)
+            .get(`${API_URL}/jobs/efce93f5-0ead-4d5d-8143-0fd7267db689`)
             .set('authorization', JSON.stringify({ email: user.email }));
         expect(result.statusCode).toEqual(404);
         expect(result.body).toEqual({});
@@ -92,7 +92,7 @@ describe(`GET ${API_URL}/job/:id`, () => {
         const other = await prisma.user.create({data: generateUser()});
         const job = await prisma.job.create({data: generateImportJob({userId: other.id})});
         const result = await request(app)
-            .get(`${API_URL}/job/${job.id}`)
+            .get(`${API_URL}/jobs/${job.id}`)
             .set('authorization', JSON.stringify({ email: user.email }));
         expect(result.statusCode).toEqual(403);
         expect(mNotification).toHaveBeenCalledTimes(0);
@@ -103,7 +103,7 @@ describe(`GET ${API_URL}/job/:id`, () => {
         const other = await prisma.user.create({data: generateUser()});
         const job = await prisma.job.create({data: generateImportJob({userId: other.id})});
         const result = await request(app)
-            .get(`${API_URL}/job/${job.id}`)
+            .get(`${API_URL}/jobs/${job.id}`)
             .set('authorization', JSON.stringify({ email: admin.email }));
         expect(result.statusCode).toEqual(200);
         expect(result.body).toEqual(prepareJob(job, true));
@@ -111,12 +111,12 @@ describe(`GET ${API_URL}/job/:id`, () => {
     });
 });
 
-describe(`PUT ${API_URL}/job/:id`, () => {
+describe(`PUT ${API_URL}/jobs/:id`, () => {
     it('throws an error when user is not authenticated', async () => {
         const user = await prisma.user.create({data: generateUser()});
         const job = await prisma.job.create({data: generateImportJob({userId: user.id})});
         const result = await request(app)
-            .put(`${API_URL}/job/${job.id}`)
+            .put(`${API_URL}/jobs/${job.id}`)
             .send({ data: { description: 'Foo' } });
         expect(result.statusCode).toEqual(401);
         expect(mNotification).toHaveBeenCalledTimes(0);
@@ -126,7 +126,7 @@ describe(`PUT ${API_URL}/job/:id`, () => {
         const user = await prisma.user.create({data: generateUser()});
         const job = await prisma.job.create({data: generateImportJob({userId: user.id, description: 'Bar'})});
         const result = await request(app)
-            .put(`${API_URL}/job/${job.id}`)
+            .put(`${API_URL}/jobs/${job.id}`)
             .set('authorization', JSON.stringify({ email: user.email }))
             .send({ data: { description: 'Foo' } });
         expect(result.statusCode).toEqual(200);
@@ -155,7 +155,7 @@ describe(`PUT ${API_URL}/job/:id`, () => {
             })
         });
         const result = await request(app)
-            .put(`${API_URL}/job/${job.id}`)
+            .put(`${API_URL}/jobs/${job.id}`)
             .set('authorization', JSON.stringify({ email: user.email }))
             .send({ data: { description: 'Foo' } });
         expect(result.statusCode).toEqual(200);
@@ -179,7 +179,7 @@ describe(`PUT ${API_URL}/job/:id`, () => {
                 })
             });
             const result = await request(app)
-                .put(`${API_URL}/job/${job.id}`)
+                .put(`${API_URL}/jobs/${job.id}`)
                 .set('authorization', JSON.stringify({ email: user.email }))
                 .send({ data: { description: 'Foo' } });
             expect(result.statusCode).toEqual(200);
@@ -203,7 +203,7 @@ describe(`PUT ${API_URL}/job/:id`, () => {
             })
         });
         const result = await request(app)
-            .put(`${API_URL}/job/${job.id}`)
+            .put(`${API_URL}/jobs/${job.id}`)
             .set('authorization', JSON.stringify({ email: user.email }))
             .send({ data: { description: 'Foo' } });
         expect(result.statusCode).toEqual(200);
@@ -223,7 +223,7 @@ describe(`PUT ${API_URL}/job/:id`, () => {
         const user = await prisma.user.create({data: generateUser()});
         const job = await prisma.job.create({data: generateImportJob({userId: user.id, description: 'Bar'})});
         const result = await request(app)
-            .put(`${API_URL}/job/${job.id}`)
+            .put(`${API_URL}/jobs/${job.id}`)
             .set('authorization', JSON.stringify({ email: user.email }))
             .send({ data: { ...generateSyncJob({userId: other.id, semesterId: semester.id}), description: 'Foo' } });
         expect(result.body).toEqual({
@@ -242,12 +242,12 @@ describe(`PUT ${API_URL}/job/:id`, () => {
     });
 });
 
-describe(`DELETE ${API_URL}/job/:id`, () => {
+describe(`DELETE ${API_URL}/jobs/:id`, () => {
     it('throws an error when user is not authenticated', async () => {
         const user = await prisma.user.create({data: generateUser()});
         const job = await prisma.job.create({data: generateImportJob({userId: user.id})});
         const result = await request(app)
-            .delete(`${API_URL}/job/${job.id}`);
+            .delete(`${API_URL}/jobs/${job.id}`);
         expect(result.statusCode).toEqual(401);
         expect(mNotification).toHaveBeenCalledTimes(0);
     });
@@ -256,7 +256,7 @@ describe(`DELETE ${API_URL}/job/:id`, () => {
         const user = await prisma.user.create({data: generateUser()});
         const job = await prisma.job.create({data: generateImportJob({userId: user.id, description: 'Bar'})});
         const result = await request(app)
-            .delete(`${API_URL}/job/${job.id}`)
+            .delete(`${API_URL}/jobs/${job.id}`)
             .set('authorization', JSON.stringify({ email: user.email }));
 
         expect(result.statusCode).toEqual(204);
@@ -284,7 +284,7 @@ describe(`DELETE ${API_URL}/job/:id`, () => {
         expect(events).toHaveLength(2);
 
         const result = await request(app)
-            .delete(`${API_URL}/job/${job.id}`)
+            .delete(`${API_URL}/jobs/${job.id}`)
             .set('authorization', JSON.stringify({ email: user.email }));
         expect(mNotification).toHaveBeenCalledTimes(1);
         expect(mNotification.mock.calls[0][0]).toEqual({
@@ -319,7 +319,7 @@ describe(`DELETE ${API_URL}/job/:id`, () => {
         expect(events).toHaveLength(8);
 
         const result = await request(app)
-            .delete(`${API_URL}/job/${job.id}`)
+            .delete(`${API_URL}/jobs/${job.id}`)
             .set('authorization', JSON.stringify({ email: user.email }));
         expect(result.statusCode).toEqual(204);
         expect(mNotification).toHaveBeenCalledTimes(1);
@@ -339,7 +339,7 @@ describe(`DELETE ${API_URL}/job/:id`, () => {
         const user = await prisma.user.create({data: generateUser()});
         const job = await prisma.job.create({data: generateImportJob({userId: user.id, description: 'Bar'})});
         const result = await request(app)
-            .delete(`${API_URL}/job/${job.id}`)
+            .delete(`${API_URL}/jobs/${job.id}`)
             .set('authorization', JSON.stringify({ email: user.email }));
 
         expect(mNotification).toHaveBeenCalledTimes(1);
@@ -354,7 +354,7 @@ describe(`DELETE ${API_URL}/job/:id`, () => {
         expect(del).toBeNull();
 
         const result2 = await request(app)
-            .delete(`${API_URL}/job/${job.id}`)
+            .delete(`${API_URL}/jobs/${job.id}`)
             .set('authorization', JSON.stringify({ email: user.email }));
         expect(mNotification).toHaveBeenCalledTimes(0);
 
