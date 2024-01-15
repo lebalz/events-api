@@ -36,11 +36,12 @@ describe(`GET ${API_URL}/events`, () => {
         const user = await prisma.user.create({
             data: generateUser({ email: 'foo@bar.ch' })
         });
-        const pubEvents = await Promise.all(eventSequence(user.id, 8, { state: EventState.PUBLISHED }).map(e => prisma.event.create({ data: e })));
-        const pubDeletedEvents = await Promise.all(eventSequence(user.id, 2, { state: EventState.PUBLISHED, deletedAt: new Date() }).map(e => prisma.event.create({ data: e })));
-        const draftEvents = await Promise.all(eventSequence(user.id, 3, { state: EventState.DRAFT }).map(e => prisma.event.create({ data: e })));
-        const refusedEvents = await Promise.all(eventSequence(user.id, 2, { state: EventState.REFUSED }).map(e => prisma.event.create({ data: e })));
-        const reviewEvents = await Promise.all(eventSequence(user.id, 4, { state: EventState.REVIEW }).map(e => prisma.event.create({ data: e })));
+        const between = { from: new Date(), to: new Date(Date.now() + 1000 * 60 * 60 * 24 * 7 * 12) };
+        const pubEvents = await Promise.all(eventSequence(user.id, 8, { state: EventState.PUBLISHED, between: between}).map(e => prisma.event.create({ data: e })));
+        const pubDeletedEvents = await Promise.all(eventSequence(user.id, 2, { state: EventState.PUBLISHED, deletedAt: new Date(), between: between }).map(e => prisma.event.create({ data: e })));
+        const draftEvents = await Promise.all(eventSequence(user.id, 3, { state: EventState.DRAFT, between: between }).map(e => prisma.event.create({ data: e })));
+        const refusedEvents = await Promise.all(eventSequence(user.id, 2, { state: EventState.REFUSED, between: between }).map(e => prisma.event.create({ data: e })));
+        const reviewEvents = await Promise.all(eventSequence(user.id, 4, { state: EventState.REVIEW, between: between }).map(e => prisma.event.create({ data: e })));
         const result = await request(app)
             .get(`${API_URL}/events`)
             .set('authorization', JSON.stringify({ noAuth: true }));

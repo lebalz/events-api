@@ -99,13 +99,14 @@ describe(`GET ${API_URL}/users`, () => {
 describe(`GET ${API_URL}/users/:id/events`, () => {
     
     it("lets authorized user fetch it's own events", async () => {
+        const between = { from: new Date(), to: new Date(Date.now() + 1000 * 60 * 60 * 24 * 7 * 12) };
         const user = await prisma.user.create({
             data: generateUser({ email: 'foo@bar.ch' })
         });
         const other = await prisma.user.create({
             data: generateUser({ email: 'other@foo.ch' })
         });
-        const pubEvents = await Promise.all(eventSequence(user.id, 10, { state: EventState.PUBLISHED }).map(e => prisma.event.create({ data: e })));
+        const pubEvents = await Promise.all(eventSequence(user.id, 10, { state: EventState.PUBLISHED, between: between }).map(e => prisma.event.create({ data: e })));
         const draftEvents = await Promise.all(eventSequence(user.id, 3, { state: EventState.DRAFT }).map(e => prisma.event.create({ data: e })));
         const refusedEvents = await Promise.all(eventSequence(user.id, 2, { state: EventState.REFUSED }).map(e => prisma.event.create({ data: e })));
         const reviewEvents = await Promise.all(eventSequence(user.id, 4, { state: EventState.REVIEW }).map(e => prisma.event.create({ data: e })));
@@ -124,13 +125,14 @@ describe(`GET ${API_URL}/users/:id/events`, () => {
     });
 
     it("lets admins fetch all events of state public, review and refused", async () => {
+        const between = { from: new Date(), to: new Date(Date.now() + 1000 * 60 * 60 * 24 * 7 * 12) };
         const user = await prisma.user.create({
             data: generateUser({ email: 'foo@bar.ch' })
         });
         const admin = await prisma.user.create({
             data: generateUser({ email: 'admin@foo.ch', role: Role.ADMIN })
         });
-        const pubEvents = await Promise.all(eventSequence(user.id, 10, { state: EventState.PUBLISHED }).map(e => prisma.event.create({ data: e })));
+        const pubEvents = await Promise.all(eventSequence(user.id, 10, { state: EventState.PUBLISHED, between: between }).map(e => prisma.event.create({ data: e })));
         const draftEvents = await Promise.all(eventSequence(user.id, 7, { state: EventState.DRAFT }).map(e => prisma.event.create({ data: e })));
         const refusedEvents = await Promise.all(eventSequence(user.id, 2, { state: EventState.REFUSED }).map(e => prisma.event.create({ data: e })));
         const reviewEvents = await Promise.all(eventSequence(user.id, 4, { state: EventState.REVIEW }).map(e => prisma.event.create({ data: e })));

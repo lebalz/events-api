@@ -1,10 +1,9 @@
 import { Prisma } from "@prisma/client";
 import {faker} from '@faker-js/faker';
-import { WEEK_2_MS } from "../../src/services/createExcel";
 
 export const generateEvent = (props: (Partial<Prisma.EventUncheckedCreateInput> & {authorId: string, between?: {from: Date, to: Date}})): Prisma.EventCreateInput => {
-    const start = props.between ? faker.date.between(props.between) : faker.date.between({from: new Date(new Date(Date.now() - 12 * WEEK_2_MS)), to: new Date(new Date(Date.now() + 11 * WEEK_2_MS))});
-    const end = props.between ? faker.date.between({from: start, to: props.between.to}) : faker.date.between({from: start, to: new Date(start.getTime() + 12 * WEEK_2_MS)});
+    const start = props.between ? faker.date.between(props.between) : faker.date.between({from: new Date(), to: new Date(Date.now() + 1000 * 60 * 60 * 24 * 7 * 12)});
+    const end = props.between ? faker.date.between({from: start, to: props.between.to}) : faker.date.between({from: start, to: new Date(start.getTime() + 1000 * 60 * 60 * 24 * 7 * 12)});
     const {authorId, parentId, jobId} = props;
 
     if (authorId) {
@@ -33,7 +32,7 @@ export const generateEvent = (props: (Partial<Prisma.EventUncheckedCreateInput> 
     return event;
 };
 
-export const eventSequence = (authorId: string, count: number, props: Partial<Prisma.EventUncheckedCreateInput> = {}) => {
+export const eventSequence = (authorId: string, count: number, props: (Partial<Prisma.EventUncheckedCreateInput> & {between?: {from: Date, to: Date}}) = {}) => {
     return [...Array(count).keys()].map(i => generateEvent({...props, authorId: authorId}));
 }
 export const eventSequenceUnchecked = (count: number, props: Partial<Prisma.EventUncheckedCreateInput> & {authorId: string}) => {
