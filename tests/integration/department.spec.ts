@@ -2,7 +2,6 @@ import request from 'supertest';
 import app, { API_URL } from '../../src/app';
 import prisma from '../../src/prisma';
 import { generateUser } from '../factories/user';
-import { truncate } from '../helpers/db';
 import { Department, Role } from '@prisma/client';
 import stubs from './stubs/departments.json';
 import _ from 'lodash';
@@ -32,15 +31,11 @@ beforeEach(async () => {
     });
 });
 
-afterEach(() => {
-    return truncate();
-});
-
-describe(`GET ${API_URL}/department/all`, () => {
+describe(`GET ${API_URL}/departments`, () => {
     it("returns all departments for public user", async () => {
         const deps = await prisma.department.findMany();
         const result = await request(app)
-            .get(`${API_URL}/department/all`);
+            .get(`${API_URL}/departments`);
         expect(result.statusCode).toEqual(200);
         expect(result.body.length).toEqual(13);
         expect(result.body.map((d: Department) => d.id).sort()).toEqual(deps.map(d => d.id).sort());
@@ -48,18 +43,18 @@ describe(`GET ${API_URL}/department/all`, () => {
     });
 });
 
-describe(`GET ${API_URL}/department/:id`, () => {
+describe(`GET ${API_URL}/departments/:id`, () => {
     it("prevents public user to get department", async () => {
         const dep = await prisma.department.findFirst();
         const result = await request(app)
-            .get(`${API_URL}/department/${dep!.id}`);
+            .get(`${API_URL}/departments/${dep!.id}`);
         expect(result.statusCode).toEqual(401);
         expect(mNotification).toHaveBeenCalledTimes(0);
     });
     it("prevents public user to get non existant department", async () => {
         const user = await prisma.user.create({data: generateUser({})});
         const result = await request(app)
-            .get(`${API_URL}/department/${faker.string.uuid()}`)
+            .get(`${API_URL}/departments/${faker.string.uuid()}`)
             .set('authorization', JSON.stringify({email: user.email}));
         expect(result.statusCode).toEqual(404);
         expect(mNotification).toHaveBeenCalledTimes(0);
@@ -68,19 +63,19 @@ describe(`GET ${API_URL}/department/:id`, () => {
         const user = await prisma.user.create({data: generateUser({})});
         const dep = await prisma.department.findFirst();
         const result = await request(app)
-            .get(`${API_URL}/department/${dep!.id}`)
+            .get(`${API_URL}/departments/${dep!.id}`)
             .set('authorization', JSON.stringify({email: user.email}));
         expect(result.statusCode).toEqual(200);
         expect(result.body).toEqual(prepareDepartment(dep!));
         expect(mNotification).toHaveBeenCalledTimes(0);
     });
 });
-describe(`PUT ${API_URL}/department/:id`, () => {
+describe(`PUT ${API_URL}/departments/:id`, () => {
     it("prevents user to update departments", async () => {
         const user = await prisma.user.create({data: generateUser({})});
         const dep = await prisma.department.findFirst();
         const result = await request(app)
-            .put(`${API_URL}/department/${dep!.id}`)
+            .put(`${API_URL}/departments/${dep!.id}`)
             .set('authorization', JSON.stringify({email: user.email}))
             .send({data: {name: 'FOO'}});
         expect(result.statusCode).toEqual(403);
@@ -90,7 +85,7 @@ describe(`PUT ${API_URL}/department/:id`, () => {
         const admin = await prisma.user.create({data: generateUser({role: Role.ADMIN})});
         const dep = await prisma.department.findFirst();
         const result = await request(app)
-            .put(`${API_URL}/department/${dep!.id}`)
+            .put(`${API_URL}/departments/${dep!.id}`)
             .set('authorization', JSON.stringify({email: admin.email}))
             .send({data: {name: 'FOO'}});
         expect(result.statusCode).toEqual(200);
@@ -127,7 +122,7 @@ describe(`PUT ${API_URL}/department/:id`, () => {
         await prisma.department.update({data: {department1_Id: depA.id}, where: {id: depB.id}});
         const current = deps[2];
         const result = await request(app)
-            .put(`${API_URL}/department/${current!.id}`)
+            .put(`${API_URL}/departments/${current!.id}`)
             .set('authorization', JSON.stringify({email: admin.email}))
             .send({data: {department1_Id: depA.id}});
         expect(result.statusCode).toEqual(400);
@@ -146,7 +141,7 @@ describe(`PUT ${API_URL}/department/:id`, () => {
         expect(deu?.classLetters).toEqual(expect.arrayContaining(['a']));
 
         const result = await request(app)
-            .put(`${API_URL}/department/${bili!.id}`)
+            .put(`${API_URL}/departments/${bili!.id}`)
             .set('authorization', JSON.stringify({email: admin.email}))
             .send({data: {classLetters: ['a', ...bili!.classLetters]}});
         expect(result.statusCode).toEqual(400);
@@ -163,7 +158,7 @@ describe(`PUT ${API_URL}/department/:id`, () => {
         expect(deu?.letter).not.toEqual(fra!.letter);
 
         const result = await request(app)
-            .put(`${API_URL}/department/${fra!.id}`)
+            .put(`${API_URL}/departments/${fra!.id}`)
             .set('authorization', JSON.stringify({email: admin.email}))
             .send({data: {classLetters: deu!.classLetters}});
         expect(result.statusCode).toEqual(200);
@@ -182,11 +177,11 @@ describe(`PUT ${API_URL}/department/:id`, () => {
 });
 
 
-describe(`POST ${API_URL}/department`, () => {
+describe(`POST ${API_URL}/departments`, () => {
     it("prevents user to create a department", async () => {
         const user = await prisma.user.create({data: generateUser({})});
         const result = await request(app)
-            .post(`${API_URL}/department`)
+            .post(`${API_URL}/departments`)
             .set('authorization', JSON.stringify({email: user.email}))
             .send({name: 'FOO', description: 'BAR'});
         expect(result.statusCode).toEqual(403);
@@ -196,7 +191,7 @@ describe(`POST ${API_URL}/department`, () => {
         const admin = await prisma.user.create({data: generateUser({role: Role.ADMIN})});
         const dep = await prisma.department.findFirst();
         const result = await request(app)
-            .post(`${API_URL}/department`)
+            .post(`${API_URL}/departments`)
             .set('authorization', JSON.stringify({email: admin.email}))
             .send({name: 'FOO', description: 'BAR'});
         expect(result.statusCode).toEqual(201);
@@ -212,12 +207,12 @@ describe(`POST ${API_URL}/department`, () => {
 });
 
 
-describe(`DELETE ${API_URL}/department/:id`, () => {
+describe(`DELETE ${API_URL}/departments/:id`, () => {
     it("prevents user to delete a department", async () => {
         const dep = await prisma.department.findFirst();
         const user = await prisma.user.create({data: generateUser({})});
         const result = await request(app)
-            .delete(`${API_URL}/department/${dep!.id}`)
+            .delete(`${API_URL}/departments/${dep!.id}`)
             .set('authorization', JSON.stringify({email: user.email}));
         expect(result.statusCode).toEqual(403);
         expect(mNotification).toHaveBeenCalledTimes(0);
@@ -228,7 +223,7 @@ describe(`DELETE ${API_URL}/department/:id`, () => {
         expect(deps).toHaveLength(13);
         const dep = deps[0];
         const result = await request(app)
-            .delete(`${API_URL}/department/${dep!.id}`)
+            .delete(`${API_URL}/departments/${dep!.id}`)
             .set('authorization', JSON.stringify({email: admin.email}));
         expect(result.statusCode).toEqual(204);
         const depsAfter = await prisma.department.findMany();

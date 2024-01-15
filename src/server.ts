@@ -74,32 +74,32 @@ server.listen(PORT || 3002, () => {
     Logger.info('Press Ctrl+C to quit.')
 });
 
-const bree = new Bree({
-    logger: Logger,
-    root: path.join(__dirname, 'jobs'),
-    jobs: [
-        {
-            name: 'sync-ics',
-            timeout: '10 secondes',
-            interval: 'every 4 hours'
-        },
-    ],
-    /**
-     * We only need the default extension to be "ts"
-     * when we are running the app with ts-node - otherwise
-     * the compiled-to-js code still needs to use JS
-     */
-    defaultExtension: process.env.TS_NODE ? 'ts' : 'js',
-});
-
-bree.on('worker created', (name) => {
-    console.log('worker created', name);
-});
-
-bree.on('worker deleted', (name) => {
-    console.log('worker deleted', name);
-});
-
 if (process.env.NODE_ENV !== 'test') {
+    const bree = new Bree({
+        logger: Logger,
+        root: path.join(__dirname, 'jobs'),
+        jobs: [
+            {
+                name: 'sync-ics',
+                timeout: '10 secondes',
+                interval: 'every 4 hours'
+            },
+        ],
+        /**
+         * We only need the default extension to be "ts"
+         * when we are running the app with ts-node - otherwise
+         * the compiled-to-js code still needs to use JS
+         */
+        defaultExtension: process.env.TS_NODE ? 'ts' : 'js',
+    });
+    
+    bree.on('worker created', (name) => {
+        console.log('worker created', name);
+    });
+    
+    bree.on('worker deleted', (name) => {
+        console.log('worker deleted', name);
+    });
+    
     bree.start();
 }

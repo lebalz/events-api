@@ -1,5 +1,5 @@
 import prisma from '../../src/prisma';
-import { mkdirSync, rmSync, unlinkSync, writeFileSync } from 'fs';
+import { mkdirSync, rmSync, writeFileSync } from 'fs';
 
 export const truncate = async (deleteFiles: boolean = true) => {
     const DATABASE_URL = process.env.DATABASE_URL;

@@ -2,12 +2,10 @@ import request from 'supertest';
 import app, { API_URL } from '../../src/app';
 import prisma from '../../src/prisma';
 import { generateUser } from '../factories/user';
-import { truncate } from '../helpers/db';
-import { Department, Role, UntisLesson, UntisTeacher } from '@prisma/client';
+import { UntisTeacher } from '@prisma/client';
 import stubs from './stubs/semesters.json';
 import _ from 'lodash';
 import { notify } from '../../src/middlewares/notify.nop';
-import { IoEvent } from '../../src/routes/socketEventTypes';
 import { syncUntis2DB } from '../../src/services/syncUntis2DB';
 import { UntisSubject } from '../../src/models/untisLessons';
 
@@ -34,14 +32,11 @@ beforeEach(async () => {
     await syncUntis2DB(semester!.id);
 });
 
-afterEach(() => {
-    return truncate();
-});
 
-describe(`GET ${API_URL}/untis/teacher/all`, () => {
+describe(`GET ${API_URL}/untis/teachers`, () => {
     it("prevents public user to fetch untis teachers", async () => {
         const result = await request(app)
-            .get(`${API_URL}/untis/teacher/all`);
+            .get(`${API_URL}/untis/teachers`);
         expect(result.statusCode).toEqual(401);
     });
     it("returns all teachers for user", async () => {
@@ -49,7 +44,7 @@ describe(`GET ${API_URL}/untis/teacher/all`, () => {
         const teachers = await prisma.untisTeacher.findMany();
         expect(teachers.length).toEqual(2);
         const result = await request(app)
-            .get(`${API_URL}/untis/teacher/all`)
+            .get(`${API_URL}/untis/teachers`)
             .set('authorization', JSON.stringify({ email: user.email }))
         expect(result.statusCode).toEqual(200);
         expect(result.body.length).toEqual(2);
@@ -60,10 +55,10 @@ describe(`GET ${API_URL}/untis/teacher/all`, () => {
     });
 });
 
-describe(`GET ${API_URL}/untis/teacher/:id`, () => {
+describe(`GET ${API_URL}/untis/teachers/:id`, () => {
     it("prevents public user to fetch untis teachers", async () => {
         const result = await request(app)
-            .get(`${API_URL}/untis/teacher/all/1`);
+            .get(`${API_URL}/untis/teachers/1`);
         expect(result.statusCode).toEqual(401);
     });
     it("returns teacher and it's lessons", async () => {
@@ -71,7 +66,7 @@ describe(`GET ${API_URL}/untis/teacher/:id`, () => {
         const teachers = await prisma.untisTeacher.findMany();
         expect(teachers.length).toEqual(2);
         const result = await request(app)
-            .get(`${API_URL}/untis/teacher/${teachers[0].id}`)
+            .get(`${API_URL}/untis/teachers/${teachers[0].id}`)
             .set('authorization', JSON.stringify({ email: user.email }))
         expect(result.statusCode).toEqual(200);
         expect(result.body).toEqual({
@@ -128,14 +123,14 @@ describe(`GET ${API_URL}/untis/teacher/:id`, () => {
     });
 });
 
-describe(`GET ${API_URL}/untis/class/all`, () => {
+describe(`GET ${API_URL}/untis/classes`, () => {
     it("allows public user to fetch untis classes (without relations)", async () => {
         const klasses = await prisma.untisClass.findMany({include: {lessons: true, teachers: true}});
         expect(klasses.length).toEqual(2);
         expect(klasses.map((k) => k.lessons).flat().length).toEqual(3);
         expect(klasses.map((k) => k.teachers).flat().length).toEqual(2);
         const result = await request(app)
-            .get(`${API_URL}/untis/class/all`);
+            .get(`${API_URL}/untis/classes`);
         expect(result.statusCode).toEqual(200);
 
         expect(result.body.map((d: UntisTeacher) => d.id).sort()).toEqual(klasses.map(d => d.id).sort());
@@ -148,7 +143,7 @@ describe(`GET ${API_URL}/untis/class/all`, () => {
         const klasses = await prisma.untisClass.findMany();
         expect(klasses.length).toEqual(2);
         const result = await request(app)
-            .get(`${API_URL}/untis/class/all`)
+            .get(`${API_URL}/untis/classes`)
             .set('authorization', JSON.stringify({ email: user.email }))
         expect(result.statusCode).toEqual(200);
         expect(result.body.length).toEqual(2);
@@ -157,10 +152,10 @@ describe(`GET ${API_URL}/untis/class/all`, () => {
     });
 });
 
-describe(`GET ${API_URL}/untis/subjects/all`, () => {
+describe(`GET ${API_URL}/untis/subjects`, () => {
     it("prevents public user to fetch untis subjects", async () => {
         const result = await request(app)
-            .get(`${API_URL}/untis/subjects/all`);
+            .get(`${API_URL}/untis/subjects`);
         expect(result.statusCode).toEqual(401);
     });
     it("returns all subjects for user", async () => {

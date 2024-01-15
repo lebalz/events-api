@@ -1,6 +1,4 @@
 import { RequestHandler } from "express";
-import prisma from "../prisma";
-import { Prisma } from "@prisma/client";
 import UntisClasses from "../models/untisClasses";
 import UntisTeachers from "../models/untisTeachers";
 import UntisLessons from "../models/untisLessons";

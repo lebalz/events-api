@@ -373,7 +373,7 @@ describe('allEvents', () => {
 	test('all published Events for anonyme user', async () => {
 		const {pub1, pub2} = await setup();
 
-		await expect(Events.all()).resolves.toEqual([
+		await expect(Events.published()).resolves.toEqual([
 			prepareEvent(pub1),
 			prepareEvent(pub2),
 		]);
@@ -382,19 +382,19 @@ describe('allEvents', () => {
 		const {maria, pub1, draft1, refused1, review1, pub2 } = await setup();
 		await expect(Events.all(maria)).resolves.toEqual([
 			prepareEvent(pub1),
+			prepareEvent(pub2),
 			prepareEvent(draft1),
 			prepareEvent(refused1),
 			prepareEvent(review1),
-			prepareEvent(pub2),
 		]);
 	});
 	test('all Published, Reviews, Refuesd and owned events for admin', async () => {
 		const { jack, pub1, refused1, review1, pub2, draft2} = await setup();
 		await expect(Events.all(jack)).resolves.toEqual([
 			prepareEvent(pub1),
+			prepareEvent(pub2),
 			prepareEvent(refused1),
 			prepareEvent(review1),
-			prepareEvent(pub2),
 			prepareEvent(draft2),
 		]);
 	});

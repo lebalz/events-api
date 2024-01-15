@@ -2,14 +2,13 @@ import request from 'supertest';
 import app, { API_URL } from '../../src/app';
 import prisma from '../../src/prisma';
 import { generateUser } from '../factories/user';
-import { truncate } from '../helpers/db';
 import { UserEventGroup, Role } from '@prisma/client';
 import _ from 'lodash';
 import { notify } from '../../src/middlewares/notify.nop';
 import { IoEvent } from '../../src/routes/socketEventTypes';
 import { faker } from '@faker-js/faker';
 import { generateUserEventGroup, userEventGroupSequence } from '../factories/userEventGroup';
-import { eventSequence, eventSequenceUnchecked } from '../factories/event';
+import { eventSequenceUnchecked } from '../factories/event';
 import { ApiEvent } from '../../src/models/event.helpers';
 
 jest.mock('../../src/middlewares/notify.nop');
@@ -20,14 +19,11 @@ const prepareRegistrationPeriod = (ueGroup: UserEventGroup) => {
         ...JSON.parse(JSON.stringify(ueGroup))
     }
 }
-afterEach(() => {
-    return truncate();
-});
 
-describe(`GET ${API_URL}/user_event_group/all`, () => {
+describe(`GET ${API_URL}/user_event_groups`, () => {
     it("is not for public users", async () => {
         const result = await request(app)
-            .get(`${API_URL}/user_event_group/all`);
+            .get(`${API_URL}/user_event_groups`);
         expect(result.statusCode).toEqual(401);
     });
     it("returns all registration periods for users", async () => {
@@ -39,7 +35,7 @@ describe(`GET ${API_URL}/user_event_group/all`, () => {
         expect(ueGroups).toHaveLength(3);
 
         const result = await request(app)
-            .get(`${API_URL}/user_event_group/all`)
+            .get(`${API_URL}/user_event_groups`)
             .set('authorization', JSON.stringify({email: user.email}));
         expect(result.statusCode).toEqual(200);
         expect(result.body.length).toEqual(3);
@@ -48,12 +44,12 @@ describe(`GET ${API_URL}/user_event_group/all`, () => {
     });
 });
 
-describe(`GET ${API_URL}/user_event_group/:id`, () => {
+describe(`GET ${API_URL}/user_event_groups/:id`, () => {
     it("prevents public user to get user event group", async () => {
         const user = await prisma.user.create({data: generateUser({})});
         const ueGroup = await prisma.userEventGroup.create({data: generateUserEventGroup({userId: user!.id})});
         const result = await request(app)
-            .get(`${API_URL}/user_event_group/${ueGroup!.id}`);
+            .get(`${API_URL}/user_event_groups/${ueGroup!.id}`);
         expect(result.statusCode).toEqual(401);
         expect(mNotification).toHaveBeenCalledTimes(0);
     });
@@ -61,7 +57,7 @@ describe(`GET ${API_URL}/user_event_group/:id`, () => {
         const user = await prisma.user.create({data: generateUser({})});
         const ueGroup = await prisma.userEventGroup.create({data: generateUserEventGroup({userId: user!.id})});
         const result = await request(app)
-            .get(`${API_URL}/user_event_group/${ueGroup!.id}`)
+            .get(`${API_URL}/user_event_groups/${ueGroup!.id}`)
             .set('authorization', JSON.stringify({email: user.email}));
         expect(result.statusCode).toEqual(200);
         expect(result.body).toEqual(prepareRegistrationPeriod(ueGroup!));
@@ -70,7 +66,7 @@ describe(`GET ${API_URL}/user_event_group/:id`, () => {
     it("returns 404 when user event group was not found", async () => {
         const user = await prisma.user.create({data: generateUser({})});
         const result = await request(app)
-            .get(`${API_URL}/user_event_group/${faker.string.uuid()}`)
+            .get(`${API_URL}/user_event_groups/${faker.string.uuid()}`)
             .set('authorization', JSON.stringify({email: user.email}));
         expect(result.statusCode).toEqual(404);
         expect(mNotification).toHaveBeenCalledTimes(0);
@@ -80,19 +76,19 @@ describe(`GET ${API_URL}/user_event_group/:id`, () => {
         const mallory = await prisma.user.create({data: generateUser({})});
         const ueGroup = await prisma.userEventGroup.create({data: generateUserEventGroup({userId: user!.id})});
         const result = await request(app)
-            .get(`${API_URL}/user_event_group/${ueGroup!.id}`)
+            .get(`${API_URL}/user_event_groups/${ueGroup!.id}`)
             .set('authorization', JSON.stringify({email: mallory.email}));
         expect(result.statusCode).toEqual(403);
     });
 });
 
-describe(`PUT ${API_URL}/user_event_group/:id`, () => {
+describe(`PUT ${API_URL}/user_event_groups/:id`, () => {
     it("lets users modify their own Registration Period", async () => {
         const user = await prisma.user.create({data: generateUser({})});
         const ueGroup = await prisma.userEventGroup.create({data: generateUserEventGroup({userId: user!.id})});
 
         const result = await request(app)
-            .put(`${API_URL}/user_event_group/${ueGroup!.id}`)
+            .put(`${API_URL}/user_event_groups/${ueGroup!.id}`)
             .set('authorization', JSON.stringify({email: user.email}))
             .send({data: {name: 'FOO'}});
         expect(result.statusCode).toEqual(200);
@@ -109,7 +105,7 @@ describe(`PUT ${API_URL}/user_event_group/:id`, () => {
         const ueGroup = await prisma.userEventGroup.create({data: generateUserEventGroup({userId: user!.id})});
 
         const result = await request(app)
-            .put(`${API_URL}/user_event_group/${ueGroup!.id}`)
+            .put(`${API_URL}/user_event_groups/${ueGroup!.id}`)
             .set('authorization', JSON.stringify({email: mallory.email}))
             .send({data: {name: 'FOO'}});
         expect(result.statusCode).toEqual(403);
@@ -120,7 +116,7 @@ describe(`PUT ${API_URL}/user_event_group/:id`, () => {
         const admin = await prisma.user.create({data: generateUser({role: Role.ADMIN})});
         const ueGroup = await prisma.userEventGroup.create({data: generateUserEventGroup({userId: user!.id})});
         const result = await request(app)
-            .put(`${API_URL}/user_event_group/${ueGroup!.id}`)
+            .put(`${API_URL}/user_event_groups/${ueGroup!.id}`)
             .set('authorization', JSON.stringify({email: admin.email}))
             .send({data: {name: 'FOO'}});
         expect(result.statusCode).toEqual(403);
@@ -128,10 +124,10 @@ describe(`PUT ${API_URL}/user_event_group/:id`, () => {
     });
 });
 
-describe(`POST ${API_URL}/user_event_group`, () => {
+describe(`POST ${API_URL}/user_event_groups`, () => {
     it("prevents public visitors to create a User Event Group", async () => {
         const result = await request(app)
-            .post(`${API_URL}/user_event_group`)
+            .post(`${API_URL}/user_event_groups`)
             .send({name: 'FOO', description: 'BAR', event_ids: []});
         expect(result.statusCode).toEqual(401);
         expect(mNotification).toHaveBeenCalledTimes(0);
@@ -139,7 +135,7 @@ describe(`POST ${API_URL}/user_event_group`, () => {
     it("allows users to create a User Event Group", async () => {
         const user = await prisma.user.create({data: generateUser({})});
         const result = await request(app)
-            .post(`${API_URL}/user_event_group`)
+            .post(`${API_URL}/user_event_groups`)
             .set('authorization', JSON.stringify({email: user.email}))
             .send({name: 'FOO', description: 'BAR', event_ids: []});
         expect(result.statusCode).toEqual(201);
@@ -160,7 +156,7 @@ describe(`POST ${API_URL}/user_event_group`, () => {
     });
 });
 
-describe(`DELETE ${API_URL}/user_event_group/:id`, () => {
+describe(`DELETE ${API_URL}/user_event_groups/:id`, () => {
     it("delets a group but keeps the events", async () => {
         const user = await prisma.user.create({data: generateUser({})});
         await prisma.event.createMany({data: eventSequenceUnchecked(3, { authorId: user.id })});
@@ -170,7 +166,7 @@ describe(`DELETE ${API_URL}/user_event_group/:id`, () => {
             data: generateUserEventGroup({userId: user!.id, events: { connect: events.map(e => ({id: e.id})) }}
         )});
         const result = await request(app)
-            .delete(`${API_URL}/user_event_group/${ueGroup!.id}`)
+            .delete(`${API_URL}/user_event_groups/${ueGroup!.id}`)
             .set('authorization', JSON.stringify({email: user.email}));
         const postDeleteEvents = await prisma.event.findMany();
         expect(postDeleteEvents).toHaveLength(3);
@@ -186,7 +182,7 @@ describe(`DELETE ${API_URL}/user_event_group/:id`, () => {
 });
 
 
-describe(`GET ${API_URL}/user_event_group/:id/events`, () => {
+describe(`GET ${API_URL}/user_event_groups/:id/events`, () => {
     it("prevents public visitor to fetch group events", async () => {
         const user = await prisma.user.create({data: generateUser({})});
         await prisma.event.createMany({data: eventSequenceUnchecked(6, { authorId: user.id })});
@@ -196,7 +192,7 @@ describe(`GET ${API_URL}/user_event_group/:id/events`, () => {
             data: generateUserEventGroup({userId: user!.id, events: { connect: events.slice(0, 3).map(e => ({id: e.id})) }}
         )});
         const result = await request(app)
-            .get(`${API_URL}/user_event_group/${ueGroup!.id}/events`);
+            .get(`${API_URL}/user_event_groups/${ueGroup!.id}/events`);
 
         expect(result.statusCode).toEqual(401);
     });
@@ -209,7 +205,7 @@ describe(`GET ${API_URL}/user_event_group/:id/events`, () => {
             data: generateUserEventGroup({userId: user!.id, events: { connect: events.slice(0, 3).map(e => ({id: e.id})) }}
         )});
         const result = await request(app)
-            .get(`${API_URL}/user_event_group/${ueGroup!.id}/events`)
+            .get(`${API_URL}/user_event_groups/${ueGroup!.id}/events`)
             .set('authorization', JSON.stringify({email: user.email}));
 
         expect(result.statusCode).toEqual(200);
@@ -219,21 +215,21 @@ describe(`GET ${API_URL}/user_event_group/:id/events`, () => {
     });
 });
 
-describe(`POST ${API_URL}/user_event_group/:id/clone`, () => {
+describe(`POST ${API_URL}/user_event_groups/:id/clone`, () => {
     it("prevents public visitor to clone group", async () => {
         const user = await prisma.user.create({data: generateUser({})});
         const ueGroup = await prisma.userEventGroup.create({
             data: generateUserEventGroup({userId: user!.id })
         });
         const result = await request(app)
-            .post(`${API_URL}/user_event_group/${ueGroup!.id}/clone`);
+            .post(`${API_URL}/user_event_groups/${ueGroup!.id}/clone`);
 
         expect(result.statusCode).toEqual(401);
     });
     it("returns 404 when user event group was not found", async () => {
         const user = await prisma.user.create({data: generateUser({})});
         const result = await request(app)
-            .get(`${API_URL}/user_event_group/${faker.string.uuid()}/clone`)
+            .get(`${API_URL}/user_event_groups/${faker.string.uuid()}/clone`)
             .set('authorization', JSON.stringify({email: user.email}));
         expect(result.statusCode).toEqual(404);
         expect(mNotification).toHaveBeenCalledTimes(0);
@@ -247,7 +243,7 @@ describe(`POST ${API_URL}/user_event_group/:id/clone`, () => {
             data: generateUserEventGroup({userId: user!.id, events: { connect: events.slice(0, 3).map(e => ({id: e.id})) }}
         )});
         const result = await request(app)
-            .post(`${API_URL}/user_event_group/${ueGroup!.id}/clone`)
+            .post(`${API_URL}/user_event_groups/${ueGroup!.id}/clone`)
             .set('authorization', JSON.stringify({email: user.email}));
 
         expect(result.statusCode).toEqual(201);

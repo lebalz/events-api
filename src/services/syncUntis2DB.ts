@@ -219,6 +219,11 @@ export const syncUntis2DB = async (semesterId: string, fetchUntis: (semester: Se
             return;
         }
         lessonIdSet.add(lesson.id);
+        if (lesson.subjects.length === 0) {
+            Logger.info(`No Subject found for ${JSON.stringify(lesson, null, 2)}`);
+            return;
+        }
+
         return {
             id: lesson.id,
             room: lesson.rooms.map((r) => r.element.name).join(', '),
