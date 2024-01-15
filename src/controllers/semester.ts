@@ -4,7 +4,6 @@ import { IoEvent } from "../routes/socketEventTypes";
 import { notifyChangedRecord } from "../routes/notify";
 import Semesters from "../models/semesters";
 import { IoRoom } from "../routes/socketEvents";
-import Logger from "../utils/logger";
 
 const NAME = 'SEMESTER';
 

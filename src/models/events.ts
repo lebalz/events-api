@@ -5,7 +5,7 @@ import { ApiEvent, clonedProps, clonedUpdateProps, prepareEvent } from "./event.
 import { HTTP400Error, HTTP403Error, HTTP404Error } from "../utils/errors/Errors";
 import { importEvents as importService, ImportType } from "../services/importEvents";
 import Logger from "../utils/logger";
-import semesters from "./semesters";
+import Semesters from "./semesters";
 import _ from "lodash";
 const getData = createDataExtractor<Prisma.EventUncheckedUpdateInput>(
     [
@@ -306,16 +306,16 @@ function Events(db: PrismaClient['event']) {
             return this._forceDestroy(record);
         },
         async published(semesterId?: string): Promise<ApiEvent[]> {
-            const semester = semesterId ? await semesters.findModel(semesterId) : undefined;
+            const semester = await (semesterId ? Semesters.findModel(semesterId) : Semesters.current());
             const events = await db.findMany({
                 include: { departments: true, children: true },
                 where: {
-                    AND: rmUndefined([
-                        semester ? { start: { lte: semester.end } } : undefined,
-                        semester ? { end: { gte: semester.start } } : undefined,
+                    AND: [
+                        { start: { lte: semester.end } },
+                        { end: { gte: semester.start } },
                         { state: EventState.PUBLISHED },
                         { parentId: null }
-                    ])
+                    ]
                 },
                 orderBy: { start: 'asc' }
             });
@@ -323,13 +323,13 @@ function Events(db: PrismaClient['event']) {
         },
         async forUser(user: User, semesterId?: string): Promise<ApiEvent[]> {
             const isAdmin = user.role === Role.ADMIN;
-            const semester = semesterId ? await semesters.findModel(semesterId) : undefined;
+            const semester = await (semesterId ? Semesters.findModel(semesterId) : Semesters.current());
             const events = await db.findMany({
                 include: { departments: true, children: true },
                 where: {
-                    AND: rmUndefined([
-                        semester ? { start: { lte: semester.end } } : undefined,
-                        semester ? { end: { gte: semester.start } } : undefined,
+                    AND: [
+                        { start: { lte: semester.end } },
+                        { end: { gte: semester.start } },
                         {
                             NOT: {
                                 AND: [
@@ -345,7 +345,7 @@ function Events(db: PrismaClient['event']) {
                                 isAdmin ? { state: EventState.REFUSED } : undefined
                             ])
                         }
-                    ])
+                    ]
                 },
                 orderBy: { start: 'asc' }
             });

@@ -4,7 +4,7 @@ import app, { API_URL } from '../../src/app';
 import { generateUser, userSequence } from '../factories/user';
 import { Department, Event, EventAudience, EventState, Role, Semester, TeachingAffected, UntisTeacher, User } from '@prisma/client';
 import { generateUntisTeacher } from '../factories/untisTeacher';
-import { generateEvent } from '../factories/event';
+import { eventSequence, generateEvent } from '../factories/event';
 import { generateSemester } from '../factories/semester';
 import { generateDepartment } from '../factories/department';
 import { generateUntisClass } from '../factories/untisClass';
@@ -92,6 +92,58 @@ describe(`GET ${API_URL}/users`, () => {
                 createdAt: expect.any(String)
             });
         });
+        expect(mNotification).toHaveBeenCalledTimes(0);
+    });
+});
+
+describe(`GET ${API_URL}/users/:id/events`, () => {
+    
+    it("lets authorized user fetch it's own events", async () => {
+        const user = await prisma.user.create({
+            data: generateUser({ email: 'foo@bar.ch' })
+        });
+        const other = await prisma.user.create({
+            data: generateUser({ email: 'other@foo.ch' })
+        });
+        const pubEvents = await Promise.all(eventSequence(user.id, 10, { state: EventState.PUBLISHED }).map(e => prisma.event.create({ data: e })));
+        const draftEvents = await Promise.all(eventSequence(user.id, 3, { state: EventState.DRAFT }).map(e => prisma.event.create({ data: e })));
+        const refusedEvents = await Promise.all(eventSequence(user.id, 2, { state: EventState.REFUSED }).map(e => prisma.event.create({ data: e })));
+        const reviewEvents = await Promise.all(eventSequence(user.id, 4, { state: EventState.REVIEW }).map(e => prisma.event.create({ data: e })));
+        const refusedOtherEvents = await Promise.all(eventSequence(other.id, 5, { state: EventState.REFUSED }).map(e => prisma.event.create({ data: e })));
+        const reviewOtherEvents = await Promise.all(eventSequence(other.id, 5, { state: EventState.REVIEW }).map(e => prisma.event.create({ data: e })));
+        const all = await prisma.event.findMany();
+        expect(all.length).toEqual(29);
+
+        const result = await request(app)
+            .get(`${API_URL}/user/events`)
+            .set('authorization', JSON.stringify({ email: user.email }));
+        expect(result.statusCode).toEqual(200);
+        expect(result.body.length).toEqual(9);
+        expect(result.body.map((e: any) => e.id).sort()).toEqual([...draftEvents, ...refusedEvents, ...reviewEvents].map(e => e.id).sort());
+        expect(mNotification).toHaveBeenCalledTimes(0);
+    });
+
+    it("lets admins fetch all events of state public, review and refused", async () => {
+        const user = await prisma.user.create({
+            data: generateUser({ email: 'foo@bar.ch' })
+        });
+        const admin = await prisma.user.create({
+            data: generateUser({ email: 'admin@foo.ch', role: Role.ADMIN })
+        });
+        const pubEvents = await Promise.all(eventSequence(user.id, 10, { state: EventState.PUBLISHED }).map(e => prisma.event.create({ data: e })));
+        const draftEvents = await Promise.all(eventSequence(user.id, 7, { state: EventState.DRAFT }).map(e => prisma.event.create({ data: e })));
+        const refusedEvents = await Promise.all(eventSequence(user.id, 2, { state: EventState.REFUSED }).map(e => prisma.event.create({ data: e })));
+        const reviewEvents = await Promise.all(eventSequence(user.id, 4, { state: EventState.REVIEW }).map(e => prisma.event.create({ data: e })));
+        const draftAdminEvents = await Promise.all(eventSequence(admin.id, 5, { state: EventState.DRAFT }).map(e => prisma.event.create({ data: e })));
+        const all = await prisma.event.findMany();
+        expect(all.length).toEqual(28);
+
+        const result = await request(app)
+            .get(`${API_URL}/user/events`)
+            .set('authorization', JSON.stringify({ email: admin.email }));
+        expect(result.statusCode).toEqual(200);
+        expect(result.body.length).toEqual(11);
+        expect(result.body.map((e: any) => e.id).sort()).toEqual([...refusedEvents, ...reviewEvents, ...draftAdminEvents].map(e => e.id).sort());
         expect(mNotification).toHaveBeenCalledTimes(0);
     });
 });

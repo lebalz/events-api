@@ -1,10 +1,11 @@
-import { JobState, Prisma, PrismaClient, Role, User } from "@prisma/client";
+import { JobState, Prisma, PrismaClient, Role, Semester, User } from "@prisma/client";
 import prisma from "../prisma";
 import { HTTP400Error, HTTP403Error, HTTP404Error } from "../utils/errors/Errors";
 import { createDataExtractor } from "../controllers/helpers";
 import Logger from "../utils/logger";
 import Jobs from "./jobs";
 import { syncUntis2DB } from "../services/syncUntis2DB";
+import { DAY_2_MS, WEEK_2_MS } from "../services/createExcel";
 
 const getData = createDataExtractor<Prisma.SemesterUncheckedUpdateInput>(
     ['name', 'start', 'end', 'untisSyncDate']
@@ -14,6 +15,31 @@ function Semesters(db: PrismaClient['semester']) {
     return Object.assign(db, {
         async all() {
             return await db.findMany({});
+        },
+        async current() {
+            const curr = await db.findFirst({
+                where: {
+                    start: {
+                        lte: new Date()
+                    },
+                    end: {
+                        gte: new Date()
+                    }
+                }
+            });
+            if (curr) {
+                return curr;
+            }
+            const defSem: Semester = {
+                id: '00000000-0000-4000-8000-000000000000', /* valid dummy uuid */
+                name: 'Default Semester',
+                start: new Date((Date.now() - 12 * WEEK_2_MS)),
+                end: new Date((Date.now() + 12 * WEEK_2_MS)),
+                untisSyncDate: new Date(),
+                createdAt: new Date(),
+                updatedAt: new Date()
+            };
+            return Promise.resolve(defSem); 
         },
         async findModel(id: string) {
             const model = await db.findUnique({ where: { id } });

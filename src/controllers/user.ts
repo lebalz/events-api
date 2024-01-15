@@ -3,6 +3,7 @@ import { RequestHandler } from "express";
 import { IoEvent } from "../routes/socketEventTypes";
 import { IoRoom } from "../routes/socketEvents";
 import Users from '../models/users';
+import Events from '../models/events';
 
 const NAME = 'USER';
 
@@ -28,10 +29,11 @@ export const all: RequestHandler = async (req, res, next) => {
     }
 }
 
-export const events: RequestHandler = async (req, res, next) => {
+export const events: RequestHandler<any, any, any, {semesterId?: string}> = async (req, res, next) => {
     try {
-        const users = await Users.all();
-        res.json(users);
+        const user = req.user!;
+        const events = await Events.forUser(user, req.query.semesterId);
+        res.json(events);
     } catch (error) /* istanbul ignore next */ {
         next(error)
     }

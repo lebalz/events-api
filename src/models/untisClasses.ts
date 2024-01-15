@@ -24,7 +24,6 @@ function UntisClasses(db: PrismaClient['untisClass']) {
             const models = await prisma.untisClass.findMany();
             return models.map((m) => ({...m, teachers: [], lessons: []}));
         }
-        
     })
 }
 

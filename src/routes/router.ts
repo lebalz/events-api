@@ -17,6 +17,8 @@ const UPLOAD_DIR = process.env.UPLOAD_DIR
 const router = express.Router();
 
 router.get('/user', user);
+router.get('/user/events', usersEvents);
+
 router.get('/users', allUsers);
 router.get('/users/:id', findUser);
 router.put('/users/:id/link_to_untis', linkToUntis);
@@ -24,7 +26,6 @@ router.put('/users/:id/set_role', setRole);
 router.post('/users/:id/create_ics', createIcs);
 router.get('/users/:id/affected-event-ids', affectedEventIds);
 
-router.get('/users/:id/events', usersEvents);
 
 router.get('/events', allEvents);
 router.post('/events/excel', exportExcel);

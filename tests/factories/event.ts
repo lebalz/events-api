@@ -1,9 +1,10 @@
 import { Prisma } from "@prisma/client";
 import {faker} from '@faker-js/faker';
+import { WEEK_2_MS } from "../../src/services/createExcel";
 
 export const generateEvent = (props: (Partial<Prisma.EventUncheckedCreateInput> & {authorId: string, between?: {from: Date, to: Date}})): Prisma.EventCreateInput => {
-    const start = props.between ? faker.date.between(props.between) : faker.date.future({years: 1});
-    const end = props.between ? faker.date.between({from: start, to: props.between.to}) : faker.date.future({refDate: start, years: 1});
+    const start = props.between ? faker.date.between(props.between) : faker.date.between({from: new Date(new Date(Date.now() - 12 * WEEK_2_MS)), to: new Date(new Date(Date.now() + 11 * WEEK_2_MS))});
+    const end = props.between ? faker.date.between({from: start, to: props.between.to}) : faker.date.between({from: start, to: new Date(start.getTime() + 12 * WEEK_2_MS)});
     const {authorId, parentId, jobId} = props;
 
     if (authorId) {
