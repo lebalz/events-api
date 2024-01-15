@@ -2,14 +2,13 @@ import request from 'supertest';
 import app, { API_URL } from '../../src/app';
 import prisma from '../../src/prisma';
 import { generateUser } from '../factories/user';
-import { truncate } from '../helpers/db';
 import { UserEventGroup, Role } from '@prisma/client';
 import _ from 'lodash';
 import { notify } from '../../src/middlewares/notify.nop';
 import { IoEvent } from '../../src/routes/socketEventTypes';
 import { faker } from '@faker-js/faker';
 import { generateUserEventGroup, userEventGroupSequence } from '../factories/userEventGroup';
-import { eventSequence, eventSequenceUnchecked } from '../factories/event';
+import { eventSequenceUnchecked } from '../factories/event';
 import { ApiEvent } from '../../src/models/event.helpers';
 
 jest.mock('../../src/middlewares/notify.nop');
@@ -20,9 +19,6 @@ const prepareRegistrationPeriod = (ueGroup: UserEventGroup) => {
         ...JSON.parse(JSON.stringify(ueGroup))
     }
 }
-afterEach(() => {
-    return truncate();
-});
 
 describe(`GET ${API_URL}/user_event_groups`, () => {
     it("is not for public users", async () => {

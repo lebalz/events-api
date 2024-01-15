@@ -2,12 +2,10 @@ import request from 'supertest';
 import app, { API_URL } from '../../src/app';
 import prisma from '../../src/prisma';
 import { generateUser } from '../factories/user';
-import { truncate } from '../helpers/db';
-import { Department, Role, UntisLesson, UntisTeacher } from '@prisma/client';
+import { UntisTeacher } from '@prisma/client';
 import stubs from './stubs/semesters.json';
 import _ from 'lodash';
 import { notify } from '../../src/middlewares/notify.nop';
-import { IoEvent } from '../../src/routes/socketEventTypes';
 import { syncUntis2DB } from '../../src/services/syncUntis2DB';
 import { UntisSubject } from '../../src/models/untisLessons';
 
@@ -34,9 +32,6 @@ beforeEach(async () => {
     await syncUntis2DB(semester!.id);
 });
 
-afterEach(() => {
-    return truncate();
-});
 
 describe(`GET ${API_URL}/untis/teachers`, () => {
     it("prevents public user to fetch untis teachers", async () => {

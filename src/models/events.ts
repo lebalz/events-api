@@ -6,6 +6,7 @@ import { HTTP400Error, HTTP403Error, HTTP404Error } from "../utils/errors/Errors
 import { importEvents as importService, ImportType } from "../services/importEvents";
 import Logger from "../utils/logger";
 import semesters from "./semesters";
+import _ from "lodash";
 const getData = createDataExtractor<Prisma.EventUncheckedUpdateInput>(
     [
         'audience',
@@ -23,6 +24,10 @@ const getData = createDataExtractor<Prisma.EventUncheckedUpdateInput>(
 );
 
 type AllEventQueryCondition = ({ state: EventState } | { authorId: string })[];
+
+const rmUndefined = <T>(arr: (T | undefined)[]): T[] => {
+    return _.reject(arr, _.isUndefined) as T[];
+}
 
 const rootParentSql = (childId: string) => {
     return Prisma.sql`
@@ -300,68 +305,57 @@ function Events(db: PrismaClient['event']) {
             }
             return this._forceDestroy(record);
         },
-        async all(actor?: User | undefined, semesterId?: string): Promise<ApiEvent[]> {
-            const orConditions: AllEventQueryCondition = [];
-            if (actor) {
-                orConditions.push({ authorId: actor.id });
-            }
-            if (actor?.role === Role.ADMIN) {
-                orConditions.push({ state: EventState.REVIEW });
-                orConditions.push({ state: EventState.REFUSED });
-            }
-            let events: (Event & { children: Event[] })[];
-            let semester: Semester | undefined;
-            if (semesterId) {
-                try {
-                    semester = await semesters.findModel(semesterId);
-                } catch (e) {
-                    /** do nothing - return everything... */
-                }
-            }
-            if (semester) {
-                events = await db.findMany({
-                    include: { departments: true, children: true },
-                    where: {
-                        AND: [
-                            { start: { lte: semester.end } },
-                            { end: { gte: semester.start } },
-                            {
-                                OR: [
-                                    {
-                                        AND: [
-                                            { state: EventState.PUBLISHED },
-                                            { parentId: null },
-                                        ],
-                                    },
-                                    ...orConditions
+        async published(semesterId?: string): Promise<ApiEvent[]> {
+            const semester = semesterId ? await semesters.findModel(semesterId) : undefined;
+            const events = await db.findMany({
+                include: { departments: true, children: true },
+                where: {
+                    AND: rmUndefined([
+                        semester ? { start: { lte: semester.end } } : undefined,
+                        semester ? { end: { gte: semester.start } } : undefined,
+                        { state: EventState.PUBLISHED },
+                        { parentId: null }
+                    ])
+                },
+                orderBy: { start: 'asc' }
+            });
+            return events.map(prepareEvent);
+        },
+        async forUser(user: User, semesterId?: string): Promise<ApiEvent[]> {
+            const isAdmin = user.role === Role.ADMIN;
+            const semester = semesterId ? await semesters.findModel(semesterId) : undefined;
+            const events = await db.findMany({
+                include: { departments: true, children: true },
+                where: {
+                    AND: rmUndefined([
+                        semester ? { start: { lte: semester.end } } : undefined,
+                        semester ? { end: { gte: semester.start } } : undefined,
+                        {
+                            NOT: {
+                                AND: [
+                                    { state: EventState.PUBLISHED },
+                                    { parentId: null },
                                 ]
                             }
-                        ]
-                    },
-                    orderBy: { start: 'asc' }
-                });
-            } else {
-                events = await db.findMany({
-                    include: { departments: true, children: true },
-                    where: {
-                        AND: [
-                            {
-                                OR: [
-                                    {
-                                        AND: [
-                                            {state: EventState.PUBLISHED},
-                                            {parentId: null}
-                                        ]
-                                    },
-                                    ...orConditions
-                                ]
-                            },
-                        ]
-                    },
-                    orderBy: { start: 'asc' }
-                });
-            }
+                        },
+                        {
+                            OR: rmUndefined([
+                                { authorId: user.id },
+                                isAdmin ? { state: EventState.REVIEW } : undefined,
+                                isAdmin ? { state: EventState.REFUSED } : undefined
+                            ])
+                        }
+                    ])
+                },
+                orderBy: { start: 'asc' }
+            });
             return events.map(prepareEvent);
+        },
+        async all(actor?: User | undefined, semesterId?: string): Promise<ApiEvent[]> {
+            if (!actor) {
+                return this.published(semesterId);
+            }
+            return [...await this.published(semesterId), ...await this.forUser(actor, semesterId)];
         },
         async createModel(actor: User, start: Date, end: Date): Promise<ApiEvent> {
             const model = await db.create({

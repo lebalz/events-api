@@ -28,6 +28,15 @@ export const all: RequestHandler = async (req, res, next) => {
     }
 }
 
+export const events: RequestHandler = async (req, res, next) => {
+    try {
+        const users = await Users.all();
+        res.json(users);
+    } catch (error) /* istanbul ignore next */ {
+        next(error)
+    }
+}
+
 export const linkToUntis: RequestHandler<{ id: string }, any, { data: { untisId: number } }> = async (req, res, next) => {
     try {
         const user = await Users.linkToUntis(req.user!, req.params.id, req.body.data.untisId || null);

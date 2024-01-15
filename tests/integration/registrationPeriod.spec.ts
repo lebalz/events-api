@@ -2,7 +2,6 @@ import request from 'supertest';
 import app, { API_URL } from '../../src/app';
 import prisma from '../../src/prisma';
 import { generateUser } from '../factories/user';
-import { truncate } from '../helpers/db';
 import { RegistrationPeriod, Role } from '@prisma/client';
 import _ from 'lodash';
 import { notify } from '../../src/middlewares/notify.nop';
@@ -35,9 +34,6 @@ beforeEach(async () => {
     });
 });
 
-afterEach(() => {
-    return truncate();
-});
 
 describe(`GET ${API_URL}/registration_periods`, () => {
     it("is not for public users", async () => {

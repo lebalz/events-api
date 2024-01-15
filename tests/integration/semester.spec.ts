@@ -2,11 +2,7 @@ import request from 'supertest';
 import app, { API_URL } from '../../src/app';
 import prisma from '../../src/prisma';
 import { generateUser } from '../factories/user';
-import { generateImportJob, generateSyncJob, jobSequence } from '../factories/job';
-import { generateSemester } from '../factories/semester';
-import { truncate } from '../helpers/db';
-import { Department, EventState, Job, JobState, JobType, Role, Semester } from '@prisma/client';
-import { eventSequence } from '../factories/event';
+import { JobState, JobType, Role, Semester } from '@prisma/client';
 import stubs from './stubs/semesters.json';
 import _ from 'lodash';
 import { notify } from '../../src/middlewares/notify.nop';
@@ -37,10 +33,6 @@ beforeEach(async () => {
     });
 });
 
-
-afterEach(() => {
-    return truncate();
-});
 
 describe(`GET ${API_URL}/semesters`, () => {
     it("returns all departments for public user", async () => {

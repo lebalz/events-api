@@ -3,7 +3,6 @@ import app, { API_URL } from '../../src/app';
 import prisma from '../../src/prisma';
 import { generateUser } from '../factories/user';
 import { Event, EventAudience, EventState, JobState, Role, TeachingAffected } from '@prisma/client';
-import { truncate } from '../helpers/db';
 import Jobs from '../../src/models/jobs';
 import { eventSequence, generateEvent } from '../factories/event';
 import { HttpStatusCode } from '../../src/utils/errors/BaseError';
@@ -33,9 +32,6 @@ const prepareEvent = (event: Event): any => {
 }
 
 describe(`GET ${API_URL}/events`, () => {
-    afterEach(() => {
-        return truncate();
-    });
     it("lets unauthorized user fetch all public events", async () => {
         const user = await prisma.user.create({
             data: generateUser({ email: 'foo@bar.ch' })
@@ -109,9 +105,6 @@ describe(`GET ${API_URL}/events`, () => {
 
 
 describe(`GET ${API_URL}/events/:id`, () => {
-    afterEach(() => {
-        return truncate();
-    });
     it("unauthorized user can fetch public event", async () => {
         const user = await prisma.user.create({
             data: generateUser({ email: 'foo@bar.ch' })
@@ -143,9 +136,6 @@ describe(`GET ${API_URL}/events/:id`, () => {
 
 
 describe(`PUT ${API_URL}/events/:id`, () => {
-    afterEach(() => {
-        return truncate();
-    });
     it('Lets users update their own draft events', async () => {
         const user = await prisma.user.create({
             data: generateUser({ email: 'foo@bar.ch' })
@@ -174,9 +164,6 @@ describe(`PUT ${API_URL}/events/:id`, () => {
 
 
 describe(`POST ${API_URL}/events`, () => {
-    afterEach(() => {
-        return truncate();
-    });
     it('Lets users create a new draft', async () => {
         expect(mNotification).toHaveBeenCalledTimes(0);
         const user = await prisma.user.create({
@@ -235,9 +222,6 @@ describe(`POST ${API_URL}/events`, () => {
 
 
 describe(`DELETE ${API_URL}/events/:id`, () => {
-    afterEach(() => {
-        return truncate();
-    });
 
     it('Lets users delete their own draft events', async () => {
         const user = await prisma.user.create({
@@ -284,10 +268,6 @@ describe(`DELETE ${API_URL}/events/:id`, () => {
 
 
 describe(`POST ${API_URL}/events/:id/clone`, () => {
-    afterEach(() => {
-        return truncate();
-    });
-
     it('Lets users clone events', async () => {
         const user = await prisma.user.create({
             data: generateUser({ email: 'foo@bar.ch' })
@@ -381,9 +361,6 @@ describe(`POST ${API_URL}/events/:id/clone`, () => {
 });
 
 describe(`POST ${API_URL}/events/change_state`, () => {
-    afterEach(() => {
-        return truncate();
-    });
     describe('allowed transitions', () => {
         const ALLOWED_TRANSITIONS = [
             { from: EventState.DRAFT, to: EventState.REVIEW, for: [Role.USER, Role.ADMIN], notify: ['user', IoRoom.ADMIN] },
@@ -756,9 +733,6 @@ describe(`POST ${API_URL}/events/change_state`, () => {
 
 describe(`POST ${API_URL}/events/import`, () => {
     describe('GBSL Format: ?type=GBSL_XLSX', () => {
-        afterEach(() => {
-            return truncate();
-        });
         it("lets admins import gbsl events: legacy format", async () => {
             const admin = await prisma.user.create({
                 data: generateUser({ email: 'admin@bar.ch', role: Role.ADMIN })
@@ -882,10 +856,6 @@ describe(`POST ${API_URL}/events/import`, () => {
     });
 
     describe('GBJB Format: ?type=GBJB_CSV', () => {
-        
-        afterEach(() => {
-            return truncate();
-        });
         it("lets admins import gbjb events: legacy format", async () => {
             const admin = await prisma.user.create({
                 data: generateUser({ email: 'admin@bar.ch', role: Role.ADMIN })
@@ -956,10 +926,6 @@ describe(`POST ${API_URL}/events/import`, () => {
 
 
 describe(`POST ${API_URL}/events/export`, () => {
-    afterEach(() => {
-        return truncate();
-    });
-
     it('Throws an error if no semester is found', async () => {
         const result = await request(app)
             .post(`${API_URL}/events/excel`);
@@ -997,9 +963,6 @@ describe(`POST ${API_URL}/events/export`, () => {
 
 
 // describe('Export and reimport', () => {
-//     afterEach(() => {
-//         return truncate();
-//     });
 //     it('Exports and reimports the same events', async () => {
 //         const admin = await prisma.user.create({
 //             data: generateUser({ email: '

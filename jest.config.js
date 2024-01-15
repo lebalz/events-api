@@ -6,6 +6,10 @@ module.exports = {
     setupFiles: [
       '<rootDir>/tests/config/jest.env.ts'
     ],
+    setupFilesAfterEnv: [
+      '<rootDir>/tests/config/db-cleaner.ts'
+    ],
+    testRegex: "\\.(spec|test)\\.ts$",
     coveragePathIgnorePatterns: [
       '<rootDir>/node_modules/',
       '<rootDir>/tests/',

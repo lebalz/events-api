@@ -4,7 +4,6 @@ import prisma from '../../../src/prisma';
 import { createUser } from "./users.test";
 import { HTTP400Error, HTTP403Error } from "../../../src/utils/errors/Errors";
 import { generateDepartment } from "../../factories/department";
-import { truncate } from "lodash";
 
 export const createDepartment = async (props: Partial<Prisma.DepartmentUncheckedCreateInput>) => {
     return await prisma.department.create({ 

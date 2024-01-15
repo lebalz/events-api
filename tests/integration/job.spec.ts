@@ -4,7 +4,6 @@ import prisma from '../../src/prisma';
 import { generateUser } from '../factories/user';
 import { generateImportJob, generateSyncJob, jobSequence } from '../factories/job';
 import { generateSemester } from '../factories/semester';
-import { truncate } from '../helpers/db';
 import { EventState, Job } from '@prisma/client';
 import { eventSequence } from '../factories/event';
 import { notify } from '../../src/middlewares/notify.nop';
@@ -23,10 +22,6 @@ const prepareJob = (job: Job, includeEvents: boolean = false) => {
     }
     return JSON.parse(JSON.stringify(job));
 }
-
-afterEach(() => {
-    return truncate();
-});
 
 describe(`GET ${API_URL}/jobs`, () => {
     it('throws an error if visitor is not authenticated', async () => {

@@ -6,7 +6,7 @@ import { find as findRegistrationPeriod, all as allRegistrationPeriods, update a
 import { find as findUserEventGroup, allOfUser as usersUserEventGroup, update as updateUserEventGroup, destroy as deleteUserEventGroup, create as createUserEventGroup, events as eventsFromUserEventGroup, clone as cloneUserEventGroup } from '../controllers/userEventGroup';
 import { find as findSemester, update as updateSemester, all as allSemesters, create as createSemester, destroy as deleteSemester, sync } from '../controllers/semester';
 import { teachers, teacher, classes, subjects } from '../controllers/untis';
-import { user, all as allUsers, linkToUntis, find as findUser, createIcs, setRole, affectedEventIds } from '../controllers/user';
+import { user, events as usersEvents, all as allUsers, linkToUntis, find as findUser, createIcs, setRole, affectedEventIds } from '../controllers/user';
 import multer from 'multer';
 
 const UPLOAD_DIR = process.env.UPLOAD_DIR
@@ -24,6 +24,7 @@ router.put('/users/:id/set_role', setRole);
 router.post('/users/:id/create_ics', createIcs);
 router.get('/users/:id/affected-event-ids', affectedEventIds);
 
+router.get('/users/:id/events', usersEvents);
 
 router.get('/events', allEvents);
 router.post('/events/excel', exportExcel);
