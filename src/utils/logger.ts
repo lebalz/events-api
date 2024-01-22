@@ -22,7 +22,24 @@ const colors = {
   debug: 'white',
 }
 
-winston.addColors(colors)
+winston.addColors(colors);
+
+const stringify = (obj: any) => {
+  let cache: any = [];
+  let str = JSON.stringify(obj, function(key, value) {
+    if (typeof value === "object" && value !== null) {
+      if (cache.indexOf(value) !== -1) {
+        // Circular reference found, discard key
+        return;
+      }
+      // Store value in our collection
+      cache.push(value);
+    }
+    return value;
+  }, 2);
+  cache = null; // reset the cache
+  return str;
+}
 
 const format = winston.format.combine(
   winston.format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss:ms' }),
@@ -32,7 +49,7 @@ const format = winston.format.combine(
     const { timestamp, level, message, ...meta } = info;
   
     return `${timestamp} [${level}]: ${message} ${
-      Object.keys(meta).length ? JSON.stringify(meta, null, 2) : ''
+      Object.keys(meta).length ? stringify(meta) : ''
     }`;
   }),
 )
