@@ -140,6 +140,30 @@ describe(`PUT ${API_URL}/jobs/:id`, () => {
         });
     });
 
+    it("allows admins to update description and state", async () => {
+        const admin = await prisma.user.create({data: generateUser({role: 'ADMIN'})});
+        const job = await prisma.job.create({data: generateImportJob({userId: admin.id, description: 'Bar', state: 'PENDING'})});
+        const result = await request(app)
+            .put(`${API_URL}/jobs/${job.id}`)
+            .set('authorization', JSON.stringify({ email: admin.email }))
+            .send({ data: { description: 'Canceled', state: 'ERROR' } });
+        expect(result.statusCode).toEqual(200);
+        expect(result.body).toEqual({
+            ...prepareJob({
+                ...job,
+                description: 'Canceled',
+                state: 'ERROR'
+            }, true),
+            updatedAt: expect.any(String)
+        });
+        expect(mNotification).toHaveBeenCalledTimes(1);
+        expect(mNotification.mock.calls[0][0]).toEqual({
+            event: IoEvent.CHANGED_RECORD,
+            message: { record: 'JOB', id: job.id },
+            to: admin.id
+        });
+    });
+
     it('notifys everyone when job has public events', async () => {
         const user = await prisma.user.create({data: generateUser()});
         const job = await prisma.job.create({
@@ -211,7 +235,7 @@ describe(`PUT ${API_URL}/jobs/:id`, () => {
         });        
     });
 
-    it("fields other than 'description' are ignored", async () => {
+    it("fields other than 'description' are ignored for users", async () => {
         const other = await prisma.user.create({data: generateUser()});
         const semester = await prisma.semester.create({data: generateSemester()});
 
@@ -233,6 +257,32 @@ describe(`PUT ${API_URL}/jobs/:id`, () => {
             event: IoEvent.CHANGED_RECORD,
             message: { record: 'JOB', id: job.id },
             to: user.id
+        });
+    });
+
+    it("fields other than 'description' and 'state' are ignored for admins", async () => {
+        const other = await prisma.user.create({data: generateUser()});
+        const semester = await prisma.semester.create({data: generateSemester()});
+
+        const admin = await prisma.user.create({data: generateUser({role: 'ADMIN'})});
+        const job = await prisma.job.create({data: generateImportJob({userId: admin.id, description: 'Bar', state: 'PENDING'})});
+        const result = await request(app)
+            .put(`${API_URL}/jobs/${job.id}`)
+            .set('authorization', JSON.stringify({ email: admin.email }))
+            .send({ data: { ...generateSyncJob({userId: other.id, semesterId: semester.id, state: 'DONE'}), description: 'Foo' } });
+        expect(result.body).toEqual({
+            ...prepareJob({
+                ...job,
+                description: 'Foo',
+                state: 'DONE'
+            }, true),
+            updatedAt: expect.any(String)
+        });
+        expect(mNotification).toHaveBeenCalledTimes(1);
+        expect(mNotification.mock.calls[0][0]).toEqual({
+            event: IoEvent.CHANGED_RECORD,
+            message: { record: 'JOB', id: job.id },
+            to: admin.id
         });
     });
 });

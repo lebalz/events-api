@@ -5,9 +5,11 @@ import { createDataExtractor } from "../controllers/helpers";
 import { prepareEvent } from "./event.helpers";
 import Events from "./events";
 
-const getData = createDataExtractor<Prisma.JobUncheckedUpdateInput>(
-    ['description']
-);
+const PROPS: (keyof Prisma.JobUncheckedUpdateInput)[] = ['description'];
+const ADMIN_PROPS: (keyof Prisma.JobUncheckedUpdateInput)[] = [...PROPS, 'state'];
+
+const getData = createDataExtractor<Prisma.JobUncheckedUpdateInput>(PROPS);
+const getAdminData = createDataExtractor<Prisma.JobUncheckedUpdateInput>(ADMIN_PROPS);
 
 function Jobs(db: PrismaClient['job']) {
     return Object.assign(db, {
@@ -44,7 +46,7 @@ function Jobs(db: PrismaClient['job']) {
         async updateModel(actor: User, id: string, data: Prisma.JobUncheckedUpdateInput) {
             /** ensure all permissions are correct */
             await this.findModel(actor, id);
-            const sanitized = getData(data);
+            const sanitized = actor.role === 'ADMIN' ? getAdminData(data) : getData(data);
             const model = await db.update({
                 where: {
                     id: id,
