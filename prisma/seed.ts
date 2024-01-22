@@ -33,7 +33,7 @@ async function main() {
     // create a semester
     const hs = {
         start: new Date('2023-08-21T00:00:00.000Z'),
-        end: new Date('2024-02-04T23:59:59.000Z'),
+        end: new Date('2024-02-05T00:00:00.000Z'),
         name: 'HS2023',
         untisSyncDate: new Date('2023-09-25')
     }
@@ -47,7 +47,7 @@ async function main() {
     });
     const fs = {
         start: new Date('2024-02-05T00:00:00.000Z'),
-        end: new Date('2024-08-11T23:59:59.000Z'),
+        end: new Date('2024-08-12T00:00:00.000Z'),
         name: 'FS2024',
         untisSyncDate: new Date('2024-02-19')
     }

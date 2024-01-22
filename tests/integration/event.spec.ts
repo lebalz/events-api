@@ -731,8 +731,8 @@ describe(`POST ${API_URL}/events/import`, () => {
             const event1 = events.find(e => e.description === '1. Schultag gemäss Programm');
             expect(event1?.descriptionLong).toEqual('');
             expect(event1?.location).toEqual('GBSL');
-            expect(event1?.start.toISOString()).toEqual('2023-08-21T23:59:00.000Z');
-            expect(event1?.end.toISOString()).toEqual('2023-08-21T23:59:00.000Z');
+            expect(event1?.start.toISOString()).toEqual('2023-08-21T00:00:00.000Z');
+            expect(event1?.end.toISOString()).toEqual('2023-08-22T00:00:00.000Z');
             expect(event1?.classes).toEqual([]);
 
 
@@ -754,7 +754,7 @@ describe(`POST ${API_URL}/events/import`, () => {
             expect(event4?.descriptionLong).toEqual('Die Lehrpersonen informieren die Klasse in einer der Lektionen über den Zeitpunkt und Ablauf des IDAF-Moduls');
             expect(event4?.location).toEqual('');
             expect(event4?.start.toISOString()).toEqual('2023-08-28T00:00:00.000Z');
-            expect(event4?.end.toISOString()).toEqual('2023-09-01T23:59:00.000Z');
+            expect(event4?.end.toISOString()).toEqual('2023-09-02T00:00:00.000Z');
             expect(event4?.classes).toEqual(['26Wa']);
         });
 
@@ -854,20 +854,20 @@ describe(`POST ${API_URL}/events/import`, () => {
             const event1 = events.find(e => e.description === 'Dispense');
             expect(event1?.descriptionLong).toEqual('Dispense de cours pour les élèves participant au concert de bienvenue');
             expect(event1?.location).toEqual('');
-            expect(event1?.start.toISOString()).toEqual('2023-08-22T10:25:00.000Z');
-            expect(event1?.end.toISOString()).toEqual('2023-08-22T12:05:00.000Z');
+            expect(event1?.start.toISOString()).toEqual('2023-08-22T00:00:00.000Z');
+            expect(event1?.end.toISOString()).toEqual('2023-08-23T00:00:00.000Z');
             expect(event1?.classes).toEqual([]);
 
 
             const event2 = events.find(e => e.description === 'début OC/EF');
-            expect(event2?.descriptionLong).toEqual(`Classes GYM 3 et GYM4:\ndébut de l\\'enseignement des disciplines de l\\'OC, selon horaire`);
+            expect(event2?.descriptionLong).toEqual(`Classes GYM 3 et GYM4:\ndébut de l'enseignement des disciplines de l'OC, selon horaire`);
             expect(event2?.location).toEqual('');
             expect(event2?.start.toISOString()).toEqual('2023-08-25T14:55:00.000Z');
             expect(event2?.end.toISOString()).toEqual('2023-08-25T15:40:00.000Z');
             expect(event2?.classes).toEqual([]);
 
             const event3 = events.find(e => e.description === 'Présentation OP');
-            expect(event3?.descriptionLong).toEqual(`Présentation des offres du GBJB autour de l\\'orientation professionnelle, à l\\'aula:\nClasses de GYM4 (24A à 24H et 24KL): 8h25-9h10\\r\\nClasses de GYM3 (25A à 25M et 25KL): 9h20-10h05\\r\\nClasses de GYM2 (26A à 26I et 26KLP): 11h20-12h05`);
+            expect(event3?.descriptionLong).toEqual(`Présentation des offres du GBJB autour de l'orientation professionnelle, à l'aula:\nClasses de GYM4 (24A à 24H et 24KL): 8h25-9h10\nClasses de GYM3 (25A à 25M et 25KL): 9h20-10h05\nClasses de GYM2 (26A à 26I et 26KLP): 11h20-12h05`);
             expect(event3?.location).toEqual('');
             expect(event3?.start.toISOString()).toEqual('2023-08-29T08:25:00.000Z');
             expect(event3?.end.toISOString()).toEqual('2023-08-29T12:05:00.000Z');

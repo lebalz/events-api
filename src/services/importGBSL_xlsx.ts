@@ -41,15 +41,12 @@ const toDate = (date: Date | string): Date | undefined => {
         return undefined;
     }
     if (typeof date === 'string') {
-        const dummy = new Date();
         const [dd, mm, yyyy] = date.split('.');
         return new Date(Date.parse(`${yyyy}-${mm}-${dd}T00:00:00.000Z`));
     }
-    date.setUTCHours(0);
-    date.setUTCMinutes(0);
-    date.setUTCSeconds(0);
-    date.setUTCMilliseconds(0);
-    return date;
+    const newDate = new Date(date);
+    newDate.setUTCHours(0, 0, 0, 0);
+    return newDate;
 }
 
 export const importExcel = async (file: string): Promise<ImportRawEvent[]> => {
@@ -57,34 +54,28 @@ export const importExcel = async (file: string): Promise<ImportRawEvent[]> => {
     return xlsx.slice(1).filter((e => !e[COLUMNS.deletedAt])).map((e) => {
         const start = toDate(e[COLUMNS.startDate] as string)!;
         const startTime = e[COLUMNS.startTime] as string;
-        let allDay = !startTime;
+        const allDay = !startTime;
         if (startTime) {
             const [hours, minutes] = extractTime(startTime);
-            start.setUTCHours(hours);
-            start.setUTCMinutes(minutes);
+            start.setUTCHours(hours, minutes, 0, 0);
         }
         let ende = toDate(e[COLUMNS.endDate] as string);
         if (!ende) {
-            ende = start
+            ende = new Date(start);
         }
         const endTime = e[COLUMNS.endTime] as string;
-        if (allDay) {
-            if (!ende) {
-                ende = new Date(start.getTime());
-            }
-            ende.setUTCHours(23);
-            ende.setUTCMinutes(59);
-        } else if (!!endTime) {
+        if (!!endTime) {
             const [hours, minutes] = extractTime(endTime);
-            ende.setUTCHours(hours);
-            ende.setUTCMinutes(minutes);
+            ende.setUTCHours(hours, minutes, 0, 0);
+        } else {
+            ende.setUTCHours(24, 0, 0, 0);
         }
         return {
             description: e[COLUMNS.description] as string || '',
             descriptionLong: e[COLUMNS.descriptionLong] as string || '',
             location: e[COLUMNS.location] as string || '',
             start: start,
-            end: ende || start,
+            end: ende,
             classesRaw: e[COLUMNS.classes] as string || '',
             teachingAffected: e[COLUMNS.teachingAffected] as TeachingAffected,
             audience: e[COLUMNS.audience] as EventAudience,

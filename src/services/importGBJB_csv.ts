@@ -28,6 +28,10 @@ const toDate = (dateString: string): Date => {
     return new Date(`${dateString.split(' ').join('T')}.000Z`);
 }
 
+const unescape = (str: string): string => {
+    return str.replace(/\\'/g, "'").replace(/(\\r)?\\n/g, '\n').trim();
+}
+
 const KLASS_REGEX = /2\d[a-zA-Z][a-zA-Z]*/;
 
 export const importCsv = async (file: string) => {
@@ -37,6 +41,8 @@ export const importCsv = async (file: string) => {
         .pipe(parse({
             delimiter: ',',
             columns: true,
+            trim: true,
+            skip_empty_lines: true
         }));
     parser.on('readable', async function () {
         let record: Record;
@@ -54,15 +60,18 @@ export const importCsv = async (file: string) => {
                 klasses.push(match[0])
                 description2klasses = description2klasses.slice(match.index! + match[0].length)
             }
-
-
+            const start = toDate(record.STARTDATE);
+            const ende = toDate(record.ENDDATE);
+            if (ende.getUTCHours() === 0 && ende.getUTCMinutes() === 0) {
+                ende.setUTCHours(24, 0, 0, 0);
+            }
             rawEvents.push({
-                description: record.TITLE,
-                descriptionLong: [record.DESCRIPTION, record.DETAILS].map(e => e.trim()).filter((e) => !!e).join('\n'),
-                location: record.LOCATION,
+                description: unescape(record.TITLE),
+                descriptionLong: [record.DESCRIPTION, record.DETAILS].map(e => unescape(e)).filter((e) => !!e).join('\n'),
+                location: unescape(record.LOCATION),
                 classesRaw: klasses.join(' '),
-                start: toDate(record.STARTDATE),
-                end: toDate(record.ENDDATE),
+                start: start,
+                end: ende,
             });
         }
     });
