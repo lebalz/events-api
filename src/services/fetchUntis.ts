@@ -8,6 +8,7 @@ import { chunks } from './helpers/splitInChunks';
 import { getClassYear } from './helpers/untisKlasse';
 
 const OPTIONAL_COURSE_REGEX = /FA[KC]/;
+const MAX_LOGIN_TRIES = 1;
 
 /**
  * @docs https://webuntis.noim.me/
@@ -46,7 +47,7 @@ const ensureLogin = async () => {
     while (!loggedIn) {
         tries += 1;
         await new Promise(resolve => setTimeout(resolve, 2000));
-        loggedIn = await login(tries > 20);
+        loggedIn = await login(tries > MAX_LOGIN_TRIES);
         Logger.info('Login Try', tries);
     }
     if (tries > 1) {
