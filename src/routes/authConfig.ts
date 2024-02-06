@@ -81,6 +81,13 @@ const authConfig: Config = {
                 roles: [Role.ADMIN, Role.USER],
             }]
         },
+        users: {
+            path: '/users',
+            access: [{
+                methods: ['GET'],
+                roles: [Role.ADMIN, Role.USER],
+            }]
+        },
         userEvents: {
             path: '/user/events',
             access: [{
