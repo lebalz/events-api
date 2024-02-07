@@ -266,6 +266,7 @@ view view_UsersTeaching {
     departmentId        String @map("d_id") @db.Uuid
     departmentSchoolId  String @map("d_school_id")
     departmentName      String @map("d_name")
+    departmentLetter    String @map("d_letter")
     untis_teacher_id    Int?    @map("untis_teacher_id")
 
     @@unique([userId, classId, lessonId, departmentId])
@@ -277,6 +278,7 @@ view view_UsersTeachingAggregated {
     lSemesterId      String   @map("l_semester_id") @db.Uuid
     classIds         Int[]    @map("class_ids")
     classNames       String[] @map("class_names")
+    classNamesMonolingue String[] @map("class_names_monolingue")
     subjects         String[] @map("subjects")
     departmentIds    String[] @map("department_ids") @db.Uuid
     departmentSchoolIds    String[] @map("department_school_ids") @db.Uuid

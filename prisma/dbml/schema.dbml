@@ -200,6 +200,7 @@ Table view__users_teaching {
   departmentId String [not null]
   departmentSchoolId String [not null]
   departmentName String [not null]
+  departmentLetter String [not null]
   untis_teacher_id Int
 
   indexes {
@@ -212,6 +213,7 @@ Table view__users_teaching_agg {
   lSemesterId String [unique, not null]
   classIds Int[] [not null]
   classNames String[] [not null]
+  classNamesMonolingue String[] [not null]
   subjects String[] [not null]
   departmentIds String[] [not null]
   departmentSchoolIds String[] [not null]

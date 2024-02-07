@@ -1276,6 +1276,53 @@ describe(`GET ${API_URL}/users/:id/affected-event-ids`, () => {
                 });
             })
         });
+        describe('selected by class and department', () => {
+            let unaffected: Event;
+            let affected: Event;
+            beforeAll(() => {
+                data.classes.push({ name: '26a', sf: 'WR' });
+                data.classes.push({ name: '26K', sf: 'WR' });
+                data.lessons.push({ subject: 'EFIN', day: 'Do', teachers: ['xyz'], classes: ['26K', '26a'], start: 1120, end: 1205, room: 'D118' });
+            })
+            beforeEach(async () => {
+                const author = await prisma.user.create({ data: generateUser() });
+                affected = await prisma.event.create({
+                    data: generateEvent({
+                        authorId: author.id,
+                        start: new Date('2023-10-19T08:00'), /* 19.10.2023 is a Do */
+                        end: new Date('2023-10-19T12:00'),
+                        state: EventState.PUBLISHED,
+                        classes: ['26mT'],
+                        audience: EventAudience.LP,
+                        affectsDepartment2: true
+                    })
+                });
+                unaffected = await prisma.event.create({
+                    data: generateEvent({
+                        authorId: author.id,
+                        start: new Date('2023-10-19T08:00'), /* 19.10.2023 is a Do */
+                        end: new Date('2023-10-19T12:00'),
+                        state: EventState.PUBLISHED,
+                        classes: ['26mT'],
+                        audience: EventAudience.LP,
+                        affectsDepartment2: false
+                    })
+                });
+            })
+            afterAll(() => {
+                data = _.cloneDeep(_data);
+            });
+            it('respects the flag: affectsDepartment2', async () => {
+                const xyz = await prisma.user.create({ data: generateUser({ untisId: untisTeachers.find(t => t.name === 'xyz')!.id }) });
+                const less = await prisma.untisLesson.findMany({ where: {subject: 'EFIN'} });
+                const resultXyz = await request(app)
+                    .get(`${API_URL}/users/${xyz.id}/affected-event-ids?semesterId=${semester.id}`)
+                    .set('authorization', JSON.stringify({ email: xyz.email }));
+                expect(resultXyz.statusCode).toEqual(200);
+                expect(resultXyz.body).toHaveLength(1);
+                expect(resultXyz.body).toEqual([affected.id]);
+            });
+        });
 
         describe('selected by class group', () => {
             let classGroups: string[] = ['26G'];
@@ -1332,7 +1379,56 @@ describe(`GET ${API_URL}/users/:id/affected-event-ids`, () => {
                 expect(resultHij.statusCode).toEqual(200);
                 expect(resultHij.body).toHaveLength(0);
             });
-
+            
+        });
+        describe('selected by class group and department', () => {
+            let unaffected: Event;
+            let affected: Event;
+            beforeAll(() => {
+                data.classes.push({ name: '26a', sf: 'WR' });
+                data.classes.push({ name: '26K', sf: 'WR' });
+                data.lessons.push({ subject: 'EFIN', day: 'Do', teachers: ['xyz'], classes: ['26K', '26a'], start: 1120, end: 1205, room: 'D118' });
+            })
+            beforeEach(async () => {
+                const author = await prisma.user.create({ data: generateUser() });
+                affected = await prisma.event.create({
+                    data: generateEvent({
+                        authorId: author.id,
+                        start: new Date('2023-10-19T08:00'), /* 19.10.2023 is a Do */
+                        end: new Date('2023-10-19T12:00'),
+                        state: EventState.PUBLISHED,
+                        classGroups: ['26m'],
+                        audience: EventAudience.LP,
+                        affectsDepartment2: true
+                    })
+                });
+                unaffected = await prisma.event.create({
+                    data: generateEvent({
+                        authorId: author.id,
+                        start: new Date('2023-10-19T08:00'), /* 19.10.2023 is a Do */
+                        end: new Date('2023-10-19T12:00'),
+                        state: EventState.PUBLISHED,
+                        classGroups: ['26m'],
+                        audience: EventAudience.LP,
+                        affectsDepartment2: false
+                    })
+                });
+            })
+            afterAll(() => {
+                data = _.cloneDeep(_data);
+            });
+            it('respects the flag: affectsDepartment2', async () => {
+                const xyz = await prisma.user.create({ data: generateUser({ untisId: untisTeachers.find(t => t.name === 'xyz')!.id }) });
+                console.log('here', affected);
+                const less = await prisma.untisLesson.findMany({ where: {subject: 'EFIN'} });
+                console.log(less);
+                const resultXyz = await request(app)
+                    .get(`${API_URL}/users/${xyz.id}/affected-event-ids?semesterId=${semester.id}`)
+                    .set('authorization', JSON.stringify({ email: xyz.email }));
+                expect(resultXyz.statusCode).toEqual(200);
+                expect(resultXyz.body).toHaveLength(1);
+                expect(resultXyz.body).toEqual([affected.id]);
+            });
         });
 
         describe('filtered by audience', () => {
