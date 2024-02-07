@@ -95,7 +95,7 @@ function Events(db: PrismaClient['event']) {
             if (!record) {
                 throw new HTTP404Error('Event not found');
             }
-            if (record.authorId !== actor.id && actor.role !== Role.ADMIN) {
+            if (!(record.authorId === actor.id || record.state === EventState.PUBLISHED || actor.role === Role.ADMIN)) {
                 throw new HTTP403Error('Not authorized');
             }
             /** remove fields not updatable*/
@@ -108,7 +108,7 @@ function Events(db: PrismaClient['event']) {
             };
             /* DRAFT     --> update the fields */
             /* OTHERWIES --> create a linked clone and update the props there */
-            if (record?.state === EventState.DRAFT) {
+            if (record.state === EventState.DRAFT) {
                 model = await db.update({
                     where: { id: id },
                     data: {
@@ -207,7 +207,6 @@ function Events(db: PrismaClient['event']) {
                             },
                             include: { children: true }
                         });
-                        const props = clonedUpdateProps(record, record.authorId, {full: true});
                         await prisma.$transaction([
                             /** update the parent (already published) to receive the new props */
                             db.update({  /** <-- now the current version */

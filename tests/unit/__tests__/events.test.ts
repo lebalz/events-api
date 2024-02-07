@@ -126,6 +126,23 @@ describe('updateEvent', () => {
 		}));
 	});
 
+	test('update anothers PUBLISHED creates a version', async () => {
+		const user = await createUser({})
+		const other = await createUser({})
+		const event = await createEvent({authorId: user.id, state: EventState.PUBLISHED, description: 'published' })
+
+		await expect(Events.updateModel(other, event.id, { description: 'hello' })).resolves.toEqual(prepareEvent({
+			...event,
+			authorId: other.id,
+			id: expect.any(String),
+			state: EventState.DRAFT,
+			createdAt: expect.any(Date),
+			updatedAt: expect.any(Date),
+			parentId: event.id,
+			description: 'hello'
+		}));
+	});
+
 	test('update PUBLISHED with departments creates a version', async () => {
 		const user = await createUser({ id: '3535b2ee-806f-425c-a4f5-394d8b16f6f9' })
 		const department = await createDepartment({ id: 'ed588f55-0e3b-425c-8adf-87cb15b80ac2' });
