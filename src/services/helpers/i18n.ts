@@ -38,6 +38,9 @@ const i18n = {
     }
 } satisfies {[key: string]: i18nMessage};
 
-export const translate = (key: keyof typeof i18n, language: 'de' | 'fr') => {
-    return i18n[key][language];
+export const translate = (key: (keyof typeof i18n) | string, language: 'de' | 'fr'): string => {
+    if (key in i18n) {
+        return i18n[key as keyof typeof i18n][language];
+    }
+    return key;
 }

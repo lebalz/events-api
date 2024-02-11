@@ -4,12 +4,14 @@ import { IoEvent } from "../routes/socketEventTypes";
 import { notifyChangedRecord } from "../routes/notify";
 import type { Event } from "@prisma/client";
 import { EventState } from "@prisma/client";
+import { view_AffectedByEvents } from "@prisma/client";
 import { IoRoom } from "../routes/socketEvents";
 import createExcel from "../services/createExcel";
 import Events from "../models/events";
 import path from "path";
 import { HTTP400Error } from "../utils/errors/Errors";
 import { ImportType } from "../services/importEvents";
+import { onChange } from "../services/notifications/mail/de/onChange";
 
 const NAME = 'EVENT';
 
@@ -52,6 +54,28 @@ export const setState: RequestHandler<{}, any, { data: { ids: string[], state: E
         }));
         const newStateIds = events.map(e => e.event.id);
         const updated = events.map(e => e.affected).flat();
+        
+        
+        for (const changed of events.map(e => ({updated: e.affected[0], old: e.event}))) {
+            if (changed.old.state === EventState.PUBLISHED && changed.updated?.state === EventState.PUBLISHED) {
+                const affectedOld = await prisma.$queryRaw<{email: string}[]>`SELECT distinct users.email
+                    FROM view__affected_by_events
+                        JOIN users ON view__affected_by_events.u_id=users.id
+                    WHERE view__affected_by_events.e_id=${changed.old.id}::uuid`;
+
+                const affectedNew = await prisma.$queryRaw<{email: string}[]>`SELECT distinct users.email
+                    FROM view__affected_by_events
+                        JOIN users ON view__affected_by_events.u_id=users.id
+                    WHERE view__affected_by_events.e_id=${changed.updated.id}::uuid`;
+
+                const affectedOldSet = new Set(affectedOld.map(e => e.email));
+                const affectedNewSet = new Set(affectedNew.map(e => e.email));
+                const update = [...affectedOldSet].filter(x => affectedNewSet.has(x));
+                const remove = [...affectedOldSet].filter(x => !affectedNewSet.has(x));
+                const add = [...affectedNewSet].filter(x => !affectedOldSet.has(x));
+                onChange(changed.old, changed.updated, update);
+            }
+        }
 
         const audience = new Set<IoRoom | string>(events.map(e => e.event.authorId));
         const affectedSemesterIds = await prisma.semester.findMany({
