@@ -54,8 +54,7 @@ export const setState: RequestHandler<{}, any, { data: { ids: string[], state: E
         }));
         const newStateIds = events.map(e => e.event.id);
         const updated = events.map(e => e.affected).flat();
-        
-        
+
         for (const changed of events.map(e => ({updated: e.affected[0], old: e.event}))) {
             if (changed.old.state === EventState.PUBLISHED && changed.updated?.state === EventState.PUBLISHED) {
                 const affectedOld = await prisma.$queryRaw<{email: string}[]>`SELECT distinct users.email
@@ -73,7 +72,7 @@ export const setState: RequestHandler<{}, any, { data: { ids: string[], state: E
                 const update = [...affectedOldSet].filter(x => affectedNewSet.has(x));
                 const remove = [...affectedOldSet].filter(x => !affectedNewSet.has(x));
                 const add = [...affectedNewSet].filter(x => !affectedOldSet.has(x));
-                onChange(changed.old, changed.updated, update);
+                onChange(changed.old, changed.updated, process.env.NODE_ENV === 'production' ? update : []);
             }
         }
 
