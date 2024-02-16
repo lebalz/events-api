@@ -12,5 +12,3 @@ export const authConfig: Readonly<SMTPTransport.Options> = Object.freeze({
     }),
     authMethod: 'PLAIN',
 });
-
-console.log(authConfig)

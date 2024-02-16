@@ -2,7 +2,7 @@ import { Event } from "@prisma/client";
 import { ApiEvent } from "../../../models/event.helpers";
 import _ from "lodash";
 import { translate } from "../../helpers/i18n";
-import { getDateTime, getTime } from "../../helpers/time";
+import { getDateTime } from "../../helpers/time";
 
 const EXCLUDED_PROPS = new Set<keyof ApiEvent>([
     'id',
@@ -18,9 +18,7 @@ const EXCLUDED_PROPS = new Set<keyof ApiEvent>([
     'cloned'
 ]);
 
-const LOCALE = 'de';
-
-const getValue = (event: ApiEvent, key: keyof Event) => {
+const getValue = (event: ApiEvent, key: keyof Event, locale: 'de' | 'fr') => {
     switch (key) {
         case 'start':
         case 'deletedAt':
@@ -29,34 +27,34 @@ const getValue = (event: ApiEvent, key: keyof Event) => {
         case 'state':
         case 'teachingAffected':
         case 'audience':
-            return translate(event[key] as string, LOCALE);
+            return translate(event[key] as string, locale);
         default:
             return event[key];
     }
 }
 
-export const getChangedProps = (current: ApiEvent, updated: ApiEvent) => {
+export const getChangedProps = (current: ApiEvent, updated: ApiEvent, locale: 'de' |'fr') => {
     const changedProps: {name: string, old: any, new: any}[] = [];
     for (const key of Object.keys(updated) as Array<keyof Event>) {
         if (EXCLUDED_PROPS.has(key)) {
             continue;
         }
-        const old = getValue(current, key);
-        const newV = getValue(updated, key);
+        const old = getValue(current, key, locale) || '-';
+        const newV = getValue(updated, key, locale) || '-';
         if (!_.isEqual(old, newV)) {
-            changedProps.push({name: translate(key, LOCALE), old, new: newV});
+            changedProps.push({name: translate(key, locale), old, new: newV});
         }
     }
     return changedProps;
 }
 
-export const getEventProps = (event: ApiEvent) => {
+export const getEventProps = (event: ApiEvent, locale: 'de' | 'fr') => {
     const eventProps: {name: string, value: any}[] = [];
     for (const key of Object.keys(event) as Array<keyof Event>) {
         if (EXCLUDED_PROPS.has(key)) {
             continue;
         }
-        eventProps.push({name: translate(key, LOCALE), value: getValue(event, key)});
+        eventProps.push({name: translate(key, locale), value: getValue(event, key, locale) || '-'});
     }
     return eventProps;
 }

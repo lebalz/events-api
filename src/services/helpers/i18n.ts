@@ -52,6 +52,50 @@ const i18n = {
         de: 'Zuletzt geändert',
         fr: 'Dernière modification'
     },
+    updatedEvent: {
+        de: 'Termin aktualisiert',
+        fr: 'Evénement actualisé'
+    },
+    updatedEvent_AffectedNow: {
+        de: 'Aktualisierter Termin betrifft dich',
+        fr: 'Evénement actualisé vous concerne'
+    },
+    updatedEvent_AffectedPrevious: {
+        de: 'Aktualisierter Termin betrifft dich nicht mehr',
+        fr: 'Evénement actualisé ne vous concerne plus'
+    },
+    changedFields: {
+        de: 'Geänderte Felder',
+        fr: 'Champs modifiés'
+    },
+    event: {
+        de: 'Termin',
+        fr: 'Evénement'
+    },
+    field: {
+        de: 'Feld',
+        fr: 'Champ'
+    },
+    previous: {
+        de: 'Vorher',
+        fr: 'Précédent'
+    },
+    new: {
+        de: 'Neu',
+        fr: 'Nouveau'
+    },
+    value: {
+        de: 'Wert',
+        fr: 'Valeur'
+    },
+    seeUpdatedEvent: {
+        de: 'Aktualisierter Termin Ansehen',
+        fr: 'Voir l\'événement actualisé'
+    },
+    eventAppName: {
+        de: 'Terminplan',
+        fr: 'Calendrier'
+    },
     YES: {
         de: 'Ja',
         fr: 'Oui'

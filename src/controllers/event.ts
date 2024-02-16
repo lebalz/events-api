@@ -11,7 +11,7 @@ import Events from "../models/events";
 import path from "path";
 import { HTTP400Error } from "../utils/errors/Errors";
 import { ImportType } from "../services/importEvents";
-import { onChange } from "../services/notifications/mail/de/onChange";
+import { onChange } from "../services/notifications/mail/onChange";
 
 const NAME = 'EVENT';
 
@@ -72,7 +72,24 @@ export const setState: RequestHandler<{}, any, { data: { ids: string[], state: E
                 const update = [...affectedOldSet].filter(x => affectedNewSet.has(x));
                 const remove = [...affectedOldSet].filter(x => !affectedNewSet.has(x));
                 const add = [...affectedNewSet].filter(x => !affectedOldSet.has(x));
-                onChange(changed.old, changed.updated, process.env.NODE_ENV === 'production' ? update : ['balthasar.hofer@gbsl.ch']);
+                const mails = [
+                    { audience: 'AFFECTED', addrs: update },
+                    { audience: 'AFFECTED_PREVIOUS', addrs: remove },
+                    { audience: 'AFFECTED_NOW', addrs: add }
+                ];
+                mails.forEach(({ audience, addrs }) => {
+                    ['de', 'fr'].forEach((locale) => {
+                        const mailPattern = locale === 'de' ? 'gbsl.ch' : 'gbjb.ch';
+                        const deliverAddresses = addrs.filter(addr => addr.endsWith(mailPattern));
+                        onChange(
+                            changed.old,
+                            changed.updated,
+                            audience as 'AFFECTED' | 'AFFECTED_NOW' | 'AFFECTED_PREVIOUS',
+                            process.env.NODE_ENV === 'production' ? deliverAddresses : process.env.TEST_EMAIL_DELIVER_ADDR ? [process.env.TEST_EMAIL_DELIVER_ADDR] : [],
+                            locale as 'de' | 'fr'
+                        );
+                    });
+                });
             }
         }
 
