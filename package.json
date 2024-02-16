@@ -52,6 +52,7 @@
     "passport-azure-ad": "^4.3.4",
     "path": "^0.12.7",
     "read-excel-file": "^5.5.3",
+    "sharp": "^0.33.2",
     "socket.io": "^4.7.2",
     "typescript": "^5.2",
     "uuid": "^9.0.0",
@@ -89,6 +90,6 @@
     "utf-8-validate": "^6.0.3"
   },
   "engines": {
-    "node": "18.x"
+    "node": "18.17.x"
   }
 }
