@@ -13,8 +13,8 @@ const i18n = {
         fr: 'Classes'
     },
     description: {
-        de: 'Beschreibung',
-        fr: 'Description'
+        de: 'Titel',
+        fr: 'Titre'
     },
     deletedAt: {
         de: 'Gelöscht am',
@@ -23,6 +23,34 @@ const i18n = {
     teachingAffected: {
         de: 'Unterricht betroffen?',
         fr: 'Enseignement concerné?'
+    },
+    start: {
+        de: 'Start',
+        fr: 'Début'
+    },
+    end: {
+        de: 'Ende',
+        fr: 'Fin'
+    },
+    location: {
+        de: 'Ort',
+        fr: 'Lieu'
+    },
+    descriptionLong: {
+        de: 'Beschreibung',
+        fr: 'Description'
+    },
+    state: {
+        de: 'Status',
+        fr: 'Statut'
+    },
+    cloned: {
+        de: 'Kopiert',
+        fr: 'Copié'
+    },
+    updatedAt: {
+        de: 'Zuletzt geändert',
+        fr: 'Dernière modification'
     },
     YES: {
         de: 'Ja',
@@ -35,6 +63,34 @@ const i18n = {
     PARTIAL: {
         de: 'Teilweise',
         fr: 'Partiellement'
+    },
+    Mo: {
+        de: 'Mo',
+        fr: 'Lu'
+    },
+    Di: {
+        de: 'Di',
+        fr: 'Ma'
+    },
+    Mi: {
+        de: 'Mi',
+        fr: 'Me'
+    },
+    Do: {
+        de: 'Do',
+        fr: 'Je'
+    },
+    Fr: {
+        de: 'Fr',
+        fr: 'Ve'
+    },
+    Sa: {
+        de: 'Sa',
+        fr: 'Sa'
+    },
+    So: {
+        de: 'So',
+        fr: 'Di'
     }
 } satisfies {[key: string]: i18nMessage};
 

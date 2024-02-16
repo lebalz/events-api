@@ -72,7 +72,7 @@ export const setState: RequestHandler<{}, any, { data: { ids: string[], state: E
                 const update = [...affectedOldSet].filter(x => affectedNewSet.has(x));
                 const remove = [...affectedOldSet].filter(x => !affectedNewSet.has(x));
                 const add = [...affectedNewSet].filter(x => !affectedOldSet.has(x));
-                onChange(changed.old, changed.updated, process.env.NODE_ENV === 'production' ? update : []);
+                onChange(changed.old, changed.updated, process.env.NODE_ENV === 'production' ? update : ['balthasar.hofer@gbsl.ch']);
             }
         }
 

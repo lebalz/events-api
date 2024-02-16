@@ -1,9 +1,9 @@
-import { Event } from "@prisma/client";
 import Mailgen from "mailgen";
-import { getChangedProps } from "../../helpers/changedProps";
+import { getChangedProps, getEventProps } from "../../helpers/changedProps";
 import { createTransport } from "nodemailer";
 import { authConfig } from "../authConfig";
 import { ApiEvent } from "../../../../models/event.helpers";
+import { getDate } from "../../../helpers/time";
 const APP_URL = process.env.EVENTS_APP_URL || 'https://events.gbsl.website';
 
 const MailGenerator = new Mailgen({
@@ -18,21 +18,33 @@ const MailGenerator = new Mailgen({
 export const onChange = async (current: ApiEvent, updated: ApiEvent, mailAddresses: string[]) => {
     const changedProps = getChangedProps(current, updated);
 
-    const startDate = updated.start.toISOString().slice(0, 10).split('-').reverse().join('.')
+    const startDate = getDate(updated.start)
 
     let response = {
         body: {
             title: 'Termin Aktualisiert',
             signature: false,
-            table: {
-                data: changedProps.map(({name, old, new: value}) => {
-                    return {
-                        field: name,
-                        from: `${old}`,
-                        to: `${value}`
-                    }
-                })
-            },
+            table: [
+                {
+                    title: 'Geänderte Felder',
+                    data: changedProps.map(({name, old, new: value}) => {
+                        return {
+                            Feld: name,
+                            Zuvor: `${old}`,
+                            Neu: `${value}`
+                        }
+                    })
+                },
+                {
+                    title: 'Termin',
+                    data: getEventProps(updated).map(({name, value}) => {
+                        return {
+                            Feld: name,
+                            Wert: `${value}`
+                        }
+                    })
+                },
+            ],
             action: {
                 instructions: 'Aktualisierter Termin Ansehen',
                 button: {
@@ -47,23 +59,20 @@ export const onChange = async (current: ApiEvent, updated: ApiEvent, mailAddress
     
     const mail = MailGenerator.generate(response);
     const txt = MailGenerator.generatePlaintext(response);
-
-    const pending = mailAddresses.map((email) => {
-        const message = {
-            from: authConfig.auth!.user,
-            to: email,
-            subject: `Aktualisierter Termin: ${startDate} ${updated.description}`,
-            html: mail,
-            text: txt
-        };
-        const transporter = createTransport(authConfig);
-        return transporter.sendMail(message).then((info) => {
-            return {success: true, to: email, info: info};
-        }).catch((err) => {
-            return {success: false, error: email, msg: err};
-        });
+    const transporter = createTransport(authConfig);
+    const result = await transporter.sendMail({
+        from: `Terminplan <${authConfig.auth!.user}>`,
+        bcc: mailAddresses,
+        subject: `Aktualisierter Termin: ${startDate} ${updated.description}`,
+        html: mail,
+        text: txt
+    }).then(info => {
+        console.log(info);
+        return true;
+    }).catch(err => {
+        console.error(err);
+        return false;
     });
-    const result = await Promise.all(pending);
-    console.log(result);
+
     return result;
 }
