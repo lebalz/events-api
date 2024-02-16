@@ -1,4 +1,4 @@
-import { Event, EventState, PrismaClient, Role, User as Users } from "@prisma/client";
+import { Event, EventState, Prisma, PrismaClient, Role, User as Users } from "@prisma/client";
 import { createIcs as createIcsFile} from '../services/createIcs';
 import prisma from "../prisma";
 import { HTTP400Error, HTTP403Error, HTTP404Error } from "../utils/errors/Errors";
@@ -6,6 +6,13 @@ import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
 import { ApiEvent, prepareEvent } from "./event.helpers";
 import { existsSync, rmSync } from "fs";
 import { ICAL_DIR } from '../app';
+import { createDataExtractor } from "../controllers/helpers";
+const getData = createDataExtractor<Prisma.UserUncheckedUpdateInput>(
+    [
+        'notifyOnEventUpdate'
+    ]
+);
+
 
 function Users(db: PrismaClient['user']) {
     return Object.assign(db, {
@@ -15,6 +22,23 @@ function Users(db: PrismaClient['user']) {
          */
         async findModel(id: string): Promise<Users | null> {
             return await db.findUnique({ where: { id } });
+        },
+        async updateModel(actor: Users, id: string, data: Partial<Users>): Promise<Users> {
+            const record = await db.findUnique({ where: { id: id } });
+            if (!record) {
+                throw new HTTP404Error('User not found');
+            }
+            if (!(record.id === actor.id || actor.role === Role.ADMIN)) {
+                throw new HTTP403Error('Not authorized');
+            }
+            /** remove fields not updatable*/
+            const sanitized = getData(data);
+            return await db.update({
+                where: {
+                    id: id
+                },
+                data: sanitized
+            });
         },
         async all(): Promise<Users[]> {
             return await db.findMany({});

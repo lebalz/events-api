@@ -1,4 +1,4 @@
-import {Role} from '@prisma/client';
+import {Role, User} from '@prisma/client';
 import { RequestHandler } from "express";
 import { IoEvent } from "../routes/socketEventTypes";
 import { IoRoom } from "../routes/socketEvents";
@@ -17,6 +17,23 @@ export const find: RequestHandler<{ id: string }> = async (req, res, next) => {
         res.json(user);
     } catch (error) /* istanbul ignore next */ {
         next(error)
+    }
+}
+
+export const update: RequestHandler<{ id: string }, any, { data: User }> = async (req, res, next) => {
+    try {
+        const model = await Users.updateModel(req.user!, req.params.id, req.body.data);
+
+        res.notifications = [
+            {
+                message: { record: NAME, id: model.id },
+                event: IoEvent.CHANGED_RECORD,
+                to: req.user!.id
+            }
+        ]
+        res.status(200).json(model);
+    } catch (error) /* istanbul ignore next */ {
+        next(error);
     }
 }
 

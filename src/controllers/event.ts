@@ -10,6 +10,7 @@ import Events from "../models/events";
 import path from "path";
 import { HTTP400Error } from "../utils/errors/Errors";
 import { ImportType } from "../services/importEvents";
+import { notifyOnUpdate } from "../services/notifications/notifyUsers";
 
 const NAME = 'EVENT';
 
@@ -52,6 +53,8 @@ export const setState: RequestHandler<{}, any, { data: { ids: string[], state: E
         }));
         const newStateIds = events.map(e => e.event.id);
         const updated = events.map(e => e.affected).flat();
+
+        notifyOnUpdate(events);
 
         const audience = new Set<IoRoom | string>(events.map(e => e.event.authorId));
         const affectedSemesterIds = await prisma.semester.findMany({

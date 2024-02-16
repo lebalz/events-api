@@ -16,6 +16,7 @@ Table users {
   icsLocator String
   jobs jobs [not null]
   eventGroups user_event_groups [not null]
+  notifyOnEventUpdate Boolean [default: false]
 }
 
 Table events {

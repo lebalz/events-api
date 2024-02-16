@@ -49,6 +49,7 @@ describe(`GET ${API_URL}/user authorized`, () => {
         expect(result.body).toEqual({
             id: expect.any(String),
             email: 'foo@bar.ch',
+            notifyOnEventUpdate: false,
             role: Role.USER,
             firstName: expect.any(String),
             lastName: expect.any(String),

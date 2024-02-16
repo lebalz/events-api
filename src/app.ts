@@ -15,6 +15,8 @@ import { HttpStatusCode } from "./utils/errors/BaseError";
 import { notify } from "./middlewares/notify.nop";
 import { HTTP401Error } from "./utils/errors/Errors";
 import connectPgSimple from "connect-pg-simple";
+import { existsSync, mkdirSync } from "fs";
+
 
 const AccessRules = createAccessRules(authConfig.accessMatrix);
 
@@ -34,7 +36,20 @@ const ICAL_DEFAULT_DIRS = {
     'development': ICAL_DEFAULT,
     'production': ICAL_DEFAULT,
 }
+const STATIC_DEFAULT = process.env.STATIC_DIR || `${__dirname}/../../static`;
+const STATIC_DEFAULT_DIRS = {
+    'test': `${__dirname}/../tests/test-data/static`,
+    'development': STATIC_DEFAULT,
+    'production': STATIC_DEFAULT,
+}
 export const ICAL_DIR = ICAL_DEFAULT_DIRS[process.env.NODE_ENV as keyof typeof ICAL_DEFAULT_DIRS] || ICAL_DEFAULT;
+export const STATIC_DIR = STATIC_DEFAULT_DIRS[process.env.NODE_ENV as keyof typeof STATIC_DEFAULT_DIRS] || STATIC_DEFAULT;
+if (!existsSync(`${STATIC_DIR}/de`)) {
+    mkdirSync(`${STATIC_DIR}/de`, { recursive: true });
+}
+if (!existsSync(`${STATIC_DIR}/fr`)) {
+    mkdirSync(`${STATIC_DIR}/fr`, { recursive: true });
+}
 
 
 app.use(compression(), express.json({ limit: "5mb" }));
@@ -104,6 +119,8 @@ passport.deserializeUser(async (id, done) => {
 
 /** Static folders */
 app.use('/ical', express.static(ICAL_DIR));
+app.use('/static', express.static(STATIC_DIR));
+
 // Serve the static files to be accessed by the docs app
 app.use(express.static(path.join(__dirname,'..', 'docs')));
 
