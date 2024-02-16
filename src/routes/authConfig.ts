@@ -98,7 +98,7 @@ const authConfig: Config = {
         userFind: {
             path: '/users/:id',
             access: [{
-                methods: ['GET'],
+                methods: ['GET', 'PUT'],
                 roles: [Role.ADMIN, Role.USER],
             }]
         },

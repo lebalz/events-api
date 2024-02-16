@@ -10,7 +10,7 @@ const APP_URL_FR = `${APP_URL}/fr`;
 
 
 
-export const onChange = async (current: ApiEvent, updated: ApiEvent, audienceType: 'AFFECTED' | 'AFFECTED_NOW' | 'AFFECTED_PREVIOUS', mailAddresses: string[], locale: 'de' | 'fr') => {
+export const mailOnChange = async (current: ApiEvent, updated: ApiEvent, audienceType: 'AFFECTED' | 'AFFECTED_NOW' | 'AFFECTED_PREVIOUS', mailAddresses: string[], locale: 'de' | 'fr') => {
     if (mailAddresses.length === 0) {
         return false;
     }

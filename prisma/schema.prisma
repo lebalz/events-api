@@ -32,6 +32,7 @@ model User {
     icsLocator  String?           @map("ics_locator")
     jobs        Job[]
     eventGroups UserEventGroup[]
+    notifyOnEventUpdate Boolean?  @default(false) @map("notify_on_event_update")
 
     @@map("users")
 }
