@@ -22,7 +22,8 @@ test('returns user', async () => {
 test('returns users', async () => {
     const user1 = await createUser({ id: 'bfc23480-9bb9-4dc1-aa8a-d4a108bd49f6' })
     const user2 = await createUser({ id: '14d670d1-44fd-48d3-bb3d-02ea21c36019' })
-    await expect(Users.all()).resolves.toEqual([user1, user2]);
+    const result = await Users.all();
+    expect(_.orderBy(result, ['id'])).toEqual(_.orderBy([user1, user2], 'id'));
 })
 
 describe('linkToUntis', () => {
