@@ -23,6 +23,7 @@ const getValue = (event: ApiEvent, key: keyof Event, locale: 'de' | 'fr') => {
         case 'start':
         case 'deletedAt':
         case 'end':
+        case 'updatedAt':
             return getDateTime(event[key] as Date | undefined);
         case 'state':
         case 'teachingAffected':
