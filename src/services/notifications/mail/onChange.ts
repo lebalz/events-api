@@ -10,7 +10,7 @@ const APP_URL_FR = `${APP_URL}/fr`;
 
 
 
-export const mailOnChange = async (current: ApiEvent, updated: ApiEvent, audienceType: 'AFFECTED' | 'AFFECTED_NOW' | 'AFFECTED_PREVIOUS', mailAddresses: string[], locale: 'de' | 'fr') => {
+export const mailOnChange = async (current: ApiEvent | undefined, updated: ApiEvent, audienceType: 'AFFECTED' | 'AFFECTED_NOW' | 'AFFECTED_PREVIOUS', mailAddresses: string[], locale: 'de' | 'fr') => {
     if (mailAddresses.length === 0) {
         return false;
     }
@@ -22,6 +22,7 @@ export const mailOnChange = async (current: ApiEvent, updated: ApiEvent, audienc
         }
     });
     let title = '';
+    const tables: Mailgen.Table[] = [];
     switch (audienceType) {
         case 'AFFECTED':
             title = translate('updatedEvent', locale);
@@ -33,21 +34,24 @@ export const mailOnChange = async (current: ApiEvent, updated: ApiEvent, audienc
             title = translate('updatedEvent_AffectedPrevious', locale);
             break;
     }
+    if (current) {
+        tables.push({
+            title: translate('changedFields', locale),
+            data: getChangedProps(current, updated, locale).map(({name, old, new: value}) => {
+                return {
+                    [translate('field', locale)]: name,
+                    [translate('previous', locale)]: `${old}`,
+                    [translate('new', locale)]: `${value}`
+                }
+            })
+        });
+    }
     const response: Mailgen.Content = {
         body: {
             title: title,
             signature: false,
             table: [
-                {
-                    title: translate('changedFields', locale),
-                    data: getChangedProps(current, updated, locale).map(({name, old, new: value}) => {
-                        return {
-                            [translate('field', locale)]: name,
-                            [translate('previous', locale)]: `${old}`,
-                            [translate('new', locale)]: `${value}`
-                        }
-                    })
-                },
+                ...tables,
                 {
                     title: translate('event', locale),
                     data: getEventProps(updated, locale).map(({name, value}) => {

@@ -51,11 +51,11 @@ export const setState: RequestHandler<{}, any, { data: { ids: string[], state: E
         const events = await Promise.all(ids.map((id) => {
             return Events.setState(req.user!, id, state);
         }));
+        
+        notifyOnUpdate(events);
+        
         const newStateIds = events.map(e => e.event.id);
         const updated = events.map(e => e.affected).flat();
-
-        notifyOnUpdate(events);
-
         const audience = new Set<IoRoom | string>(events.map(e => e.event.authorId));
         const affectedSemesterIds = await prisma.semester.findMany({
             where: {
