@@ -2,6 +2,7 @@ import { EventState } from "@prisma/client";
 import { ApiEvent } from "../../models/event.helpers";
 import prisma from "../../prisma";
 import { mailOnChange } from "./mail/onChange";
+import { mailOnDelete } from "./mail/onDelete";
 
 export const notifyOnUpdate = async (events: { event: ApiEvent; affected: ApiEvent[]}[]) => {
     const relevantEvents = events.filter(e => e.event.state === EventState.PUBLISHED).map(e => {
@@ -42,15 +43,37 @@ export const notifyOnUpdate = async (events: { event: ApiEvent; affected: ApiEve
                 ['de', 'fr'].forEach((locale) => {
                     const mailPattern = locale === 'de' ? 'gbsl.ch' : 'gbjb.ch';
                     const deliverAddresses = addrs.filter(addr => addr.endsWith(mailPattern));
-                    mailOnChange(
-                        records.old,
-                        records.new || records.updated,
-                        audience as 'AFFECTED' | 'AFFECTED_NOW' | 'AFFECTED_PREVIOUS',
-                        process.env.NODE_ENV === 'production' ? deliverAddresses : (process.env.NODE_ENV !== 'test' && process.env.TEST_EMAIL_DELIVER_ADDR) ? [process.env.TEST_EMAIL_DELIVER_ADDR] : [],
-                        locale as 'de' | 'fr'
-                    );
+                    if (deliverAddresses.length > 0) {
+                        mailOnChange(
+                            records.old,
+                            records.new || records.updated,
+                            audience as 'AFFECTED' | 'AFFECTED_NOW' | 'AFFECTED_PREVIOUS',
+                            process.env.NODE_ENV === 'production' ? deliverAddresses : (process.env.NODE_ENV !== 'test' && process.env.TEST_EMAIL_DELIVER_ADDR) ? [process.env.TEST_EMAIL_DELIVER_ADDR] : [],
+                            locale as 'de' | 'fr'
+                        );
+                    }
                 });
             });
         }
     }
+};
+
+export const notifyOnDelete = async (deleted: ApiEvent) => {
+    const affected = await prisma.$queryRaw<{email: string}[]>`SELECT distinct users.email
+        FROM view__affected_by_events
+            JOIN users ON view__affected_by_events.u_id=users.id
+        WHERE
+            users.notify_on_event_update AND
+            view__affected_by_events.e_id=${deleted.id}::uuid`;
+    ['de', 'fr'].forEach((locale) => {
+        const mailPattern = locale === 'de' ? 'gbsl.ch' : 'gbjb.ch';
+        const deliverAddresses = affected.map(e => e.email).filter(addr => addr.endsWith(mailPattern));
+        if (deliverAddresses.length > 0) {
+            mailOnDelete(
+                deleted,
+                process.env.NODE_ENV === 'production' ? deliverAddresses : (process.env.NODE_ENV !== 'test' && process.env.TEST_EMAIL_DELIVER_ADDR) ? [process.env.TEST_EMAIL_DELIVER_ADDR] : [],
+                locale as 'de' | 'fr'
+            );
+        }
+    });
 };

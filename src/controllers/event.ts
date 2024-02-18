@@ -10,7 +10,7 @@ import Events from "../models/events";
 import path from "path";
 import { HTTP400Error } from "../utils/errors/Errors";
 import { ImportType } from "../services/importEvents";
-import { notifyOnUpdate } from "../services/notifications/notifyUsers";
+import { notifyOnDelete, notifyOnUpdate } from "../services/notifications/notifyUsers";
 
 const NAME = 'EVENT';
 
@@ -145,6 +145,7 @@ export const destroy: RequestHandler = async (req, res, next) => {
                 to: event.authorId
             }]
         } else {
+            notifyOnDelete(event);
             res.notifications = [{
                 message: { record: NAME, id: event.id },
                 event: IoEvent.CHANGED_RECORD,

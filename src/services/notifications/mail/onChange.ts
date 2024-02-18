@@ -5,22 +5,15 @@ import { authConfig } from "./authConfig";
 import { ApiEvent } from "../../../models/event.helpers";
 import { getDate } from "../../helpers/time";
 import { translate } from "../../helpers/i18n";
+import { Color } from "../helpers/colors";
 const APP_URL = process.env.EVENTS_APP_URL || 'https://events.gbsl.website';
 const APP_URL_FR = `${APP_URL}/fr`;
 
 
-
 export const mailOnChange = async (current: ApiEvent | undefined, updated: ApiEvent, audienceType: 'AFFECTED' | 'AFFECTED_NOW' | 'AFFECTED_PREVIOUS', mailAddresses: string[], locale: 'de' | 'fr') => {
-    if (mailAddresses.length === 0) {
+    if (mailAddresses.length === 0 || !!updated.deletedAt) {
         return false;
     }
-    const MailGenerator = new Mailgen({
-        theme: 'default',
-        product: {
-            name: `${translate('eventAppName',locale)} ${locale === 'de' ? 'GBSL' : 'GBJB'}`,
-            link: locale === 'de' ? APP_URL : APP_URL_FR
-        }
-    });
     let title = '';
     const tables: Mailgen.Table[] = [];
     switch (audienceType) {
@@ -28,16 +21,25 @@ export const mailOnChange = async (current: ApiEvent | undefined, updated: ApiEv
             title = translate('updatedEvent', locale);
             break;
         case 'AFFECTED_NOW':
-            title = translate('updatedEvent_AffectedNow', locale);
+            title = current ? translate('updatedEvent_AffectedNow', locale) : translate('newEvent', locale);
             break;
         case 'AFFECTED_PREVIOUS':
             title = translate('updatedEvent_AffectedPrevious', locale);
             break;
     }
+    title = `${title}: ${getDate(updated.start)} ${updated.description}`;
+
+    const MailGenerator = new Mailgen({
+        theme: 'default',
+        product: {
+            name: `${translate('eventAppName',locale)} ${locale === 'de' ? 'GBSL' : 'GBJB'}`,
+            link: locale === 'de' ? APP_URL : APP_URL_FR
+        }
+    });
     if (current) {
         tables.push({
             title: translate('changedFields', locale),
-            data: getChangedProps(current, updated, locale).map(({name, old, new: value}) => {
+            data: getChangedProps(current, updated, locale, ['deletedAt']).map(({name, old, new: value}) => {
                 return {
                     [translate('field', locale)]: name,
                     [translate('previous', locale)]: `${old}`,
@@ -54,7 +56,7 @@ export const mailOnChange = async (current: ApiEvent | undefined, updated: ApiEv
                 ...tables,
                 {
                     title: translate('event', locale),
-                    data: getEventProps(updated, locale).map(({name, value}) => {
+                    data: getEventProps(updated, locale, ['deletedAt']).map(({name, value}) => {
                         return {
                             [translate('field', locale)]: name,
                             [translate('value', locale)]: `${value}`
@@ -65,9 +67,10 @@ export const mailOnChange = async (current: ApiEvent | undefined, updated: ApiEv
             action: {
                 instructions: translate('seeUpdatedEvent', locale),
                 button: {
-                    color: '#7b2e85',
+                    color: current ? Color.Info : Color.Success,
                     text: `👉 ${translate('event', locale)}`,
-                    link: locale === 'de' ? `${APP_URL}/event?id=${updated.id}` : `${APP_URL_FR}/event?id=${updated.id}`
+                    link: locale === 'de' ? `${APP_URL}/event?id=${updated.id}` : `${APP_URL_FR}/event?id=${updated.id}`,
+                    fallback: true
                 }
             }
         }
@@ -81,7 +84,7 @@ export const mailOnChange = async (current: ApiEvent | undefined, updated: ApiEv
     const result = await transporter.sendMail({
         from: `${translate('eventAppName', locale)} <${authConfig.auth!.user}>`,
         bcc: mailAddresses,
-        subject: `${title}: ${getDate(updated.start)} ${updated.description}`,
+        subject: title,
         html: mail,
         text: txt
     }).then(info => {

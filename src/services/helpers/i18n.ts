@@ -16,6 +16,14 @@ const i18n = {
         de: 'Titel',
         fr: 'Titre'
     },
+    deleted: {
+        de: 'Gelöscht',
+        fr: 'Supprimé'
+    },
+    deletedEvent: {
+        de: 'Gelöschter Termin',
+        fr: 'Evénement supprimé'
+    },
     deletedAt: {
         de: 'Gelöscht am',
         fr: 'Supprimé le'
@@ -84,6 +92,10 @@ const i18n = {
         de: 'Neu',
         fr: 'Nouveau'
     },
+    newEvent: {
+        de: 'Neuer Termin',
+        fr: 'Nouvel événement'
+    },
     value: {
         de: 'Wert',
         fr: 'Valeur'
@@ -91,6 +103,10 @@ const i18n = {
     seeUpdatedEvent: {
         de: 'Aktualisierter Termin Ansehen',
         fr: 'Voir l\'événement actualisé'
+    },
+    seeDeletedEvent: {
+        de: 'Gelöschter Termin Ansehen',
+        fr: 'Voir l\'événement supprimé'
     },
     eventAppName: {
         de: 'Terminplan',

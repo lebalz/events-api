@@ -34,10 +34,11 @@ const getValue = (event: ApiEvent, key: keyof Event, locale: 'de' | 'fr') => {
     }
 }
 
-export const getChangedProps = (current: ApiEvent, updated: ApiEvent, locale: 'de' |'fr') => {
+export const getChangedProps = (current: ApiEvent, updated: ApiEvent, locale: 'de' |'fr', excludedProps: (keyof ApiEvent)[] = []) => {
+    const excluded = new Set([...EXCLUDED_PROPS, ...excludedProps]);
     const changedProps: {name: string, old: any, new: any}[] = [];
     for (const key of Object.keys(updated) as Array<keyof Event>) {
-        if (EXCLUDED_PROPS.has(key)) {
+        if (excluded.has(key)) {
             continue;
         }
         const old = getValue(current, key, locale) || '-';
@@ -49,10 +50,11 @@ export const getChangedProps = (current: ApiEvent, updated: ApiEvent, locale: 'd
     return changedProps;
 }
 
-export const getEventProps = (event: ApiEvent, locale: 'de' | 'fr') => {
+export const getEventProps = (event: ApiEvent, locale: 'de' | 'fr', excludedProps: (keyof ApiEvent)[] = []) => {
+    const excluded = new Set([...EXCLUDED_PROPS, ...excludedProps]);
     const eventProps: {name: string, value: any}[] = [];
     for (const key of Object.keys(event) as Array<keyof Event>) {
-        if (EXCLUDED_PROPS.has(key)) {
+        if (excluded.has(key)) {
             continue;
         }
         eventProps.push({name: translate(key, locale), value: getValue(event, key, locale) || '-'});
