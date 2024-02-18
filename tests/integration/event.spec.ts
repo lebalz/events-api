@@ -713,7 +713,16 @@ describe(`POST ${API_URL}/events/import`, () => {
             expect(job.state).toEqual(JobState.DONE);
             expect(job.log).toEqual('');
 
-            const events = await prisma.event.findMany();
+            const events = await prisma.event.findMany({
+                include: {
+                    groups: {
+                        select: {id: true}
+                    },
+                    departments: {
+                        select: {id: true}
+                    }
+                }
+            });
             expect(events.length).toEqual(4);
             events.forEach((e) => {
                 expect(e.state).toEqual(EventState.DRAFT);
@@ -721,7 +730,7 @@ describe(`POST ${API_URL}/events/import`, () => {
                 expect(e.cloned).toBeFalsy();
                 expect(e.jobId).toEqual(job.id);
                 expect(e.parentId).toBeNull();
-                expect(e.userGroupId).toBeNull();
+                expect(e.groups).toEqual([]);
                 expect(e.audience).toBe(EventAudience.STUDENTS);
                 expect(e.deletedAt).toBeNull();
                 expect(e.start.getTime()).toBeLessThanOrEqual(e.end.getTime());
@@ -836,7 +845,16 @@ describe(`POST ${API_URL}/events/import`, () => {
             expect(job.state).toEqual(JobState.DONE);
             expect(job.log).toEqual('');
 
-            const events = await prisma.event.findMany();
+            const events = await prisma.event.findMany({
+                include: {
+                    groups: {
+                        select: {id: true}
+                    },
+                    departments: {
+                        select: {id: true}
+                    }
+                }
+            });
             expect(events.length).toEqual(3);
             events.forEach((e) => {
                 expect(e.state).toEqual(EventState.DRAFT);
@@ -844,7 +862,8 @@ describe(`POST ${API_URL}/events/import`, () => {
                 expect(e.cloned).toBeFalsy();
                 expect(e.jobId).toEqual(job.id);
                 expect(e.parentId).toBeNull();
-                expect(e.userGroupId).toBeNull();
+                expect(e.groups).toEqual([]);
+                expect(e.departments).toEqual([]);
                 expect(e.audience).toBe(EventAudience.STUDENTS);
                 expect(e.deletedAt).toBeNull();
                 expect(e.start.getTime()).toBeLessThanOrEqual(e.end.getTime());

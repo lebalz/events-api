@@ -15,7 +15,7 @@ Table users {
   events events [not null]
   icsLocator String
   jobs jobs [not null]
-  eventGroups user_event_groups [not null]
+  eventGroups event_groups [not null]
   notifyOnEventUpdate Boolean [default: false]
 }
 
@@ -35,11 +35,10 @@ Table events {
   parent events
   parentId String
   children events [not null]
-  userGroup user_event_groups
-  userGroupId String
   classes String[] [not null]
   classGroups String[] [not null]
   departments departments [not null]
+  groups event_groups [not null]
   audience EventAudience [not null, default: 'STUDENTS']
   affectsDepartment2 Boolean [default: false]
   teachingAffected TeachingAffected [not null, default: 'YES']
@@ -48,13 +47,12 @@ Table events {
   deletedAt DateTime
 }
 
-Table user_event_groups {
+Table event_groups {
   id String [pk]
   name String [not null, default: '']
   description String [not null, default: '']
-  user users [not null]
-  userId String [not null]
   events events [not null]
+  users users [not null]
   createdAt DateTime [default: `now()`, not null]
   updatedAt DateTime [default: `now()`, not null]
 }
@@ -249,7 +247,6 @@ Table view__users_affected_by_events {
   cloned Boolean [not null, default: false]
   jobId String
   parentId String
-  userGroupId String
   classes String[] [not null]
   classGroups String[] [not null]
   audience EventAudience [not null, default: 'STUDENTS']
@@ -299,7 +296,6 @@ Table view__events_classes {
   cloned Boolean [not null, default: false]
   jobId String
   parentId String
-  userGroupId String
   classes String[] [not null]
   classGroups String[] [not null]
   audience EventAudience [not null, default: 'STUDENTS']
@@ -359,10 +355,6 @@ Ref: events.authorId > users.id
 Ref: events.jobId > jobs.id [delete: Cascade]
 
 Ref: events.parentId - events.id [delete: Cascade]
-
-Ref: events.userGroupId > user_event_groups.id
-
-Ref: user_event_groups.userId > users.id [delete: Cascade]
 
 Ref: departments.department1_Id - departments.id
 

@@ -1,8 +1,8 @@
-import type { UserEventGroup } from "@prisma/client";
+import type { EventGroup } from "@prisma/client";
 import { RequestHandler } from "express";
 import prisma from "../prisma";
 import { IoEvent } from "../routes/socketEventTypes";
-import UserEventGroups from '../models/userEventGroups';
+import UserEventGroups from '../models/eventGroups';
 import { IoRoom } from "../routes/socketEvents";
 
 const NAME = 'USER_EVENT_GROUP';
@@ -25,7 +25,7 @@ export const find: RequestHandler<{ id: string }, any, any> = async (req, res, n
     }
 }
 
-export const create: RequestHandler<any, any, UserEventGroup & { event_ids: string[] }> = async (req, res, next) => {
+export const create: RequestHandler<any, any, EventGroup & { event_ids: string[] }> = async (req, res, next) => {
     try {
         const model = await UserEventGroups.createModel(req.user!, req.body);
 
@@ -42,7 +42,7 @@ export const create: RequestHandler<any, any, UserEventGroup & { event_ids: stri
     }
 }
 
-export const update: RequestHandler<{ id: string }, any, { data: UserEventGroup }> = async (req, res, next) => {
+export const update: RequestHandler<{ id: string }, any, { data: EventGroup }> = async (req, res, next) => {
     /** remove fields not updatable*/
     try {
         const model = await UserEventGroups.updateModel(req.user!, req.params.id, req.body.data);

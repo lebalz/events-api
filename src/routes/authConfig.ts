@@ -151,7 +151,7 @@ const authConfig: Config = {
             }]
         },
         userEventGroup: {
-            path: '/user_event_groups',
+            path: '/event_groups',
             access: [{
                 methods: ['GET', 'POST', 'PUT', 'DELETE'],
                 roles: [Role.USER, Role.ADMIN],

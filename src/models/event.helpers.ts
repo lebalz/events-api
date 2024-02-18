@@ -12,9 +12,24 @@ export interface ApiEvent extends Omit<Event, 'jobId'> {
     publishedVersionIds: string[];
 }
 
+type CloneableEvent = Event & {departments: {id: string}[]};
+type FullClonedEvent = CloneableEvent & { groups: { id: string }[] };
+interface CloneConfig {
+    event: CloneableEvent;
+    uid: string;
+    type: 'basic'
+}
+interface FullCloneConfig {
+    event: FullClonedEvent;
+    uid: string;
+    type: 'full';
+    allProps?: boolean;
+}
+
+
 export const prepareEvent = (event: (Event & {
-    children?: Event[];
-    departments?: Department[];
+    children?: {id: string, state: EventState, createdAt: Date}[];
+    departments?: {id: string}[];
 })): ApiEvent => {
     const children = event?.children || [];
     const prepared: ApiEvent = {
@@ -32,8 +47,8 @@ export const prepareEvent = (event: (Event & {
     return prepared;
 }
 
-export const clonedUpdateProps = (event: Event & {departments: Department[]}, uid: string, options: {full?: boolean, cloneUserGroup?: boolean} = {}): Prisma.EventUpdateInput => {
-    const cloned: Prisma.EventUpdateInput = clonedProps(event, uid, options);
+export const clonedUpdateProps = (config: CloneConfig | FullCloneConfig): Prisma.EventUpdateInput => {
+    const cloned: Prisma.EventUpdateInput = clonedProps(config);
     if (cloned.departments) {
         cloned.departments = {
             set: cloned.departments.connect
@@ -46,7 +61,9 @@ export const clonedUpdateProps = (event: Event & {departments: Department[]}, ui
     return cloned;
 }
 
-export const clonedProps = (event: Event & {departments: Department[]}, uid: string, options: {full?: boolean, cloneUserGroup?: boolean} = {}): Prisma.EventCreateInput => {
+
+export const clonedProps = (config: CloneConfig | FullCloneConfig): Prisma.EventCreateInput => {
+    const event = config.event;
     const props: Prisma.EventCreateInput = {
         start: event.start,
         end: event.end,
@@ -57,7 +74,7 @@ export const clonedProps = (event: Event & {departments: Department[]}, uid: str
         descriptionLong: event.descriptionLong,
         teachingAffected: event.teachingAffected,
         state: EventState.DRAFT,
-        author: { connect: { id: uid }},        
+        author: { connect: { id: config.uid }}
     }
     if (event.departments.length > 0) {
         props.departments = {
@@ -70,19 +87,20 @@ export const clonedProps = (event: Event & {departments: Department[]}, uid: str
             (props as any)[key] = [...(event[key] as string[])]
         }
     });
-    if (event.userGroupId && (options.full || options.cloneUserGroup)) {
-        props.userGroup = {connect: {id: event.userGroupId}};
-    }
-    if (options.full) {
-        if (event.jobId) {
-            props.job = {connect: {id: event.jobId}};
+    if (config.type === 'full') {
+        props.groups = {
+            connect: config.event.groups.map((g) => ({ id: g.id }))
         }
-        props.state = event.state;
-        props.createdAt = event.createdAt;
-        props.updatedAt = event.updatedAt;
-        props.deletedAt = event.deletedAt;
-        props.cloned = event.cloned;
+        if (config.allProps) {
+            if (event.jobId) {
+                props.job = {connect: {id: event.jobId}};
+            }
+            props.state = event.state;
+            props.createdAt = event.createdAt;
+            props.updatedAt = event.updatedAt;
+            props.deletedAt = event.deletedAt;
+            props.cloned = event.cloned;
+        }
     }
-
     return props;
 }
