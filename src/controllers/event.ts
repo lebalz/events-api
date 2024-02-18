@@ -45,14 +45,18 @@ export const update: RequestHandler<{ id: string }, any, { data: Event & { depar
     }
 }
 
-export const setState: RequestHandler<{}, any, { data: { ids: string[], state: EventState } }> = async (req, res, next) => {
+export const setState: RequestHandler<{}, any, { data: { ids: string[], state: EventState, message?: string } }> = async (req, res, next) => {
     try {
-        const { ids, state } = req.body.data;
+        const { ids, state, message } = req.body.data;
         const events = await Promise.all(ids.map((id) => {
             return Events.setState(req.user!, id, state);
         }));
         
-        notifyOnUpdate(events);
+        notifyOnUpdate(events, message || 'Keine weiteren Angaben', req.user!);
+
+        /**
+         * 
+         */
         
         const newStateIds = events.map(e => e.event.id);
         const updated = events.map(e => e.affected).flat();
@@ -145,7 +149,7 @@ export const destroy: RequestHandler = async (req, res, next) => {
                 to: event.authorId
             }]
         } else {
-            notifyOnDelete(event);
+            notifyOnDelete(event, req.user!);
             res.notifications = [{
                 message: { record: NAME, id: event.id },
                 event: IoEvent.CHANGED_RECORD,

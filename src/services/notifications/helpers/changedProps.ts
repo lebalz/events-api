@@ -28,7 +28,7 @@ const getValue = (event: ApiEvent, key: keyof Event, locale: 'de' | 'fr') => {
         case 'state':
         case 'teachingAffected':
         case 'audience':
-            return translate(event[key] as string, locale);
+            return translate(event[key] as any, locale);
         default:
             return event[key];
     }
@@ -44,7 +44,7 @@ export const getChangedProps = (current: ApiEvent, updated: ApiEvent, locale: 'd
         const old = getValue(current, key, locale) || '-';
         const newV = getValue(updated, key, locale) || '-';
         if (!_.isEqual(old, newV)) {
-            changedProps.push({name: translate(key, locale), old, new: newV});
+            changedProps.push({name: translate(key as any, locale), old, new: newV});
         }
     }
     return changedProps;
@@ -57,7 +57,7 @@ export const getEventProps = (event: ApiEvent, locale: 'de' | 'fr', excludedProp
         if (excluded.has(key)) {
             continue;
         }
-        eventProps.push({name: translate(key, locale), value: getValue(event, key, locale) || '-'});
+        eventProps.push({name: translate(key as any, locale), value: getValue(event, key, locale) || '-'});
     }
     return eventProps;
 }

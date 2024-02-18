@@ -6,48 +6,31 @@ import { ApiEvent } from "../../../models/event.helpers";
 import { getDate } from "../../helpers/time";
 import { translate } from "../../helpers/i18n";
 import { Color } from "../helpers/colors";
+import prisma from "../../../prisma";
+import { rmUndefined } from "../../../utils/filterHelpers";
 import { User } from "@prisma/client";
 const APP_URL = process.env.EVENTS_APP_URL || 'https://events.gbsl.website';
 const APP_URL_FR = `${APP_URL}/fr`;
 
 
-export const mailOnChange = async (
-        event: ApiEvent, 
-        old: ApiEvent | undefined, 
-        audienceType: 'AFFECTED' | 'AFFECTED_NOW' | 'AFFECTED_PREVIOUS', 
-        mailAddresses: string[],
-        reviewer: User,
-        locale: 'de' | 'fr'
-) => {
-    if (mailAddresses.length === 0 || !!event.deletedAt) {
+export const mailOnReviewRequest = async (event: ApiEvent, current: ApiEvent | undefined, author: User, to: string[], cc: string[], locale: 'de' | 'fr') => {
+    if (to.length === 0) {
         return false;
     }
-    let title = '';
-    switch (audienceType) {
-        case 'AFFECTED':
-            title = translate('updatedEvent', locale);
-            break;
-        case 'AFFECTED_NOW':
-            title = old ? translate('updatedEvent_AffectedNow', locale) : translate('newEvent', locale);
-            break;
-        case 'AFFECTED_PREVIOUS':
-            title = translate('updatedEvent_AffectedPrevious', locale);
-            break;
-    }
-    title = `${title}: ${getDate(event.start)} ${event.description}`;
+    const title = `📨 ${translate('reviewRequested', locale)}: ${getDate(event.start)} ${event.description}`;
 
     const MailGenerator = new Mailgen({
         theme: 'default',
         product: {
-            name: `${translate('eventAppName',locale)} ${locale === 'de' ? 'GBSL' : 'GBJB'}`,
+            name: `${translate('eventAppName', locale)} ${locale === 'de' ? 'GBSL' : 'GBJB'}`,
             link: locale === 'de' ? APP_URL : APP_URL_FR
         }
     });
     const tables: Mailgen.Table[] = [];
-    if (old) {
+    if (current) {
         tables.push({
             title: translate('changedFields', locale),
-            data: getChangedProps(old, event, locale, ['deletedAt']).map(({name, old, new: value}) => {
+            data: getChangedProps(current, event, locale, ['deletedAt']).map(({name, old, new: value}) => {
                 return {
                     [translate('field', locale)]: name,
                     [translate('previous', locale)]: `${old}`,
@@ -60,10 +43,13 @@ export const mailOnChange = async (
         body: {
             title: title,
             signature: false,
+            intro: [
+                `${author.firstName} ${author.lastName} ${translate('reviewRequestedMessage', locale)}`
+            ],
             table: [
                 ...tables,
                 {
-                    title: translate('event', locale),
+                    title: translate('newEvent', locale),
                     data: getEventProps(event, locale, ['deletedAt']).map(({name, value}) => {
                         return {
                             [translate('field', locale)]: name,
@@ -73,10 +59,10 @@ export const mailOnChange = async (
                 }
             ],
             action: {
-                instructions: translate(old ? 'seeUpdatedEvent' : 'seeNewEvent', locale),
+                instructions: translate('seeEvent', locale),
                 button: {
-                    color: old ? Color.Info : Color.Success,
-                    text: `👉 ${translate('event', locale)}`,
+                    color: Color.Info,
+                    text: `👉 ${translate('seeEvent', locale)}`,
                     link: locale === 'de' ? `${APP_URL}/event?id=${event.id}` : `${APP_URL_FR}/event?id=${event.id}`,
                     fallback: true
                 }
@@ -89,12 +75,13 @@ export const mailOnChange = async (
     const txt = MailGenerator.generatePlaintext(response);
 
     const transporter = createTransport(authConfig);
+    const toSet = new Set(to.map(e => e.toLowerCase()));
     const result = await transporter.sendMail({
         from: `${translate('eventAppName', locale)} <${authConfig.auth!.user}>`,
-        bcc: mailAddresses,
+        to: to,
+        cc: cc.filter(e => !toSet.has(e?.toLowerCase())),
         subject: title,
         html: mail,
-        replyTo: `${reviewer.firstName} ${reviewer.lastName} <${reviewer.email}>`,
         text: txt
     }).then(info => {
         console.log(info);

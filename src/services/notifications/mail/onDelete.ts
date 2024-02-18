@@ -6,12 +6,13 @@ import { ApiEvent } from "../../../models/event.helpers";
 import { getDate } from "../../helpers/time";
 import { translate } from "../../helpers/i18n";
 import { Color } from "../helpers/colors";
+import { User } from "@prisma/client";
 const APP_URL = process.env.EVENTS_APP_URL || 'https://events.gbsl.website';
 const APP_URL_FR = `${APP_URL}/fr`;
 
 
 
-export const mailOnDelete = async (deleted: ApiEvent, mailAddresses: string[], locale: 'de' | 'fr') => {
+export const mailOnDelete = async (deleted: ApiEvent, actor: User, mailAddresses: string[], locale: 'de' | 'fr') => {
     if (mailAddresses.length === 0 || deleted.state === 'DRAFT' || !deleted.deletedAt) {
         return false;
     }
@@ -28,6 +29,9 @@ export const mailOnDelete = async (deleted: ApiEvent, mailAddresses: string[], l
         body: {
             title: title,
             signature: false,
+            intro: [
+                `${actor.firstName} ${actor.lastName} ${translate('deletedEventMessage', locale)}`
+            ],
             table: [
                 {
                     title: translate('deletedEvent', locale),
@@ -61,6 +65,7 @@ export const mailOnDelete = async (deleted: ApiEvent, mailAddresses: string[], l
         bcc: mailAddresses,
         subject: `${title} ${getDate(deleted.start)}`,
         html: mail,
+        replyTo: `${actor.firstName} ${actor.lastName} <${actor.email}>`,
         text: txt
     }).then(info => {
         console.log(info);

@@ -243,7 +243,7 @@ function Events(db: PrismaClient['event']) {
                         const oldCurrent = await db.findUnique({ where: { id: record.id }, include: { departments: true, children: true } });
                         // updatedCurrent: the current version
                         const updatedCurrent = await db.findUnique({ where: { id: parent.id }, include: { departments: true, children: true } });
-                        return {event: prepareEvent(oldCurrent!), affected: [prepareEvent(updatedCurrent!), ...siblings.map(prepareEvent)]};
+                        return {event: prepareEvent(updatedCurrent!), affected: [prepareEvent(oldCurrent!), ...siblings.map(prepareEvent)]};
                     } else if (EventState.PUBLISHED === requested || EventState.REFUSED === requested) {
                         const model = await updater();
                         return {event: prepareEvent(model), affected: []};

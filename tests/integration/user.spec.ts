@@ -1420,9 +1420,7 @@ describe(`GET ${API_URL}/users/:id/affected-event-ids`, () => {
             });
             it('respects the flag: affectsDepartment2', async () => {
                 const xyz = await prisma.user.create({ data: generateUser({ untisId: untisTeachers.find(t => t.name === 'xyz')!.id }) });
-                console.log('here', affected);
-                const less = await prisma.untisLesson.findMany({ where: {subject: 'EFIN'} });
-                console.log(less);
+                // const less = await prisma.untisLesson.findMany({ where: {subject: 'EFIN'} });
                 const resultXyz = await request(app)
                     .get(`${API_URL}/users/${xyz.id}/affected-event-ids?semesterId=${semester.id}`)
                     .set('authorization', JSON.stringify({ email: xyz.email }));

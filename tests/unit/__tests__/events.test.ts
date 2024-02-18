@@ -305,8 +305,8 @@ describe('setState transitions', () => {
 		};
 		const result = await Events.setState(admin, nextCurrent.id, EventState.PUBLISHED);
 		await expect(result).toEqual({
-			event: oldCurrent,
-			affected: [newCurrent]
+			event: newCurrent,
+			affected: [oldCurrent]
 		});
 	});
 

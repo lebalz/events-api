@@ -76,6 +76,46 @@ const i18n = {
         de: 'Geänderte Felder',
         fr: 'Champs modifiés'
     },
+    reviewRequested: {
+        de: 'Überprüfung angefordert',
+        fr: 'Examen demandé'
+    },
+    reviewRequestedMessage: {
+        de: 'hat einen Termin zur Überprüfung eingereicht',
+        fr: 'a soumis un événement pour examen'
+    },
+    deletedEventMessage: {
+        de: 'hat einen Termin gelöscht',
+        fr: 'a supprimé un événement'
+    },
+    eventAccepted: {
+        de: 'Termineintrag angenommen',
+        fr: 'Evénement accepté'
+    },
+    eventChangeAccepted: {
+        de: 'Terminänderung angenommen',
+        fr: 'Changement d\'événement accepté'
+    },
+    eventAcceptedMessage: {
+        de: 'Der eingereichte Termin wurde angenommen und ist nun veröffentlicht',
+        fr: 'L\'événement soumis a été accepté et est maintenant publié'
+    },
+    publishedEvent: {
+        de: 'Veröffentlichter Termin',
+        fr: 'Evénement publié'
+    },
+    eventRefused: {
+        de: 'Termineintrag abgelehnt',
+        fr: 'Evénement refusé'
+    },
+    reasonForRejection: {
+        de: 'Grund für Ablehnung',
+        fr: 'Motif du refus'
+    },
+    reviewer: {
+        de: 'Reviewer:in',
+        fr: 'Examinateur'
+    },
     event: {
         de: 'Termin',
         fr: 'Evénement'
@@ -99,6 +139,14 @@ const i18n = {
     value: {
         de: 'Wert',
         fr: 'Valeur'
+    },
+    seeEvent: {
+        de: 'Termin Ansehen',
+        fr: 'Voir l\'événement'
+    },
+    seeNewEvent: {
+        de: 'Neuer Termin Ansehen',
+        fr: 'Voir le nouvel événement'
     },
     seeUpdatedEvent: {
         de: 'Aktualisierter Termin Ansehen',
@@ -154,7 +202,7 @@ const i18n = {
     }
 } satisfies {[key: string]: i18nMessage};
 
-export const translate = (key: (keyof typeof i18n) | string, language: 'de' | 'fr'): string => {
+export const translate = (key: (keyof typeof i18n), language: 'de' | 'fr'): string => {
     if (key in i18n) {
         return i18n[key as keyof typeof i18n][language];
     }

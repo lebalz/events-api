@@ -456,9 +456,8 @@ describe(`POST ${API_URL}/events/change_state`, () => {
             expect(result.statusCode).toEqual(201);
             expect(result.body.length).toEqual(1);
             expect(result.body[0].state).toEqual(EventState.PUBLISHED);
-            /** even if edi3 is now the versioned old published event, 
-            it is reurned since it's state changed */
-            expect(result.body[0].id).toEqual(edit3.id);
+
+            expect(result.body[0].id).toEqual(event.id);
 
             const updatedEvent = await prisma.event.findUnique({ where: { id: event.id } });
             const updatedEdit1 = await prisma.event.findUnique({ where: { id: edit1.id } });
@@ -499,15 +498,16 @@ describe(`POST ${API_URL}/events/change_state`, () => {
                 message: { semesterIds: [semester.id] },
                 to: IoRoom.ALL
             });
+            /* first the original event */
             expect(mNotification.mock.calls[1][0]).toEqual({
                 event: IoEvent.CHANGED_STATE,
-                message: { state: EventState.PUBLISHED, ids: [edit3.id] },
+                message: { state: EventState.PUBLISHED, ids: [event.id] },
                 to: IoRoom.ALL
             });
-            /* first the original event */
+            /* then the previously published event */
             expect(mNotification.mock.calls[2][0]).toEqual({
                 event: IoEvent.CHANGED_RECORD,
-                message: { record: 'EVENT', id: event.id },
+                message: { record: 'EVENT', id: edit3.id },
                 to: IoRoom.ALL,
                 toSelf: true
             });
@@ -554,9 +554,8 @@ describe(`POST ${API_URL}/events/change_state`, () => {
         expect(result.statusCode).toEqual(201);
         expect(result.body.length).toEqual(1);
         expect(result.body[0].state).toEqual(EventState.PUBLISHED);
-        /** even if edi3 is now the versioned old published event, 
-        it is reurned since it's state changed */
-        expect(result.body[0].id).toEqual(edit3.id);
+
+        expect(result.body[0].id).toEqual(event.id);
 
         const updatedEvent = await prisma.event.findUnique({ where: { id: event.id } });
         const updatedEdit1 = await prisma.event.findUnique({ where: { id: edit1.id } });
@@ -606,13 +605,13 @@ describe(`POST ${API_URL}/events/change_state`, () => {
         /* first the newly published version */
         expect(mNotification.mock.calls[1][0]).toEqual({
             event: IoEvent.CHANGED_STATE,
-            message: { state: EventState.PUBLISHED, ids: [edit3.id] },
+            message: { state: EventState.PUBLISHED, ids: [event.id] },
             to: IoRoom.ALL
         });
-        /* second the original event */
+        /* second the previous original event */
         expect(mNotification.mock.calls[2][0]).toEqual({
             event: IoEvent.CHANGED_RECORD,
-            message: { record: 'EVENT', id: event.id },
+            message: { record: 'EVENT', id: edit3.id },
             to: IoRoom.ALL,
             toSelf: true
         });
@@ -672,12 +671,12 @@ describe(`POST ${API_URL}/events/change_state`, () => {
         expect(result.statusCode).toEqual(201);
         expect(result.body.length).toEqual(1);
         expect(result.body[0].state).toEqual(EventState.PUBLISHED);
-        expect(result.body[0].id).toEqual(edit1.id);
-        expect(result.body[0].description).toEqual(event.description);
-        expect(result.body[0].departmentIds).toHaveLength(1);
+        expect(result.body[0].id).toEqual(event.id);
+        expect(result.body[0].description).toEqual(edit1.description);
+        expect(result.body[0].departmentIds).toHaveLength(0);
 
-        const updatedEvent = await prisma.event.findUnique({ where: { id: event.id }, include: {departments: true} });
-        expect(updatedEvent?.departments).toHaveLength(0);
+        const updatedEvent = await prisma.event.findUnique({ where: { id: edit1.id }, include: {departments: true} });
+        expect(updatedEvent?.departments).toHaveLength(1);
 
     });
 });
