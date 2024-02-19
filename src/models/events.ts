@@ -405,6 +405,40 @@ function Events(db: PrismaClient['event']) {
             }
             return [...await this.published(semesterId), ...await this.forUser(actor)];
         },
+        async allByIds(actor: User | undefined, ids: string[]): Promise<ApiEvent[]> {
+            const events = await db.findMany({
+                include: { departments: { select: { id: true }}, children: { select: { id: true, state: true, createdAt: true }} },
+                where: {
+                    AND: rmUndefined([
+                        { id: { in: ids } },
+                        actor 
+                            ? { 
+                                OR: [
+                                    { 
+                                        state: {
+                                            in: actor.role === 'ADMIN' ? [EventState.PUBLISHED, EventState.REFUSED, EventState.REVIEW] : [EventState.PUBLISHED]
+                                        },
+                                    },
+                                    { authorId: actor.id },
+                                    { 
+                                        groups: {
+                                            some: {
+                                                id: actor.id
+                                            }
+                                        }
+                                    },
+                                ]
+                              }
+                            : {
+                                state: EventState.PUBLISHED
+                            }
+                    ]),
+                    
+                },
+                orderBy: { start: 'asc' }
+            });
+            return events.map(prepareEvent);
+        },
         async createModel(actor: User, start: Date, end: Date): Promise<ApiEvent> {
             const model = await db.create({
                 data: {

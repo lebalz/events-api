@@ -10,7 +10,6 @@ const EXCLUDED_PROPS = new Set<keyof ApiEvent>([
     'authorId',
     'jobId',
     'publishedVersionIds',
-    'children',
     'affectsDepartment2',
     'parentId',
     'departmentIds',

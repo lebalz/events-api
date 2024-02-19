@@ -4,6 +4,7 @@ import prisma from "../prisma";
 import { HTTP403Error, HTTP404Error } from "../utils/errors/Errors";
 import { createDataExtractor } from "../controllers/helpers";
 import Events from "./events";
+import { prepareEventGroup, ApiEventGroup } from "./eventGroup.helpers";
 
 const getData = createDataExtractor<Prisma.EventGroupUncheckedUpdateInput>(
     ['name', 'description']
@@ -11,7 +12,7 @@ const getData = createDataExtractor<Prisma.EventGroupUncheckedUpdateInput>(
 function EventGroups(db: PrismaClient['eventGroup']) {
     return Object.assign(db, {
         async allOfUser(user: User) {
-            return await db.findMany({
+            const records = await db.findMany({
                 where: {
                     users: {
                         some: {
@@ -32,8 +33,9 @@ function EventGroups(db: PrismaClient['eventGroup']) {
                     }
                 }
             });
+            return records.map(prepareEventGroup);
         },
-        async findModel(actor: User, id: string) {
+        async _findRawModel(actor: User, id: string) {
             const model = await db.findUnique({
                 where: { 
                     id: id,
@@ -61,6 +63,10 @@ function EventGroups(db: PrismaClient['eventGroup']) {
                 throw new HTTP404Error(`EventGroup with id ${id} and user ${actor.id} not found`);
             }
             return model;
+        },
+        async findModel(actor: User, id: string) {
+            const model = await this._findRawModel(actor, id);
+            return prepareEventGroup(model);
         },
         async createModel(actor: User, data:{ name: string, description: string, event_ids: string[] }) {
             const { name, description, event_ids } = data;
@@ -90,14 +96,24 @@ function EventGroups(db: PrismaClient['eventGroup']) {
                     }
                 }
             });
-            return model;
+            return prepareEventGroup(model);
         },
-        async updateModel(actor: User, id: string, data: Prisma.EventGroupUncheckedUpdateInput) {
+        async updateModel(actor: User, id: string, data: ApiEventGroup ) {
             /** ensure correct permissions */
             await this.findModel(actor, id);
 
             /** update */
             const sanitized = getData(data);
+            if (data.eventIds?.length > 0) {
+                sanitized.events = {
+                    set: data.eventIds.map(eId => ({ id: eId }))
+                }
+            }
+            if (data.userIds?.length > 0) {
+                sanitized.users = {
+                    set: data.userIds.map(uId => ({ id: uId }))
+                }
+            }
             const model = await db.update({
                 where: { id: id },
                 data: sanitized,
@@ -114,17 +130,17 @@ function EventGroups(db: PrismaClient['eventGroup']) {
                     }
                 }
             });
-            return model;
+            return prepareEventGroup(model);
         },
         async destroy(actor: User, id: string, cascadeEvents = false) {
-            const model = await this.findModel(actor, id);
+            const model = await this._findRawModel(actor, id);
             if (model.events.length > 0) {
                 if (cascadeEvents) {
                     await Promise.all(model.events.map((e) => Events._forceDestroy(e)));
                 } else {
                     await Promise.all(model.events.map((e) => Events._unlinkFromEventGroup(e.id)));
                 }
-                const cleanedUp = await this.findModel(actor, id);
+                const cleanedUp = await this._findRawModel(actor, id);
                 if (cleanedUp.events.length === 0) {
                     return await db.delete({
                         where: {
@@ -132,7 +148,7 @@ function EventGroups(db: PrismaClient['eventGroup']) {
                         },
                     });
                 }
-                return cleanedUp;
+                return prepareEventGroup(cleanedUp);
             } else {
                 return await db.delete({
                     where: {
@@ -146,7 +162,7 @@ function EventGroups(db: PrismaClient['eventGroup']) {
             const events = await prisma.event.findMany({
                 where: {
                     id: {
-                        in: model.events.map(e => e.id)
+                        in: model.eventIds
                     },
                     parentId: null
                 },
@@ -170,16 +186,28 @@ function EventGroups(db: PrismaClient['eventGroup']) {
                     events: {
                         create: events.map(event => clonedEventProps({ event: event, uid: actor.id, type: 'basic'}))
                     }
+                },
+                include: {
+                    events: {
+                        select: {
+                            id: true
+                        }
+                    },
+                    users: {
+                        select: {
+                            id: true
+                        }
+                    }
                 }
             });
-            return newGroup;
+            return prepareEventGroup(newGroup);
         },
         async events(actor: User, id: string) {
             const model = await this.findModel(actor, id);
             const events = await prisma.event.findMany({
                 where: {
                     id: {
-                        in: model.events.map(e => e.id)
+                        in: model.eventIds
                     },
                     parentId: null
                 },

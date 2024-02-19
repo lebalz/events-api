@@ -10,14 +10,15 @@ import { faker } from '@faker-js/faker';
 import { generateEventGroup } from '../factories/eventGroup';
 import { eventSequenceUnchecked } from '../factories/event';
 import { ApiEvent } from '../../src/models/event.helpers';
+import { prepareEventGroup as apiPrepareEventGroup } from '../../src/models/eventGroup.helpers';
 
 jest.mock('../../src/middlewares/notify.nop');
 const mNotification = <jest.Mock<typeof notify>>notify;
 const DEFAULT_INCLUDE_CONFIG = { events: { select: { id: true}}, users: { select: { id: true }} };
 
-const prepareEventGroup = (eGroup: EventGroup) => {
+const prepareEventGroup = (eGroup: EventGroup & { events: { id: string}[], users: { id: string }[] }) => {
     return {
-        ...JSON.parse(JSON.stringify(eGroup))
+        ...JSON.parse(JSON.stringify(apiPrepareEventGroup(eGroup)))
     }
 }
 
@@ -149,8 +150,8 @@ describe(`POST ${API_URL}/event_groups`, () => {
             description: 'BAR',
             createdAt: expect.any(String),
             updatedAt: expect.any(String),
-            events: [],
-            users: [{id: user.id}]
+            eventIds: [],
+            userIds: [user.id]
         })
         expect(mNotification).toHaveBeenCalledTimes(1);
         expect(mNotification.mock.calls[0][0]).toEqual({

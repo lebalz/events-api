@@ -1,14 +1,9 @@
-import { Department, Event, EventState, Job, Prisma, User } from "@prisma/client";
-import { isNull } from "lodash";
+import { Event, EventState, Prisma } from "@prisma/client";
 
-export interface ApiEvent extends Omit<Event, 'jobId'> {
-    job: undefined;
-    jobId: string | undefined | null;
-    author: undefined;
+export interface ApiEvent extends Omit<Event, 'job' | 'author' | 'departments' | 'children' > {
+    jobId: string | null;
     authorId: string;
-    departments: undefined;
     departmentIds: string[];
-    children: undefined;
     publishedVersionIds: string[];
 }
 
@@ -34,11 +29,7 @@ export const prepareEvent = (event: (Event & {
     const children = event?.children || [];
     const prepared: ApiEvent = {
         ...event,
-        job: undefined,
-        author: undefined,
-        departments: undefined,
         departmentIds: event?.departments?.map((d) => d.id) || [],
-        children: undefined,
         publishedVersionIds: children.filter(e => e.state === EventState.PUBLISHED).sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime()).map((c) => c.id),
     };
     ['author', 'departments', 'children', 'job'].forEach((key) => {

@@ -163,8 +163,12 @@ export const destroy: RequestHandler = async (req, res, next) => {
 }
 
 
-export const all: RequestHandler<any, any, any, {semesterId?: string}> = async (req, res, next) => {
+export const all: RequestHandler<any, any, any, {semesterId?: string, ids?: string[]}> = async (req, res, next) => {
     try {
+        if (req.query.ids) {
+            const events = await Events.allByIds(req.user, req.query.ids);
+            return res.json(events);
+        }
         const events = await Events.published(req.query.semesterId);
         res.json(events);
     } catch (error) /* istanbul ignore next */ {
