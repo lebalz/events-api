@@ -104,12 +104,12 @@ function EventGroups(db: PrismaClient['eventGroup']) {
 
             /** update */
             const sanitized = getData(data);
-            if (data.eventIds?.length > 0) {
+            if (data.eventIds) {
                 sanitized.events = {
                     set: data.eventIds.map(eId => ({ id: eId }))
                 }
             }
-            if (data.userIds?.length > 0) {
+            if (data.userIds) {
                 sanitized.users = {
                     set: data.userIds.map(uId => ({ id: uId }))
                 }
