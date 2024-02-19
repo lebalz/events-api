@@ -246,20 +246,24 @@ describe(`POST ${API_URL}/event_groups/:id/clone`, () => {
         const events = await prisma.event.findMany();
         expect(events).toHaveLength(6);
         const ueGroup = await prisma.eventGroup.create({
-            data: generateEventGroup({userId: user!.id, events: { connect: events.slice(0, 3).map(e => ({id: e.id})) }}
-        )});
+            data: generateEventGroup({userId: user!.id, events: { connect: events.slice(0, 3).map(e => ({id: e.id})) }}),
+            include: DEFAULT_INCLUDE_CONFIG
+        });
         const result = await request(app)
             .post(`${API_URL}/event_groups/${ueGroup!.id}/clone`)
             .set('authorization', JSON.stringify({email: user.email}));
 
         expect(result.statusCode).toEqual(201);
         expect(result.body).toEqual({
-            ...ueGroup,
+            ...prepareEventGroup(ueGroup),
             id: expect.any(String),
+            eventIds: expect.any(Array),
             name: `📋 ${ueGroup.name}`,
             createdAt: expect.any(String),
             updatedAt: expect.any(String),
-        })
+        });
+        expect(result.body.eventIds).toHaveLength(3);
+        expect(result.body.eventIds).not.toEqual(ueGroup.events.map(e => e.id).sort());
         expect(mNotification).toHaveBeenCalledTimes(1);
         expect(mNotification.mock.calls[0][0]).toEqual({
             event: IoEvent.NEW_RECORD,
