@@ -495,7 +495,7 @@ describe(`POST ${API_URL}/events/change_state`, () => {
             expect(mNotification).toHaveBeenCalledTimes(5);
             expect(mNotification.mock.calls[0][0]).toEqual({
                 event: IoEvent.RELOAD_AFFECTING_EVENTS,
-                message: { semesterIds: [semester.id] },
+                message: { record: 'SEMESTER', semesterIds: [semester.id] },
                 to: IoRoom.ALL
             });
             /* first the original event */
@@ -598,7 +598,7 @@ describe(`POST ${API_URL}/events/change_state`, () => {
         
         expect(mNotification.mock.calls[0][0]).toEqual({
             event: IoEvent.RELOAD_AFFECTING_EVENTS,
-            message: { semesterIds: [] },
+            message: { record: 'SEMESTER', semesterIds: [] },
             to: IoRoom.ALL
         });
 
