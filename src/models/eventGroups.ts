@@ -35,6 +35,30 @@ function EventGroups(db: PrismaClient['eventGroup']) {
             });
             return records.map(prepareEventGroup);
         },
+        async allOfEvent(event: { id: string }) {
+            const records = await db.findMany({
+                where: {
+                    events: {
+                        some: {
+                            id: event.id
+                        }
+                    }
+                },
+                include: {
+                    events: {
+                        select: {
+                            id: true
+                        }
+                    },
+                    users: {
+                        select: {
+                            id: true
+                        }
+                    }
+                }
+            });
+            return records.map(prepareEventGroup);
+        },
         async _findRawModel(actor: User, id: string) {
             const model = await db.findUnique({
                 where: { 

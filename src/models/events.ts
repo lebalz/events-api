@@ -100,7 +100,12 @@ function Events(db: PrismaClient['event']) {
                     },
                     groups: {
                         select: {
-                            id: true
+                            id: true,
+                            users: {
+                                select: {
+                                    id: true
+                                }
+                            }
                         }
                     }
                 }
@@ -108,7 +113,7 @@ function Events(db: PrismaClient['event']) {
             if (!record) {
                 throw new HTTP404Error('Event not found');
             }
-            if (!(record.authorId === actor.id || record.state === EventState.PUBLISHED || actor.role === Role.ADMIN)) {
+            if (!(record.authorId === actor.id || record.groups.some(g => g.users.map(user => user.id).includes(actor.id)) || record.state === EventState.PUBLISHED || actor.role === Role.ADMIN)) {
                 throw new HTTP403Error('Not authorized');
             }
             /** remove fields not updatable*/
@@ -116,8 +121,8 @@ function Events(db: PrismaClient['event']) {
             const departmentIds = data.departmentIds || [];
 
             let model: Event & {
-                departments: Department[];
-                children: Event[];
+                departments: { id: string }[];
+                children: {id: string, state: EventState, createdAt: Date }[];
             };
             /* DRAFT     --> update the fields */
             /* OTHERWIES --> create a linked clone and update the props there */
@@ -146,7 +151,7 @@ function Events(db: PrismaClient['event']) {
                             connect: departmentIds.map((id) => ({ id }))
                         }
                     },
-                    include: { departments: true, children: true },
+                    include: { departments: { select: { id: true }}, children: { select: { id: true, createdAt: true, state: true }} },
                 });
             }
             return prepareEvent(model);

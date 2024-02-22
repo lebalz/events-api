@@ -100,7 +100,7 @@ describe(`PUT ${API_URL}/event_groups/:id`, () => {
         expect(mNotification).toHaveBeenCalledTimes(1);
         expect(mNotification.mock.calls[0][0]).toEqual({
             event: IoEvent.CHANGED_RECORD,
-            message: { record: 'USER_EVENT_GROUP', id: ueGroup!.id },
+            message: { record: 'EVENT_GROUP', id: ueGroup!.id },
             to: user.id
         });
     });
@@ -156,7 +156,7 @@ describe(`POST ${API_URL}/event_groups`, () => {
         expect(mNotification).toHaveBeenCalledTimes(1);
         expect(mNotification.mock.calls[0][0]).toEqual({
             event: IoEvent.NEW_RECORD,
-            message: { record: 'USER_EVENT_GROUP', id: result.body.id },
+            message: { record: 'EVENT_GROUP', id: result.body.id },
             to: user.id
         });
     });
@@ -181,7 +181,7 @@ describe(`DELETE ${API_URL}/event_groups/:id`, () => {
         expect(mNotification).toHaveBeenCalledTimes(1);
         expect(mNotification.mock.calls[0][0]).toEqual({
             event: IoEvent.DELETED_RECORD,
-            message: { record: 'USER_EVENT_GROUP', id: ueGroup.id },
+            message: { record: 'EVENT_GROUP', id: ueGroup.id },
             to: user.id
         });
     });
@@ -267,7 +267,7 @@ describe(`POST ${API_URL}/event_groups/:id/clone`, () => {
         expect(mNotification).toHaveBeenCalledTimes(1);
         expect(mNotification.mock.calls[0][0]).toEqual({
             event: IoEvent.NEW_RECORD,
-            message: { record: 'USER_EVENT_GROUP', id: result.body.id },
+            message: { record: 'EVENT_GROUP', id: result.body.id },
             to: user.id
         });
 

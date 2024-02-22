@@ -4,7 +4,7 @@ import { IoEvent } from "../routes/socketEventTypes";
 import UserEventGroups from '../models/eventGroups';
 import { ApiEventGroup } from "../models/eventGroup.helpers";
 
-const NAME = 'USER_EVENT_GROUP';
+const NAME = 'EVENT_GROUP';
 
 export const allOfUser: RequestHandler = async (req, res, next) => {
     try {
