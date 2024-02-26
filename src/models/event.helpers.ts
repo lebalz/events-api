@@ -14,11 +14,20 @@ interface CloneConfig {
     uid: string;
     type: 'basic'
 }
+interface AllPropsCloneConfig {
+    event: CloneableEvent;
+    uid: string;
+    type: 'full';
+    allProps?: boolean;
+    includeGroups?: false;
+}
+
 interface FullCloneConfig {
     event: FullClonedEvent;
     uid: string;
     type: 'full';
     allProps?: boolean;
+    includeGroups: true;
 }
 
 
@@ -38,7 +47,7 @@ export const prepareEvent = (event: (Event & {
     return prepared;
 }
 
-export const clonedUpdateProps = (config: CloneConfig | FullCloneConfig): Prisma.EventUpdateInput => {
+export const clonedUpdateProps = (config: CloneConfig | FullCloneConfig | AllPropsCloneConfig): Prisma.EventUpdateInput => {
     const cloned: Prisma.EventUpdateInput = clonedProps(config);
     if (cloned.departments) {
         cloned.departments = {
@@ -53,7 +62,7 @@ export const clonedUpdateProps = (config: CloneConfig | FullCloneConfig): Prisma
 }
 
 
-export const clonedProps = (config: CloneConfig | FullCloneConfig): Prisma.EventCreateInput => {
+export const clonedProps = (config: CloneConfig | FullCloneConfig | AllPropsCloneConfig): Prisma.EventCreateInput => {
     const event = config.event;
     const props: Prisma.EventCreateInput = {
         start: event.start,
@@ -79,8 +88,10 @@ export const clonedProps = (config: CloneConfig | FullCloneConfig): Prisma.Event
         }
     });
     if (config.type === 'full') {
-        props.groups = {
-            connect: config.event.groups.map((g) => ({ id: g.id }))
+        if (config.includeGroups) {
+            props.groups = {
+                connect: config.event.groups.map((g) => ({ id: g.id }))
+            }
         }
         if (config.allProps) {
             if (event.jobId) {

@@ -243,6 +243,13 @@ function EventGroups(db: PrismaClient['eventGroup']) {
                         select: {
                             id: true
                         }
+                    },
+                    children: {
+                        select: {
+                            id: true,
+                            createdAt: true,
+                            state: true
+                        }
                     }
                 }
             });

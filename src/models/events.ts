@@ -139,8 +139,7 @@ function Events(db: PrismaClient['event']) {
                     include: { departments: true, children: true },
                 });
             } else {
-                // record, actor.id, { cloneUserGroup: true }
-                const cProps = clonedProps({ event: record, uid: actor.id, type: 'full' });
+                const cProps = clonedProps({ event: record, uid: actor.id, type: 'full', includeGroups: false});
                 model = await db.create({
                     data: {
                         ...cProps,
@@ -259,7 +258,7 @@ function Events(db: PrismaClient['event']) {
                             db.update({  /** <-- now the current version */
                                 where: { id: parent.id },
                                 data: {
-                                    ...clonedUpdateProps({ event: record, uid: record.authorId, type: 'full', allProps: true}),
+                                    ...clonedUpdateProps({ event: record, uid: record.authorId, type: 'full', allProps: true, includeGroups: true}),
                                     groups: {
                                         set: groups.map((id) => ({ id }))
                                     },
@@ -271,7 +270,7 @@ function Events(db: PrismaClient['event']) {
                             db.update({  /** version --> the previous published event, now accessible under the id of the former review candidate */
                                 where: { id: record.id },
                                 data: {
-                                    ...clonedUpdateProps({ event: parent, uid: parent.authorId, type: 'full', allProps: true}),
+                                    ...clonedUpdateProps({ event: parent, uid: parent.authorId, type: 'full', allProps: true, includeGroups: false}),
                                     groups: {
                                         set: []
                                     },
