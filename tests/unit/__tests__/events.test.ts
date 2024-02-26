@@ -17,10 +17,10 @@ export const createEvent = async (props: (Partial<Prisma.EventUncheckedCreateInp
 
 describe('find event', () => {
 	test('returns event', async () => {
-		const user = await createUser({ id: 'd40f9b00-c6de-4a36-b976-a4218c22b599' })
-		const event = await createEvent({ id: 'a3ab1beb-34df-4fd1-8b3a-b96af77dd722', authorId: user.id })
+		const user = await createUser({})
+		const event = await createEvent({ authorId: user.id })
 
-		await expect(Events.findModel(user, 'a3ab1beb-34df-4fd1-8b3a-b96af77dd722')).resolves.toEqual({
+		await expect(Events.findModel(user, event.id)).resolves.toEqual({
 			/** expect the prepared event to be returned
 			 * @see event.helpers.ts#prepareEvent 
 			 */
@@ -73,6 +73,19 @@ describe('updateEvent', () => {
 			updatedAt: expect.any(Date)
 		}));
 	});
+	// test('update a DRAFT from a group', async () => {
+	// 	const alice = await createUser({})
+	// 	const bob = await createUser({})
+	// 	const group = await createEventGroup({ authorId: alice.id });
+	// 	const event = await createEvent({authorId: alice.id, state: EventState.DRAFT })
+
+
+	// 	await expect(Events.updateModel(alice, event.id, { description: 'hello' })).resolves.toEqual(prepareEvent({
+	// 		...event,
+	// 		description: 'hello',
+	// 		updatedAt: expect.any(Date)
+	// 	}));
+	// });
 	test('can add departments to a draft', async () => {
 		const user = await createUser({})
 		const dep1 = await createDepartment({});

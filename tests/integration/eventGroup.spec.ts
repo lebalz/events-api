@@ -31,7 +31,7 @@ describe(`GET ${API_URL}/event_groups`, () => {
     it("returns all registration periods for users", async () => {
         const user = await prisma.user.create({data: generateUser({})});
         for (var i = 0; i < 3; i++) {
-            await prisma.eventGroup.create({data: generateEventGroup({userId: user!.id})});
+            await prisma.eventGroup.create({data: generateEventGroup({userIds: [user!.id], eventIds: []})});
         }
         const ueGroups = await prisma.eventGroup.findMany();
         expect(ueGroups).toHaveLength(3);
@@ -49,7 +49,7 @@ describe(`GET ${API_URL}/event_groups`, () => {
 describe(`GET ${API_URL}/event_groups/:id`, () => {
     it("prevents public user to get user event group", async () => {
         const user = await prisma.user.create({data: generateUser({})});
-        const ueGroup = await prisma.eventGroup.create({data: generateEventGroup({userId: user!.id})});
+        const ueGroup = await prisma.eventGroup.create({data: generateEventGroup({userIds: [user!.id], eventIds: []})});
         const result = await request(app)
             .get(`${API_URL}/event_groups/${ueGroup!.id}`);
         expect(result.statusCode).toEqual(401);
@@ -58,7 +58,7 @@ describe(`GET ${API_URL}/event_groups/:id`, () => {
     it("can get user event group by id", async () => {
         const user = await prisma.user.create({data: generateUser({})});
         const ueGroup = await prisma.eventGroup.create({
-            data: generateEventGroup({userId: user!.id}),
+            data: generateEventGroup({userIds: [user!.id], eventIds: []}),
             include: DEFAULT_INCLUDE_CONFIG
         });
         const result = await request(app)
@@ -79,7 +79,7 @@ describe(`GET ${API_URL}/event_groups/:id`, () => {
     it("prevents user to find other users event group by id", async () => {
         const user = await prisma.user.create({data: generateUser({})});
         const mallory = await prisma.user.create({data: generateUser({})});
-        const ueGroup = await prisma.eventGroup.create({data: generateEventGroup({userId: user!.id})});
+        const ueGroup = await prisma.eventGroup.create({data: generateEventGroup({userIds: [user!.id], eventIds: []})});
         const result = await request(app)
             .get(`${API_URL}/event_groups/${ueGroup!.id}`)
             .set('authorization', JSON.stringify({email: mallory.email}));
@@ -90,7 +90,7 @@ describe(`GET ${API_URL}/event_groups/:id`, () => {
 describe(`PUT ${API_URL}/event_groups/:id`, () => {
     it("lets users modify their own Registration Period", async () => {
         const user = await prisma.user.create({data: generateUser({})});
-        const ueGroup = await prisma.eventGroup.create({data: generateEventGroup({userId: user!.id})});
+        const ueGroup = await prisma.eventGroup.create({data: generateEventGroup({userIds: [user!.id], eventIds: []})});
 
         const result = await request(app)
             .put(`${API_URL}/event_groups/${ueGroup!.id}`)
@@ -107,7 +107,7 @@ describe(`PUT ${API_URL}/event_groups/:id`, () => {
     it("prevents users to modify others Registration Period", async () => {
         const user = await prisma.user.create({data: generateUser({})});
         const mallory = await prisma.user.create({data: generateUser({})});
-        const ueGroup = await prisma.eventGroup.create({data: generateEventGroup({userId: user!.id})});
+        const ueGroup = await prisma.eventGroup.create({data: generateEventGroup({userIds: [user!.id], eventIds: []})});
 
         const result = await request(app)
             .put(`${API_URL}/event_groups/${ueGroup!.id}`)
@@ -119,7 +119,7 @@ describe(`PUT ${API_URL}/event_groups/:id`, () => {
     it("prevents admins to modify others Registration Period", async () => {
         const user = await prisma.user.create({data: generateUser({})});
         const admin = await prisma.user.create({data: generateUser({role: Role.ADMIN})});
-        const ueGroup = await prisma.eventGroup.create({data: generateEventGroup({userId: user!.id})});
+        const ueGroup = await prisma.eventGroup.create({data: generateEventGroup({userIds: [user!.id], eventIds: []})});
         const result = await request(app)
             .put(`${API_URL}/event_groups/${ueGroup!.id}`)
             .set('authorization', JSON.stringify({email: admin.email}))
@@ -169,7 +169,7 @@ describe(`DELETE ${API_URL}/event_groups/:id`, () => {
         const events = await prisma.event.findMany();
         expect(events).toHaveLength(3);
         const ueGroup = await prisma.eventGroup.create({
-            data: generateEventGroup({userId: user!.id, events: { connect: events.map(e => ({id: e.id})) }}
+            data: generateEventGroup({userIds: [user!.id], eventIds: events.map(e => e.id)}
         )});
         const result = await request(app)
             .delete(`${API_URL}/event_groups/${ueGroup!.id}`)
@@ -195,7 +195,7 @@ describe(`GET ${API_URL}/event_groups/:id/events`, () => {
         const events = await prisma.event.findMany();
         expect(events).toHaveLength(6);
         const ueGroup = await prisma.eventGroup.create({
-            data: generateEventGroup({userId: user!.id, events: { connect: events.slice(0, 3).map(e => ({id: e.id})) }}
+            data: generateEventGroup({userIds: [user!.id], eventIds: events.slice(0, 3).map(e => e.id)}
         )});
         const result = await request(app)
             .get(`${API_URL}/event_groups/${ueGroup!.id}/events`);
@@ -208,7 +208,7 @@ describe(`GET ${API_URL}/event_groups/:id/events`, () => {
         const events = await prisma.event.findMany();
         expect(events).toHaveLength(6);
         const ueGroup = await prisma.eventGroup.create({
-            data: generateEventGroup({userId: user!.id, events: { connect: events.slice(0, 3).map(e => ({id: e.id})) }}
+            data: generateEventGroup({userIds: [user!.id], eventIds: events.slice(0, 3).map(e => e.id)}
         )});
         const result = await request(app)
             .get(`${API_URL}/event_groups/${ueGroup!.id}/events`)
@@ -225,7 +225,7 @@ describe(`POST ${API_URL}/event_groups/:id/clone`, () => {
     it("prevents public visitor to clone group", async () => {
         const user = await prisma.user.create({data: generateUser({})});
         const ueGroup = await prisma.eventGroup.create({
-            data: generateEventGroup({userId: user!.id })
+            data: generateEventGroup({userIds: [user!.id], eventIds: [] })
         });
         const result = await request(app)
             .post(`${API_URL}/event_groups/${ueGroup!.id}/clone`);
@@ -246,7 +246,7 @@ describe(`POST ${API_URL}/event_groups/:id/clone`, () => {
         const events = await prisma.event.findMany();
         expect(events).toHaveLength(6);
         const ueGroup = await prisma.eventGroup.create({
-            data: generateEventGroup({userId: user!.id, events: { connect: events.slice(0, 3).map(e => ({id: e.id})) }}),
+            data: generateEventGroup({userIds: [user!.id], eventIds: events.slice(0, 3).map(e => e.id)}),
             include: DEFAULT_INCLUDE_CONFIG
         });
         const result = await request(app)

@@ -341,13 +341,13 @@ function Events(db: PrismaClient['event']) {
             });
             return prepareEvent(model);
         },
-        async _unlinkFromEventGroup(id: string) {
+        async _unlinkFromEventGroup(id: string, groupId: string) {
             await db.update({
                 where: { id: id },
                 data: {
                     groups: {
                         disconnect: {
-                            id: id
+                            id: groupId
                         }
                     }
                 }

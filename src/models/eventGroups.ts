@@ -1,7 +1,7 @@
 import { Department, Event, Prisma, PrismaClient, User } from "@prisma/client";
 import {clonedProps as clonedEventProps, prepareEvent} from './event.helpers';
 import prisma from "../prisma";
-import { HTTP403Error, HTTP404Error } from "../utils/errors/Errors";
+import { HTTP403Error, HTTP404Error, HTTP500Error } from "../utils/errors/Errors";
 import { createDataExtractor } from "../controllers/helpers";
 import Events from "./events";
 import { prepareEventGroup, ApiEventGroup } from "./eventGroup.helpers";
@@ -9,6 +9,7 @@ import { prepareEventGroup, ApiEventGroup } from "./eventGroup.helpers";
 const getData = createDataExtractor<Prisma.EventGroupUncheckedUpdateInput>(
     ['name', 'description']
 );
+
 function EventGroups(db: PrismaClient['eventGroup']) {
     return Object.assign(db, {
         async allOfUser(user: User) {
@@ -94,6 +95,7 @@ function EventGroups(db: PrismaClient['eventGroup']) {
         },
         async createModel(actor: User, data:{ name: string, description: string, event_ids: string[] }) {
             const { name, description, event_ids } = data;
+            const allowedEvents = await Events.allByIds(actor, event_ids);
             const model = await db.create({
                 data: {
                     name,
@@ -104,7 +106,7 @@ function EventGroups(db: PrismaClient['eventGroup']) {
                         }
                     },
                     events: {
-                        connect: [...new Set(event_ids)].map(id => ({ id }))
+                        connect: allowedEvents.map(e => ({ id: e.id }))
                     }
                 },
                 include: {
@@ -122,15 +124,16 @@ function EventGroups(db: PrismaClient['eventGroup']) {
             });
             return prepareEventGroup(model);
         },
-        async updateModel(actor: User, id: string, data: ApiEventGroup ) {
+        async updateModel(actor: User, id: string, data: Partial<ApiEventGroup> ) {
             /** ensure correct permissions */
             await this.findModel(actor, id);
 
             /** update */
             const sanitized = getData(data);
             if (data.eventIds) {
+                const allowedEvents = await Events.allByIds(actor, data.eventIds);
                 sanitized.events = {
-                    set: data.eventIds.map(eId => ({ id: eId }))
+                    set: allowedEvents.map(e => ({ id: e.id }))
                 }
             }
             if (data.userIds) {
@@ -156,29 +159,27 @@ function EventGroups(db: PrismaClient['eventGroup']) {
             });
             return prepareEventGroup(model);
         },
-        async destroy(actor: User, id: string, cascadeEvents = false) {
+        async destroy(actor: User, id: string) {
             const model = await this._findRawModel(actor, id);
             if (model.events.length > 0) {
-                if (cascadeEvents) {
-                    await Promise.all(model.events.map((e) => Events._forceDestroy(e)));
-                } else {
-                    await Promise.all(model.events.map((e) => Events._unlinkFromEventGroup(e.id)));
-                }
+                await Promise.all(model.events.map((e) => Events._unlinkFromEventGroup(e.id, id)));
                 const cleanedUp = await this._findRawModel(actor, id);
-                if (cleanedUp.events.length === 0) {
-                    return await db.delete({
-                        where: {
-                            id: id,
-                        },
-                    });
+                if (cleanedUp.events.length !== 0) {
+                    throw new HTTP500Error('Could not unlink all events from group');
                 }
-                return prepareEventGroup(cleanedUp);
-            } else {
-                return await db.delete({
+                await db.delete({
                     where: {
                         id: id,
                     },
                 });
+                return prepareEventGroup(cleanedUp);
+            } else {
+                await db.delete({
+                    where: {
+                        id: id,
+                    },
+                });
+                return prepareEventGroup(model);
             }
         },
         async cloneModel(actor: User, id: string) {
