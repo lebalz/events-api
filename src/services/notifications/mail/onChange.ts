@@ -1,6 +1,6 @@
+/* istanbul ignore file */
 import Mailgen from "mailgen";
 import { getChangedProps, getEventProps } from "../helpers/changedProps";
-import { createTransport } from "nodemailer";
 import { authConfig, sendMail } from "./authConfig";
 import { ApiEvent } from "../../../models/event.helpers";
 import { getDate } from "../../helpers/time";

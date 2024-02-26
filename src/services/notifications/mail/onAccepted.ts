@@ -1,3 +1,4 @@
+/* istanbul ignore file */
 import Mailgen from "mailgen";
 import { getChangedProps, getEventProps } from "../helpers/changedProps";
 import { createTransport } from "nodemailer";

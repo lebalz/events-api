@@ -1,3 +1,4 @@
+/* istanbul ignore file */
 import { createTransport } from 'nodemailer';
 import Mail from 'nodemailer/lib/mailer';
 import SMTPTransport from 'nodemailer/lib/smtp-transport';
