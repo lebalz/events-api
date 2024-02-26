@@ -51,6 +51,7 @@ describe(`GET ${API_URL}/user authorized`, () => {
             email: 'foo@bar.ch',
             notifyOnEventUpdate: false,
             notifyAdminOnReviewRequest: false,
+            notifyAdminOnReviewDecision: false,
             role: Role.USER,
             firstName: expect.any(String),
             lastName: expect.any(String),
