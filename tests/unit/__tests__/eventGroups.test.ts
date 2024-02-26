@@ -146,6 +146,7 @@ describe('create group', () => {
 describe('update group', () => {
 	test('user can update group', async () => {
 		const alice = await createUser({});
+		const bob = await createUser({});
 		const event = await createEvent({ authorId: alice.id });
 		const group = await createEventGroup({ userIds: [alice.id], eventIds: [] });
 		await expect(EventGroups.updateModel(
@@ -153,11 +154,13 @@ describe('update group', () => {
 			group.id,
 			{
 				description: 'Dummy Test Description',
-				eventIds: [event.id]
+				eventIds: [event.id],
+				userIds: [alice.id, bob.id]
 			}
 		)).resolves.toEqual(expect.objectContaining({
 			description: 'Dummy Test Description',
-			eventIds: [event.id]
+			eventIds: [event.id],
+			userIds: [alice.id, bob.id].sort()
 		}));
 	});
 	test('user can not add others unpublished events', async () => {

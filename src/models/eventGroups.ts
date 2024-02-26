@@ -164,6 +164,8 @@ function EventGroups(db: PrismaClient['eventGroup']) {
             if (model.events.length > 0) {
                 await Promise.all(model.events.map((e) => Events._unlinkFromEventGroup(e.id, id)));
                 const cleanedUp = await this._findRawModel(actor, id);
+
+                /* istanbul ignore if */
                 if (cleanedUp.events.length !== 0) {
                     throw new HTTP500Error('Could not unlink all events from group');
                 }
