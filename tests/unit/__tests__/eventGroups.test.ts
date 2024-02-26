@@ -35,12 +35,12 @@ describe('find eventGroup', () => {
 		const group = await createEventGroup({ userIds: [alice.id, bob.id], eventIds: [] });
 		await expect(EventGroups.findModel(admin, group.id)).rejects.toEqual(new HTTP404Error('Not found'));
 		await expect(EventGroups.findModel(alice, group.id)).resolves.toEqual({
-			...group,
+			...prepareEventGroup(group),
 			eventIds: [],
-			userIds: expect.arrayContaining([alice.id, bob.id])
+			userIds: expect.arrayContaining([alice.id, bob.id]),
 		});
 		await expect(EventGroups.findModel(bob, group.id)).resolves.toEqual({
-			...group,
+			...prepareEventGroup(group),
 			eventIds: [],
 			userIds: expect.arrayContaining([alice.id, bob.id])
 		});
