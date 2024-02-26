@@ -6,8 +6,6 @@ import { ApiEvent } from "../../../models/event.helpers";
 import { getDate } from "../../helpers/time";
 import { translate } from "../../helpers/i18n";
 import { Color } from "../helpers/colors";
-import prisma from "../../../prisma";
-import { rmUndefined } from "../../../utils/filterHelpers";
 import { User } from "@prisma/client";
 const APP_URL = process.env.EVENTS_APP_URL || 'https://events.gbsl.website';
 const APP_URL_FR = `${APP_URL}/fr`;

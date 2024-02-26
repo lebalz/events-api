@@ -4,6 +4,9 @@ import { Departments, toDepartmentName } from "../../../src/services/helpers/dep
 import { KlassName } from "../../../src/services/helpers/klassNames";
 import { chunks } from "../../../src/services/helpers/splitInChunks";
 import prisma from '../../../src/prisma';
+import { rmUndefined } from "../../../src/utils/filterHelpers";
+import { stringify } from "../../../src/utils/logger";
+import { HTTP401Error, HTTP500Error } from "../../../src/utils/errors/Errors";
 
 
 describe('Split In Chunks', () => {
@@ -232,3 +235,36 @@ describe('Department Names', () => {
     });
 
 });
+
+describe('Helper Function', () => {
+    test('rm undefined', () => {
+        const arr = [1, 2, undefined, 3, 4, undefined, 5, 6, undefined];
+        expect(rmUndefined(arr)).toEqual([1, 2, 3, 4, 5, 6]);
+    })
+
+    test('stringify logger json objects', () => {
+        const objA = { name: "Object A", reference: {} };
+        const objB = { name: "Object B", reference: objA };
+        objA.reference = objB;
+        // circular reference should throw error
+        expect(() => JSON.stringify(objA)).toThrowError('Converting circular structure to JSON');
+        // the logger uses a cache to avoid circular references
+        expect(stringify(objA)).toMatchInlineSnapshot(`
+"{
+  "name": "Object A",
+  "reference": {
+    "name": "Object B"
+  }
+}"
+`);
+    });
+
+    test('Errors', () => {
+        expect(() => {
+            throw new HTTP401Error()
+        }).toThrowError(HTTP401Error);
+        expect(() => {
+            throw new HTTP500Error()
+        }).toThrowError(HTTP500Error);
+    })
+})

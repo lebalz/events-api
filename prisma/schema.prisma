@@ -31,7 +31,9 @@ model User {
     events      Event[]           @relation("events")
     icsLocator  String?           @map("ics_locator")
     jobs        Job[]
-    eventGroups UserEventGroup[]
+
+    eventGroups  EventGroup[]     @relation("users_to_event_groups")
+
     notifyOnEventUpdate Boolean?  @default(false) @map("notify_on_event_update")
 
     @@map("users")
@@ -59,14 +61,14 @@ model Event {
     parentId String?    @map("parent_id") @db.Uuid()
     children Event[]    @relation("event_history")
 
-    userGroup   UserEventGroup? @relation(fields: [userGroupId], references: [id])
-    userGroupId String?          @map("user_group_id") @db.Uuid
-
     // Filter Criterias
     classes      String[]     @default([])
     // wildcard class names
     classGroups  String[]     @default([]) @map("class_groups")
     departments  Department[] @relation("events_to_departments")
+
+    groups  EventGroup[]     @relation("events_to_event_groups")
+
 
     audience     EventAudience @default(STUDENTS)
     // wheter the bilinguale teachers of the classes are affected
@@ -81,18 +83,18 @@ model Event {
     @@map("events")
 }
 
-model UserEventGroup {
+model EventGroup {
     id          String  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
     name        String  @default("")
     description String  @default("")
-    user        User    @relation(fields: [userId], references: [id], onDelete: Cascade)
-    userId      String  @map("user_id") @db.Uuid
-    events      Event[]
+
+    events      Event[] @relation("events_to_event_groups")
+    users       User[] @relation("users_to_event_groups")
 
     createdAt DateTime @default(now()) @map("created_at")
     updatedAt DateTime @updatedAt @default(now()) @map("updated_at")
 
-    @@map("user_event_groups")
+    @@map("event_groups")
 }
 
 model Department {
@@ -323,8 +325,6 @@ view view_UsersAffectedByEvents {
 
     parentId String?    @map("parent_id") @db.Uuid()
 
-    userGroupId String?          @map("user_group_id") @db.Uuid
-
     // Filter Criterias
     classes      String[]     @default([])
     // wildcard class names
@@ -387,8 +387,6 @@ view view_EventsClasses {
     jobId String? @map("import_id") @db.Uuid()
 
     parentId String?    @map("parent_id") @db.Uuid()
-
-    userGroupId String?          @map("user_group_id") @db.Uuid
 
     // Filter Criterias
     classes      String[]     @default([])

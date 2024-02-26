@@ -27,7 +27,6 @@ export const find: RequestHandler = async (req, res, next) => {
 export const update: RequestHandler<{ id: string }, any, { data: Event & { departmentIds?: string[] } }> = async (req, res, next) => {
     try {
         const model = await Events.updateModel(req.user!, req.params.id, req.body.data);
-
         res.notifications = [
             {
                 message: { record: NAME, id: model.id },
@@ -96,6 +95,7 @@ export const setState: RequestHandler<{}, any, { data: { ids: string[], state: E
                 if (updated.length > 0) {
                     res.notifications.push({
                         message: {
+                            record: 'SEMESTER',
                             semesterIds: affectedSemesterIds.map(s => s.id)
                         },
                         event: IoEvent.RELOAD_AFFECTING_EVENTS,
@@ -163,8 +163,12 @@ export const destroy: RequestHandler = async (req, res, next) => {
 }
 
 
-export const all: RequestHandler<any, any, any, {semesterId?: string}> = async (req, res, next) => {
+export const all: RequestHandler<any, any, any, {semesterId?: string, ids?: string[]}> = async (req, res, next) => {
     try {
+        if (req.query.ids) {
+            const events = await Events.allByIds(req.user, req.query.ids);
+            return res.json(events);
+        }
         const events = await Events.published(req.query.semesterId);
         res.json(events);
     } catch (error) /* istanbul ignore next */ {

@@ -3,7 +3,7 @@ import { create as createEvent, all as allEvents, find as findEvent, update as u
 import { find as findJob, all as allJobs, destroy as deleteJob, update as updateJob } from '../controllers/job';
 import { all as allDepartments, find as findDepartment, update as updateDepartment, create as createDepartment, destroy as deleteDepartment } from '../controllers/department';
 import { find as findRegistrationPeriod, all as allRegistrationPeriods, update as updateRegistrationPeriod, destroy as deleteRegistrationPeriod, create as createRegistrationPeriod } from '../controllers/registrationPeriod';
-import { find as findUserEventGroup, allOfUser as usersUserEventGroup, update as updateUserEventGroup, destroy as deleteUserEventGroup, create as createUserEventGroup, events as eventsFromUserEventGroup, clone as cloneUserEventGroup } from '../controllers/userEventGroup';
+import { find as findEventGroup, allOfUser as usersEventGroup, update as updateEventGroup, destroy as deleteEventGroup, create as createEventGroup, events as eventsFromEventGroup, clone as cloneEventGroup } from '../controllers/eventGroup';
 import { find as findSemester, update as updateSemester, all as allSemesters, create as createSemester, destroy as deleteSemester, sync } from '../controllers/semester';
 import { teachers, teacher, classes, subjects } from '../controllers/untis';
 import { user, events as usersEvents, all as allUsers, linkToUntis, find as findUser, update as updateUser, createIcs, setRole, affectedEventIds } from '../controllers/user';
@@ -71,13 +71,13 @@ router.put('/registration_periods/:id', updateRegistrationPeriod);
 router.delete('/registration_periods/:id', deleteRegistrationPeriod);
 router.post('/registration_periods', createRegistrationPeriod);
 
-router.get('/user_event_groups', usersUserEventGroup)
-router.post('/user_event_groups', createUserEventGroup)
-router.get('/user_event_groups/:id', findUserEventGroup)
-router.put('/user_event_groups/:id', updateUserEventGroup)
-router.delete('/user_event_groups/:id', deleteUserEventGroup)
-router.get('/user_event_groups/:id/events', eventsFromUserEventGroup)
-router.post('/user_event_groups/:id/clone', cloneUserEventGroup)
+router.get('/event_groups', usersEventGroup)
+router.post('/event_groups', createEventGroup)
+router.get('/event_groups/:id', findEventGroup)
+router.put('/event_groups/:id', updateEventGroup)
+router.delete('/event_groups/:id', deleteEventGroup)
+router.get('/event_groups/:id/events', eventsFromEventGroup)
+router.post('/event_groups/:id/clone', cloneEventGroup)
 
 
 export default router;

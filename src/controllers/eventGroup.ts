@@ -1,11 +1,10 @@
-import type { UserEventGroup } from "@prisma/client";
+import type { EventGroup } from "@prisma/client";
 import { RequestHandler } from "express";
-import prisma from "../prisma";
 import { IoEvent } from "../routes/socketEventTypes";
-import UserEventGroups from '../models/userEventGroups';
-import { IoRoom } from "../routes/socketEvents";
+import UserEventGroups from '../models/eventGroups';
+import { ApiEventGroup } from "../models/eventGroup.helpers";
 
-const NAME = 'USER_EVENT_GROUP';
+const NAME = 'EVENT_GROUP';
 
 export const allOfUser: RequestHandler = async (req, res, next) => {
     try {
@@ -25,7 +24,7 @@ export const find: RequestHandler<{ id: string }, any, any> = async (req, res, n
     }
 }
 
-export const create: RequestHandler<any, any, UserEventGroup & { event_ids: string[] }> = async (req, res, next) => {
+export const create: RequestHandler<any, any, EventGroup & { event_ids: string[] }> = async (req, res, next) => {
     try {
         const model = await UserEventGroups.createModel(req.user!, req.body);
 
@@ -42,18 +41,18 @@ export const create: RequestHandler<any, any, UserEventGroup & { event_ids: stri
     }
 }
 
-export const update: RequestHandler<{ id: string }, any, { data: UserEventGroup }> = async (req, res, next) => {
+export const update: RequestHandler<{ id: string }, any, { data: ApiEventGroup }> = async (req, res, next) => {
     /** remove fields not updatable*/
     try {
         const model = await UserEventGroups.updateModel(req.user!, req.params.id, req.body.data);
 
-        res.notifications = [
-            {
+        res.notifications = model.userIds.map(uId => {
+            return {
                 message: { record: NAME, id: model.id },
                 event: IoEvent.CHANGED_RECORD,
-                to: req.user!.id
+                to: uId
             }
-        ]
+        });
         res.status(200).json(model);
     } catch (e) /* istanbul ignore next */ {
         next(e)

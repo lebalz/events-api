@@ -20,3 +20,9 @@ export class HTTP404Error extends BaseError {
     super('NOT FOUND', HttpStatusCode.NOT_FOUND, description, true);
   }
 }
+
+export class HTTP500Error extends BaseError {
+  constructor(description = 'Internal Server Error') {
+    super('INTERNAL SERVER ERROR', HttpStatusCode.INTERNAL_SERVER, description, true);
+  }
+}

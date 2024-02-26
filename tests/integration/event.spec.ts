@@ -54,6 +54,32 @@ describe(`GET ${API_URL}/events`, () => {
         });
         expect(mNotification).toHaveBeenCalledTimes(0);
     });
+    it("lets caller specify ids to fetch", async () => {
+        const user = await prisma.user.create({
+            data: generateUser({ email: 'foo@bar.ch' })
+        });
+        const between = { from: new Date(), to: new Date(Date.now() + 1000 * 60 * 60 * 24 * 7 * 12) };
+        const pubEvents = await Promise.all(eventSequence(user.id, 8, { state: EventState.PUBLISHED, between: between}).map(e => prisma.event.create({ data: e })));
+        const pubDeletedEvents = await Promise.all(eventSequence(user.id, 2, { state: EventState.PUBLISHED, deletedAt: new Date(), between: between }).map(e => prisma.event.create({ data: e })));
+        const draftEvents = await Promise.all(eventSequence(user.id, 3, { state: EventState.DRAFT, between: between }).map(e => prisma.event.create({ data: e })));
+        const refusedEvents = await Promise.all(eventSequence(user.id, 2, { state: EventState.REFUSED, between: between }).map(e => prisma.event.create({ data: e })));
+        const reviewEvents = await Promise.all(eventSequence(user.id, 4, { state: EventState.REVIEW, between: between }).map(e => prisma.event.create({ data: e })));
+        // public user will get only the public events
+        const result = await request(app)
+            .get(`${API_URL}/events?ids[]=${pubEvents[0].id}&ids[]=${pubEvents[1].id}&ids[]=${pubDeletedEvents[0].id}&ids[]=${draftEvents[0].id}`)
+            .set('authorization', JSON.stringify({ noAuth: true }));
+        expect(result.statusCode).toEqual(200);
+        expect(result.body.length).toEqual(3);
+        expect(result.body.map((e: any) => e.id).sort()).toEqual([pubEvents[0], pubEvents[1], pubDeletedEvents[0]].map(e => e.id).sort());
+        
+        // authenticated user will get personal events too
+        const authResult = await request(app)
+            .get(`${API_URL}/events?ids[]=${pubEvents[0].id}&ids[]=${pubEvents[1].id}&ids[]=${pubDeletedEvents[0].id}&ids[]=${draftEvents[0].id}`)
+            .set('authorization', JSON.stringify({ email: user.email }));
+        expect(authResult.statusCode).toEqual(200);
+        expect(authResult.body.length).toEqual(4);
+        expect(authResult.body.map((e: any) => e.id).sort()).toEqual([pubEvents[0], pubEvents[1], draftEvents[0], pubDeletedEvents[0]].map(e => e.id).sort());
+    });
 });
 
 
@@ -114,7 +140,6 @@ describe(`PUT ${API_URL}/events/:id`, () => {
 
     /** TODO: check that only accepted attributes are updated */
 });
-
 
 describe(`POST ${API_URL}/events`, () => {
     it('Lets users create a new draft', async () => {
@@ -495,7 +520,7 @@ describe(`POST ${API_URL}/events/change_state`, () => {
             expect(mNotification).toHaveBeenCalledTimes(5);
             expect(mNotification.mock.calls[0][0]).toEqual({
                 event: IoEvent.RELOAD_AFFECTING_EVENTS,
-                message: { semesterIds: [semester.id] },
+                message: { record: 'SEMESTER', semesterIds: [semester.id] },
                 to: IoRoom.ALL
             });
             /* first the original event */
@@ -598,7 +623,7 @@ describe(`POST ${API_URL}/events/change_state`, () => {
         
         expect(mNotification.mock.calls[0][0]).toEqual({
             event: IoEvent.RELOAD_AFFECTING_EVENTS,
-            message: { semesterIds: [] },
+            message: { record: 'SEMESTER', semesterIds: [] },
             to: IoRoom.ALL
         });
 
@@ -713,7 +738,16 @@ describe(`POST ${API_URL}/events/import`, () => {
             expect(job.state).toEqual(JobState.DONE);
             expect(job.log).toEqual('');
 
-            const events = await prisma.event.findMany();
+            const events = await prisma.event.findMany({
+                include: {
+                    groups: {
+                        select: {id: true}
+                    },
+                    departments: {
+                        select: {id: true}
+                    }
+                }
+            });
             expect(events.length).toEqual(4);
             events.forEach((e) => {
                 expect(e.state).toEqual(EventState.DRAFT);
@@ -721,7 +755,7 @@ describe(`POST ${API_URL}/events/import`, () => {
                 expect(e.cloned).toBeFalsy();
                 expect(e.jobId).toEqual(job.id);
                 expect(e.parentId).toBeNull();
-                expect(e.userGroupId).toBeNull();
+                expect(e.groups).toEqual([]);
                 expect(e.audience).toBe(EventAudience.STUDENTS);
                 expect(e.deletedAt).toBeNull();
                 expect(e.start.getTime()).toBeLessThanOrEqual(e.end.getTime());
@@ -836,7 +870,16 @@ describe(`POST ${API_URL}/events/import`, () => {
             expect(job.state).toEqual(JobState.DONE);
             expect(job.log).toEqual('');
 
-            const events = await prisma.event.findMany();
+            const events = await prisma.event.findMany({
+                include: {
+                    groups: {
+                        select: {id: true}
+                    },
+                    departments: {
+                        select: {id: true}
+                    }
+                }
+            });
             expect(events.length).toEqual(3);
             events.forEach((e) => {
                 expect(e.state).toEqual(EventState.DRAFT);
@@ -844,7 +887,8 @@ describe(`POST ${API_URL}/events/import`, () => {
                 expect(e.cloned).toBeFalsy();
                 expect(e.jobId).toEqual(job.id);
                 expect(e.parentId).toBeNull();
-                expect(e.userGroupId).toBeNull();
+                expect(e.groups).toEqual([]);
+                expect(e.departments).toEqual([]);
                 expect(e.audience).toBe(EventAudience.STUDENTS);
                 expect(e.deletedAt).toBeNull();
                 expect(e.start.getTime()).toBeLessThanOrEqual(e.end.getTime());

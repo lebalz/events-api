@@ -8,6 +8,8 @@ import { createUser } from './users.test';
 import { generateEvent } from '../../factories/event';
 import { setTimeout } from 'timers/promises';
 import _ from 'lodash';
+import { createEventGroup } from './eventGroups.test';
+import EventGroups from '../../../src/models/eventGroups';
 
 export const createEvent = async (props: (Partial<Prisma.EventUncheckedCreateInput> & {authorId: string})) => {
 	return await prisma.event.create({
@@ -17,10 +19,10 @@ export const createEvent = async (props: (Partial<Prisma.EventUncheckedCreateInp
 
 describe('find event', () => {
 	test('returns event', async () => {
-		const user = await createUser({ id: 'd40f9b00-c6de-4a36-b976-a4218c22b599' })
-		const event = await createEvent({ id: 'a3ab1beb-34df-4fd1-8b3a-b96af77dd722', authorId: user.id })
+		const user = await createUser({})
+		const event = await createEvent({ authorId: user.id })
 
-		await expect(Events.findModel(user, 'a3ab1beb-34df-4fd1-8b3a-b96af77dd722')).resolves.toEqual({
+		await expect(Events.findModel(user, event.id)).resolves.toEqual({
 			/** expect the prepared event to be returned
 			 * @see event.helpers.ts#prepareEvent 
 			 */
@@ -73,6 +75,19 @@ describe('updateEvent', () => {
 			updatedAt: expect.any(Date)
 		}));
 	});
+	// test('update a DRAFT from a group', async () => {
+	// 	const alice = await createUser({})
+	// 	const bob = await createUser({})
+	// 	const group = await createEventGroup({ authorId: alice.id });
+	// 	const event = await createEvent({authorId: alice.id, state: EventState.DRAFT })
+
+
+	// 	await expect(Events.updateModel(alice, event.id, { description: 'hello' })).resolves.toEqual(prepareEvent({
+	// 		...event,
+	// 		description: 'hello',
+	// 		updatedAt: expect.any(Date)
+	// 	}));
+	// });
 	test('can add departments to a draft', async () => {
 		const user = await createUser({})
 		const dep1 = await createDepartment({});
@@ -255,6 +270,26 @@ describe('setState transitions', () => {
 		});
 	});
 
+	test('REVIEW -> PUBLISHED', async () => {
+		const admin = await createUser({ role: Role.ADMIN });
+		const user = await createUser({ })
+		const event = await createEvent({ authorId: user.id, state: EventState.REVIEW })
+
+		/** expect the prepared event to be returned
+		 * @see event.helpers.ts#prepareEvent 
+		 */
+		await expect(Events.setState(admin, event.id, EventState.PUBLISHED)).resolves.toEqual({
+			event: {
+				...event,
+				state: EventState.PUBLISHED,
+				departmentIds: [],
+				publishedVersionIds: [],
+				updatedAt: expect.any(Date)
+			},
+			affected: []
+		});
+	});
+
 	test('versioned DRAFT of old version -> REVIEW', async () => {
 		const user = await createUser({ id: '3535b2ee-806f-425c-a4f5-394d8b16f6f9' });
 		const ancestor1 = await createEvent({ id: 'e1a38f26-8da7-43b4-be5d-49ee81d20490', authorId: user.id, state: EventState.PUBLISHED });
@@ -308,6 +343,46 @@ describe('setState transitions', () => {
 			event: newCurrent,
 			affected: [oldCurrent]
 		});
+	});
+
+	test('REVIEW -> PUBLISHED: review replaces model assigned to a group', async () => {
+		const admin = await createUser({ role: Role.ADMIN });
+		const user = await createUser({})
+		const current = await createEvent({ authorId: user.id, state: EventState.PUBLISHED })
+		const event = await createEvent({ authorId: user.id, state: EventState.REVIEW, parentId: current.id })
+		const group = await createEventGroup({ userIds: [user.id], eventIds: [current.id] });
+
+		/** expect the prepared event to be returned
+		 * @see event.helpers.ts#prepareEvent 
+		 */
+		await expect(Events.setState(admin, event.id, EventState.PUBLISHED)).resolves.toEqual({
+			event: {
+				...event,
+				id: current.id,
+				state: EventState.PUBLISHED,
+				departmentIds: [],
+				parentId: null,
+				publishedVersionIds: [event.id],
+				updatedAt: expect.any(Date)
+			},
+			affected: [{
+				...current,
+				id: event.id,
+				parentId: current.id,
+				departmentIds: [],
+				publishedVersionIds: [],
+				updatedAt: expect.any(Date)
+			}]
+		});
+		await expect(EventGroups.events(user, group.id)).resolves.toEqual([{
+			...event,
+			id: current.id,
+			state: EventState.PUBLISHED,
+			departmentIds: [],
+			parentId: null,
+			publishedVersionIds: [event.id],
+			updatedAt: expect.any(Date)
+		}]);
 	});
 
 });
