@@ -141,7 +141,6 @@ describe(`PUT ${API_URL}/events/:id`, () => {
     /** TODO: check that only accepted attributes are updated */
 });
 
-
 describe(`POST ${API_URL}/events`, () => {
     it('Lets users create a new draft', async () => {
         expect(mNotification).toHaveBeenCalledTimes(0);

@@ -46,13 +46,13 @@ export const update: RequestHandler<{ id: string }, any, { data: ApiEventGroup }
     try {
         const model = await UserEventGroups.updateModel(req.user!, req.params.id, req.body.data);
 
-        res.notifications = [
-            {
+        res.notifications = model.userIds.map(uId => {
+            return {
                 message: { record: NAME, id: model.id },
                 event: IoEvent.CHANGED_RECORD,
-                to: req.user!.id
+                to: uId
             }
-        ]
+        });
         res.status(200).json(model);
     } catch (e) /* istanbul ignore next */ {
         next(e)

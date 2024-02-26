@@ -11,7 +11,6 @@ import path from "path";
 import { HTTP400Error } from "../utils/errors/Errors";
 import { ImportType } from "../services/importEvents";
 import { notifyOnDelete, notifyOnUpdate } from "../services/notifications/notifyUsers";
-import EventGroups from "../models/eventGroups";
 
 const NAME = 'EVENT';
 
@@ -28,7 +27,6 @@ export const find: RequestHandler = async (req, res, next) => {
 export const update: RequestHandler<{ id: string }, any, { data: Event & { departmentIds?: string[] } }> = async (req, res, next) => {
     try {
         const model = await Events.updateModel(req.user!, req.params.id, req.body.data);
-        const isNewRecord = model.state === EventState.DRAFT && model.createdAt.toISOString() === model.updatedAt.toISOString();
         res.notifications = [
             {
                 message: { record: NAME, id: model.id },
@@ -36,19 +34,6 @@ export const update: RequestHandler<{ id: string }, any, { data: Event & { depar
                 to: model.state === EventState.PUBLISHED ? IoRoom.ALL : req.user!.id
             }
         ]
-        if (isNewRecord) {
-            const changedGroups = await EventGroups.allOfEvent({id: model.id});
-            changedGroups.forEach(g => {
-                g.userIds.forEach(uid => {
-                    res.notifications?.push({
-                        message: { record: 'EVENT_GROUP', id: g.id, memberType: 'EVENT', addedIds: [model.id], removedIds: [] },
-                        event: IoEvent.CHANGED_MEMBERS,
-                        to: uid,
-                        toSelf: true
-                    });
-                });
-            });
-        }
         res.status(200).json(model);
     } catch (error) /* istanbul ignore next */ {
         const err = error as Error;
