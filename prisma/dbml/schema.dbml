@@ -17,6 +17,8 @@ Table users {
   jobs jobs [not null]
   eventGroups event_groups [not null]
   notifyOnEventUpdate Boolean [default: false]
+  notifyAdminOnReviewRequest Boolean [default: false]
+  notifyAdminOnReviewDecision Boolean [default: false]
 }
 
 Table events {

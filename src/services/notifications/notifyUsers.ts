@@ -1,4 +1,6 @@
-import { EventState, User } from "@prisma/client";
+/* istanbul ignore file */
+
+import { EventState, Role, User } from "@prisma/client";
 import { ApiEvent } from "../../models/event.helpers";
 import prisma from "../../prisma";
 import { mailOnChange } from "./mail/onChange";
@@ -8,151 +10,181 @@ import { mailOnRefused } from "./mail/onRefused";
 import { mailOnAccept } from "./mail/onAccepted";
 import { rmUndefined } from "../../utils/filterHelpers";
 
-const DELIVER_MAILS = process.env.NODE_ENV === 'production';
-const DEFAULT_MAIL = (process.env.NODE_ENV !== 'test' && process.env.TEST_EMAIL_DELIVER_ADDR) ? [process.env.TEST_EMAIL_DELIVER_ADDR] : []
+type Locale = 'de' | 'fr';
+const LOCALES = ['de', 'fr'] as Locale[];
 
-export const notifyOnUpdate = async (events: { event: ApiEvent; affected: ApiEvent[]}[], message: string, actor: User) => {
+export const notifiableUsers = async () => {
+    const notificationUsers = await prisma.user.findMany({ where: { notifyOnEventUpdate: true }, select: { id: true, email: true } });
     const admins = await prisma.user.findMany({
         where: {
-            role: 'ADMIN'
+            role: Role.ADMIN
         }
     });
+    const GBSL_REGEX = /gbsl.ch$/i;
+    const GBJB_REGEX = /gbjb.ch$/i;
+    return {
+        de: new Map<string, string>(notificationUsers.filter(e => GBSL_REGEX.test(e.email)).map(e => [e.id, e.email])),
+        fr: new Map<string, string>(notificationUsers.filter(e => GBJB_REGEX.test(e.email)).map(e => [e.id, e.email])),
+        admins: {
+            onRequest: {
+                de: new Map<string, string>(admins.filter(u => GBSL_REGEX.test(u.email) && u.notifyAdminOnReviewRequest).map(e => [e.id, e.email])),
+                fr: new Map<string, string>(admins.filter(u => GBJB_REGEX.test(u.email) && u.notifyAdminOnReviewRequest).map(e => [e.id, e.email]))
+            },
+            onDecision: {
+                de: new Map<string, string>(admins.filter(u => GBSL_REGEX.test(u.email) && u.notifyAdminOnReviewDecision).map(e => [e.id, e.email])),
+                fr: new Map<string, string>(admins.filter(u => GBJB_REGEX.test(u.email) && u.notifyAdminOnReviewDecision).map(e => [e.id, e.email]))
+            }
+        }
+    }
+}
+
+export const notifyOnUpdate = async (events: { event: ApiEvent; affected: ApiEvent[]}[], message: string, actor: User) => {
+    const validMails = await notifiableUsers();
     const publicEvents = events.filter(e => e.event.state === EventState.PUBLISHED);
     const reviewEvents = events.filter(e => e.event.state === EventState.REVIEW);
     const refusedEvents = events.filter(e => e.event.state === EventState.REFUSED);
+    const deliveries: Promise<boolean>[] = [];
+
     for (const record of publicEvents) {
-        const isNew = record.affected.length === 0;
-        const affectedOld = isNew ?
-                                [] :
-                                await prisma.$queryRaw<{email: string}[]>`SELECT distinct users.email
-                                    FROM view__affected_by_events
-                                        JOIN users ON view__affected_by_events.u_id=users.id
-                                    WHERE
-                                        users.notify_on_event_update AND 
-                                        view__affected_by_events.e_id=${record.affected[0].id}::uuid`;
-
-        const affectedNew = await prisma.$queryRaw<{email: string}[]>`SELECT distinct users.email
-            FROM view__affected_by_events
-                JOIN users ON view__affected_by_events.u_id=users.id
-            WHERE
-                users.notify_on_event_update AND
-                view__affected_by_events.e_id=${(record.event).id}::uuid`;
-
-        const previousAuthor = isNew ? undefined : await prisma.user.findUnique({ where: { id: record.affected[0]?.authorId }, select: { email: true } });
-        const author = await prisma.user.findUnique({ where: { id: record.event.authorId }, select: { email: true } });
-        if (!author) {
-            continue;
+        const audienceIds = await prisma.view_AffectedByEvents.findMany({ 
+            where: { 
+                eventId: record.event.id
+            }, 
+            select: { 
+                userId: true
+            },
+            distinct: ['userId']
+        });
+        if (record.affected.length === 0) {
+            /**
+             * a newly published event 
+             */
+            LOCALES.map((locale) => {
+                deliveries.push(
+                    mailOnAccept({
+                        event: record.event,
+                        previous: undefined,
+                        to: rmUndefined(audienceIds.map(e => validMails[locale].get(e.userId))),
+                        cc: rmUndefined([...validMails.admins.onDecision[locale].values()]),
+                        reviewer: actor,
+                        locale: locale
+                    })
+                );
+            });
+        } else {
+            const audience = new Set(audienceIds.map(e => e.userId));
+            const affectedOldIds = record.affected[0] ? await prisma.view_AffectedByEvents.findMany({ 
+                where: {
+                    eventId: record.affected[0]?.id
+                },
+                select: {
+                    userId: true
+                },
+                distinct: ['userId']
+            }) : [];
+            const affectedOld = new Set(affectedOldIds.map(e => e.userId));
+            /** THE EVENT WAS UPDATED AND STILL AFFECTS THE USER */
+            LOCALES.forEach((locale) => {
+                deliveries.push(
+                    mailOnChange({
+                        event: record.event,
+                        previous: record.affected[0],
+                        audienceType: 'AFFECTED',
+                        to: rmUndefined(audienceIds.filter(e => affectedOld.has(e.userId)).map(u => validMails[locale].get(u.userId))),
+                        reviewer: actor,
+                        locale: locale
+                    })
+                );
+            });
+            /** THE EVENT WAS UPDATED AND NOW AFFECTS THE USER */
+            LOCALES.forEach((locale) => {
+                deliveries.push(
+                    mailOnChange({
+                        event: record.event,
+                        previous: record.affected[0],
+                        audienceType: 'AFFECTED_NOW',
+                        to: rmUndefined(audienceIds.filter(e => !affectedOld.has(e.userId)).map(u => validMails[locale].get(u.userId))),
+                        reviewer: actor,
+                        locale: locale
+                    })
+                );
+            })
+            /** THE EVENT WAS UPDATED AND NOW DOES NOT ANYOMORE AFFECTS THE USER */
+            LOCALES.forEach((locale) => {
+                deliveries.push(
+                    mailOnChange({
+                        event: record.event,
+                        previous: record.affected[0],
+                        audienceType: 'AFFECTED_PREVIOUS',
+                        to: rmUndefined(affectedOldIds.filter(e => audience.has(e.userId)).map(u => validMails[locale].get(u.userId))),
+                        reviewer: actor,
+                        locale: locale
+                    })
+                );
+            });
+            LOCALES.forEach((locale) => {
+                deliveries.push(
+                    mailOnAccept({
+                        event: record.event,
+                        previous: undefined,
+                        to: rmUndefined([record.event.authorId, record.affected[0].authorId].map(userId => validMails[locale].get(userId))),
+                        cc: rmUndefined([...validMails.admins.onDecision[locale].values()]),
+                        reviewer: actor,
+                        locale: locale
+                    })
+                );
+            });
         }
 
-        const affectedOldSet = new Set(affectedOld.map(e => e.email));
-        const affectedNewSet = new Set(affectedNew.map(e => e.email));
-
-        affectedNewSet.delete(author.email);
-        affectedOldSet.delete(author.email);
-        if (previousAuthor) {
-            affectedNewSet.delete(previousAuthor.email);
-            affectedOldSet.delete(previousAuthor.email);
-        }
-
-        ['de', 'fr'].forEach((locale) => {
-            const cc = rmUndefined([...admins.map(a => a.email), previousAuthor?.email]).filter(addr => addr.toLowerCase() !== author.email?.toLowerCase());
-            mailOnAccept(
-                record.event,
-                record.affected[0],
-                DELIVER_MAILS ? [author.email] : DEFAULT_MAIL,
-                DELIVER_MAILS ? cc : (process.env.NODE_ENV !== 'test' && process.env.TEST_EMAIL_DELIVER_ADDR) ? [process.env.TEST_EMAIL_DELIVER_ADDR] : [],
-                actor,
-                author.email.endsWith('gbsl.ch') ? 'de' : 'fr'
+    }
+    for (const record of reviewEvents) {
+        LOCALES.forEach((locale) => {
+            deliveries.push(
+                mailOnReviewRequest({
+                    event: record.event,
+                    previous: record.affected[0],
+                    author: actor,
+                    to: rmUndefined([...validMails.admins.onRequest[locale].values()]),
+                    cc: rmUndefined([record.event.authorId, record.affected[0]?.authorId].map(userId => validMails[locale].get(userId))),
+                    locale: locale
+                })
             );
         });
-
-        const update = [...affectedOldSet].filter(x => affectedNewSet.has(x));
-        const remove = [...affectedOldSet].filter(x => !affectedNewSet.has(x));
-        const add = [...affectedNewSet].filter(x => !affectedOldSet.has(x));
-        const mails = [
-            { audience: 'AFFECTED', addrs: update },
-            { audience: 'AFFECTED_PREVIOUS', addrs: remove },
-            { audience: 'AFFECTED_NOW', addrs: add }
-        ];
-        mails.forEach(({ audience, addrs }) => {
-            ['de', 'fr'].forEach((locale) => {
-                const mailPattern = locale === 'de' ? 'gbsl.ch' : 'gbjb.ch';
-                const deliverAddresses = addrs.filter(addr => addr.endsWith(mailPattern));
-                if (deliverAddresses.length > 0) {
-                    mailOnChange(
-                        record.event,
-                        record.affected[0],
-                        audience as 'AFFECTED' | 'AFFECTED_NOW' | 'AFFECTED_PREVIOUS',
-                        DELIVER_MAILS ? deliverAddresses : DEFAULT_MAIL,
-                        actor,
-                        locale as 'de' | 'fr'
-                    );
-                }
-            });
+    }
+    for (const record of refusedEvents) {
+        LOCALES.forEach((locale) => {
+            deliveries.push(
+                mailOnRefused({
+                    event: record.event,
+                    reviewer: actor,
+                    message: message,
+                    to: rmUndefined([record.event.authorId].map(userId => validMails[locale].get(userId))),
+                    cc: rmUndefined([...validMails.admins.onDecision[locale].values()]),
+                    locale: locale
+                })
+            );
         });
     }
-    if (reviewEvents.length > 0 || refusedEvents.length > 0) {
-        ['de', 'fr'].forEach((locale) => {
-            const mailPattern = locale === 'de' ? 'gbsl.ch' : 'gbjb.ch';
-            const deliverAddresses = admins.map(e => e.email).filter(addr => addr.endsWith(mailPattern));
-            if (deliverAddresses.length > 0) {
-                reviewEvents.forEach(async e => {
-                    const cc = await prisma.user.findMany({
-                        where: {
-                            id: {
-                                in: rmUndefined([e.event.authorId, e.affected[0]?.authorId])
-                            }
-                        }
-                    });                
-                    mailOnReviewRequest(
-                        e.event,
-                        e.affected[0],
-                        cc[0],
-                        DELIVER_MAILS ? deliverAddresses : DEFAULT_MAIL,
-                        DELIVER_MAILS ? cc.map(e => e.email).filter(addr => addr.endsWith(mailPattern)) : DEFAULT_MAIL,
-                        locale as 'de' | 'fr'
-                    );
-                });
-                refusedEvents.forEach(async e => {
-                    const author = await prisma.user.findUnique({
-                        where: {
-                            id: e.event.authorId
-                        }
-                    });
-                    if (!author) {
-                        return;
-                    }
-                    mailOnRefused(
-                        e.event,
-                        DELIVER_MAILS ? [author.email] : DEFAULT_MAIL,
-                        DELIVER_MAILS ? deliverAddresses : DEFAULT_MAIL,
-                        actor,
-                        message,
-                        locale as 'de' | 'fr'
-                    );
-                });
-            }
-        });
-    }
+    
 };
 
 export const notifyOnDelete = async (deleted: ApiEvent, actor: User) => {
-    const affected = await prisma.$queryRaw<{email: string}[]>`SELECT distinct users.email
-        FROM view__affected_by_events
-            JOIN users ON view__affected_by_events.u_id=users.id
-        WHERE
-            users.notify_on_event_update AND
-            view__affected_by_events.e_id=${deleted.id}::uuid`;
-    ['de', 'fr'].forEach((locale) => {
-        const mailPattern = locale === 'de' ? 'gbsl.ch' : 'gbjb.ch';
-        const deliverAddresses = affected.map(e => e.email).filter(addr => addr.endsWith(mailPattern));
-        if (deliverAddresses.length > 0) {
-            mailOnDelete(
-                deleted,
-                actor,
-                process.env.NODE_ENV === 'production' ? deliverAddresses : (process.env.NODE_ENV !== 'test' && process.env.TEST_EMAIL_DELIVER_ADDR) ? [process.env.TEST_EMAIL_DELIVER_ADDR] : [],
-                locale as 'de' | 'fr'
-            );
-        }
+    const validMails = await notifiableUsers();
+    const affected = await prisma.view_AffectedByEvents.findMany({
+        where: {
+            eventId: deleted.id
+        },
+        select: {
+            userId: true
+        },
+        distinct: ['userId']
+    });
+    LOCALES.forEach((locale) => {
+        mailOnDelete({
+            deleted: deleted,
+            actor: actor,
+            to: rmUndefined(affected.map(e => validMails[locale].get(e.userId))),
+            locale: locale
+        })
     });
 };

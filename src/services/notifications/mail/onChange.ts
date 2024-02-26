@@ -1,7 +1,7 @@
 import Mailgen from "mailgen";
 import { getChangedProps, getEventProps } from "../helpers/changedProps";
 import { createTransport } from "nodemailer";
-import { authConfig } from "./authConfig";
+import { authConfig, sendMail } from "./authConfig";
 import { ApiEvent } from "../../../models/event.helpers";
 import { getDate } from "../../helpers/time";
 import { translate } from "../../helpers/i18n";
@@ -10,16 +10,18 @@ import { User } from "@prisma/client";
 const APP_URL = process.env.EVENTS_APP_URL || 'https://events.gbsl.website';
 const APP_URL_FR = `${APP_URL}/fr`;
 
+interface Config {
+    event: ApiEvent;
+    previous: ApiEvent | undefined;
+    audienceType: 'AFFECTED' | 'AFFECTED_NOW' | 'AFFECTED_PREVIOUS';
+    to: string[];
+    reviewer: User;
+    locale: 'de' | 'fr';
+}
 
-export const mailOnChange = async (
-        event: ApiEvent, 
-        old: ApiEvent | undefined, 
-        audienceType: 'AFFECTED' | 'AFFECTED_NOW' | 'AFFECTED_PREVIOUS', 
-        mailAddresses: string[],
-        reviewer: User,
-        locale: 'de' | 'fr'
-) => {
-    if (mailAddresses.length === 0 || !!event.deletedAt) {
+export const mailOnChange = async (config: Config) => {
+    const { event, previous, to, reviewer, locale, audienceType } = config;
+    if (to.length === 0 || !!event.deletedAt) {
         return false;
     }
     let title = '';
@@ -28,7 +30,7 @@ export const mailOnChange = async (
             title = translate('updatedEvent', locale);
             break;
         case 'AFFECTED_NOW':
-            title = old ? translate('updatedEvent_AffectedNow', locale) : translate('newEvent', locale);
+            title = previous ? translate('updatedEvent_AffectedNow', locale) : translate('newEvent', locale);
             break;
         case 'AFFECTED_PREVIOUS':
             title = translate('updatedEvent_AffectedPrevious', locale);
@@ -44,13 +46,13 @@ export const mailOnChange = async (
         }
     });
     const tables: Mailgen.Table[] = [];
-    if (old) {
+    if (previous) {
         tables.push({
             title: translate('changedFields', locale),
-            data: getChangedProps(old, event, locale, ['deletedAt']).map(({name, old, new: value}) => {
+            data: getChangedProps(previous, event, locale, ['deletedAt']).map(({name, old: previous, new: value}) => {
                 return {
                     [translate('field', locale)]: name,
-                    [translate('previous', locale)]: `${old}`,
+                    [translate('previous', locale)]: `${previous}`,
                     [translate('new', locale)]: `${value}`
                 }
             })
@@ -73,9 +75,9 @@ export const mailOnChange = async (
                 }
             ],
             action: {
-                instructions: translate(old ? 'seeUpdatedEvent' : 'seeNewEvent', locale),
+                instructions: translate(previous ? 'seeUpdatedEvent' : 'seeNewEvent', locale),
                 button: {
-                    color: old ? Color.Info : Color.Success,
+                    color: previous ? Color.Info : Color.Success,
                     text: `👉 ${translate('event', locale)}`,
                     link: locale === 'de' ? `${APP_URL}/event?id=${event.id}` : `${APP_URL_FR}/event?id=${event.id}`,
                     fallback: true
@@ -88,10 +90,9 @@ export const mailOnChange = async (
     const mail = MailGenerator.generate(response);
     const txt = MailGenerator.generatePlaintext(response);
 
-    const transporter = createTransport(authConfig);
-    const result = await transporter.sendMail({
+    const result = await sendMail({
         from: `${translate('eventAppName', locale)} <${authConfig.auth!.user}>`,
-        bcc: mailAddresses,
+        bcc: to,
         subject: title,
         html: mail,
         replyTo: `${reviewer.firstName} ${reviewer.lastName} <${reviewer.email}>`,

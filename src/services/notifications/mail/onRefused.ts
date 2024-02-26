@@ -1,7 +1,7 @@
 import Mailgen from "mailgen";
 import { getChangedProps, getEventProps } from "../helpers/changedProps";
 import { createTransport } from "nodemailer";
-import { authConfig } from "./authConfig";
+import { authConfig, sendMail } from "./authConfig";
 import { ApiEvent } from "../../../models/event.helpers";
 import { getDate } from "../../helpers/time";
 import { translate } from "../../helpers/i18n";
@@ -12,8 +12,18 @@ import { User } from "@prisma/client";
 const APP_URL = process.env.EVENTS_APP_URL || 'https://events.gbsl.website';
 const APP_URL_FR = `${APP_URL}/fr`;
 
+interface Config {
+    event: ApiEvent;
+    to: string[];
+    cc: string[];
+    reviewer: User;
+    message: string;
+    locale: 'de' | 'fr';
 
-export const mailOnRefused = async (event: ApiEvent, to: string[], cc: string[], reviewer: User, message: string, locale: 'de' | 'fr') => {
+}
+
+export const mailOnRefused = async (config: Config) => {
+    const { event, to, cc, reviewer, message, locale } = config;
     if (to.length === 0) {
         return false;
     }
@@ -64,9 +74,8 @@ export const mailOnRefused = async (event: ApiEvent, to: string[], cc: string[],
     const mail = MailGenerator.generate(response);
     const txt = MailGenerator.generatePlaintext(response);
 
-    const transporter = createTransport(authConfig);
     const toSet = new Set(to.map(e => e.toLowerCase()));
-    const result = await transporter.sendMail({
+    const result = await sendMail({
         from: `${translate('eventAppName', locale)} <${authConfig.auth!.user}>`,
         to: to,
         replyTo: `${reviewer.firstName} ${reviewer.lastName} <${reviewer.email}>`,

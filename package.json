@@ -20,6 +20,7 @@
     "cov:integration": "TZ=UTC jest --collectCoverage -c jest.config.integration.js --",
     "db:cleanup": "ts-node -r dotenv/config ./bin/db_reset.ts",
     "db:reset": "yarn run db:cleanup && npx prisma migrate reset --force",
+    "db:test": "PATH=\"$(yarn global bin):$PATH\" dotenv -e .test.env -- yarn prisma migrate deploy",
     "db:seed:users": "ts-node -r dotenv/config ./bin/users-csv-to-db.ts",
     "untis:fetch": "ts-node -r dotenv/config ./bin/fetch-untis.ts",
     "untis:sync": "ts-node -r dotenv/config ./bin/sync-untis-2-db.ts"

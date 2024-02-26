@@ -9,7 +9,9 @@ import { ICAL_DIR } from '../app';
 import { createDataExtractor } from "../controllers/helpers";
 const getData = createDataExtractor<Prisma.UserUncheckedUpdateInput>(
     [
-        'notifyOnEventUpdate'
+        'notifyOnEventUpdate',
+        'notifyAdminOnReviewRequest',
+        'notifyAdminOnReviewDecision'
     ]
 );
 

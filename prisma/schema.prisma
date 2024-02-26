@@ -34,7 +34,9 @@ model User {
 
     eventGroups  EventGroup[]     @relation("users_to_event_groups")
 
-    notifyOnEventUpdate Boolean?  @default(false) @map("notify_on_event_update")
+    notifyOnEventUpdate Boolean?   @default(false) @map("notify_on_event_update")
+    notifyAdminOnReviewRequest Boolean? @default(false) @map("notify_admin_on_review_request")
+    notifyAdminOnReviewDecision Boolean? @default(false) @map("notify_admin_on_review_decision")
 
     @@map("users")
 }

@@ -1,7 +1,7 @@
 import Mailgen from "mailgen";
 import { getChangedProps, getEventProps } from "../helpers/changedProps";
 import { createTransport } from "nodemailer";
-import { authConfig } from "./authConfig";
+import { authConfig, sendMail } from "./authConfig";
 import { ApiEvent } from "../../../models/event.helpers";
 import { getDate } from "../../helpers/time";
 import { translate } from "../../helpers/i18n";
@@ -10,10 +10,16 @@ import { User } from "@prisma/client";
 const APP_URL = process.env.EVENTS_APP_URL || 'https://events.gbsl.website';
 const APP_URL_FR = `${APP_URL}/fr`;
 
+interface Config {
+    deleted: ApiEvent;
+    actor: User;
+    to: string[];
+    locale: 'de' | 'fr';
+}
 
-
-export const mailOnDelete = async (deleted: ApiEvent, actor: User, mailAddresses: string[], locale: 'de' | 'fr') => {
-    if (mailAddresses.length === 0 || deleted.state === 'DRAFT' || !deleted.deletedAt) {
+export const mailOnDelete = async (config: Config) => {
+    const { deleted, actor, to, locale } = config;
+    if (to.length === 0 || deleted.state === 'DRAFT' || !deleted.deletedAt) {
         return false;
     }
     const link = locale === 'de' ? `${APP_URL}/event?id=${deleted.id}` : `${APP_URL_FR}/event?id=${deleted.id}`
@@ -59,10 +65,9 @@ export const mailOnDelete = async (deleted: ApiEvent, actor: User, mailAddresses
     const mail = MailGenerator.generate(response);
     const txt = MailGenerator.generatePlaintext(response);
 
-    const transporter = createTransport(authConfig);
-    const result = await transporter.sendMail({
+    const result = await sendMail({
         from: `${translate('eventAppName', locale)} <${authConfig.auth!.user}>`,
-        bcc: mailAddresses,
+        bcc: to,
         subject: `${title} ${getDate(deleted.start)}`,
         html: mail,
         replyTo: `${actor.firstName} ${actor.lastName} <${actor.email}>`,

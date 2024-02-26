@@ -1,3 +1,5 @@
+import { createTransport } from 'nodemailer';
+import Mail from 'nodemailer/lib/mailer';
 import SMTPTransport from 'nodemailer/lib/smtp-transport';
 
 export const authConfig: Readonly<SMTPTransport.Options> = Object.freeze({
@@ -12,3 +14,27 @@ export const authConfig: Readonly<SMTPTransport.Options> = Object.freeze({
     }),
     authMethod: 'PLAIN',
 });
+
+export const sendMail = async (config: Mail.Options) => {
+    if (process.env.NODE_ENV === 'test') {
+        return Promise.resolve(true);
+    }
+    if (process.env.NODE_ENV !== 'production') {
+        /** dev mode */
+        if (process.env.TEST_EMAIL_DELIVER_ADDR) {
+            if (config.to) {
+                config.to = [process.env.TEST_EMAIL_DELIVER_ADDR];
+            }
+            if (config.cc && !config.to) {
+                config.cc = [process.env.TEST_EMAIL_DELIVER_ADDR];
+            } else {
+                config.cc = [];
+            }
+
+            return createTransport(authConfig).sendMail(config);
+        }
+        return Promise.resolve(true);
+    }
+    const transporter = createTransport(authConfig);
+    return transporter.sendMail(config);
+};
