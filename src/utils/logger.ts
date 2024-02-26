@@ -24,7 +24,7 @@ const colors = {
 
 winston.addColors(colors);
 
-const stringify = (obj: any) => {
+export const stringify = (obj: any) => {
   let cache: any = [];
   let str = JSON.stringify(obj, function(key, value) {
     if (typeof value === "object" && value !== null) {
