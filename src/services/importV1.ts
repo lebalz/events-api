@@ -87,7 +87,7 @@ export const importExcel = async (file: string) => {
         if (!ende) {
             ende = new Date(start);
         }
-        const endTime = e[COLUMNS.dateEnd] as string;
+        const endTime = e[COLUMNS.timeEnd] as string;
         if (!!endTime) {
             const [hours, minutes] = extractTime(endTime);
             ende.setUTCHours(hours, minutes, 0, 0);

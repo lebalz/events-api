@@ -26,7 +26,6 @@ export interface ImportRawEvent {
 
 export const importEvents = async (file: string, userId: string, jobId: string, type: ImportType) => {
     let data: ImportRawEvent[] = [];
-
     switch (type) {
         case ImportType.GBSL_XLSX:
             data = await importGBSL_xlsx(file);
@@ -36,7 +35,7 @@ export const importEvents = async (file: string, userId: string, jobId: string, 
             break;
         case ImportType.V1:
             const impData = await importV1(file);
-            impData.map((e) => {
+            return await Promise.all(impData.map((e) => {
                 return prisma.event.create({
                     data: {
                         ...e,
@@ -52,8 +51,7 @@ export const importEvents = async (file: string, userId: string, jobId: string, 
                         state: EventState.DRAFT,
                     }
                 })
-            })
-            break;
+            }));
     }
 
     const createPromises = data.map((e) => {

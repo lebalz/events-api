@@ -16,9 +16,12 @@ export const DAYS_LONG = ['Sonntag', 'Montag', 'Dienstag', 'Mittwoch', 'Donnerst
 
 const DEP_ORDER = ['GBSL', 'GBSL/GBJB', 'GBJB', 'GBJB/GBSL', 'FMS', 'ECG', 'ECG/FMS', 'WMS', 'ESC', 'FMPäd', 'MSOP', 'Passerelle']
 
-const EXPORT_DIR = process.env.EXPORT_DIR 
-    ? process.env.EXPORT_DIR 
-    : process.env.NODE_ENV === 'test' ? `${__dirname}/../../tests/test-data/exports` : `${__dirname}/../../exports`;
+export const EXCEL_EXPORT_DIR =
+    process.env.NODE_ENV === 'test' 
+        ? `${__dirname}/../../tests/test-data/exports`
+        : process.env.EXPORT_DIR 
+            ? process.env.EXPORT_DIR
+            : `${__dirname}/../../exports`;
 
 const getKW = (date: Date) => {
     const utcDate = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate(), 0, 0, 0, 0));
@@ -54,16 +57,16 @@ const createExcel = async (semesterId: string) => {
     }
     const timeStamp = `${now.getFullYear()}-${now.getMonth() + 1}-${now.getDate()}_${now.getHours()}-${Math.floor(now.getMinutes() / 5) * 5}`;
     const fileName = `${semester.name}-events_${timeStamp}.xlsx`;
-    const file = `${EXPORT_DIR}/${fileName}`;
+    const file = `${EXCEL_EXPORT_DIR}/${fileName}`;
     if (existsSync(file)) {
         return file;
     }
     // cleanup old files
     try {
 
-        const oldFiles = readdirSync(`${EXPORT_DIR}/`).filter(f => f.startsWith(`${semester.name}-events `));
+        const oldFiles = readdirSync(`${EXCEL_EXPORT_DIR}/`).filter(f => f.startsWith(`${semester.name}-events `));
         oldFiles.forEach(f => {
-            const file = `${EXPORT_DIR}/${f}`;
+            const file = `${EXCEL_EXPORT_DIR}/${f}`;
             rmSync(file);
         });
     } catch (error) /* istanbul ignore next */ {
