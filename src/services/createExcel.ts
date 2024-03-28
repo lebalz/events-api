@@ -14,6 +14,7 @@ export const WEEK_2_MS = 7 * DAY_2_MS;
 export const DAYS = ['So', 'Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa'] as const;
 export const DAYS_LONG = ['Sonntag', 'Montag', 'Dienstag', 'Mittwoch', 'Donnerstag', 'Freitag', 'Samstag'] as const;
 
+const DEP_ORDER = ['GBSL', 'GBSL/GBJB', 'GBJB', 'GBJB/GBSL', 'FMS', 'ECG', 'ECG/FMS', 'WMS', 'ESC', 'FMPäd', 'MSOP', 'Passerelle']
 
 const EXPORT_DIR = process.env.EXPORT_DIR 
     ? process.env.EXPORT_DIR 
@@ -27,9 +28,12 @@ const getKW = (date: Date) => {
     return Math.ceil(((utcDate.getTime() - yearStart.getTime()) / DAY_2_MS + 1) / 7);
 }
 
-const formatTime = (date: Date) => {
+const formatTime = (date: Date, ignore00: boolean = false) => {
     const hours = `${date.getUTCHours()}`.padStart(2, '0');
     const minutes = `${date.getUTCMinutes()}`.padStart(2, '0');
+    if (ignore00 && hours === '00' && minutes === '00') {
+        return ''
+    }
     return `${hours}:${minutes}`;
 }
 
@@ -83,83 +87,64 @@ const createExcel = async (semesterId: string) => {
             departments: true
         }
     });
-    const data = events.sort((a, b) => a.start.getTime() - b.start.getTime()).map(e => {
-        return {
-            kw: getKW(e.start),
-            weekday: DAYS_LONG[e.start.getDay()],
-            description: e.description,
-            date_s: formatDate(e.start),
-            time_s: formatTime(e.start),
-            date_e: formatDate(e.end),
-            time_e: formatTime(e.end),
-            location: e.location,
-            lps: '',
-            gym: e.departments.filter(d => ['G', 'm'].includes(d.letter)).map(d => d.name).join(', '),
-            fms: e.departments.filter(d => ['F', 's'].includes(d.letter)).map(d => d.name).join(', '),
-            wms: e.departments.filter(d => ['W', 'c'].includes(d.letter)).map(d => d.name).join(', '),
-            descriptionLong: e.descriptionLong,
-            year: e.classGroups.join(', '),
-            classes: e.classes.join(', '),
-            audience: e.audience,
-            teachingAffected: e.teachingAffected,
-            deletedAt: e.deletedAt ? formatDate(e.deletedAt) : ''
-        }
-    });
+    const departments = await prisma.department.findMany();
+    const _depNames = departments.map(dep => dep.name);
+    const depNames = [...DEP_ORDER.filter(dep => _depNames.includes(dep)), ..._depNames.filter(dep => !_depNames.includes(dep)).sort()];
 
     const workbook = new Excel.Workbook();
     const worksheet = workbook.addWorksheet('Termine');
-    worksheet.columns = [
-        { header: 'KW', key: 'kw', width: 7, outlineLevel: 1 },
-        { header: 'Wochentag', key: 'weekday', width: 15, outlineLevel: 1 },
-        { header: 'Stichworte', key: 'description', width: 42, outlineLevel: 1 },
-        { header: 'Datum Beginn', key: 'date_s', width: 15, outlineLevel: 1 },
-        { header: 'Zeit Beginn', key: 'time_s', width: 12, outlineLevel: 1 },
-        { header: 'Datum Ende', key: 'date_e', width: 15, outlineLevel: 1 },
-        { header: 'Zeit Ende', key: 'time_e', width: 12, outlineLevel: 1 },
-        { header: 'Ort', key: 'location', width: 20, outlineLevel: 1 },
-        { header: 'Betroffene Lehrkräfte', key: 'lps', width: 20, outlineLevel: 1 },
-        { header: 'GYM', key: 'gym', width: 7, outlineLevel: 1 },
-        { header: 'FMS', key: 'fms', width: 7, outlineLevel: 1 },
-        { header: 'WMS', key: 'wms', width: 7, outlineLevel: 1 },
-        { header: 'Beschreibung', key: 'descriptionLong', width: 42, outlineLevel: 1 },
-        { header: 'Jahrgangsstufe', key: 'year', width: 10, outlineLevel: 1 },
-        { header: 'Einzelne Klassen', key: 'classes', width: 32, outlineLevel: 1 },
-        { header: translate('audience', 'de'), key: 'audience', width: 5, outlineLevel: 1 },
-        { header: translate('teachingAffected', 'de'), key: 'teachingAffected', width: 5, outlineLevel: 1 },
-        { header: translate('deletedAt', 'de'), key: 'deletedAt', width: 5, outlineLevel: 1 },
-    ];
-
+    const lang = 'de';
+    const columns = [
+        { header: translate('kw', lang), key: 'kw', width: 7, outlineLevel: 1 },
+        { header: translate('weekday', lang), key: 'weekday', width: 15, outlineLevel: 1 },
+        { header: translate('description', lang), key: 'description', width: 42, outlineLevel: 1 },
+        { header: translate('dateStart', lang), key: 'date_s', width: 15, outlineLevel: 1 },
+        { header: translate('timeStart', lang), key: 'time_s', width: 12, outlineLevel: 1 },
+        { header: translate('dateEnd', lang), key: 'date_e', width: 15, outlineLevel: 1 },
+        { header: translate('timeEnd', lang), key: 'time_e', width: 12, outlineLevel: 1 },
+        { header: translate('location', lang), key: 'location', width: 20, outlineLevel: 1 },
+        { header: translate('descriptionLong', lang), key: 'location', width: 20, outlineLevel: 1 },
+        ...depNames.map((dep) => ({ header: dep, key: dep, width: 4, outlineLevel: 1, alignment: {textRotation: 90}})),
+        { header: translate('bilingueLPsAffected', lang)},
+        { header: translate('classes', lang), key: 'classes', width: 10, outlineLevel: 1 },
+        { header: translate('affects', lang), key: 'audience', width: 10, outlineLevel: 1 },
+        { header: translate('teachingAffected', lang), key: 'teachingAffected', width: 10, outlineLevel: 1 },
+        { header: translate('deletedAt', lang), key: 'deletedAt', width: 15, outlineLevel: 1}
+    ] satisfies typeof worksheet.columns;
     worksheet.addTable({
-        name: 'Termine',
+        name: translate('events', lang),
         ref: 'A1',
         headerRow: true,
         totalsRow: false,
         style: {
           theme: 'TableStyleMedium2',
-          showRowStripes: true,
+          showRowStripes: true
         },
-        columns: [
-            { name: 'KW', filterButton: true },
-            { name: 'Wochentag', filterButton: true },
-            { name: 'Stichworte', filterButton: true },
-            { name: 'Datum Beginn', filterButton: true },
-            { name: 'Zeit Beginn', filterButton: true },
-            { name: 'Datum Ende', filterButton: true },
-            { name: 'Zeit Ende', filterButton: true },
-            { name: 'Ort', filterButton: true },
-            { name: 'Betroffene Lehrkräfte', filterButton: true },
-            { name: 'GBSL', filterButton: true },
-            { name: 'FMS', filterButton: true },
-            { name: 'WMS', filterButton: true },
-            { name: 'Beschreibung', filterButton: true },
-            { name: 'Jahrgangsstufe', filterButton: true },
-            { name: 'Einzelne Klassen', filterButton: true },
-            { name: translate('audience', 'de'), filterButton: true },
-            { name: translate('teachingAffected', 'de'), filterButton: true },
-            { name: translate('deletedAt', 'de'), filterButton: true },
-        ],
-        rows: data.map(i => Object.values(i)),
+        columns: columns.map(c => ({ name: c.header, filterButton: true })),
+        rows: events.sort((a, b) => a.start.getTime() - b.start.getTime()).map(e => {
+            return [
+                getKW(e.start),
+                translate(DAYS[e.start.getDay()], lang),
+                e.description,
+                formatDate(e.start),
+                formatTime(e.start, true),
+                formatDate(e.end),
+                formatTime(e.end, true),
+                e.location, 
+                e.descriptionLong,
+                ...depNames.map((dep) => e.departments.find(d => d.name === dep) ? 1 : ''),
+                e.affectsDepartment2 ? 1 : 0,
+                [...e.classGroups.map(g => `${g}*`), ...e.classes].join(', '),
+                e.audience,
+                e.teachingAffected,
+                e.deletedAt ? formatDate(e.deletedAt) : ''
+            ]
+        }),
       });
+    worksheet.columns = columns;
+    depNames.forEach((_, i) => {
+        worksheet.getCell(1, 10 + i).alignment = { textRotation: -90, vertical: 'top', horizontal: 'left' }
+    })
     
     await workbook.xlsx.writeFile(file);
     return file;
