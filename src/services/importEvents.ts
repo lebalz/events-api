@@ -3,11 +3,12 @@ import { importExcel as importGBSL_xlsx } from "./importGBSL_xlsx";
 import prisma from "../prisma";
 import { KlassName, mapLegacyClassName } from "./helpers/klassNames";
 import { importCsv as importGBJB_csv } from "./importGBJB_csv";
+import { importExcel as importV1 } from "./importV1";
 
 export enum ImportType {
     GBSL_XLSX = 'GBSL_XLSX',
     GBJB_CSV = 'GBJB_CSV',
-    EVENTS_XLSX = 'EVENTS_XLSX',
+    V1 = 'V1'
 }
 
 export interface ImportRawEvent {
@@ -25,7 +26,6 @@ export interface ImportRawEvent {
 
 export const importEvents = async (file: string, userId: string, jobId: string, type: ImportType) => {
     let data: ImportRawEvent[] = [];
-
     switch (type) {
         case ImportType.GBSL_XLSX:
             data = await importGBSL_xlsx(file);
@@ -33,6 +33,25 @@ export const importEvents = async (file: string, userId: string, jobId: string, 
         case ImportType.GBJB_CSV:
             data = await importGBJB_csv(file);
             break;
+        case ImportType.V1:
+            const impData = await importV1(file);
+            return await Promise.all(impData.map((e) => {
+                return prisma.event.create({
+                    data: {
+                        ...e,
+                        departments: {
+                            connect: e.departments
+                        },
+                        author: {
+                            connect: { id: userId }
+                        },
+                        job: {
+                            connect: { id: jobId }
+                        },
+                        state: EventState.DRAFT,
+                    }
+                })
+            }));
     }
 
     const createPromises = data.map((e) => {

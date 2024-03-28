@@ -199,7 +199,44 @@ const i18n = {
     So: {
         de: 'So',
         fr: 'Di'
+    },
+    kw: {
+        de: 'KW',
+        fr: 'Sem'
+    },
+    weekday: {
+        de: 'Wochentag',
+        fr: 'Jour de la semaine'
+    },
+    dateStart: {
+        de: 'Datum Beginn',
+        fr: 'Date de début'
+    },
+    timeStart: {
+        de: 'Zeit Beginn',
+        fr: 'Heure de début'
+    },
+    dateEnd: {
+        de: 'Datum Ende',
+        fr: 'Date de fin'
+    },
+    timeEnd: {
+        de: 'Zeit Ende',
+        fr: 'Heure de fin'
+    },
+    bilingueLPsAffected: {
+        de: 'Bilingue LP\'s betroffen',
+        fr: 'LPs bilingues concernés'
+    },
+    affects: {
+        de: 'Betrifft',
+        fr: 'Concerne'
+    },
+    events: {
+        de: 'Termine',
+        fr: 'Evénements'    
     }
+    
 } satisfies {[key: string]: i18nMessage};
 
 export const translate = (key: (keyof typeof i18n), language: 'de' | 'fr'): string => {

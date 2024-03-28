@@ -14,6 +14,8 @@ import { IoRoom } from '../../src/routes/socketEvents';
 import _ from 'lodash';
 import { generateDepartment } from '../factories/department';
 import { ImportType } from '../../src/services/importEvents';
+import { existsSync, readdirSync } from 'fs';
+import { EXCEL_EXPORT_DIR } from '../../src/services/createExcel';
 
 jest.mock('../../src/middlewares/notify.nop');
 const mNotification = <jest.Mock<typeof notify>>notify;
@@ -958,8 +960,98 @@ describe(`POST ${API_URL}/events/export`, () => {
 });
 
 
-// describe('Export and reimport', () => {
-//     it('Exports and reimports the same events', async () => {
-//         const admin = await prisma.user.create({
-//             data: generateUser({ email: '
-// })
+describe('Export and reimport', () => {
+    it('Exports and reimports events without dataloss', async () => {
+        const gbsl = await prisma.department.create({data: generateDepartment({name: 'GBSL'})});
+        const gbjb = await prisma.department.create({data: generateDepartment({name: 'GBJB'})});
+        const gbsl_gbjb = await prisma.department.create({data: generateDepartment({name: 'GBSL/GBJB', department1_Id: gbsl.id, department2_Id: gbjb.id})});
+
+        const admin = await prisma.user.create({ data: generateUser({role: 'ADMIN'}) });
+        const start = faker.date.recent();
+        const end = faker.date.between({ from: start, to: new Date(start.getTime() + 1000 * 60 * 60 * 24 * 180) });
+        const semester = await prisma.semester.create({
+            data: generateSemester({
+                start: start,
+                end: end,
+                untisSyncDate: faker.date.between({ from: start, to: end }),
+            })
+        });
+        const e1 = await prisma.event.create({
+            data: {
+                state: EventState.PUBLISHED,
+                authorId: admin.id,
+                start: new Date('2024-03-28T13:19:00.000Z'),
+                end: new Date('2024-03-28T17:15:00.000Z'),
+                description: 'foo bar!',
+                descriptionLong: 'foo bar! foo bar!',
+                affectsDepartment2: true,
+                audience: 'LP',
+                departments: {
+                    connect: [{id: gbsl.id}, {id: gbsl_gbjb.id}]
+                },
+                classes: ['25Gh'],
+                classGroups: ['24G']                
+            }
+        });
+        const e2 = await prisma.event.create({
+            data: {
+                state: EventState.PUBLISHED,
+                authorId: admin.id,
+                start: new Date('2024-03-28T13:19:00.000Z'),
+                end: new Date('2024-03-28T18:15:00.000Z'),
+                description: faker.lorem.sentence(),
+                descriptionLong: faker.lorem.paragraph(),
+                affectsDepartment2: false,
+                departments: {
+                    connect: [{id: gbjb.id}]
+                },
+            }
+        });
+
+        const resultExport = await request(app)
+            .post(`${API_URL}/events/excel`);
+        let excels = readdirSync(EXCEL_EXPORT_DIR).filter(f => f.endsWith('.xlsx'));
+        while (excels.length < 1) {
+            // wait
+            excels = readdirSync(EXCEL_EXPORT_DIR).filter(f => f.endsWith('.xlsx'));
+        }
+        
+        // now delete everything
+        await prisma.event.deleteMany({});
+        expect(prisma.event.findMany({})).resolves.toHaveLength(0);
+
+        const resultImport = await request(app)
+            .post(`${API_URL}/events/import?type=${ImportType.V1}`)
+            .set('authorization', JSON.stringify({ email: admin.email }))
+            .attach('terminplan', `${EXCEL_EXPORT_DIR}/${excels[0]}`);
+
+        expect(resultImport.statusCode).toEqual(200);
+
+        // wait for the imported jop
+        let job = await Jobs.findModel(admin, resultImport.body.id);
+        while (job.state === JobState.PENDING) {
+            await new Promise((resolve) => setTimeout(resolve, 50));
+            job = await Jobs.findModel(admin, resultImport.body.id);
+        }
+        const reimported = await prisma.event.findMany({});
+        expect(reimported).toHaveLength(2);
+        const r1 = reimported.find(e => e.description === e1.description);
+        const r2 = reimported.find(e => e.description === e2.description);
+        expect(r1).toEqual({
+            ...e1,
+            state: EventState.DRAFT,
+            updatedAt: expect.any(Date),
+            createdAt: expect.any(Date),
+            id: expect.any(String),
+            jobId: expect.any(String)
+        });
+        expect(r2).toEqual({
+            ...e2,
+            state: EventState.DRAFT,
+            updatedAt: expect.any(Date),
+            createdAt: expect.any(Date),
+            id: expect.any(String),
+            jobId: expect.any(String)
+        });
+    });
+})
