@@ -312,6 +312,36 @@ Table view__events_classes {
   }
 }
 
+Table users_to_event_groups {
+  eventgroupsId String [ref: > event_groups.id]
+  usersId String [ref: > users.id]
+}
+
+Table events_to_departments {
+  departmentsId String [ref: > departments.id]
+  eventsId String [ref: > events.id]
+}
+
+Table events_to_event_groups {
+  groupsId String [ref: > event_groups.id]
+  eventsId String [ref: > events.id]
+}
+
+Table teachers_to_lessons {
+  lessonsId Int [ref: > untis_lessons.id]
+  teachersId Int [ref: > untis_teachers.id]
+}
+
+Table teachers_to_classes {
+  classesId Int [ref: > untis_classes.id]
+  teachersId Int [ref: > untis_teachers.id]
+}
+
+Table classes_to_lessons {
+  classesId Int [ref: > untis_classes.id]
+  lessonsId Int [ref: > untis_lessons.id]
+}
+
 Enum Role {
   USER
   ADMIN
