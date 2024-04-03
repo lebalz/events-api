@@ -9,6 +9,7 @@ import { getClassYear } from './helpers/untisKlasse';
 
 const OPTIONAL_COURSE_REGEX = /FA[KC]/;
 const MAX_LOGIN_TRIES = 1;
+const API_FETCH_DELAY = 5;
 
 /**
  * @docs https://webuntis.noim.me/
@@ -22,7 +23,6 @@ const untis = new WebUntisSecretAuth(
     'custom-identity',
     Authenticator
 );
-
 
 const login = async (rethrow?: boolean) => {
     let success = await untis.login()
@@ -72,6 +72,7 @@ export const fetchUntis = async (semester: Semester): Promise<UntisData> => {
                 Logger.info('Login not successful');
                 throw new Error('Login not successful');
             }
+            Logger.info('Login successful');
             const sjs = await untis.getSchoolyears(true);
             Logger.info('Fetch Schoolyears', sjs);
             /** find the school year for the events-app semester
@@ -106,22 +107,35 @@ export const fetchUntis = async (semester: Semester): Promise<UntisData> => {
             return { ...data, classes }
         }).then(async (data) => {
             Logger.info('Fetch Timetables');
-            const s1 = chunks(
-                data.classes.map((kl) => kl.id),
-                (id) => untis.getTimetableForWeek(semester.untisSyncDate, id, Base.TYPES.CLASS, 2, true),
-                50
-            ).catch((e) => {
-                Logger.error('Error fetching Untis Timetables', e);
-                return [] as WebAPITimetable[][];
-            });
-            const [tt] = await Promise.all([s1]);
-            const flattend_tt = tt.flat().filter((t) => t.lessonCode === 'LESSON');
+            const s1: WebAPITimetable[][] = [];
+            for (const kl of data.classes) {
+                try {
+                    const tt = await untis.getTimetableForWeek(semester.untisSyncDate, kl.id, Base.TYPES.CLASS, 2, true);
+                    s1.push(tt);
+                    await new Promise(resolve => setTimeout(resolve, API_FETCH_DELAY));
+                } catch (e) {
+                    Logger.error('Error fetching Untis Timetables', e);
+                    s1.splice(0, s1.length);
+                    break;
+                }
+            }
+            // const s1 = chunks(
+            //     data.classes.map((kl) => kl.id),
+            //     (id) => untis.getTimetableForWeek(semester.untisSyncDate, id, Base.TYPES.CLASS, 2, true),
+            //     50
+            // ).catch((e) => {
+            //     Logger.error('Error fetching Untis Timetables', e);
+            //     return [] as WebAPITimetable[][];
+            // });
+            // const [tt] = await Promise.all([s1]);
+            const flattend_tt = s1.flat().filter((t) => t.lessonCode === 'LESSON');
             /** Fak Kurse */
             const optLessonIds = data.subjects.filter((s) => OPTIONAL_COURSE_REGEX.test(s.name)).map(s => s.id);
             const optLessons: WebAPITimetable[] = [];
             for (const id of optLessonIds) {
                 const fakTT = await untis.getTimetableForWeek(semester.untisSyncDate, id, Base.TYPES.SUBJECT, 2, true);
                 optLessons.push(...fakTT.filter((t) => t.lessonCode === 'LESSON'));
+                await new Promise(resolve => setTimeout(resolve, API_FETCH_DELAY));
             }
             return { ...data, timetable: [...flattend_tt, ...optLessons] };
         }).then((data) => {
