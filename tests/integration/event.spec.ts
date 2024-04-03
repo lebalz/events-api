@@ -14,8 +14,6 @@ import { IoRoom } from '../../src/routes/socketEvents';
 import _ from 'lodash';
 import { generateDepartment } from '../factories/department';
 import { ImportType } from '../../src/services/importEvents';
-import { existsSync, readdirSync } from 'fs';
-import { EXCEL_EXPORT_DIR } from '../../src/services/createExcel';
 
 jest.mock('../../src/middlewares/notify.nop');
 const mNotification = <jest.Mock<typeof notify>>notify;
@@ -711,6 +709,19 @@ describe(`POST ${API_URL}/events/change_state`, () => {
 
 
 describe(`POST ${API_URL}/events/import`, () => {
+    beforeEach(async () => {        
+        await prisma.department.create({data: generateDepartment({name: 'GBSL'})});
+        await prisma.department.create({data: generateDepartment({name: 'GBSL/GBJB'})});
+        await prisma.department.create({data: generateDepartment({name: 'GBJB'})});
+        await prisma.department.create({data: generateDepartment({name: 'GBJB/GBSL'})});
+        await prisma.department.create({data: generateDepartment({name: 'FMS'})});
+        await prisma.department.create({data: generateDepartment({name: 'ECG'})});
+        await prisma.department.create({data: generateDepartment({name: 'ECG/FMS'})});
+        await prisma.department.create({data: generateDepartment({name: 'WMS'})});
+        await prisma.department.create({data: generateDepartment({name: 'ESC'})});
+        await prisma.department.create({data: generateDepartment({name: 'MSOP'})});
+        await prisma.department.create({data: generateDepartment({name: 'Passerelle'})});
+    });
     describe('GBSL Format: ?type=GBSL_XLSX', () => {
         it("lets admins import gbsl events: legacy format", async () => {
             const admin = await prisma.user.create({
@@ -720,10 +731,10 @@ describe(`POST ${API_URL}/events/import`, () => {
             const result = await request(app)
                 .post(`${API_URL}/events/import?type=${ImportType.GBSL_XLSX}`)
                 .set('authorization', JSON.stringify({ email: admin.email }))
-                .attach('terminplan', `${__dirname}/stubs/terminplan-import.xlsx`)
+                .attach('terminplan', `${__dirname}/stubs/terminplan-gbsl.xlsx`)
             expect(result.statusCode).toEqual(200);
             expect(result.body.state).toEqual(JobState.PENDING);
-            expect(result.body.filename).toEqual('terminplan-import.xlsx');
+            expect(result.body.filename).toEqual('terminplan-gbsl.xlsx');
             /** wait for the import job to finish */
             let job = await Jobs.findModel(admin, result.body.id);
             while (job.state === JobState.PENDING) {
@@ -801,7 +812,7 @@ describe(`POST ${API_URL}/events/import`, () => {
             const result = await request(app)
                 .post(`${API_URL}/events/import?type=${ImportType.GBSL_XLSX}`)
                 .set('authorization', JSON.stringify({ email: user.email }))
-                .attach('terminplan', `${__dirname}/stubs/terminplan-import.xlsx`);
+                .attach('terminplan', `${__dirname}/stubs/terminplan-gbsl.xlsx`);
             expect(result.statusCode).toEqual(403);
 
             expect(mNotification).toHaveBeenCalledTimes(0);
@@ -920,138 +931,145 @@ describe(`POST ${API_URL}/events/import`, () => {
         });
 
     });
-});
 
-
-describe(`POST ${API_URL}/events/export`, () => {
-    it('Throws an error if no semester is found', async () => {
-        const result = await request(app)
-            .post(`${API_URL}/events/excel`);
-        expect(result.statusCode).toEqual(400);
-    });
-    it('Lets everyone export an excel', async () => {
-        const user = await prisma.user.create({ data: generateUser() });
-        const start = faker.date.recent();
-        const end = faker.date.between({ from: start, to: new Date(start.getTime() + 1000 * 60 * 60 * 24 * 180) });
-        const semester = await prisma.semester.create({
-            data: generateSemester({
-                start: start,
-                end: end,
-                untisSyncDate: faker.date.between({ from: start, to: end }),
-            })
-        });
-        for (var i = 0; i < 10; i++) {
-            const estart = faker.date.between({ from: start, to: end });
-            await prisma.event.create({
-                data: generateEvent({
-                    authorId: user.id,
-                    start: estart,
-                    end: faker.date.between({ from: estart, to: end }),
-                    state: EventState.PUBLISHED,
-                })
+    describe('V1 Format: ?type=V1', () => {
+        it("lets users import V1 events", async () => {
+            const user = await prisma.user.create({
+                data: generateUser({ email: 'user@bar.ch', role: Role.USER })
             });
-        }
 
-        const result = await request(app)
-            .post(`${API_URL}/events/excel`);
-        expect(result.statusCode).toEqual(200);
-        expect(result.body).toEqual({});
+            const result = await request(app)
+                .post(`${API_URL}/events/import?type=${ImportType.V1}`)
+                .set('authorization', JSON.stringify({ email: user.email }))
+                .attach('terminplan', `${__dirname}/stubs/terminplan-v1.xlsx`)
+            expect(result.statusCode).toEqual(200);
+            expect(result.body.state).toEqual(JobState.PENDING);
+            expect(result.body.filename).toEqual('terminplan-v1.xlsx');
+            /** wait for the import job to finish */
+            let job = await Jobs.findModel(user, result.body.id);
+            while (job.state === JobState.PENDING) {
+                await new Promise((resolve) => setTimeout(resolve, 50));
+                job = await Jobs.findModel(user, result.body.id);
+            }
+            expect(mNotification).toHaveBeenCalledTimes(1);
+            expect(mNotification.mock.calls[0][0]).toEqual({
+                event: IoEvent.NEW_RECORD,
+                message: { record: 'JOB', id: job.id },
+                to: user.id
+            });
+
+            expect(job.state).toEqual(JobState.DONE);
+            expect(job.log).toEqual('');
+
+            const events = await prisma.event.findMany({
+                include: {
+                    groups: {
+                        select: {id: true}
+                    },
+                    departments: {
+                        select: {id: true, name: true}
+                    }
+                }
+            });
+
+            /**
+             * There are 4 events in the excel, but one is deleted - this won't be imported again.
+             */
+            expect(events.length).toEqual(3);
+            events.forEach((e) => {
+                expect(e.state).toEqual(EventState.DRAFT);
+                expect(e.cloned).toBeFalsy();
+                expect(e.jobId).toEqual(job.id);
+                expect(e.parentId).toBeNull();
+                expect(e.groups).toEqual([]);
+                expect(e.deletedAt).toBeNull();
+                expect(e.start.getTime()).toBeLessThanOrEqual(e.end.getTime());
+            });
+            const event1 = events.find(e => e.description === 'Nachbefragung in Klassenstunde: GYM3 Klassen')!;
+            expect(event1.descriptionLong).toEqual('QE führt die Klassenstunde mit den einsprachigen Klassen des JG. 25 durch');
+            expect(event1.location).toEqual('');
+            expect(event1.start.toISOString()).toEqual('2024-02-26T00:00:00.000Z');
+            expect(event1.end.toISOString()).toEqual('2024-03-02T00:00:00.000Z');
+            expect(event1.classes.sort()).toEqual(['25Ga', '25Gb', '25Gc', '25Gd', '25Ge', '25Gf', '25Gg', '25Gh', '25Gi']);
+            expect(event1.classGroups).toEqual([]);
+            expect(event1.audience).toEqual(EventAudience.KLP);
+            expect(event1.teachingAffected).toEqual(TeachingAffected.PARTIAL);
+            expect(event1.affectsDepartment2).toBeFalsy();
+            expect(event1.departments).toHaveLength(0);
+
+            
+            const event2 = events.find(e => e.description === 'Information Maturaarbeit')!;
+            expect(event2.descriptionLong).toEqual('Informationsveranstaltung Wegleitung');
+            expect(event2.location).toEqual('M901');
+            expect(event2.start.toISOString()).toEqual('2024-03-28T12:15:00.000Z');
+            expect(event2.end.toISOString()).toEqual('2024-03-28T13:45:00.000Z');
+            expect(event2.classes).toEqual([]);
+            expect(event2.classGroups).toEqual(['25G']);
+            expect(event2.audience).toEqual(EventAudience.STUDENTS);
+            expect(event2.teachingAffected).toEqual(TeachingAffected.NO);
+            expect(event2.affectsDepartment2).toBeTruthy();
+            expect(event2.departments).toHaveLength(0);
+
+            const event3 = events.find(e => e.description === 'Pfingsten: Frei')!;
+            expect(event3.descriptionLong).toEqual('Pfingstmontag: Frei');
+            expect(event3.location).toEqual('');
+            expect(event3.start.toISOString()).toEqual('2024-05-20T00:00:00.000Z');
+            expect(event3.end.toISOString()).toEqual('2024-05-21T00:00:00.000Z');
+            expect(event3.classes).toEqual([]);
+            expect(event3.classGroups).toEqual([]);
+            expect(event3.departments.map(d => d.name).sort()).toEqual(['FMS', 'GBSL', 'GBSL/GBJB', 'WMS']);
+            expect(event3.audience).toEqual(EventAudience.ALL);
+            expect(event3.teachingAffected).toEqual(TeachingAffected.YES);
+            expect(event3.affectsDepartment2).toBeFalsy();
+        });
+
+        it("prevents users from importing events", async () => {
+            const user = await prisma.user.create({
+                data: generateUser({ email: 'foo@bar.ch' })
+            });
+
+            const result = await request(app)
+                .post(`${API_URL}/events/import?type=${ImportType.GBSL_XLSX}`)
+                .set('authorization', JSON.stringify({ email: user.email }))
+                .attach('terminplan', `${__dirname}/stubs/terminplan-gbsl.xlsx`);
+            expect(result.statusCode).toEqual(403);
+
+            expect(mNotification).toHaveBeenCalledTimes(0);
+        });
+
+        it("lets report the logs of failed imports", async () => {
+            const admin = await prisma.user.create({
+                data: generateUser({ email: 'admin@bar.ch', role: Role.ADMIN })
+            });
+
+            /** expect the logger to report an [error]: invalid signature: 0x73206f6e */
+            const result = await request(app)
+                .post(`${API_URL}/events/import?type=${ImportType.GBSL_XLSX}`)
+                .set('authorization', JSON.stringify({ email: admin.email }))
+                .attach('terminplan', `${__dirname}/stubs/terminplan-corrupted.xlsx`);
+            expect(result.statusCode).toEqual(200);
+            expect(result.body.state).toEqual(JobState.PENDING);
+            expect(result.body.filename).toEqual('terminplan-corrupted.xlsx');
+
+            expect(mNotification).toHaveBeenCalledTimes(1);
+            expect(mNotification.mock.calls[0][0]).toEqual({
+                event: IoEvent.NEW_RECORD,
+                message: { record: 'JOB', id: result.body.id },
+                to: admin.id
+            });
+
+            /** wait for the import job to finish */
+            let job = await Jobs.findModel(admin, result.body.id);
+            while (job.state === JobState.PENDING) {
+                await new Promise((resolve) => setTimeout(resolve, 50));
+                job = await Jobs.findModel(admin, result.body.id);
+            }
+            expect(job.state).toEqual(JobState.ERROR);
+            expect(job.log).toEqual(expect.any(String));
+            expect(job.log.length).toBeGreaterThan(0);
+            const events = await prisma.event.findMany();
+            expect(events.length).toEqual(0);
+            expect(mNotification).toHaveBeenCalledTimes(1);
+        });
     });
 });
-
-
-describe('Export and reimport', () => {
-    it('Exports and reimports events without dataloss', async () => {
-        const gbsl = await prisma.department.create({data: generateDepartment({name: 'GBSL'})});
-        const gbjb = await prisma.department.create({data: generateDepartment({name: 'GBJB'})});
-        const gbsl_gbjb = await prisma.department.create({data: generateDepartment({name: 'GBSL/GBJB', department1_Id: gbsl.id, department2_Id: gbjb.id})});
-
-        const admin = await prisma.user.create({ data: generateUser({role: 'ADMIN'}) });
-        const start = faker.date.recent();
-        const end = faker.date.between({ from: start, to: new Date(start.getTime() + 1000 * 60 * 60 * 24 * 180) });
-        const semester = await prisma.semester.create({
-            data: generateSemester({
-                start: start,
-                end: end,
-                untisSyncDate: faker.date.between({ from: start, to: end }),
-            })
-        });
-        const e1 = await prisma.event.create({
-            data: {
-                state: EventState.PUBLISHED,
-                authorId: admin.id,
-                start: new Date('2024-03-28T13:19:00.000Z'),
-                end: new Date('2024-03-28T17:15:00.000Z'),
-                description: 'foo bar!',
-                descriptionLong: 'foo bar! foo bar!',
-                affectsDepartment2: true,
-                audience: 'LP',
-                departments: {
-                    connect: [{id: gbsl.id}, {id: gbsl_gbjb.id}]
-                },
-                classes: ['25Gh'],
-                classGroups: ['24G']                
-            }
-        });
-        const e2 = await prisma.event.create({
-            data: {
-                state: EventState.PUBLISHED,
-                authorId: admin.id,
-                start: new Date('2024-03-28T13:19:00.000Z'),
-                end: new Date('2024-03-28T18:15:00.000Z'),
-                description: faker.lorem.sentence(),
-                descriptionLong: faker.lorem.paragraph(),
-                affectsDepartment2: false,
-                departments: {
-                    connect: [{id: gbjb.id}]
-                },
-            }
-        });
-
-        const resultExport = await request(app)
-            .post(`${API_URL}/events/excel`);
-        let excels = readdirSync(EXCEL_EXPORT_DIR).filter(f => f.endsWith('.xlsx'));
-        while (excels.length < 1) {
-            // wait
-            excels = readdirSync(EXCEL_EXPORT_DIR).filter(f => f.endsWith('.xlsx'));
-        }
-        
-        // now delete everything
-        await prisma.event.deleteMany({});
-        expect(prisma.event.findMany({})).resolves.toHaveLength(0);
-
-        const resultImport = await request(app)
-            .post(`${API_URL}/events/import?type=${ImportType.V1}`)
-            .set('authorization', JSON.stringify({ email: admin.email }))
-            .attach('terminplan', `${EXCEL_EXPORT_DIR}/${excels[0]}`);
-
-        expect(resultImport.statusCode).toEqual(200);
-
-        // wait for the imported jop
-        let job = await Jobs.findModel(admin, resultImport.body.id);
-        while (job.state === JobState.PENDING) {
-            await new Promise((resolve) => setTimeout(resolve, 50));
-            job = await Jobs.findModel(admin, resultImport.body.id);
-        }
-        const reimported = await prisma.event.findMany({});
-        expect(reimported).toHaveLength(2);
-        const r1 = reimported.find(e => e.description === e1.description);
-        const r2 = reimported.find(e => e.description === e2.description);
-        expect(r1).toEqual({
-            ...e1,
-            state: EventState.DRAFT,
-            updatedAt: expect.any(Date),
-            createdAt: expect.any(Date),
-            id: expect.any(String),
-            jobId: expect.any(String)
-        });
-        expect(r2).toEqual({
-            ...e2,
-            state: EventState.DRAFT,
-            updatedAt: expect.any(Date),
-            createdAt: expect.any(Date),
-            id: expect.any(String),
-            jobId: expect.any(String)
-        });
-    });
-})

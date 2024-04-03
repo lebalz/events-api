@@ -7,6 +7,8 @@ import prisma from '../../../src/prisma';
 import { rmUndefined } from "../../../src/utils/filterHelpers";
 import { stringify } from "../../../src/utils/logger";
 import { HTTP401Error, HTTP500Error } from "../../../src/utils/errors/Errors";
+import { getDate, getDateTime, getDay, getTime } from "../../../src/services/helpers/time";
+import { translate } from "../../../src/services/helpers/i18n";
 
 
 describe('Split In Chunks', () => {
@@ -253,7 +255,7 @@ describe('Helper Function', () => {
         const objB = { name: "Object B", reference: objA };
         objA.reference = objB;
         // circular reference should throw error
-        expect(() => JSON.stringify(objA)).toThrowError('Converting circular structure to JSON');
+        expect(() => JSON.stringify(objA)).toThrow('Converting circular structure to JSON');
         // the logger uses a cache to avoid circular references
         expect(stringify(objA)).toMatchInlineSnapshot(`
 "{
@@ -268,9 +270,48 @@ describe('Helper Function', () => {
     test('Errors', () => {
         expect(() => {
             throw new HTTP401Error()
-        }).toThrowError(HTTP401Error);
+        }).toThrow(HTTP401Error);
         expect(() => {
             throw new HTTP500Error()
-        }).toThrowError(HTTP500Error);
+        }).toThrow(HTTP500Error);
     })
+});
+
+describe('Time Helpers', () => {
+    test('getDate', () => {
+        const date = new Date('2021-10-27T15:00:00Z');
+        expect(getDate(date)).toEqual('27.10.21');
+    });
+    test('getDateLong', () => {
+        const date = new Date('2021-10-27T15:00:00Z');
+        expect(getDate(date)).toEqual('27.10.2021');
+    });
+    test('getTime', () => {
+        const date = new Date('2021-10-27T15:00:00Z');
+        expect(getTime(date)).toEqual('15:00');
+    });
+    test('getDateTime', () => {
+        const date = new Date('2021-10-27T15:00:00Z');
+        expect(getDateTime(date)).toEqual('27.10.21 15:00');
+    });
+    test('getDay', () => {
+        expect(getDay(new Date('2024-04-01T00:00:00Z'), 'de')).toEqual('Mo');
+        expect(getDay(new Date('2024-04-02T00:00:00Z'), 'de')).toEqual('Di');
+        expect(getDay(new Date('2024-04-03T00:00:00Z'), 'de')).toEqual('Mi');
+        expect(getDay(new Date('2024-04-04T00:00:00Z'), 'de')).toEqual('Do');
+        expect(getDay(new Date('2024-04-05T00:00:00Z'), 'de')).toEqual('Fr');
+        expect(getDay(new Date('2024-04-06T00:00:00Z'), 'de')).toEqual('Sa');
+        expect(getDay(new Date('2024-04-07T00:00:00Z'), 'de')).toEqual('So');
+    });
 })
+
+describe('i18n', () => {
+    test('translates known keys', () => {
+        expect(translate('NO', 'de')).toEqual('Nein');
+        expect(translate('NO', 'fr')).toEqual('Non');
+    });
+    test('returns key when translation was missing', () => {
+        expect(translate('FooBar' as any, 'de')).toEqual('FooBar');
+        expect(translate('FooBar' as any, 'fr')).toEqual('FooBar');
+    });
+});

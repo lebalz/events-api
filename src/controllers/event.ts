@@ -3,12 +3,11 @@ import prisma from "../prisma";
 import { IoEvent } from "../routes/socketEventTypes";
 import { notifyChangedRecord } from "../routes/notify";
 import type { Event } from "@prisma/client";
-import { EventState } from "@prisma/client";
+import { EventState, Role } from "@prisma/client";
 import { IoRoom } from "../routes/socketEvents";
-import createExcel from "../services/createExcel";
 import Events from "../models/events";
 import path from "path";
-import { HTTP400Error } from "../utils/errors/Errors";
+import { HTTP400Error, HTTP403Error } from "../utils/errors/Errors";
 import { ImportType } from "../services/importEvents";
 import { notifyOnDelete, notifyOnUpdate } from "../services/notifications/notifyUsers";
 
@@ -215,6 +214,9 @@ export const clone: RequestHandler<{ id: string }, any, any> = async (req, res, 
 
 export const importEvents: RequestHandler<any, any, any, {type: ImportType}> = async (req, res, next) => {
     try {
+        if (req.user!.role !== Role.ADMIN && [ImportType.GBSL_XLSX, ImportType.GBJB_CSV].includes(req.query.type)) {
+            throw new HTTP403Error('Not authorized to import legacy format');
+        }
         const {job, importer} = await Events.importEvents(req.user!, req.file!.path, req.file!.originalname, req.query.type);
  
         importer.finally(() => {
@@ -229,40 +231,6 @@ export const importEvents: RequestHandler<any, any, any, {type: ImportType}> = a
             }
         ];
         res.json(job);
-    } catch (error) /* istanbul ignore next */ {
-        next(error);
-    }
-}
-
-export const exportExcel: RequestHandler = async (req, res, next) => {
-    try {
-        const currentSemester = await prisma.semester.findFirst({where: {
-            AND: {
-                start: {
-                    lte: new Date()
-                },
-                end: {
-                    gte: new Date()
-                }
-            }
-        }});
-        if (!currentSemester) {
-            throw new HTTP400Error('No semester found');
-        }
-        const file = await createExcel(currentSemester?.id || '-1');
-
-        /* istanbul ignore else */
-        if (file) {
-            const fpath = path.resolve(file);
-            res.download(fpath, (err) => {
-                /* istanbul ignore next */
-                if (err) {
-                    console.error(err);
-                }
-            });
-        } else {
-            res.status(500).json({message: 'Excel file could not be created'});
-        }
     } catch (error) /* istanbul ignore next */ {
         next(error);
     }

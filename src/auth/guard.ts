@@ -1,6 +1,6 @@
 import type { Role } from "@prisma/client";
 import { Request, Response, NextFunction } from "express";
-import { AccessMatrix, PUBLIC_POST_ROUTES, PUBLIC_ROUTES } from "../routes/authConfig";
+import { AccessMatrix, PUBLIC_ROUTES } from "../routes/authConfig";
 import Logger from "../utils/logger";
 import { HttpStatusCode } from "../utils/errors/BaseError";
 
@@ -26,10 +26,8 @@ const regexFromRoute = (route: string) => {
 };
 
 export const PUBLIC_GET_ACCESS = new Set(PUBLIC_ROUTES.filter(route => !route.includes(':')));
-export const PUBLIC_POST_ACCESS = new Set(PUBLIC_POST_ROUTES.filter(route => !route.includes(':')));
 
 export const PUBLIC_GET_ACCESS_REGEX = PUBLIC_ROUTES.filter(route => route.includes(':')).map(regexFromRoute);
-export const PUBLIC_POST_ACCESS_REGEX = PUBLIC_POST_ROUTES.filter(route => route.includes(':')).map(regexFromRoute);
 
 
 
@@ -70,10 +68,8 @@ const routeGuard = (accessMatrix: AccessRegexRule[]) => {
     return (req: Request, res: Response, next: NextFunction) => {
         const reqPath = req.path.toLowerCase();
         if (!req.user && !(
-                PUBLIC_GET_ACCESS.has(reqPath) || 
-                PUBLIC_POST_ACCESS.has(reqPath) || 
-                PUBLIC_GET_ACCESS_REGEX.some((regex) => regex.test(reqPath)) || 
-                PUBLIC_POST_ACCESS_REGEX.some((regex) => regex.test(reqPath))
+                PUBLIC_GET_ACCESS.has(reqPath) ||
+                PUBLIC_GET_ACCESS_REGEX.some((regex) => regex.test(reqPath))
             )) {
             return res.status(HttpStatusCode.FORBIDDEN).json({ error: 'No roles claim found!' });
         }
@@ -92,9 +88,6 @@ const routeGuard = (accessMatrix: AccessRegexRule[]) => {
  */
 const requestHasRequiredAttributes = (accessMatrix: AccessRegexRule[], path: string, method: string, role: Role | 'PUBLIC') => {
     if (role === 'PUBLIC') {
-        if (PUBLIC_POST_ACCESS.has(path.toLowerCase()) || PUBLIC_POST_ACCESS_REGEX.some((regex) => regex.test(path))) {
-            return method === 'POST';
-        }
         return method === 'GET';
     }
     const accessRules = Object.values(accessMatrix);

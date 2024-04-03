@@ -43,14 +43,6 @@ export const PUBLIC_ROUTES = [
     '/untis/classes',
 ];
 
-/**
- * Routes that are accessible without authentication
- * only for POST requests
- */
-export const PUBLIC_POST_ROUTES = [
-    '/events/excel',
-];
-
 const authConfig: Config = {
     credentials: {
         tenantID: process.env.TENANT_ID || '',
@@ -147,7 +139,7 @@ const authConfig: Config = {
             path: '/events/import',
             access: [{
                 methods: ['POST'],
-                roles: [Role.ADMIN],
+                roles: [Role.ADMIN, Role.USER],
             }]
         },
         userEventGroup: {

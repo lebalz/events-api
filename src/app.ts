@@ -8,8 +8,8 @@ import cors from "cors";
 import morganMiddleware from './middlewares/morgan.middleware'
 import passport from "passport";
 import router from './routes/router';
-import routeGuard, { PUBLIC_GET_ACCESS, PUBLIC_GET_ACCESS_REGEX, PUBLIC_POST_ACCESS, PUBLIC_POST_ACCESS_REGEX, createAccessRules } from './auth/guard';
-import authConfig, { PUBLIC_POST_ROUTES, PUBLIC_ROUTES } from './routes/authConfig';
+import routeGuard, { PUBLIC_GET_ACCESS, PUBLIC_GET_ACCESS_REGEX, createAccessRules } from './auth/guard';
+import authConfig, { PUBLIC_ROUTES } from './routes/authConfig';
 import type { User } from "@prisma/client";
 import { HttpStatusCode } from "./utils/errors/BaseError";
 import { notify } from "./middlewares/notify.nop";
@@ -210,9 +210,7 @@ export const configure = (_app: typeof app) => {
     
             if (!user && !(
                             PUBLIC_GET_ACCESS.has(req.path.toLowerCase()) ||
-                            PUBLIC_POST_ACCESS.has(req.path.toLowerCase()) ||
-                            PUBLIC_GET_ACCESS_REGEX.some((regex) => regex.test(req.path)) ||
-                            PUBLIC_POST_ACCESS_REGEX.some((regex) => regex.test(req.path))
+                            PUBLIC_GET_ACCESS_REGEX.some((regex) => regex.test(req.path))
                         )) {
                 // If no user object found, send a 401 response.
                 return res.status(HttpStatusCode.UNAUTHORIZED).json({ error: 'Unauthorized' });

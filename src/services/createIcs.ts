@@ -4,7 +4,6 @@ import { createEvents, DateArray, EventAttributes } from 'ics';
 import { Event, EventAudience, EventState } from '@prisma/client';
 import { writeFileSync } from 'fs';
 import _ from 'lodash';
-import { toCamelCase } from './helpers/rawQueryKeys';
 import Logger from '../utils/logger';
 import { ICAL_DIR } from '../app';
 import { translate } from './helpers/i18n';
@@ -120,7 +119,6 @@ export const createIcs = async (userId: string) => {
             ]
         }
     });
-    // const publicEvents = toCamelCase(publicEventsRaw);
     const fileName = user?.icsLocator || `${uuidv4()}.ics`;
     const fileCreated = await exportIcs(publicEventsRaw, fileName);
     if (fileCreated) {

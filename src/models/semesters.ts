@@ -5,7 +5,7 @@ import { createDataExtractor } from "../controllers/helpers";
 import Logger from "../utils/logger";
 import Jobs from "./jobs";
 import { syncUntis2DB } from "../services/syncUntis2DB";
-import { DAY_2_MS, WEEK_2_MS } from "../services/createExcel";
+import { WEEK_2_MS } from "../services/helpers/time";
 
 const getData = createDataExtractor<Prisma.SemesterUncheckedUpdateInput>(
     ['name', 'start', 'end', 'untisSyncDate']

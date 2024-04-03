@@ -1,5 +1,5 @@
 import express, { RequestHandler } from 'express';
-import { create as createEvent, all as allEvents, find as findEvent, update as updateEvent, importEvents, clone as cloneEvent, destroy as deleteEvent, setState as setEventState, exportExcel } from '../controllers/event';
+import { create as createEvent, all as allEvents, find as findEvent, update as updateEvent, importEvents, clone as cloneEvent, destroy as deleteEvent, setState as setEventState } from '../controllers/event';
 import { find as findJob, all as allJobs, destroy as deleteJob, update as updateJob } from '../controllers/job';
 import { all as allDepartments, find as findDepartment, update as updateDepartment, create as createDepartment, destroy as deleteDepartment } from '../controllers/department';
 import { find as findRegistrationPeriod, all as allRegistrationPeriods, update as updateRegistrationPeriod, destroy as deleteRegistrationPeriod, create as createRegistrationPeriod } from '../controllers/registrationPeriod';
@@ -29,7 +29,6 @@ router.get('/users/:id/affected-event-ids', affectedEventIds);
 
 
 router.get('/events', allEvents);
-router.post('/events/excel', exportExcel);
 router.get('/events/:id', findEvent);
 router.put('/events/:id', updateEvent);
 router.post('/events/:id/clone', cloneEvent);
