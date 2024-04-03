@@ -1,8 +1,9 @@
 import { Event } from "@prisma/client";
 import { ApiEvent } from "../../../models/event.helpers";
-import _ from "lodash";
-import { translate } from "../../helpers/i18n";
+import _, { filter } from "lodash";
+import { i18nKey, translate } from "../../helpers/i18n";
 import { getDateTime } from "../../helpers/time";
+import diff, { DifferenceChange } from "microdiff";
 
 const EXCLUDED_PROPS = new Set<keyof ApiEvent>([
     'id',
@@ -34,18 +35,12 @@ const getValue = (event: ApiEvent, key: keyof Event, locale: 'de' | 'fr') => {
 
 export const getChangedProps = (current: ApiEvent, updated: ApiEvent, locale: 'de' |'fr', excludedProps: (keyof ApiEvent)[] = []) => {
     const excluded = new Set([...EXCLUDED_PROPS, ...excludedProps]);
-    const changedProps: {name: string, old: any, new: any}[] = [];
-    for (const key of Object.keys(updated) as Array<keyof Event>) {
-        if (excluded.has(key)) {
-            continue;
-        }
-        const old = getValue(current, key, locale) || '-';
-        const newV = getValue(updated, key, locale) || '-';
-        if (!_.isEqual(old, newV)) {
-            changedProps.push({name: translate(key as any, locale), old, new: newV});
-        }
-    }
-    return changedProps;
+    const changes = diff(current, updated);
+    return changes
+        .filter((change) => change.path.length === 1)
+        .filter((change) => !excluded.has(change.path[0] as keyof ApiEvent))
+        .filter((change) => change.type === 'CHANGE')
+        .map((change) => ({...change, name: translate(change.path[0] as i18nKey, locale)})) as (DifferenceChange & {name: string})[];
 }
 
 export const getEventProps = (event: ApiEvent, locale: 'de' | 'fr', excludedProps: (keyof ApiEvent)[] = []) => {

@@ -28,6 +28,10 @@ const i18n = {
         de: 'Gelöscht am',
         fr: 'Supprimé le'
     },
+    classGroups: {
+        de: 'Klassenstufen',
+        fr: 'Niveaux'
+    },
     teachingAffected: {
         de: 'Unterricht betroffen?',
         fr: 'Enseignement concerné?'
@@ -171,6 +175,38 @@ const i18n = {
     PARTIAL: {
         de: 'Teilweise',
         fr: 'Partiellement'
+    },
+    STUDENTS: {
+        de: 'Schüler:innen',
+        fr: 'Élèves'
+    },
+    KLP: {
+        de: 'Klassenlehrpersonen',
+        fr: 'Enseignant·e principal·e'
+    },
+    LP: {
+        de: 'Lehrpersonen',
+        fr: 'Enseignant·e·s'
+    },
+    ALL: {
+        de: 'Alle',
+        fr: 'Tous'
+    },
+    DRAFT: {
+        de: 'Entwurf',
+        fr: 'Brouillon'
+    },
+    PUBLISHED: {
+        de: 'Veröffentlicht',
+        fr: 'Publié'
+    },
+    REVIEW: {
+        de: 'Zur Überprüfung',
+        fr: 'À examiner'
+    },
+    REFUSED: {
+        de: 'Abgelehnt',
+        fr: 'Refusé'
     },
     Mo: {
         de: 'Mo',

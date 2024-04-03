@@ -1,4 +1,12 @@
+import _ from "lodash";
+import { ApiEvent, prepareEvent } from "../../../src/models/event.helpers";
+import { getDateTime } from "../../../src/services/helpers/time";
 import { importCsv } from "../../../src/services/importGBJB_csv";
+import { getChangedProps, getEventProps } from "../../../src/services/notifications/helpers/changedProps";
+import { generateEvent } from "../../factories/event";
+import { createEvent } from "./events.test";
+import { createUser } from "./users.test";
+import { translate } from "../../../src/services/helpers/i18n";
 
 describe('import csv gbjb', () => {
     test('can extract raw event data', async () => {
@@ -31,3 +39,81 @@ describe('import csv gbjb', () => {
         });
     });
 });
+
+describe('notifications > helpers > changedProps', () => {
+    let current: ApiEvent;
+    beforeEach(async () => {
+        const user = await createUser({})
+        const raw = await createEvent({authorId: user.id, start: new Date('2024-04-03T12:00:00.000Z'), end: new Date('2024-04-03T13:00:00.000Z')});
+        current = prepareEvent(raw);
+    });
+    test('getChangedProps: no changes', () => {
+        const updated = {...current} satisfies ApiEvent;
+        const changes = getChangedProps(current, updated, 'de');
+        expect(changes).toHaveLength(0);
+    });
+    test('getChangedProps: string changes', () => {
+        const updated = {...current, description: `${current.description} updated`} satisfies ApiEvent;
+        const changes = getChangedProps(current, updated, 'de');
+        expect(changes).toHaveLength(1);
+        expect(changes[0].path).toEqual(['description']);
+        expect(changes[0].name).toEqual('Titel');
+        expect(changes[0].oldValue).toEqual(current.description);
+        expect(changes[0].value).toEqual(updated.description);
+    });
+    test('getChangedProps: date changes', () => {
+        const updated = {...current, start: new Date('2024-04-03T12:45:00.000Z')} satisfies ApiEvent;
+        const changes = getChangedProps(current, updated, 'de');
+        expect(changes).toHaveLength(1);
+        expect(changes[0].path).toEqual(['start']);
+        expect(changes[0].name).toEqual('Start');
+        expect(changes[0].oldValue).toEqual(current.start);
+        expect(changes[0].value).toEqual(updated.start);
+    });
+    test('getChangedProps: exclude props', () => {
+        const updated = {...current, description: `${current.description} updated`} satisfies ApiEvent;
+        const changes = getChangedProps(current, updated, 'de', ['description']);
+        expect(changes).toHaveLength(0);
+    });
+})
+describe('notifications > helpers > getEventProps', () => {
+    let current: ApiEvent;
+    beforeEach(async () => {
+        const user = await createUser({})
+        const raw = await createEvent({authorId: user.id, start: new Date('2024-04-03T12:00:00.000Z'), end: new Date('2024-04-03T13:00:00.000Z')});
+        current = prepareEvent(raw);
+    });
+    test('getEventProps', () => {
+        const eventProps = getEventProps(current, 'de');
+        expect(_.orderBy(eventProps, ['name'])).toEqual(_.orderBy([
+            {name: translate('description', 'de'), value: current.description},
+            {name: translate('descriptionLong', 'de'), value: current.descriptionLong},
+            {name: translate('classes', 'de'), value: current.classes},
+            {name: translate('location', 'de'), value: current.location},
+            {name: translate('start', 'de'), value: getDateTime(current.start)},
+            {name: translate('end', 'de'), value: getDateTime(current.end)},
+            {name: translate('updatedAt', 'de'), value: getDateTime(current.updatedAt)},
+            {name: translate('deletedAt', 'de'), value: '-'},
+            {name: translate('state', 'de'), value: translate('DRAFT', 'de')},
+            {name: translate('teachingAffected', 'de'), value: translate('YES', 'de')},
+            {name: translate('audience', 'de'), value: translate('STUDENTS', 'de')},
+            {name: translate('classGroups', 'de'), value: current.classGroups},
+        ], ['name']));
+    });
+    test('getEventProps: excluded Props', () => {
+        const eventProps = getEventProps(current, 'de', ['classGroups']);
+        expect(_.orderBy(eventProps, ['name'])).toEqual(_.orderBy([
+            {name: translate('description', 'de'), value: current.description},
+            {name: translate('descriptionLong', 'de'), value: current.descriptionLong},
+            {name: translate('classes', 'de'), value: current.classes},
+            {name: translate('location', 'de'), value: current.location},
+            {name: translate('start', 'de'), value: getDateTime(current.start)},
+            {name: translate('end', 'de'), value: getDateTime(current.end)},
+            {name: translate('updatedAt', 'de'), value: getDateTime(current.updatedAt)},
+            {name: translate('deletedAt', 'de'), value: '-'},
+            {name: translate('state', 'de'), value: translate('DRAFT', 'de')},
+            {name: translate('teachingAffected', 'de'), value: translate('YES', 'de')},
+            {name: translate('audience', 'de'), value: translate('STUDENTS', 'de')}
+        ], ['name']));
+    });
+})

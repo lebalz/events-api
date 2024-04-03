@@ -20,7 +20,7 @@ class MockStrat extends Strategy {
             try {
                 const auth = JSON.parse(req.headers.authorization) as { email: string };           
                 where = { email: auth.email || 'anonymous@user.ch'};
-            } catch (err) {
+            } catch /* istanbul ignore next */ (err) {
                 Logger.warn('Bearer Verify Error', err);
                 return this.fail('Could not parse authorization header');
             }
@@ -36,7 +36,7 @@ class MockStrat extends Strategy {
                 return this.fail(`No User found for ${where}`);
             }
             return this.success(user, { preferred_username: user.email });            
-        } catch (err) {
+        } catch /* istanbul ignore next */ (err) {
             Logger.error('Bearer Verify Error', err);
             return this.fail(`No User found for ${where}`);
         }

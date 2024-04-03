@@ -58,6 +58,7 @@ export const createAccessRules = (accessMatrix: AccessMatrix): AccessRegexRule[]
     });
     const rules = accessRulesWithRegex.sort((a, b) => b.weight - a.weight);
     Object.freeze(rules);
+    /* istanbul ignore if */
     if (process.env.NODE_ENV !== 'test') {
         Logger.info('Access Rules created');
     }
@@ -67,6 +68,7 @@ export const createAccessRules = (accessMatrix: AccessMatrix): AccessRegexRule[]
 const routeGuard = (accessMatrix: AccessRegexRule[]) => {
     return (req: Request, res: Response, next: NextFunction) => {
         const reqPath = req.path.toLowerCase();
+        /* istanbul ignore if */
         if (!req.user && !(
                 PUBLIC_GET_ACCESS.has(reqPath) ||
                 PUBLIC_GET_ACCESS_REGEX.some((regex) => regex.test(reqPath))
@@ -92,6 +94,7 @@ const requestHasRequiredAttributes = (accessMatrix: AccessRegexRule[], path: str
     }
     const accessRules = Object.values(accessMatrix);
     const accessRule = accessRules.filter((accessRule) => accessRule.regex.test(path)).sort((a, b) => b.path.length - a.path.length)[0];
+    /* istanbul ignore if */
     if (!accessRule) {
         return false;
     }

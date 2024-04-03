@@ -21,7 +21,7 @@ export const getTime = (date: Date) => {
     return hhmm;
 }
 
-export const getDateTime = (date?: Date) => {
+export const getDateTime = (date: Date | undefined | null) => {
     if (!date) {
         return;
     }

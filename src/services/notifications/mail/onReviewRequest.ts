@@ -37,10 +37,10 @@ export const mailOnReviewRequest = async (config: Config) => {
     if (previous) {
         tables.push({
             title: translate('changedFields', locale),
-            data: getChangedProps(previous, event, locale, ['deletedAt']).map(({name, old, new: value}) => {
+            data: getChangedProps(previous, event, locale, ['deletedAt']).map(({name, oldValue, value}) => {
                 return {
                     [translate('field', locale)]: name,
-                    [translate('previous', locale)]: `${old}`,
+                    [translate('previous', locale)]: `${oldValue}`,
                     [translate('new', locale)]: `${value}`
                 }
             })
