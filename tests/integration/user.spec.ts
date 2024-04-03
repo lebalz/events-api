@@ -321,9 +321,28 @@ describe(`POST ${API_URL}/users/:id/create_ics`, () => {
                     }
                 },
                 audience: EventAudience.ALL,
+                classes: ['25Gh'],
                 teachingAffected: TeachingAffected.YES,
                 start: new Date(semStart.getTime() + 1000),
                 end: new Date(semStart.getTime() + 1000 * 60 * 60),
+            })
+        });
+
+        const deletedEvent = await prisma.event.create({
+            data: generateEvent({
+                authorId: user.id,
+                state: EventState.PUBLISHED,
+                departments: {
+                    connect: {
+                        id: department.id
+                    }
+                },
+                audience: EventAudience.ALL,
+                classGroups: ['24G'],
+                teachingAffected: TeachingAffected.YES,
+                start: new Date(semStart.getTime() + 2000),
+                end: new Date(semStart.getTime() + 2000 * 60 * 60),
+                deletedAt: new Date()
             })
         });
 
@@ -340,14 +359,10 @@ describe(`POST ${API_URL}/users/:id/create_ics`, () => {
         expect(existsSync(`${__dirname}/../test-data/ical/fr/${result.body.icsLocator}`)).toBeTruthy();
         const icalDe = readFileSync(`${__dirname}/../test-data/ical/de/${result.body.icsLocator}`, { encoding: 'utf-8' });
         const icalFr = readFileSync(`${__dirname}/../test-data/ical/fr/${result.body.icsLocator}`, { encoding: 'utf-8' });
-        const icsDe = createEvents([prepareEvent(event, 'de')]);
-        const icsFr = createEvents([prepareEvent(event, 'fr')]);
-        expect(icalDe.normalize()).toEqual(
-            icsDe.value?.normalize()
-        );
-        expect(icalFr.normalize()).toEqual(
-            icsFr.value?.normalize()
-        );
+        const icsDe = createEvents([prepareEvent(event, 'de'), prepareEvent(deletedEvent, 'de')]).value!.replace('END:VCALENDAR', '').split('BEGIN:VEVENT').slice(1).map((e, idx) => `BEGIN:VEVENT${e}`.trim());
+        const icsFr = createEvents([prepareEvent(event, 'fr'), prepareEvent(deletedEvent, 'fr')]).value!.replace('END:VCALENDAR', '').split('BEGIN:VEVENT').slice(1).map((e, idx) => `BEGIN:VEVENT${e}`.trim());
+        icsDe.forEach((e, idx) => expect(icalDe.normalize()).toContain(e.normalize()));
+        icsFr.forEach((e, idx) => expect(icalFr.normalize()).toContain(e.normalize()));
         expect(mNotification).toHaveBeenCalledTimes(1);
         expect(mNotification.mock.calls[0][0]).toEqual({
             event: IoEvent.CHANGED_RECORD,

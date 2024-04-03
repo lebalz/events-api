@@ -80,6 +80,7 @@ const exportIcs = async (events: Event[], filename: string) => {
     });
     const fileCreatedDe = new Promise<boolean>((resolve, reject) => {
         createEvents(eventsDe, (error, value) => {
+            /* istanbul ignore if */
             if (error) {
                 Logger.error(error);
                 return resolve(false);
