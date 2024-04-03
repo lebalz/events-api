@@ -7,7 +7,7 @@ import prisma from '../../../src/prisma';
 import { rmUndefined } from "../../../src/utils/filterHelpers";
 import { stringify } from "../../../src/utils/logger";
 import { HTTP401Error, HTTP500Error } from "../../../src/utils/errors/Errors";
-import { getDate, getDateTime, getDay, getTime } from "../../../src/services/helpers/time";
+import { getDate, getDateLong, getDateTime, getDay, getTime } from "../../../src/services/helpers/time";
 import { translate } from "../../../src/services/helpers/i18n";
 
 
@@ -284,7 +284,7 @@ describe('Time Helpers', () => {
     });
     test('getDateLong', () => {
         const date = new Date('2021-10-27T15:00:00Z');
-        expect(getDate(date)).toEqual('27.10.2021');
+        expect(getDateLong(date)).toEqual('27.10.2021');
     });
     test('getTime', () => {
         const date = new Date('2021-10-27T15:00:00Z');

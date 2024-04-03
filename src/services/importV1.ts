@@ -5,7 +5,7 @@ import prisma from "../prisma"
 import { i18nKey, translate } from "./helpers/i18n";
 import { Cell } from "read-excel-file/types";
 
-const extractTime = (time: string): [number, number] => {
+const extractTime = (time?: string): [number, number] => {
     if (!time) {
         return [0, 0];
     }
