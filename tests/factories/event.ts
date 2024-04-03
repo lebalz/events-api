@@ -29,7 +29,7 @@ export const generateEvent = (props: (Partial<Prisma.EventUncheckedCreateInput> 
         location: faker.location.city(),
         ...props,
         author: {connect: { id: authorId }},
-        departments: departmentIds ? { connect: departmentIds.map((did) => ({id: did})) } : undefined,
+        departments: props.departments ?? (departmentIds ? { connect: departmentIds.map((did) => ({id: did})) } : undefined),
         parent: parentId ? {connect: { id: parentId }} : undefined,
         job: jobId ? {connect: { id: jobId }} : undefined
 	};
