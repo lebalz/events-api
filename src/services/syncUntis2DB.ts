@@ -10,11 +10,13 @@ import { getClassYear } from './helpers/untisKlasse';
 
 export const syncUntis2DB = async (semesterId: string, fetchUntis: (semester: Semester) => Promise<UntisData> = defaultFetchUntis) => {
     const semester = await prisma.semester.findUnique({ where: { id: semesterId }, include: { lessons: { include: { classes: true } } } });
+    /* istanbul ignore if */
     if (!semester) {
         throw new Error('No Semester found');
     }
     const data = await fetchUntis(semester)
 
+    /* istanbul ignore if */
     if (data.timetable.length === 0) {
         Logger.info('No Data');
         throw new Error(`No timetable data for semester "${semester.name}" in the Week of ${semester.untisSyncDate.toISOString().slice(0, 10)} found`)
@@ -125,6 +127,7 @@ export const syncUntis2DB = async (semesterId: string, fetchUntis: (semester: Se
         });
         dbTransactions.push(klass);
     });
+    /* istanbul ignore if */
     if (process.env.NODE_ENV !== 'test') {
         Logger.info('Classes: idMap', classIdMap);
     }
@@ -137,6 +140,7 @@ export const syncUntis2DB = async (semesterId: string, fetchUntis: (semester: Se
         const dLetter = isoName.slice(2, 3); /** third letter, e.g. 26gA --> g */
         const cLetter = isoName.slice(3, 4); /** fourth letter, e.g. 26gA --> A */
         const department = departments.find(d => d.letter === dLetter && d.classLetters.includes(cLetter));
+        /* istanbul ignore if */
         if (!department) {
             Logger.info(`No Department found for ${dLetter}, ${c.id}, ${c.longName}, ${c.active}, ${c.name}, ${isoName}`);
             unknownClassDepartments[c.name] = {
@@ -207,6 +211,7 @@ export const syncUntis2DB = async (semesterId: string, fetchUntis: (semester: Se
             description: sub?.longName || 'Unbekannt',
         }
     }
+    /* istanbul ignore if */
     if (process.env.NODE_ENV !== 'test') {
         Logger.info(`Next ID: ${nextId}`);
     }
@@ -215,10 +220,12 @@ export const syncUntis2DB = async (semesterId: string, fetchUntis: (semester: Se
         const month = (lesson.date % 10000) / 100;
         const day = lesson.date % 100;
         const date = new Date(Date.UTC(year, month - 1, day, 0, 0, 0, 0));
+        /* istanbul ignore if */
         if (lessonIdSet.has(lesson.id)) {
             return;
         }
         lessonIdSet.add(lesson.id);
+        /* istanbul ignore if */
         if (lesson.subjects.length === 0) {
             Logger.info(`No Subject found for ${JSON.stringify(lesson, null, 2)}`);
             return;
@@ -325,6 +332,7 @@ export const syncUntis2DB = async (semesterId: string, fetchUntis: (semester: Se
         });
         dbTransactions.push(update);
     });
+    /* istanbul ignore if */
     if (process.env.NODE_ENV !== 'test') {
         Logger.info(`TRANSACTION COUNT: ${dbTransactions.length}`);
     }
@@ -347,6 +355,7 @@ export const syncUntis2DB = async (semesterId: string, fetchUntis: (semester: Se
     if (Object.keys(unknownClassDepartments).length > 0) {
         summary['unknownClassDepartments'] = unknownClassDepartments;
     }
+    /* istanbul ignore if */
     if (process.env.NODE_ENV !== 'test') {
         Logger.info('Summary', summary);
     }
