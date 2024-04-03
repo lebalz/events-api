@@ -11,7 +11,7 @@ import _ from 'lodash';
 import { createEventGroup } from './eventGroups.test';
 import EventGroups from '../../../src/models/eventGroups';
 
-export const createEvent = async (props: (Partial<Prisma.EventUncheckedCreateInput> & {authorId: string})) => {
+export const createEvent = async (props: (Partial<Prisma.EventUncheckedCreateInput> & {authorId: string, departmentIds?: string[]})) => {
 	return await prisma.event.create({
 		data: generateEvent(props)
 	});

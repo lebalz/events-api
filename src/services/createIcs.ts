@@ -150,7 +150,6 @@ export const createIcsForClasses = async () => {
             year: {gte: today.getFullYear()}
         }
     });
-
     for (const untisClass of untisClasses) {
         const publicEvents = await prisma.view_EventsClasses.findMany({
             where: {

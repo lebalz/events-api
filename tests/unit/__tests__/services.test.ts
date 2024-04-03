@@ -1,5 +1,6 @@
 import _ from "lodash";
 import { ApiEvent, prepareEvent } from "../../../src/models/event.helpers";
+import { createIcsForDepartments, prepareEvent as prepareIcsEvent} from '../../../src/services/createIcs';
 import { getDateTime } from "../../../src/services/helpers/time";
 import { importCsv } from "../../../src/services/importGBJB_csv";
 import { getChangedProps, getEventProps } from "../../../src/services/notifications/helpers/changedProps";
@@ -7,6 +8,14 @@ import { generateEvent } from "../../factories/event";
 import { createEvent } from "./events.test";
 import { createUser } from "./users.test";
 import { translate } from "../../../src/services/helpers/i18n";
+import { createUntisClass } from "./untisClasses.test";
+import { createDepartment } from "./departments.test";
+import { Event, EventState } from "@prisma/client";
+import { createIcsForClasses } from "../../../src/services/createIcs";
+import { existsSync, readFileSync } from "fs";
+import { ICAL_DIR } from "../../../src/app";
+import prisma from "../../../src/prisma";
+import { createEvents } from "ics";
 
 describe('import csv gbjb', () => {
     test('can extract raw event data', async () => {
@@ -116,4 +125,75 @@ describe('notifications > helpers > getEventProps', () => {
             {name: translate('audience', 'de'), value: translate('STUDENTS', 'de')}
         ], ['name']));
     });
+})
+
+describe('createIcs', () => {
+    let event41i: Event;
+    let event42h: Event;
+    let eventGbsl: Event;
+    beforeEach(async () => {
+        const gbsl = await createDepartment({name: 'GBSL'});
+        const author = await createUser({});
+        await createUntisClass({name: '41i', year: 2041, departmentId: gbsl.id});
+        await createUntisClass({name: '42h', year: 2042, departmentId: gbsl.id});
+        event41i = await createEvent({
+            start: new Date(Date.now() + 1000), 
+            end: new Date(Date.now() + 2000),
+            authorId: author.id,
+            state: EventState.PUBLISHED,
+            classes: ['41i']
+        });
+        event42h = await createEvent({
+            start: new Date(Date.now() + 1000), 
+            end: new Date(Date.now() + 2000),
+            authorId: author.id,
+            state: EventState.PUBLISHED,
+            classes: ['42h']
+        });
+        eventGbsl = await createEvent({
+            start: new Date(Date.now() + 1000), 
+            end: new Date(Date.now() + 2000),
+            authorId: author.id,
+            state: EventState.PUBLISHED,
+            departmentIds: [gbsl.id]
+        });
+    })
+    describe('for classes', () => {
+        test('creates ics for classes', async () => {
+            await createIcsForClasses();
+            expect(existsSync(`${ICAL_DIR}/de/41i.ics`)).toBeTruthy();
+            expect(existsSync(`${ICAL_DIR}/de/42h.ics`)).toBeTruthy();
+            expect(existsSync(`${ICAL_DIR}/fr/41i.ics`)).toBeTruthy();
+            expect(existsSync(`${ICAL_DIR}/fr/42h.ics`)).toBeTruthy();
+            const icalDe41i = readFileSync(`${ICAL_DIR}/de/41i.ics`, { encoding: 'utf-8' });
+            const icsDe41i = createEvents([
+                prepareIcsEvent(event41i, 'de'),
+                prepareIcsEvent(eventGbsl, 'de')
+            ]).value!.replace('END:VCALENDAR', '').split('BEGIN:VEVENT').slice(1).map((e, idx) => `BEGIN:VEVENT${e}`.trim());
+            icsDe41i.forEach((e, idx) => expect(icalDe41i.normalize()).toContain(e.normalize()));
+
+            const icalDe42h = readFileSync(`${ICAL_DIR}/fr/42h.ics`, { encoding: 'utf-8' });
+            const icsDe42h = createEvents([
+                prepareIcsEvent(event42h, 'fr'),
+                prepareIcsEvent(eventGbsl, 'fr')
+            ]).value!.replace('END:VCALENDAR', '').split('BEGIN:VEVENT').slice(1).map((e, idx) => `BEGIN:VEVENT${e}`.trim());
+            icsDe42h.forEach((e, idx) => expect(icalDe42h.normalize()).toContain(e.normalize()));
+
+        })
+    })
+
+    describe('for departments', () => {
+        test('creates ics for classes', async () => {
+            await createIcsForDepartments();
+            expect(existsSync(`${ICAL_DIR}/de/GBSL.ics`)).toBeTruthy();
+            expect(existsSync(`${ICAL_DIR}/fr/GBSL.ics`)).toBeTruthy();
+            const icalDeGbsl = readFileSync(`${ICAL_DIR}/de/GBSL.ics`, { encoding: 'utf-8' });
+            const icsDeGbsl = createEvents([
+                prepareIcsEvent(event41i, 'de'),
+                prepareIcsEvent(event42h, 'de'),
+                prepareIcsEvent(eventGbsl, 'de')
+            ]).value!.replace('END:VCALENDAR', '').split('BEGIN:VEVENT').slice(1).map((e, idx) => `BEGIN:VEVENT${e}`.trim());
+            icsDeGbsl.forEach((e, idx) => expect(icalDeGbsl.normalize()).toContain(e.normalize()));
+        })        
+    })
 })
