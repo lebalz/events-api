@@ -6040,10 +6040,10 @@ webidl-conversions@^3.0.0:
   resolved "https://registry.yarnpkg.com/webidl-conversions/-/webidl-conversions-3.0.1.tgz#24534275e2a7bc6be7bc86611cc16ae0a5654871"
   integrity sha512-2JAn3z8AR6rjK8Sm8orRC0h/bcl/DqL7tRPdGZ4I1CjdF+EaMLmYxBHyXuKL849eucPFhvBoxMsflfOb8kxaeQ==
 
-webuntis@^2.2.0:
-  version "2.2.0"
-  resolved "https://registry.yarnpkg.com/webuntis/-/webuntis-2.2.0.tgz#aa36c4056ebbcfefec4756cbf2e90bcd3d4a49d7"
-  integrity sha512-8wdpZO9pU14JRN5VWAYrOa87Vs39j+ZIR1+803el5g6ddKyV0JimyJP3lXidUH3ypZQLSp+gOEoOaxxb+3V7Xg==
+webuntis@^2.2.1:
+  version "2.2.1"
+  resolved "https://registry.yarnpkg.com/webuntis/-/webuntis-2.2.1.tgz#1a9505a2eda1fa780e510cd7a2f4529939ca6f26"
+  integrity sha512-9zDHBjcH52ps7FbQ/fO7tPg7WQbaqkXgRdvpogB1pCeV+EmFSbkQ2qOviwEYV/qzAKFVu58yq9wzdV/Atba80w==
   dependencies:
     axios "^1.6.7"
     date-fns "^3.3.1"

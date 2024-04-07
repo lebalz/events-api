@@ -57,7 +57,7 @@
     "socket.io": "^4.7.2",
     "typescript": "^5.2",
     "uuid": "^9.0.0",
-    "webuntis": "^2.2.0",
+    "webuntis": "^2.2.1",
     "winston": "^3.10.0"
   },
   "devDependencies": {
