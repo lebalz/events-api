@@ -4,7 +4,7 @@ import { HTTP403Error, HTTP404Error } from "../utils/errors/Errors";
 import { createDataExtractor } from "../controllers/helpers";
 
 const getData = createDataExtractor<Prisma.RegistrationPeriodUncheckedUpdateInput>(
-    ['name', 'start', 'end']
+    ['name', 'start', 'end', 'description', 'eventRangeEnd', 'eventRangeStart', 'isOpen']
 );
 
 export const prepareRegistrationPeriod = (registrationPeriod: RegistrationPeriod & { departments?: { id: string }[]}) => {
@@ -24,7 +24,6 @@ function RegistrationPeriods(db: PrismaClient['registrationPeriod']) {
             return await db.findMany({});
         },
         async findModel(id: string) {
-            console.log('find rp', id)
             const model = await db.findUnique({ where: { id }, include: { departments: { select: { id: true }}} });
 
             if (!model) {
@@ -32,19 +31,64 @@ function RegistrationPeriods(db: PrismaClient['registrationPeriod']) {
             }
             return prepareRegistrationPeriod(model);
         },
-        async createModel(actor: User, data: Prisma.RegistrationPeriodUncheckedCreateInput) {
+        async openPeriods(forDate: Date, eventStartDate: Date, departmentIds: string[]) {
+            const models1 = await db.findMany({
+                where: {
+                    OR: [
+                        { 
+                            AND: [
+                                { start: { lte: forDate}},
+                                { end: { gte: forDate }},
+                                { eventRangeStart: { lte: eventStartDate }},
+                                { eventRangeEnd: { gte: eventStartDate }}
+                            ]
+                        },
+                        { isOpen: true }
+                    ]
+                }
+            });
+            const models2 = await db.findMany({
+                where: {
+                    departments: { some: { id: { in: departmentIds }}}
+                }
+            });
+            const models = await db.findMany({
+                where: {
+                    AND: [
+                        {
+                            OR: [
+                                { 
+                                    AND: [
+                                        { start: { lte: forDate}},
+                                        { end: { gte: forDate }},
+                                        { eventRangeStart: { lte: eventStartDate }},
+                                        { eventRangeEnd: { gte: eventStartDate }}
+                                    ]
+                                },
+                                { isOpen: true }
+                            ]
+                        },
+                        { departments: { some: { id: { in: departmentIds }}}}
+                    ]
+                }
+            });
+            return models.map((rp) => prepareRegistrationPeriod(rp));
+        },
+        async createModel(data: Prisma.RegistrationPeriodUncheckedCreateInput) {
             /** authorization handled by route guard */
-            const { start, end, name } = data;
+            const { start, end, name, eventRangeEnd, eventRangeStart } = data;
             const model = await db.create({
                 data: {
                     start,
                     end,
-                    name
+                    name,
+                    eventRangeStart,
+                    eventRangeEnd
                 }
             });
             return prepareRegistrationPeriod(model);
         },
-        async updateModel(actor: User, id: string, data: Prisma.SemesterUncheckedUpdateInput & { departmentIds?: string[]}) {
+        async updateModel(id: string, data: Prisma.RegistrationPeriodUncheckedUpdateInput & { departmentIds?: string[]}) {
             /** authorization handled by route guard */
             /** remove fields not updatable*/
             const sanitized = getData(data);

@@ -24,9 +24,9 @@ export const find: RequestHandler<{ id: string }, any, any> = async (req, res, n
     }
 }
 
-export const create: RequestHandler<any, any, Semester> = async (req, res, next) => {
+export const create: RequestHandler<any, any, RegistrationPeriod> = async (req, res, next) => {
     try {
-        const model = await RegistrationPeriods.createModel(req.user!, req.body);
+        const model = await RegistrationPeriods.createModel(req.body);
         res.notifications = [
             {
                 message: { record: NAME, id: model.id },
@@ -42,7 +42,7 @@ export const create: RequestHandler<any, any, Semester> = async (req, res, next)
 
 export const update: RequestHandler<{ id: string }, any, { data: Semester }> = async (req, res, next) => {
     try {
-        const model = await RegistrationPeriods.updateModel(req.user!, req.params.id, req.body.data);
+        const model = await RegistrationPeriods.updateModel(req.params.id, req.body.data);
         
         res.notifications = [
             {

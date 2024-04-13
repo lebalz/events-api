@@ -10,6 +10,9 @@ import { setTimeout } from 'timers/promises';
 import _ from 'lodash';
 import { createEventGroup } from './eventGroups.test';
 import EventGroups from '../../../src/models/eventGroups';
+import { createRegistrationPeriod } from './registrationPeriods.test';
+import { faker } from '@faker-js/faker';
+import { createSemester } from './semesters.test';
 
 export const createEvent = async (props: (Partial<Prisma.EventUncheckedCreateInput> & {authorId: string, departmentIds?: string[]})) => {
 	return await prisma.event.create({
@@ -196,8 +199,11 @@ describe('setState transitions', () => {
 	});
 
 	test('DRAFT -> REVIEW', async () => {
-		const user = await createUser({ id: '3535b2ee-806f-425c-a4f5-394d8b16f6f9' })
-		const event = await createEvent({ id: '7cf72375-4ee7-4a13-afeb-8d68883acdf4', authorId: user.id, state: EventState.DRAFT })
+		const user = await createUser({ id: '3535b2ee-806f-425c-a4f5-394d8b16f6f9' });
+		const gbsl = await createDepartment({name: 'GBSL'});
+		const event = await createEvent({ id: '7cf72375-4ee7-4a13-afeb-8d68883acdf4', departmentIds: [gbsl.id], authorId: user.id, state: EventState.DRAFT })
+		const sem = await createSemester({start: faker.date.recent({refDate: event.start}), end: faker.date.future({refDate: event.end})});
+		const regPeriod = await createRegistrationPeriod({eventRangeStart: faker.date.recent({refDate: event.start}), departmentIds: [gbsl.id]});
 
 		await expect(Events.setState(user, '7cf72375-4ee7-4a13-afeb-8d68883acdf4', EventState.REVIEW)).resolves.toEqual({
 			event: {
@@ -206,7 +212,7 @@ describe('setState transitions', () => {
 				 */
 				...event,
 				state: EventState.REVIEW,
-				departmentIds: [],
+				departmentIds: [gbsl.id],
 				publishedVersionIds: [],
 				updatedAt: expect.any(Date)
 			},

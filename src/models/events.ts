@@ -1,4 +1,4 @@
-import { Department, Event, EventState, Job, JobState, JobType, Prisma, PrismaClient, Role, Semester, User } from "@prisma/client";
+import { Event, EventState, Job, JobState, JobType, Prisma, PrismaClient, Role, User } from "@prisma/client";
 import prisma from "../prisma";
 import { createDataExtractor } from "../controllers/helpers";
 import { ApiEvent, clonedProps, clonedUpdateProps, prepareEvent } from "./event.helpers";
@@ -6,6 +6,7 @@ import { HTTP400Error, HTTP403Error, HTTP404Error } from "../utils/errors/Errors
 import { importEvents as importService, ImportType } from "../services/importEvents";
 import Logger from "../utils/logger";
 import Semesters from "./semesters";
+import RegistrationPeriods from "./registrationPeriods";
 import _ from "lodash";
 const getData = createDataExtractor<Prisma.EventUncheckedUpdateInput>(
     [
@@ -209,8 +210,17 @@ function Events(db: PrismaClient['event']) {
                             });
                             return {event: prepareEvent(model), affected: []};
                         } else {
-                            const model = await updater();
-                            return {event: prepareEvent(model), affected: []};
+                            const eventsDepartments = await prisma.view_Events.findFirstOrThrow({where: { eventId: record.id }, select: { departmentIds: true, departmentSchoolIds: true}});
+                            const registrationPeriods = await RegistrationPeriods.openPeriods(
+                                new Date(),
+                                record.start,
+                                [...new Set([...eventsDepartments.departmentIds, ...eventsDepartments.departmentSchoolIds])]
+                            );
+                            if (registrationPeriods.length > 0 || isAdmin) {
+                                const model = await updater();
+                                return {event: prepareEvent(model), affected: []};
+                            }
+                            throw new HTTP400Error('No open registration period found.')
                         }
                     }
                     throw new HTTP400Error('Draft can only be set to review');

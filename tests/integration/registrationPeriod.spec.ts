@@ -9,6 +9,7 @@ import { IoEvent } from '../../src/routes/socketEventTypes';
 import { faker } from '@faker-js/faker';
 import { prepareRegistrationPeriod as apiPreparedRP } from '../../src/models/registrationPeriods';
 import { generateDepartment } from '../factories/department';
+import { generateRegistrationPeriod } from '../factories/registrationPeriod';
 
 jest.mock('../../src/middlewares/notify.nop');
 const mNotification = <jest.Mock<typeof notify>>notify;
@@ -22,16 +23,16 @@ const prepareRegistrationPeriod = (regPeriod: RegistrationPeriod) => {
 beforeEach(async () => {
     await prisma.registrationPeriod.createMany({
         data: [
-            {
+            generateRegistrationPeriod({
                 start: new Date('2023-03-01'),
                 end: new Date('2023-06-28'),
                 name: 'HS2023'
-            },
-            {
+            }),
+            generateRegistrationPeriod({
                 start: new Date('2023-08-23'),
                 end: new Date('2023-12-23'),
                 name: 'FS2024'
-            }
+            })
         ]
     });
 });
@@ -69,7 +70,6 @@ describe(`GET ${API_URL}/registration_periods/:id`, () => {
     it("can get registration period by id", async () => {
         const user = await prisma.user.create({data: generateUser({})});
         const regPeriod = await prisma.registrationPeriod.findFirst();
-        console.log('regPeriod', regPeriod)
         const result = await request(app)
             .get(`${API_URL}/registration_periods/${regPeriod!.id}`)
             .set('authorization', JSON.stringify({email: user.email}));
@@ -173,7 +173,7 @@ describe(`POST ${API_URL}/registration_periods`, () => {
         const result = await request(app)
             .post(`${API_URL}/registration_periods`)
             .set('authorization', JSON.stringify({email: admin.email}))
-            .send({name: 'FOO', start: start, end: end });
+            .send({name: 'FOO', start: start, end: end, eventRangeStart: start, eventRangeEnd: end });
         expect(result.statusCode).toEqual(201);
         expect(result.body.name).toEqual('FOO');
         expect(result.body.start).toEqual(start.toISOString());

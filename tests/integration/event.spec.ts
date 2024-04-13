@@ -14,6 +14,9 @@ import { IoRoom } from '../../src/routes/socketEvents';
 import _ from 'lodash';
 import { generateDepartment } from '../factories/department';
 import { ImportType } from '../../src/services/importEvents';
+import { createDepartment } from '../unit/__tests__/departments.test';
+import { createSemester } from '../unit/__tests__/semesters.test';
+import { createRegistrationPeriod } from '../unit/__tests__/registrationPeriods.test';
 
 jest.mock('../../src/middlewares/notify.nop');
 const mNotification = <jest.Mock<typeof notify>>notify;
@@ -351,7 +354,11 @@ describe(`POST ${API_URL}/events/change_state`, () => {
                     const user = await prisma.user.create({
                         data: generateUser({ email: 'foo@bar.ch', role: role })
                     });
-                    const event = await prisma.event.create({ data: generateEvent({ authorId: user.id, state: transition.from }) });
+                    const gbsl = await createDepartment({name: 'GBSL'});
+                    const event = await prisma.event.create({ data: generateEvent({ authorId: user.id, state: transition.from, departmentIds: [gbsl.id] }) });
+                    const sem = await createSemester({start: faker.date.recent({refDate: event.start}), end: faker.date.future({refDate: event.end})});
+                    const regPeriod = await createRegistrationPeriod({eventRangeStart: faker.date.recent({refDate: event.start}), departmentIds: [gbsl.id]});
+            
                     const result = await request(app)
                         .post(`${API_URL}/events/change_state`)
                         .set('authorization', JSON.stringify({ email: user.email }))
@@ -396,7 +403,11 @@ describe(`POST ${API_URL}/events/change_state`, () => {
                     const user = await prisma.user.create({
                         data: generateUser({ email: 'foo@bar.ch', role: role })
                     });
-                    const event = await prisma.event.create({ data: generateEvent({ authorId: user.id, state: transition.from }) });
+                    const gbsl = await createDepartment({name: 'GBSL'});
+                    const event = await prisma.event.create({ data: generateEvent({ authorId: user.id, state: transition.from, departmentIds: [gbsl.id] }) });
+                    const sem = await createSemester({start: faker.date.recent({refDate: event.start}), end: faker.date.future({refDate: event.end})});
+                    const regPeriod = await createRegistrationPeriod({eventRangeStart: faker.date.recent({refDate: event.start}), departmentIds: [gbsl.id]});
+
                     const result = await request(app)
                         .post(`${API_URL}/events/change_state`)
                         .set('authorization', JSON.stringify({ email: user.email }))

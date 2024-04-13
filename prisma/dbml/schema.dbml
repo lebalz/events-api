@@ -94,8 +94,12 @@ Table semesters {
 Table registration_periods {
   id String [pk]
   name String [not null]
+  description String [not null, default: '']
   start DateTime [not null]
   end DateTime [not null]
+  eventRangeStart DateTime [not null]
+  eventRangeEnd DateTime [not null]
+  isOpen Boolean [not null, default: false]
   departments departments [not null]
   createdAt DateTime [default: `now()`, not null]
   updatedAt DateTime [default: `now()`, not null]
