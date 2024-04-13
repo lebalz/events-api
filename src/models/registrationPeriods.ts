@@ -21,7 +21,8 @@ export const prepareRegistrationPeriod = (registrationPeriod: RegistrationPeriod
 function RegistrationPeriods(db: PrismaClient['registrationPeriod']) {
     return Object.assign(db, {
         async all() {
-            return await db.findMany({});
+            const records = await db.findMany({include: { departments: { select: { id: true }}}});
+            return records.map(r => prepareRegistrationPeriod(r))
         },
         async findModel(id: string) {
             const model = await db.findUnique({ where: { id }, include: { departments: { select: { id: true }}} });
