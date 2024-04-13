@@ -116,6 +116,7 @@ model Department {
 
     classes UntisClass[]
     events  Event[]      @relation("events_to_departments")
+    registrationPeriods  RegistrationPeriod[] @relation("registration_periods_to_departments")
     color   String       @default("#306cce")
 
     createdAt DateTime @default(now()) @map("created_at")
@@ -143,6 +144,7 @@ model RegistrationPeriod {
     name      String
     start     DateTime
     end       DateTime
+    departments  Department[] @relation("registration_periods_to_departments")
     createdAt DateTime @default(now()) @map("created_at")
     updatedAt DateTime @updatedAt @default(now()) @map("updated_at")
 

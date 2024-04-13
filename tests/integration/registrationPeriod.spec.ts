@@ -7,13 +7,15 @@ import _ from 'lodash';
 import { notify } from '../../src/middlewares/notify.nop';
 import { IoEvent } from '../../src/routes/socketEventTypes';
 import { faker } from '@faker-js/faker';
+import { prepareRegistrationPeriod as apiPreparedRP } from '../../src/models/registrationPeriods';
+import { generateDepartment } from '../factories/department';
 
 jest.mock('../../src/middlewares/notify.nop');
 const mNotification = <jest.Mock<typeof notify>>notify;
 
 const prepareRegistrationPeriod = (regPeriod: RegistrationPeriod) => {
     return {
-        ...JSON.parse(JSON.stringify(regPeriod))
+        ...JSON.parse(JSON.stringify(apiPreparedRP(regPeriod)))
     }
 }
 
@@ -67,6 +69,7 @@ describe(`GET ${API_URL}/registration_periods/:id`, () => {
     it("can get registration period by id", async () => {
         const user = await prisma.user.create({data: generateUser({})});
         const regPeriod = await prisma.registrationPeriod.findFirst();
+        console.log('regPeriod', regPeriod)
         const result = await request(app)
             .get(`${API_URL}/registration_periods/${regPeriod!.id}`)
             .set('authorization', JSON.stringify({email: user.email}));
@@ -98,6 +101,28 @@ describe(`PUT ${API_URL}/registration_periods/:id`, () => {
         expect(result.body).toEqual({
             ...prepareRegistrationPeriod(regPeriod!),
             name: 'FOO',
+            updatedAt: expect.any(String)
+        });
+        expect(mNotification).toHaveBeenCalledTimes(1);
+        expect(mNotification.mock.calls[0][0]).toEqual({
+            event: IoEvent.CHANGED_RECORD,
+            message: { record: 'REGISTRATION_PERIOD', id: regPeriod!.id },
+            to: 'all'
+        });
+    });
+    it("can modify departments", async () => {
+        const gbsl = await prisma.department.create({data: generateDepartment({name: 'GBSL'})});
+        const gbjb = await prisma.department.create({data: generateDepartment({name: 'GBJB'})});
+        const admin = await prisma.user.create({data: generateUser({role: Role.ADMIN})});
+        const regPeriod = await prisma.registrationPeriod.findFirst();
+        const result = await request(app)
+            .put(`${API_URL}/registration_periods/${regPeriod!.id}`)
+            .set('authorization', JSON.stringify({email: admin.email}))
+            .send({data: {departmentIds: [gbsl.id, gbjb.id]}});
+        expect(result.statusCode).toEqual(200);
+        expect(result.body).toEqual({
+            ...prepareRegistrationPeriod(regPeriod!),
+            departmentIds: [gbsl.id, gbjb.id],
             updatedAt: expect.any(String)
         });
         expect(mNotification).toHaveBeenCalledTimes(1);

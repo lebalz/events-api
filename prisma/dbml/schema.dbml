@@ -73,6 +73,7 @@ Table departments {
   childDepartment2 departments
   classes untis_classes [not null]
   events events [not null]
+  registrationPeriods registration_periods [not null]
   color String [not null, default: '#306cce']
   createdAt DateTime [default: `now()`, not null]
   updatedAt DateTime [default: `now()`, not null]
@@ -95,6 +96,7 @@ Table registration_periods {
   name String [not null]
   start DateTime [not null]
   end DateTime [not null]
+  departments departments [not null]
   createdAt DateTime [default: `now()`, not null]
   updatedAt DateTime [default: `now()`, not null]
 }
@@ -325,6 +327,11 @@ Table events_to_departments {
 Table events_to_event_groups {
   groupsId String [ref: > event_groups.id]
   eventsId String [ref: > events.id]
+}
+
+Table registration_periods_to_departments {
+  registrationperiodsId String [ref: > registration_periods.id]
+  departmentsId String [ref: > departments.id]
 }
 
 Table teachers_to_lessons {
