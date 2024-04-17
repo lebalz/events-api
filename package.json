@@ -29,7 +29,7 @@
     "seed": "ts-node -r dotenv/config prisma/seed.ts"
   },
   "dependencies": {
-    "@azure/msal-node": "^2.6.1",
+    "@azure/msal-node": "^2.7.0",
     "@prisma/client": "^5.11.0",
     "@socket.io/admin-ui": "^0.5.1",
     "@types/nodemailer": "^6.4.14",

@@ -15,17 +15,17 @@
   resolved "https://registry.yarnpkg.com/@antfu/ni/-/ni-0.21.4.tgz#a6c1e3d6fbd86e4cb36ec5ff97302ae8878f3eee"
   integrity sha512-O0Uv9LbLDSoEg26fnMDdDRiPwFJnQSoD4WnrflDwKCJm8Cx/0mV4cGxwBLXan5mGIrpK4Dd7vizf4rQm0QCEAA==
 
-"@azure/msal-common@14.8.1":
-  version "14.8.1"
-  resolved "https://registry.yarnpkg.com/@azure/msal-common/-/msal-common-14.8.1.tgz#a0ebe12a23f19f6f484ded38acd525474f056ff6"
-  integrity sha512-9HfBMDTIgtFFkils+o6gO/aGEoLLuc4z+QLLfhy/T1bTNPiVsX/9CjaBPMZGnMltN/IlMkU5SGGNggGh55p5xA==
+"@azure/msal-common@14.9.0":
+  version "14.9.0"
+  resolved "https://registry.yarnpkg.com/@azure/msal-common/-/msal-common-14.9.0.tgz#ce1895b4eefccaa0e6aaa39db869611eaec4e37f"
+  integrity sha512-yzBPRlWPnTBeixxLNI3BBIgF5/bHpbhoRVuuDBnYjCyWRavaPUsKAHUDYLqpGkBLDciA6TCc6GOxN4/S3WiSxg==
 
-"@azure/msal-node@^2.6.1":
-  version "2.6.6"
-  resolved "https://registry.yarnpkg.com/@azure/msal-node/-/msal-node-2.6.6.tgz#91ee9da18137d93476fb3a19687f1618214524ef"
-  integrity sha512-j+1hW81ccglIYWukXufzRA4O71BCmpbmCO66ECDyE9FuPno6SjiR+K+mIk4tg6aQ7/UO2QA/EnRmT6YN0EF1Hw==
+"@azure/msal-node@^2.7.0":
+  version "2.7.0"
+  resolved "https://registry.yarnpkg.com/@azure/msal-node/-/msal-node-2.7.0.tgz#8641ab846704dd4fcbeed30aef94544c5fecfa30"
+  integrity sha512-wXD8LkUvHICeSWZydqg6o8Yvv+grlBEcmLGu+QEI4FcwFendbTEZrlSygnAXXSOCVaGAirWLchca35qrgpO6Jw==
   dependencies:
-    "@azure/msal-common" "14.8.1"
+    "@azure/msal-common" "14.9.0"
     jsonwebtoken "^9.0.0"
     uuid "^8.3.0"
 
