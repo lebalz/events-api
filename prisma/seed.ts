@@ -155,6 +155,9 @@ async function main() {
     ]
     for (var i = 0; i < departments.length; i++) {
         const department = departments[i];
+        if (department.name === 'FMPaed') {
+            department.name = 'FMPäd';
+        }
         const dep = await prisma.department.upsert({
             where: { name: department.name },
             update: { ...department },
