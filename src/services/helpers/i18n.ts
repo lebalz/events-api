@@ -34,7 +34,7 @@ const i18n = {
     },
     teachingAffected: {
         de: 'Unterricht betroffen?',
-        fr: 'Enseignement concerné?'
+        fr: 'Leçons impactés?'
     },
     start: {
         de: 'Start',
@@ -238,7 +238,7 @@ const i18n = {
     },
     kw: {
         de: 'KW',
-        fr: 'Sem'
+        fr: 'SC'
     },
     weekday: {
         de: 'Wochentag',
@@ -246,19 +246,19 @@ const i18n = {
     },
     dateStart: {
         de: 'Datum Beginn',
-        fr: 'Date de début'
+        fr: 'Date début'
     },
     timeStart: {
         de: 'Zeit Beginn',
-        fr: 'Heure de début'
+        fr: 'Heure début'
     },
     dateEnd: {
         de: 'Datum Ende',
-        fr: 'Date de fin'
+        fr: 'Date fin'
     },
     timeEnd: {
         de: 'Zeit Ende',
-        fr: 'Heure de fin'
+        fr: 'Heure fin'
     },
     bilingueLPsAffected: {
         de: 'Bilingue LP\'s betroffen',

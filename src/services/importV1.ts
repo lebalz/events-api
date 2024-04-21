@@ -32,7 +32,7 @@ const toDate = (date: Date | string): Date | undefined => {
 }
 
 const getColumnIndex = (header: Row, key: string) => {
-    const headerNames = header.map((h) => h.toString().toLowerCase());
+    const headerNames = header.map((h) => h.toString().toLowerCase().trim().replace(' ?', '?'));
     return Math.max(
         headerNames.indexOf(translate(key as i18nKey, 'de').toLowerCase()),
         headerNames.indexOf(translate(key as i18nKey, 'fr').toLowerCase())
