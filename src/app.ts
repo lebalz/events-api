@@ -136,7 +136,7 @@ app.use(
                     referrer: '',
                     screen: `1080x600`,
                     title: 'ics file',
-                    url: `${HOSTNAME}/ical/${lang}/${ical}`,
+                    url: `/ical/${lang}/${ical}`,
                     website: process.env.UMAMI_ID || 'eventes-api',
                     name: 'access-ical'
                 },
