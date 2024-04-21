@@ -16,6 +16,7 @@ import { notify } from "./middlewares/notify.nop";
 import { HTTP401Error } from "./utils/errors/Errors";
 import connectPgSimple from "connect-pg-simple";
 import { existsSync, mkdirSync } from "fs";
+import { request } from "https";
 
 
 const AccessRules = createAccessRules(authConfig.accessMatrix);
@@ -81,13 +82,13 @@ export const sessionMiddleware = session({
     saveUninitialized: false,
     resave: false,
     cookie: {
-      secure: false, // process.env.NODE_ENV === 'production',
-      httpOnly: true,
-      sameSite: 'lax',
-      domain: domain.length > 0 ? domain : undefined,
-      maxAge: 1000 * 60 * 60 * 24, // 1 day
+        secure: false, // process.env.NODE_ENV === 'production',
+        httpOnly: true,
+        sameSite: 'lax',
+        domain: domain.length > 0 ? domain : undefined,
+        maxAge: 1000 * 60 * 60 * 24, // 1 day
     },
-  });
+});
 
 app.use(sessionMiddleware);
 
@@ -117,9 +118,53 @@ passport.deserializeUser(async (id, done) => {
     done(null, user);
 });
 
+const HOSTNAME = new URL(process.env.EVENTS_APP_URL || 'http://localhost').hostname;
+const UMAMI_HOSTNAME = new URL(process.env.UMAMI_URL || 'http://localhost').hostname
 /** Static folders */
-app.use('/ical', express.static(ICAL_DIR));
-app.use('/static', express.static(STATIC_DIR));
+app.use(
+    '/ical',
+    (req, res, next) => {
+        /**
+         * Umami Middleware
+         */
+        if (process.env.UMAMI_URL && process.env.UMAMI_ID) {
+            const [_, lang, ical] = req.path.split('/');
+            const data = {
+                payload: {
+                    hostname: HOSTNAME,
+                    language: lang === 'fr' ? 'fr-CH' : 'de-CH',
+                    referrer: '',
+                    screen: `1080x600`,
+                    title: 'ics file',
+                    url: `${HOSTNAME}/ical/${lang}/${ical}`,
+                    website: process.env.UMAMI_ID || 'eventes-api',
+                    name: 'access-ical'
+                },
+                type: 'event',
+            };
+            const body = JSON.stringify(data);
+            const umamiReq = request({
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'user-agent': req.headers['user-agent'],
+                    'content-length': body.length,
+                },
+                hostname: UMAMI_HOSTNAME,
+                path: '/api/send',
+    
+            });
+            umamiReq.on('error', (e) => {
+                console.error(e);
+            })
+            umamiReq.write(body);
+            umamiReq.end();
+        }
+
+        next();
+    },
+    express.static(ICAL_DIR)
+);
 
 // Serve the static files to be accessed by the docs app
 app.use(express.static(path.join(__dirname,'..', 'docs')));
@@ -142,6 +187,7 @@ app.get(`${API_URL}/checklogin`,
         }
     }
 );
+
 export const configure = (_app: typeof app) => {
     /**
      * Notification Middleware
