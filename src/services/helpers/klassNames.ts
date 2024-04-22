@@ -81,8 +81,8 @@ export const mapLegacyClassName: (name: string) => `${number}${DepartmentLetter}
         //     return `${year}${DepartmentLetter.ECG}${newLetter}`;
         // }
         if (['R', 'S', 'T'].includes(id)) {
-            // FMS/ECG
-            const newLetter = String.fromCharCode(id.charCodeAt(0) + 2);
+            // ECG
+            const newLetter = String.fromCharCode('A'.charCodeAt(0) + id.charCodeAt(0) - 'R'.charCodeAt(0));
             return `${year}${DepartmentLetter.ECG}${newLetter}`;
         }
 

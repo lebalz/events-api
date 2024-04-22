@@ -126,7 +126,8 @@ app.use(
     (req, res, next) => {
         /**
          * Umami Middleware
-         */
+         */        
+        /* istanbul ignore next */
         if (process.env.UMAMI_URL && process.env.UMAMI_ID) {
             const [_, lang, ical] = req.path.split('/');
             const data = {
