@@ -1054,6 +1054,138 @@ describe(`POST ${API_URL}/events/import`, () => {
             expect(event4.affectsDepartment2).toBeFalsy();
         });
 
+        
+        it("V1 import format handles column name mapping", async () => {
+            const user = await prisma.user.create({
+                data: generateUser({ email: 'user@bar.ch', role: Role.USER })
+            });
+
+            const result = await request(app)
+                .post(`${API_URL}/events/import?type=${ImportType.V1}`)
+                .set('authorization', JSON.stringify({ email: user.email }))
+                .attach('terminplan', `${__dirname}/stubs/terminplan-v1-department-name-mapping.xlsx`)
+            expect(result.statusCode).toEqual(200);
+            /** wait for the import job to finish */
+            let job = await Jobs.findModel(user, result.body.id);
+            while (job.state === JobState.PENDING) {
+                await new Promise((resolve) => setTimeout(resolve, 50));
+                job = await Jobs.findModel(user, result.body.id);
+            }
+
+            const events = await prisma.event.findMany({
+                include: {
+                    groups: {
+                        select: {id: true}
+                    },
+                    departments: {
+                        select: {id: true, name: true}
+                    }
+                }
+            });
+            expect(events.length).toEqual(1);
+            const event3 = events.find(e => e.description === 'Pfingsten: Frei')!;
+            expect(event3.descriptionLong).toEqual('Pfingstmontag: Frei');
+            expect(event3.location).toEqual('');
+            expect(event3.start.toISOString()).toEqual('2024-05-20T00:00:00.000Z');
+            expect(event3.end.toISOString()).toEqual('2024-05-21T00:00:00.000Z');
+            expect(event3.classes).toEqual([]);
+            expect(event3.classGroups).toEqual([]);
+            expect(event3.departments.map(d => d.name).sort()).toEqual(['FMS', 'GYMD', 'GYMD/GYMF', 'GYMF', 'GYMF/GYMD', 'WMS']);
+            expect(event3.audience).toEqual(EventAudience.ALL);
+            expect(event3.teachingAffected).toEqual(TeachingAffected.YES);
+            expect(event3.affectsDepartment2).toBeFalsy();
+        });
+
+        it("V1 import format ignores missing columns", async () => {
+            const user = await prisma.user.create({
+                data: generateUser({ email: 'user@bar.ch', role: Role.USER })
+            });
+
+            const result = await request(app)
+                .post(`${API_URL}/events/import?type=${ImportType.V1}`)
+                .set('authorization', JSON.stringify({ email: user.email }))
+                .attach('terminplan', `${__dirname}/stubs/terminplan-v1-missing-column.xlsx`)
+            expect(result.statusCode).toEqual(200);
+            /** wait for the import job to finish */
+            let job = await Jobs.findModel(user, result.body.id);
+            while (job.state === JobState.PENDING) {
+                await new Promise((resolve) => setTimeout(resolve, 50));
+                job = await Jobs.findModel(user, result.body.id);
+            }
+
+            const events = await prisma.event.findMany({
+                include: {
+                    groups: {
+                        select: {id: true}
+                    },
+                    departments: {
+                        select: {id: true, name: true}
+                    }
+                }
+            });
+            expect(events.length).toEqual(1);
+            const event3 = events.find(e => e.description === 'Pfingsten: Frei')!;
+            expect(event3.descriptionLong).toEqual('Pfingstmontag: Frei');
+            expect(event3.location).toEqual('');
+            expect(event3.start.toISOString()).toEqual('2024-05-20T00:00:00.000Z');
+            expect(event3.end.toISOString()).toEqual('2024-05-21T00:00:00.000Z');
+            expect(event3.classes).toEqual([]);
+            expect(event3.classGroups).toEqual([]);
+            expect(event3.departments.map(d => d.name).sort()).toEqual(['FMS', 'GYMD', 'WMS']);
+            expect(event3.audience).toEqual(EventAudience.ALL);
+            expect(event3.teachingAffected).toEqual(TeachingAffected.YES);
+            expect(event3.affectsDepartment2).toBeFalsy();
+        });
+
+        it("V1 import format respects 'excdluded classes'", async () => {
+            /** create some classes */
+            for (const kl of ['23Fa', '24Fa', '24Fb', '24Ga', '24Gi', '24mA', '24mB', '24mT']){
+                await prisma.untisClass.create({
+                    data: generateUntisClass({name: kl})
+                })
+            }
+
+            const user = await prisma.user.create({
+                data: generateUser({ email: 'user@bar.ch', role: Role.USER })
+            });
+
+            const result = await request(app)
+                .post(`${API_URL}/events/import?type=${ImportType.V1}`)
+                .set('authorization', JSON.stringify({ email: user.email }))
+                .attach('terminplan', `${__dirname}/stubs/terminplan-v1-excludes.xlsx`)
+            expect(result.statusCode).toEqual(200);
+            /** wait for the import job to finish */
+            let job = await Jobs.findModel(user, result.body.id);
+            while (job.state === JobState.PENDING) {
+                await new Promise((resolve) => setTimeout(resolve, 50));
+                job = await Jobs.findModel(user, result.body.id);
+            }
+
+            const events = await prisma.event.findMany({
+                include: {
+                    groups: {
+                        select: {id: true}
+                    },
+                    departments: {
+                        select: {id: true, name: true}
+                    }
+                }
+            });
+            expect(events.length).toEqual(1);
+
+            const event4 = events.find(e => e.description === 'Singen')!;
+            expect(event4.descriptionLong).toEqual('Gemeinsam singen');
+            expect(event4.location).toEqual('');
+            expect(event4.start.toISOString()).toEqual('2024-05-21T00:00:00.000Z');
+            expect(event4.end.toISOString()).toEqual('2024-05-22T00:00:00.000Z');
+            expect(event4.classes.sort()).toEqual(['24Fb', '24Ga', '24mA', '24mB','25Gb', '25Gc', '25Gd', '25Ge', '25Gf', '25Gg', '25Gi'].sort());
+            expect(event4.classGroups).toEqual(['26m']);
+            expect(event4.departments.map(d => d.name).sort()).toEqual([]);
+            expect(event4.audience).toEqual(EventAudience.STUDENTS);
+            expect(event4.teachingAffected).toEqual(TeachingAffected.YES);
+            expect(event4.affectsDepartment2).toBeFalsy();
+        });
+
         it("prevents users from importing events", async () => {
             const user = await prisma.user.create({
                 data: generateUser({ email: 'foo@bar.ch' })
