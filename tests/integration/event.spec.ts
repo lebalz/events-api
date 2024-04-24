@@ -761,7 +761,7 @@ describe(`POST ${API_URL}/events/import`, () => {
             });
 
             expect(job.state).toEqual(JobState.DONE);
-            expect(job.log).toEqual('');
+            expect(job.log.trim()).toEqual('Success: 4/4 events imported\nFailed: 0');
 
             const events = await prisma.event.findMany({
                 include: {
@@ -893,7 +893,7 @@ describe(`POST ${API_URL}/events/import`, () => {
             });
 
             expect(job.state).toEqual(JobState.DONE);
-            expect(job.log).toEqual('');
+            expect(job.log.trim()).toEqual('Success: 3/3 events imported\nFailed: 0');
 
             const events = await prisma.event.findMany({
                 include: {
