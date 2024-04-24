@@ -1185,6 +1185,63 @@ describe(`POST ${API_URL}/events/import`, () => {
             expect(event4.teachingAffected).toEqual(TeachingAffected.YES);
             expect(event4.affectsDepartment2).toBeFalsy();
         });
+        it("V1 import format ignores failing rows", async () => {
+            /** create some classes */
+            const user = await prisma.user.create({
+                data: generateUser({ email: 'user@bar.ch', role: Role.USER })
+            });
+
+            const result = await request(app)
+                .post(`${API_URL}/events/import?type=${ImportType.V1}`)
+                .set('authorization', JSON.stringify({ email: user.email }))
+                .attach('terminplan', `${__dirname}/stubs/terminplan-v1-failed-row.xlsx`)
+            expect(result.statusCode).toEqual(200);
+            /** wait for the import job to finish */
+            let job = await Jobs.findModel(user, result.body.id);
+            while (job.state === JobState.PENDING) {
+                await new Promise((resolve) => setTimeout(resolve, 50));
+                job = await Jobs.findModel(user, result.body.id);
+            }
+
+            expect(job.log).toMatch(`Success: 2/3 events imported
+Failed: 1
+
+Error at row: 2:`);
+            const events = await prisma.event.findMany({
+                include: {
+                    groups: {
+                        select: {id: true}
+                    },
+                    departments: {
+                        select: {id: true, name: true}
+                    }
+                }
+            });
+            expect(events.length).toEqual(2);
+            const event1 = events.find(e => e.description === 'Nachbefragung in Klassenstunde: GYM3 Klassen')!;
+            expect(event1.descriptionLong).toEqual('QE führt die Klassenstunde mit den einsprachigen Klassen des JG. 25 durch');
+            expect(event1.location).toEqual('');
+            expect(event1.start.toISOString()).toEqual('2024-02-26T00:00:00.000Z');
+            expect(event1.end.toISOString()).toEqual('2024-03-02T00:00:00.000Z');
+            expect(event1.classes.sort()).toEqual(['25Ga', '25Gb', '25Gc', '25Gd', '25Ge', '25Gf', '25Gg', '25Gh', '25Gi']);
+            expect(event1.classGroups).toEqual([]);
+            expect(event1.audience).toEqual(EventAudience.KLP);
+            expect(event1.teachingAffected).toEqual(TeachingAffected.PARTIAL);
+            expect(event1.affectsDepartment2).toBeFalsy();
+            expect(event1.departments).toHaveLength(0);
+
+            const event3 = events.find(e => e.description === 'Pfingsten: Frei')!;
+            expect(event3.descriptionLong).toEqual('Pfingstmontag: Frei');
+            expect(event3.location).toEqual('');
+            expect(event3.start.toISOString()).toEqual('2024-05-20T00:00:00.000Z');
+            expect(event3.end.toISOString()).toEqual('2024-05-21T00:00:00.000Z');
+            expect(event3.classes).toEqual([]);
+            expect(event3.classGroups).toEqual([]);
+            expect(event3.departments.map(d => d.name).sort()).toEqual(['FMS', 'GYMD', 'GYMD/GYMF', 'WMS']);
+            expect(event3.audience).toEqual(EventAudience.ALL);
+            expect(event3.teachingAffected).toEqual(TeachingAffected.YES);
+            expect(event3.affectsDepartment2).toBeFalsy();
+        });
 
         it("prevents users from importing events", async () => {
             const user = await prisma.user.create({

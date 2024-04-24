@@ -35,7 +35,7 @@ export const importEvents = async (file: string, userId: string, jobId: string, 
             break;
         case ImportType.V1:
             const impData = await importV1(file);
-            return await Promise.all(impData.map((e) => {
+            return await Promise.all(impData.map((e, idx) => {
                 return prisma.event.create({
                     data: {
                         ...e,
@@ -50,11 +50,13 @@ export const importEvents = async (file: string, userId: string, jobId: string, 
                         },
                         state: EventState.DRAFT,
                     }
+                }).catch((e) => {
+                    return Promise.resolve(`Error at row: ${idx + 1}: ${JSON.stringify(e.message, undefined, 2)}`);
                 })
             }));
     }
 
-    const createPromises = data.map((e) => {
+    const createPromises = data.map((e, idx) => {
         const classesRaw = e.classesRaw || '';
         /**
          * \d matches a digit (equivalent to [0-9])
@@ -90,6 +92,8 @@ export const importEvents = async (file: string, userId: string, jobId: string, 
                 teachingAffected: e.teachingAffected || TeachingAffected.YES,
                 audience: e.audience || EventAudience.STUDENTS,
             }
+        }).catch((e) => {
+            return Promise.resolve(`Error at row: ${idx + 1}: ${JSON.stringify(e.message, undefined, 2)}`);
         });
     });
     return await Promise.all(createPromises);

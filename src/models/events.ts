@@ -502,10 +502,13 @@ function Events(db: PrismaClient['event']) {
                 }
             });
             const importer = importService(filepath, actor.id, importJob.id, type).then(async (events) => {
+                const successfulImports = events.filter((e) => !(typeof e === 'string'));
+                const failedImports = events.filter((e) => typeof e === 'string'); 
                 return await prisma.job.update({
                     where: { id: importJob.id },
                     data: {
-                        state: JobState.DONE
+                        state: JobState.DONE,
+                        log: `Success: ${successfulImports.length}/${events.length} events imported\nFailed: ${failedImports.length}\n\n${failedImports.join('\n')}`
                     }
                 });
             }).catch(async (e) => {
