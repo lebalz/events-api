@@ -978,7 +978,7 @@ describe(`POST ${API_URL}/events/import`, () => {
             });
 
             expect(job.state).toEqual(JobState.DONE);
-            expect(job.log).toEqual('');
+            expect(job.log.trim()).toEqual(`Success: 4/4 events imported\nFailed: 0`);
 
             const events = await prisma.event.findMany({
                 include: {
@@ -1093,7 +1093,7 @@ describe(`POST ${API_URL}/events/import`, () => {
             expect(event3.departments.map(d => d.name).sort()).toEqual(['FMS', 'GYMD', 'GYMD/GYMF', 'GYMF', 'GYMF/GYMD', 'WMS']);
             expect(event3.audience).toEqual(EventAudience.ALL);
             expect(event3.teachingAffected).toEqual(TeachingAffected.YES);
-            expect(event3.affectsDepartment2).toBeFalsy();
+            expect(event3.affectsDepartment2).toBeTruthy();
         });
 
         it("V1 import format ignores missing columns", async () => {
