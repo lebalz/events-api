@@ -17,6 +17,7 @@ import { ImportType } from '../../src/services/importEvents';
 import { createDepartment } from '../unit/__tests__/departments.test';
 import { createSemester } from '../unit/__tests__/semesters.test';
 import { createRegistrationPeriod } from '../unit/__tests__/registrationPeriods.test';
+import { generateUntisClass } from '../factories/untisClass';
 
 jest.mock('../../src/middlewares/notify.nop');
 const mNotification = <jest.Mock<typeof notify>>notify;
@@ -354,7 +355,7 @@ describe(`POST ${API_URL}/events/change_state`, () => {
                     const user = await prisma.user.create({
                         data: generateUser({ email: 'foo@bar.ch', role: role })
                     });
-                    const gbsl = await createDepartment({name: 'GBSL'});
+                    const gbsl = await createDepartment({name: 'GYMD'});
                     const event = await prisma.event.create({ data: generateEvent({ authorId: user.id, state: transition.from, departmentIds: [gbsl.id] }) });
                     const sem = await createSemester({start: faker.date.recent({refDate: event.start}), end: faker.date.future({refDate: event.end})});
                     const regPeriod = await createRegistrationPeriod({eventRangeStart: faker.date.recent({refDate: event.start}), departmentIds: [gbsl.id]});
@@ -403,7 +404,7 @@ describe(`POST ${API_URL}/events/change_state`, () => {
                     const user = await prisma.user.create({
                         data: generateUser({ email: 'foo@bar.ch', role: role })
                     });
-                    const gbsl = await createDepartment({name: 'GBSL'});
+                    const gbsl = await createDepartment({name: 'GYMD'});
                     const event = await prisma.event.create({ data: generateEvent({ authorId: user.id, state: transition.from, departmentIds: [gbsl.id] }) });
                     const sem = await createSemester({start: faker.date.recent({refDate: event.start}), end: faker.date.future({refDate: event.end})});
                     const regPeriod = await createRegistrationPeriod({eventRangeStart: faker.date.recent({refDate: event.start}), departmentIds: [gbsl.id]});
@@ -697,7 +698,7 @@ describe(`POST ${API_URL}/events/change_state`, () => {
          * edit1[:review/id:1]
          * 
          */
-        const department = await prisma.department.create({data: generateDepartment({name: 'GBSL'})});
+        const department = await prisma.department.create({data: generateDepartment({name: 'GYMD'})});
         const event = await prisma.event.create({ data: generateEvent({ authorId: user.id, state: EventState.PUBLISHED, departments: {connect: [{id: department.id}]} }) });
         const edit1 = await prisma.event.create({ data: generateEvent({ authorId: user.id, parentId: event.id, state: EventState.REVIEW }) });
         const result = await request(app)
@@ -721,10 +722,10 @@ describe(`POST ${API_URL}/events/change_state`, () => {
 
 describe(`POST ${API_URL}/events/import`, () => {
     beforeEach(async () => {        
-        await prisma.department.create({data: generateDepartment({name: 'GBSL'})});
-        await prisma.department.create({data: generateDepartment({name: 'GBSL/GBJB'})});
-        await prisma.department.create({data: generateDepartment({name: 'GBJB'})});
-        await prisma.department.create({data: generateDepartment({name: 'GBJB/GBSL'})});
+        await prisma.department.create({data: generateDepartment({name: 'GYMD'})});
+        await prisma.department.create({data: generateDepartment({name: 'GYMD/GYMF'})});
+        await prisma.department.create({data: generateDepartment({name: 'GYMF'})});
+        await prisma.department.create({data: generateDepartment({name: 'GYMF/GYMD'})});
         await prisma.department.create({data: generateDepartment({name: 'FMS'})});
         await prisma.department.create({data: generateDepartment({name: 'ECG'})});
         await prisma.department.create({data: generateDepartment({name: 'ECG/FMS'})});
@@ -944,6 +945,13 @@ describe(`POST ${API_URL}/events/import`, () => {
     });
 
     describe('V1 Format: ?type=V1', () => {
+        beforeEach(async () => {
+            for (const kl of ['25Ga', '25Gb', '25Gc', '25Gd', '25Ge', '25Gf', '25Gg', '25Gh', '25Gi']){
+                await prisma.untisClass.create({
+                    data: generateUntisClass({name: kl})
+                })
+            }
+        })
         it("lets users import V1 events", async () => {
             const user = await prisma.user.create({
                 data: generateUser({ email: 'user@bar.ch', role: Role.USER })
@@ -984,9 +992,9 @@ describe(`POST ${API_URL}/events/import`, () => {
             });
 
             /**
-             * There are 4 events in the excel, but one is deleted - this won't be imported again.
+             * There are 5 events in the excel, but one is deleted - this won't be imported again.
              */
-            expect(events.length).toEqual(3);
+            expect(events.length).toEqual(4);
             events.forEach((e) => {
                 expect(e.state).toEqual(EventState.DRAFT);
                 expect(e.cloned).toBeFalsy();
@@ -1028,10 +1036,22 @@ describe(`POST ${API_URL}/events/import`, () => {
             expect(event3.end.toISOString()).toEqual('2024-05-21T00:00:00.000Z');
             expect(event3.classes).toEqual([]);
             expect(event3.classGroups).toEqual([]);
-            expect(event3.departments.map(d => d.name).sort()).toEqual(['FMS', 'GBSL', 'GBSL/GBJB', 'WMS']);
+            expect(event3.departments.map(d => d.name).sort()).toEqual(['FMS', 'GYMD', 'GYMD/GYMF', 'WMS']);
             expect(event3.audience).toEqual(EventAudience.ALL);
             expect(event3.teachingAffected).toEqual(TeachingAffected.YES);
             expect(event3.affectsDepartment2).toBeFalsy();
+
+            const event4 = events.find(e => e.description === 'Singen')!;
+            expect(event4.descriptionLong).toEqual('Gemeinsam singen');
+            expect(event4.location).toEqual('');
+            expect(event4.start.toISOString()).toEqual('2024-05-21T00:00:00.000Z');
+            expect(event4.end.toISOString()).toEqual('2024-05-22T00:00:00.000Z');
+            expect(event4.classes.sort()).toEqual(['25Gb', '25Gc', '25Gd', '25Ge', '25Gf', '25Gg', '25Gi']);
+            expect(event4.classGroups).toEqual([]);
+            expect(event4.departments.map(d => d.name).sort()).toEqual([]);
+            expect(event4.audience).toEqual(EventAudience.STUDENTS);
+            expect(event4.teachingAffected).toEqual(TeachingAffected.YES);
+            expect(event4.affectsDepartment2).toBeFalsy();
         });
 
         it("prevents users from importing events", async () => {

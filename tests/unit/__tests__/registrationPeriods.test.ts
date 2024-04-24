@@ -74,9 +74,9 @@ describe('RegistrationPeriods', () => {
         let rpGBSL: RegistrationPeriod;
         let rpGBJB: RegistrationPeriod;
         beforeEach(async () => {
-            gbsl = await createDepartment({name: 'GBSL'});
-            gbjb = await createDepartment({name: 'GBJB'});
-            gbslGbjb = await createDepartment({name: 'GBSL/GBJB', department1_Id: gbsl.id, department2_Id: gbjb.id});
+            gbsl = await createDepartment({name: 'GYMD'});
+            gbjb = await createDepartment({name: 'GYMF'});
+            gbslGbjb = await createDepartment({name: 'GYMD/GYMF', department1_Id: gbsl.id, department2_Id: gbjb.id});
             const defaultProps = {
                 start: new Date('2024-04-13T12:00'),
                 end: new Date('2024-04-23T12:00'),

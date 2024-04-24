@@ -111,8 +111,8 @@ describe(`PUT ${API_URL}/registration_periods/:id`, () => {
         });
     });
     it("can modify departments", async () => {
-        const gbsl = await prisma.department.create({data: generateDepartment({name: 'GBSL'})});
-        const gbjb = await prisma.department.create({data: generateDepartment({name: 'GBJB'})});
+        const gbsl = await prisma.department.create({data: generateDepartment({name: 'GYMD'})});
+        const gbjb = await prisma.department.create({data: generateDepartment({name: 'GYMF'})});
         const admin = await prisma.user.create({data: generateUser({role: Role.ADMIN})});
         const regPeriod = await prisma.registrationPeriod.findFirst();
         const result = await request(app)

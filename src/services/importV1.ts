@@ -4,6 +4,9 @@ import { ImportRawEvent } from "./importEvents";
 import prisma from "../prisma"
 import { i18nKey, translate } from "./helpers/i18n";
 import { Cell } from "read-excel-file/types";
+import { Departments } from "./helpers/departmentNames";
+
+const CLASS_NAME_MATCHER = /(\d\d)([a-z][A-Z]|[A-Z][a-z])/g;
 
 const extractTime = (time?: string): [number, number] => {
     if (!time) {
@@ -31,15 +34,31 @@ const toDate = (date: Date | string): Date | undefined => {
     return newDate;
 }
 
+const ALIASES = {
+    ['GBSL']: Departments.GYMD,
+    ['GBSL/GBJB']: Departments.GYMDBilingual,
+    ['GBJB']: Departments.GYMF,
+    ['GBJB/GBSL']: Departments.GYMFBilingual,
+};
+
+const mapAlias = (name: string): string => {
+    if (name in ALIASES) {
+        return ALIASES[name as keyof typeof ALIASES];
+    }
+    return name;
+}
+
+
 const getColumnIndex = (header: Row, key: string) => {
-    const headerNames = header.map((h) => h.toString().toLowerCase().trim().replace(' ?', '?'));
+    const headerNames = header.map((h) => mapAlias(h.toString().trim().replace(' ?', '?')).toLowerCase())
     return Math.max(
         headerNames.indexOf(translate(key as i18nKey, 'de').toLowerCase()),
-        headerNames.indexOf(translate(key as i18nKey, 'fr').toLowerCase())
+        headerNames.indexOf(translate(key as i18nKey, 'fr').toLowerCase()),
+
     );
 }
 
-const getColumnIndices = async (header: Row, departments: Department[]) => {
+const getColumnIndices = (header: Row, departments: Department[]) => {
     return {
         kw: getColumnIndex(header, 'kw'),
         weekday: getColumnIndex(header, 'weekday'),
@@ -59,6 +78,7 @@ const getColumnIndices = async (header: Row, departments: Department[]) => {
         }, {}),
         bilingueLPsAffected: getColumnIndex(header, 'bilingueLPsAffected'),
         classes: getColumnIndex(header, 'classes'),
+        excludedClasses: getColumnIndex(header, 'excludedClasses'),
         affects: getColumnIndex(header, 'affects'),
         teachingAffected: getColumnIndex(header, 'teachingAffected'),
         deletedAt: getColumnIndex(header, 'deletedAt')
@@ -83,9 +103,9 @@ export const importExcel = async (file: string) => {
     const departments = await prisma.department.findMany({});
     const xlsx = await readXlsxFile(file, { dateFormat: 'YYYY-MM-DD' });
     const header = xlsx[0];
-    const COLUMNS = await getColumnIndices(header, departments);
+    const COLUMNS = getColumnIndices(header, departments);
 
-    return xlsx.slice(1).filter((e => !e[COLUMNS.deletedAt])).map((e) => {
+    return Promise.all(xlsx.slice(1).filter((e => !e[COLUMNS.deletedAt])).map(async (e) => {
         const start = toDate(e[COLUMNS.dateStart] as string)!;
         const startTime = e[COLUMNS.timeStart] as string;
         if (startTime) {
@@ -104,8 +124,28 @@ export const importExcel = async (file: string) => {
             ende.setUTCHours(24, 0, 0, 0);
         }
         const classesRaw = e[COLUMNS.classes] as string || '';
-        const classes = classesRaw.match(/(\d\d)([a-z][A-Z]|[A-Z][a-z])/g)?.map((c) => c) || [];
-        const classGroups = classesRaw.match(/(\d\d)(\*|[a-z]\*|[A-Z]\*)/g)?.map((c) => c.replace(/\*/g, '')) || [];
+        const classes = new Set(classesRaw.match(CLASS_NAME_MATCHER)?.map((c) => c) || []);
+        const excludedClassesRaw = e[COLUMNS.excludedClasses] as string || '';
+        const classGroups = new Set(classesRaw.match(/(\d\d)(\*|[a-z]\*|[A-Z]\*)/g)?.map((c) => c.replace(/\*/g, '')) || []);
+        const excludedClasses = excludedClassesRaw.match(CLASS_NAME_MATCHER)?.map((c) => c) || [];
+        if (excludedClasses.length > 0 && (classGroups.size > 0 || classes.size > 0)) {
+            for (const excludedClass of excludedClasses) {
+                for (const cg of classGroups) {
+                    if (excludedClass.startsWith(cg)) {
+                        const allFromGroup = await prisma.untisClass.findMany({
+                            where: {
+                                name: { startsWith: cg },
+                            },
+                            select: { name: true }
+                        });
+                        allFromGroup.forEach(c => classes.add(c.name));
+                        classGroups.delete(cg);
+                    }
+                    classes.delete(excludedClass);
+                }
+                classes.delete(excludedClass);
+            }
+        }
         const assignedDeps = departments.filter(dep => e[(COLUMNS as {[key: string]: number})[dep.name]] === 1).map(dep => ({id: dep.id}));
         return {
             start: start,
@@ -114,11 +154,11 @@ export const importExcel = async (file: string) => {
             location: e[COLUMNS.location] as string || '',
             descriptionLong: e[COLUMNS.descriptionLong] as string || '',
             affectsDepartment2: e[COLUMNS.bilingueLPsAffected] === 1,
-            classes: classes,
-            classGroups: classGroups,
+            classes: [...classes],
+            classGroups: [...classGroups],
             audience: asAudience(e[COLUMNS.affects]),
             teachingAffected: asTeachingAffected(e[COLUMNS.teachingAffected]),
             departments: assignedDeps
         };
-    });
+    }));
 }

@@ -50,10 +50,10 @@ export const Departments = {
   FMSBilingual: 'FMS/ECG',
   ECG: 'ECG',
   ECGBilingual: 'ECG/FMS',
-  GYMF: 'GBJB',
-  GYMFBilingual: 'GBJB/GBSL',
-  GYMD: 'GBSL',
-  GYMDBilingual: 'GBSL/GBJB',
+  GYMF: 'GYMF',
+  GYMFBilingual: 'GYMF/GYMD',
+  GYMD: 'GYMD',
+  GYMDBilingual: 'GYMD/GYMF',
   PASSERELLE: 'Passerelle',
 }
 export const SchoolDepartments: {[key in keyof typeof Departments]: {main: typeof Departments[key], dep_1?: typeof Departments[key], dep_2?: typeof Departments[key]}} = {
@@ -133,7 +133,7 @@ export const DepartmentLetterMap: {[key in keyof typeof Departments]: Department
     
     WMS: DepartmentLetter.WMS,
 
-    /** GBJB */
+    /** GYMF */
     GYMF: DepartmentLetter.GYMF,
     GYMFBilingual: DepartmentLetter.GYMF,
 
@@ -159,7 +159,7 @@ export const ClassLetterMap: {[key in keyof typeof Departments]: readonly string
     
     WMS: WMS,
 
-    /** GBJB */
+    /** GYMF */
     GYMF: GYMF,
     GYMFBilingual: GYMFBilingual,
 

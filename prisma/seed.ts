@@ -76,7 +76,7 @@ async function main() {
             color: "#805cdd"
         },
         {
-            name: "GBJB",
+            name: "GYMF",
             description: "",
             letter: "m",
             classLetters: ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S"],
@@ -118,7 +118,7 @@ async function main() {
             color: "#c968b5"
         },
         {
-            name: "GBSL/GBJB",
+            name: "GYMD/GYMF",
             description: "",
             letter: "G",
             classLetters: ["w", "x", "y"],
@@ -132,14 +132,14 @@ async function main() {
             color: "#b3a62d"
         },
         {
-            name: "GBSL",
+            name: "GYMD",
             description: "",
             letter: "G",
             classLetters: ["a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s"],
             color: "#41b9bc"
         },
         {
-            name: "GBJB/GBSL",
+            name: "GYMF/GYMD",
             description: "",
             letter: "m",
             classLetters: ["T", "U", "V"],

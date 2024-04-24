@@ -200,7 +200,7 @@ describe('setState transitions', () => {
 
 	test('DRAFT -> REVIEW', async () => {
 		const user = await createUser({ id: '3535b2ee-806f-425c-a4f5-394d8b16f6f9' });
-		const gbsl = await createDepartment({name: 'GBSL'});
+		const gbsl = await createDepartment({name: 'GYMD'});
 		const event = await createEvent({ id: '7cf72375-4ee7-4a13-afeb-8d68883acdf4', departmentIds: [gbsl.id], authorId: user.id, state: EventState.DRAFT })
 		const sem = await createSemester({start: faker.date.recent({refDate: event.start}), end: faker.date.future({refDate: event.end})});
 		const regPeriod = await createRegistrationPeriod({eventRangeStart: faker.date.recent({refDate: event.start}), departmentIds: [gbsl.id]});

@@ -271,6 +271,10 @@ const i18n = {
     events: {
         de: 'Termine',
         fr: 'Evénements'    
+    },
+    excludedClasses: {
+        de: 'Ausgeschlossene Klassen',
+        fr: 'Classes exclues'
     }
     
 } satisfies {[key: string]: i18nMessage};

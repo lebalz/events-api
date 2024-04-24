@@ -132,7 +132,7 @@ describe('createIcs', () => {
     let event42h: Event;
     let eventGbsl: Event;
     beforeEach(async () => {
-        const gbsl = await createDepartment({name: 'GBSL'});
+        const gbsl = await createDepartment({name: 'GYMD'});
         const author = await createUser({});
         await createUntisClass({name: '41i', year: 2041, departmentId: gbsl.id});
         await createUntisClass({name: '42h', year: 2042, departmentId: gbsl.id});
@@ -185,9 +185,9 @@ describe('createIcs', () => {
     describe('for departments', () => {
         test('creates ics for classes', async () => {
             await createIcsForDepartments();
-            expect(existsSync(`${ICAL_DIR}/de/GBSL.ics`)).toBeTruthy();
-            expect(existsSync(`${ICAL_DIR}/fr/GBSL.ics`)).toBeTruthy();
-            const icalDeGbsl = readFileSync(`${ICAL_DIR}/de/GBSL.ics`, { encoding: 'utf-8' });
+            expect(existsSync(`${ICAL_DIR}/de/GYMD.ics`)).toBeTruthy();
+            expect(existsSync(`${ICAL_DIR}/fr/GYMD.ics`)).toBeTruthy();
+            const icalDeGbsl = readFileSync(`${ICAL_DIR}/de/GYMD.ics`, { encoding: 'utf-8' });
             const icsDeGbsl = createEvents([
                 prepareIcsEvent(event41i, 'de'),
                 prepareIcsEvent(event42h, 'de'),

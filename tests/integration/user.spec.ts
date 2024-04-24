@@ -482,9 +482,9 @@ describe(`GET ${API_URL}/users/:id/affected-event-ids`, () => {
                 { name: 'E', longName: 'Englisch' }
             ],
             teachers: [
-                { name: 'abc', longName: 'Ambrosio Clark [GBSL, GBJB]', sex: 'M' },
-                { name: 'xyz', longName: 'Xavianda Zorro [GBSL]', sex: 'F' },
-                { name: 'AAA', longName: 'Louise Bommeraux [GBJB]', sex: 'F'}
+                { name: 'abc', longName: 'Ambrosio Clark [GYMD, GYMF]', sex: 'M' },
+                { name: 'xyz', longName: 'Xavianda Zorro [GYMD]', sex: 'F' },
+                { name: 'AAA', longName: 'Louise Bommeraux [GYMF]', sex: 'F'}
             ],
             classes: [
                 { name: '24i', sf: 'BG/WR' },
@@ -554,15 +554,15 @@ describe(`GET ${API_URL}/users/:id/affected-event-ids`, () => {
         describe('selected by department', () => {
             it('respects departments of teached classes', async () => {
                 /**
-                 * 10 events, audience[LP], 5 for GBSL, 5 for GBJB
+                 * 10 events, audience[LP], 5 for GYMD, 5 for GYMF
                  * 
-                 * xyz -> teaches GBSL -> 5 events
-                 * abc -> teaches GBSL and GBJB -> 10 events
+                 * xyz -> teaches GYMD -> 5 events
+                 * abc -> teaches GYMD and GYMF -> 10 events
                  */
                 const gbslTeacher = await prisma.user.create({ data: generateUser({ untisId: untisTeachers.find(t => t.name === 'xyz')!.id }) });
                 const gbslGbjbTeacher = await prisma.user.create({ data: generateUser({ untisId: untisTeachers.find(t => t.name === 'abc')!.id }) });
-                const gbsl = departments.find((d) => d.name === 'GBSL' && d.letter === 'G')!;
-                const gbjb = departments.find((d) => d.name === 'GBJB' && d.letter === 'm')!;
+                const gbsl = departments.find((d) => d.name === 'GYMD' && d.letter === 'G')!;
+                const gbjb = departments.find((d) => d.name === 'GYMF' && d.letter === 'm')!;
                 const gbslEvents = await Promise.all([1, 2, 3, 4, 5].map(() => {
                     const start = faker.date.between({ from: semester.start, to: semester.end });
                     return prisma.event.create({
@@ -617,7 +617,7 @@ describe(`GET ${API_URL}/users/:id/affected-event-ids`, () => {
                 let AAA: User;
                 let affectingEvent: Event;
                 beforeEach(async () => {
-                    const gbsl = departments.find((d) => d.name === 'GBSL' && d.letter === 'G')!;
+                    const gbsl = departments.find((d) => d.name === 'GYMD' && d.letter === 'G')!;
                     author = await prisma.user.create({ data: generateUser() });
                     abc = await prisma.user.create({ data: generateUser({ firstName: 'abc', untisId: untisTeachers.find(t => t.name === 'abc')!.id }) });
                     AAA = await prisma.user.create({ data: generateUser({ firstName: 'AAA', untisId: untisTeachers.find(t => t.name === 'AAA')!.id }) });
@@ -768,7 +768,7 @@ describe(`GET ${API_URL}/users/:id/affected-event-ids`, () => {
                         });
                         beforeEach(async () => {
                             await prisma.user.create({ data: generateUser({ firstName: 'hij', untisId: untisTeachers.find(t => t.name === 'hij')!.id }) });
-                            const gbsl = departments.find((d) => d.name === 'GBSL' && d.letter === 'G')!;
+                            const gbsl = departments.find((d) => d.name === 'GYMD' && d.letter === 'G')!;
                             /* add a second event for 26Ge, that does not affect lessons */
                             infoElternabend = await prisma.event.create({
                                 data: generateEvent({
@@ -876,7 +876,7 @@ describe(`GET ${API_URL}/users/:id/affected-event-ids`, () => {
                 let affectsDepartment2 = false;
                 let thisData: UntisDataProps;
                 beforeEach(async () => {
-                    const gbjbBili = departments.find((d) => d.name === 'GBJB/GBSL' && d.letter === 'm')!;
+                    const gbjbBili = departments.find((d) => d.name === 'GYMF/GYMD' && d.letter === 'm')!;
 
                     data.teachers.push({ name: 'hij', longName: 'Jimmy Hermann', sex: 'M' });
                     data.teachers.push({ name: 'VWZ', longName: 'Vinny Zimmer', sex: 'M' });
@@ -917,11 +917,11 @@ describe(`GET ${API_URL}/users/:id/affected-event-ids`, () => {
                     data = _.cloneDeep(_data);
                 });
                 it('sets up the data correctly', async () => {
-                    const gbsl = departments.find((d) => d.name === 'GBSL' && d.letter === 'G')!;
-                    const gbjb = departments.find((d) => d.name === 'GBJB' && d.letter === 'm')!;
-                    const gbjbBili = departments.find((d) => d.name === 'GBJB/GBSL' && d.letter === 'm')!;
+                    const gbsl = departments.find((d) => d.name === 'GYMD' && d.letter === 'G')!;
+                    const gbjb = departments.find((d) => d.name === 'GYMF' && d.letter === 'm')!;
+                    const gbjbBili = departments.find((d) => d.name === 'GYMF/GYMD' && d.letter === 'm')!;
                     const kl26mT = await prisma.untisClass.findFirst({ where: { name: '26mT' }, include: {department: true, teachers: true} });
-                    expect(kl26mT!.department!.name).toEqual('GBJB/GBSL');
+                    expect(kl26mT!.department!.name).toEqual('GYMF/GYMD');
                     expect(kl26mT!.department!.id).toEqual(gbjbBili.id);
                     expect(kl26mT!.department!.department1_Id).toEqual(gbjb.id);
                     expect(kl26mT!.department!.department2_Id).toEqual(gbsl.id);
@@ -971,12 +971,12 @@ describe(`GET ${API_URL}/users/:id/affected-event-ids`, () => {
                             expect(gbslResult.body).toEqual([affectingEvent.id]);
                         });
                     });
-                    describe('When a GBJB class is listed as part of an EF, GBJB events wont appear for this teacher', () => {
+                    describe('When a GYMF class is listed as part of an EF, GYMF events wont appear for this teacher', () => {
                         beforeEach(async () => {
                             affectsDepartment2 = false;
                             data = _.cloneDeep(thisData);
                             data.subjects.push({ name: 'EFP', longName: 'EF Physik' });
-                            data.classes.push({ name: '26mA', sf: 'GBJB Class' });
+                            data.classes.push({ name: '26mA', sf: 'GYMF Class' });
                             data.lessons.push({ subject: 'EFP', day: day, teachers: ['hij'], classes: ['26mT', '26mA'], start: 1025, end: 1110, room: 'D113' });
                             await syncUntis2DB(semester!.id, (sem: Semester) => fetchUntis(sem, generateUntisData(data)));
                         });
@@ -984,7 +984,7 @@ describe(`GET ${API_URL}/users/:id/affected-event-ids`, () => {
                             const lessons = await prisma.untisLesson.findMany({ where: {subject: 'EFP'} });
                             const kl = await prisma.untisClass.findFirst({ where: { name: '26mA' }, include: {department: true, teachers: true} });
                             expect(lessons).toHaveLength(1);
-                            expect(kl!.department!.name).toEqual('GBJB');
+                            expect(kl!.department!.name).toEqual('GYMF');
                         });
                         it(`displays the event only for gbjb teacher`, async () => {
                             const gbjbResult = await request(app)
@@ -1001,14 +1001,14 @@ describe(`GET ${API_URL}/users/:id/affected-event-ids`, () => {
                             expect(gbslResult.body).toHaveLength(0);
                         });
                     })
-                    describe('When a GBSL class is listed as part of an OC, GBSL events wont appear for this teacher', () => {
+                    describe('When a GYMD class is listed as part of an OC, GYMD events wont appear for this teacher', () => {
                         let gbslBiliEvent: Event;
                         beforeEach(async () => {
                             affectsDepartment2 = false;
                             data = _.cloneDeep(thisData);
-                            const gbslBili = departments.find((d) => d.name === 'GBSL/GBJB' && d.letter === 'G')!;
+                            const gbslBili = departments.find((d) => d.name === 'GYMD/GYMF' && d.letter === 'G')!;
                             data.subjects.push({ name: 'OCIN', longName: 'OC Informatique' });
-                            data.classes.push({ name: '26Ga', sf: 'GBSL Class' });
+                            data.classes.push({ name: '26Ga', sf: 'GYMD Class' });
                             data.lessons.push({ subject: 'OCIN', day: day, teachers: ['VWZ'], classes: ['26mT', '26Ga'], start: 1025, end: 1110, room: 'D113' });
                             await syncUntis2DB(semester!.id, (sem: Semester) => fetchUntis(sem, generateUntisData(data)));
                             await prisma.event.deleteMany();
@@ -1032,7 +1032,7 @@ describe(`GET ${API_URL}/users/:id/affected-event-ids`, () => {
                             const lessons = await prisma.untisLesson.findMany({ where: {subject: 'OCIN'} });
                             const kl = await prisma.untisClass.findFirst({ where: { name: '26Ga' }, include: {department: true, teachers: true} });
                             expect(lessons).toHaveLength(1);
-                            expect(kl!.department!.name).toEqual('GBSL');
+                            expect(kl!.department!.name).toEqual('GYMD');
                             expect(kl!.teachers).toHaveLength(1);
                             expect(kl!.teachers[0].name).toEqual('VWZ');
                         });
