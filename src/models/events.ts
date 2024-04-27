@@ -8,6 +8,7 @@ import Logger from "../utils/logger";
 import Semesters from "./semesters";
 import RegistrationPeriods from "./registrationPeriods";
 import _ from "lodash";
+import { rmUndefined } from "../utils/filterHelpers";
 const getData = createDataExtractor<Prisma.EventUncheckedUpdateInput>(
     [
         'audience',
@@ -24,11 +25,9 @@ const getData = createDataExtractor<Prisma.EventUncheckedUpdateInput>(
 );
 
 type AllEventQueryCondition = ({ state: EventState } | { authorId: string })[];
-
-const rmUndefined = <T>(arr: (T | undefined)[]): T[] => {
-    return _.reject(arr, _.isUndefined) as T[];
+export const getCurrentDate = () => {
+    return new Date();
 }
-
 const rootParentSql = (childId: string) => {
     return Prisma.sql`
         WITH RECURSIVE tree as (
@@ -212,7 +211,7 @@ function Events(db: PrismaClient['event']) {
                         } else {
                             const eventsDepartments = await prisma.view_Events.findFirstOrThrow({where: { eventId: record.id }, select: { departmentIds: true, departmentSchoolIds: true}});
                             const registrationPeriods = await RegistrationPeriods.openPeriods(
-                                new Date(),
+                                getCurrentDate(),
                                 record.start,
                                 [...new Set([...eventsDepartments.departmentIds, ...eventsDepartments.departmentSchoolIds])]
                             );

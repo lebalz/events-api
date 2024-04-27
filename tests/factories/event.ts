@@ -7,8 +7,16 @@ export const generateEvent = (
         between?: {from: Date, to: Date}, 
         departmentIds?: string[]
     })): Prisma.EventCreateInput => {
-    const start = props.between ? faker.date.between(props.between) : faker.date.between({from: new Date(), to: new Date(Date.now() + 1000 * 60 * 60 * 24 * 7 * 12)});
-    const end = props.between ? faker.date.between({from: start, to: props.between.to}) : faker.date.between({from: start, to: new Date(start.getTime() + 1000 * 60 * 60 * 24 * 7 * 12)});
+    const start = props.start 
+                    ? new Date(props.start) 
+                    : props.between 
+                        ? faker.date.between(props.between) 
+                        : faker.date.between({from: new Date(), to: new Date(Date.now() + 1000 * 60 * 60 * 24 * 7 * 12)});
+    const end = props.end
+                ? new Date(props.end)
+                : props.between 
+                    ? faker.date.between({from: start, to: props.between.to}) 
+                    : faker.date.between({from: start, to: new Date(start.getTime() + 1000 * 60 * 60 * 24 * 7 * 12)});
     const {authorId, parentId, jobId, departmentIds} = props;
 
     if (authorId) {

@@ -20,9 +20,9 @@ export const truncate = async (deleteFiles: boolean = true) => {
     }
 
     await prisma.$transaction([
+        prisma.registrationPeriod.deleteMany(),
         prisma.department.deleteMany(),
         prisma.job.deleteMany(),
-        prisma.registrationPeriod.deleteMany(),
         prisma.semester.deleteMany(),
         prisma.untisClass.deleteMany(),
         prisma.untisLesson.deleteMany(),

@@ -2,7 +2,7 @@ import request from 'supertest';
 import app, { API_URL } from '../../src/app';
 import prisma from '../../src/prisma';
 import { generateUser } from '../factories/user';
-import { Event, EventAudience, EventState, JobState, Role, TeachingAffected } from '@prisma/client';
+import { Department, Event, EventAudience, EventState, JobState, RegistrationPeriod, Role, Semester, TeachingAffected, User } from '@prisma/client';
 import Jobs from '../../src/models/jobs';
 import { eventSequence, generateEvent } from '../factories/event';
 import { HttpStatusCode } from '../../src/utils/errors/BaseError';
@@ -18,6 +18,10 @@ import { createDepartment } from '../unit/__tests__/departments.test';
 import { createSemester } from '../unit/__tests__/semesters.test';
 import { createRegistrationPeriod } from '../unit/__tests__/registrationPeriods.test';
 import { generateUntisClass } from '../factories/untisClass';
+import { createUser } from '../unit/__tests__/users.test';
+import { Departments } from '../../src/services/helpers/departmentNames';
+import * as eventModel from '../../src/models/events';
+
 
 jest.mock('../../src/middlewares/notify.nop');
 const mNotification = <jest.Mock<typeof notify>>notify;
@@ -715,6 +719,205 @@ describe(`POST ${API_URL}/events/change_state`, () => {
         const updatedEvent = await prisma.event.findUnique({ where: { id: edit1.id }, include: {departments: true} });
         expect(updatedEvent?.departments).toHaveLength(1);
 
+    });
+
+    describe('transitions with registration periods', () => {
+        describe('opened registration period', () => {
+            let user: User;
+            let admin: User;
+            let regPeriod: RegistrationPeriod;
+            let gymd: Department;
+            let gymf: Department;
+            let fms: Department;
+            beforeEach(async () => {
+                gymd = await createDepartment({name: 'GYMD'});
+                gymf = await createDepartment({name: 'GYMF'});
+                fms = await createDepartment({name: 'FMS'});
+                regPeriod = await createRegistrationPeriod({
+                    start: new Date('2024-03-06T08:00:00.000Z'),
+                    end: new Date('2024-03-10T12:00:00.000Z'),
+                    eventRangeStart: new Date('2024-04-15T00:00:00.000Z'),
+                    eventRangeEnd: new Date('2024-04-29T24:00:00.000Z'),
+                    departmentIds: [gymd.id, fms.id]
+                });
+                user = await createUser({role: Role.USER});
+                admin = await createUser({role: Role.ADMIN});
+                /** transitions need a semester */
+                await createSemester({start: new Date('2024-02-06T08:00:00.000Z'), end: new Date('2024-07-06T08:00:00.000Z')});
+            });
+            describe('allowed transitions during open registration period', () => {
+                const ALLOWED_TRANSITIONS = [
+                    { 
+                        descr: 'start and end in range', 
+                        from: EventState.DRAFT,
+                        to: EventState.REVIEW,
+                        for: [Role.USER, Role.ADMIN],
+                        requestDate: new Date('2024-03-08T08:00:00.000Z'),
+                        departments: [Departments.GYMD],
+                        event: {start: '2024-04-15T00:00:00.000Z', end: '2024-04-30T12:00:00.000Z' },
+                    },
+                    { 
+                        descr: 'start in range, end outside range', 
+                        from: EventState.DRAFT,
+                        to: EventState.REVIEW,
+                        for: [Role.USER, Role.ADMIN],
+                        requestDate: new Date('2024-03-08T08:00:00.000Z'),
+                        departments: [Departments.FMS],
+                        event: {start: '2024-04-15T00:00:00.000Z', end: '2024-04-30T12:00:00.000Z' },
+                    },
+                    { 
+                        descr: 'allows updates of published versions after reg period', 
+                        from: EventState.DRAFT,
+                        to: EventState.REVIEW,
+                        for: [Role.USER, Role.ADMIN],
+                        requestDate: new Date('2024-04-08T08:00:00.000Z'),
+                        hasParent: true,
+                        departments: [Departments.GYMF],
+                        event: {start: '2024-04-15T00:00:00.000Z', end: '2024-04-30T12:00:00.000Z' },
+                    },
+                    { 
+                        descr: 'Admin can transition drafts after period', 
+                        from: EventState.DRAFT,
+                        to: EventState.REVIEW,
+                        for: [Role.ADMIN],
+                        requestDate: new Date('2024-03-15T08:00:00.000Z'),
+                        departments: [Departments.FMS],
+                        event: {start: '2024-04-15T00:00:00.000Z', end: '2024-04-30T12:00:00.000Z' },
+                    },
+                    { 
+                        descr: 'admin can refuse after period', 
+                        from: EventState.REVIEW,
+                        to: EventState.REFUSED,
+                        for: [Role.ADMIN],
+                        author: Role.USER,
+                        requestDate: new Date('2024-03-15T08:00:00.000Z'),
+                        departments: [Departments.GYMD],
+                        event: {start: '2024-04-15T00:00:00.000Z', end: '2024-04-30T12:00:00.000Z' },
+                    },
+                    { 
+                        descr: 'admin can publish after period', 
+                        from: EventState.REVIEW,
+                        to: EventState.PUBLISHED,
+                        for: [Role.ADMIN],
+                        author: Role.USER,
+                        requestDate: new Date('2024-03-15T08:00:00.000Z'),
+                        departments: [Departments.FMS],
+                        event: {start: '2024-04-15T00:00:00.000Z', end: '2024-04-30T12:00:00.000Z' },
+                    }
+                ]
+                ALLOWED_TRANSITIONS.forEach((transition) => {
+                    transition.for.forEach((role) => {
+                        describe(transition.descr, () => {
+                            beforeEach(() => {
+                                jest.spyOn(eventModel, "getCurrentDate").mockReturnValue(new Date(transition.requestDate));
+                            })
+                            it(`lets ${role} change state from ${transition.from} to ${transition.to} with ${transition.descr}`, async () => {
+                                const reqUser = (role === Role.USER) ? user : admin;
+                                const deps = [transition.departments.includes(Departments.FMS) && fms.id, transition.departments.includes(Departments.GYMD) && gymd.id, transition.departments.includes(Departments.GYMF) && gymf.id].filter(d => !!d) as string[];
+                                let parent: Event | undefined; 
+                                if (transition.hasParent) {
+                                    parent = await prisma.event.create({ data: generateEvent({ authorId: reqUser.id, state: EventState.PUBLISHED }) });
+                                };
+                                const event = await prisma.event.create({ 
+                                    data: generateEvent({
+                                        ...transition.event,
+                                        state: transition.from,
+                                        authorId:  transition.author === Role.USER ? user.id : reqUser.id,
+                                        parentId: transition.hasParent && parent?.id || undefined,
+                                        departmentIds: deps
+                                    })
+                                });                    
+                                const result = await request(app)
+                                    .post(`${API_URL}/events/change_state`)
+                                    .set('authorization', JSON.stringify({ email: reqUser.email }))
+                                    .send({ data: { ids: [event.id], state: transition.to } });
+                                expect(result.statusCode).toEqual(201);
+                                expect(result.body.length).toEqual(1);
+                                expect(result.body[0].state).toEqual(transition.to);
+                            });
+                        })
+                    });
+                });
+            });
+            describe('forbidden transitions during open registration period', () => {
+                const FORBIDDEN_TRANSITIONS = [
+                    { 
+                        descr: 'start outside range', 
+                        from: EventState.DRAFT,
+                        to: EventState.REVIEW,
+                        for: [Role.USER],
+                        requestDate: new Date('2024-03-08T08:00:00.000Z'),
+                        departments: [Departments.GYMD],
+                        event: {start: '2024-04-14T23:59:00.000Z', end: '2024-04-27T12:00:00.000Z' },
+                    },
+                    { 
+                        descr: 'start and end outside range', 
+                        from: EventState.DRAFT,
+                        to: EventState.REVIEW,
+                        for: [Role.USER],
+                        requestDate: new Date('2024-03-08T08:00:00.000Z'),
+                        departments: [Departments.FMS],
+                        event: {start: '2024-04-14T23:59:00.000Z', end: '2024-04-30T12:00:00.000Z' },
+                    },
+                    { 
+                        descr: 'request before reg period', 
+                        from: EventState.DRAFT,
+                        to: EventState.REVIEW,
+                        for: [Role.USER],
+                        requestDate: new Date('2024-03-06T07:59:00.000Z'),
+                        departments: [Departments.FMS],
+                        event: {start: '2024-04-16T23:59:00.000Z', end: '2024-04-27T12:00:00.000Z' },
+                    },
+                    { 
+                        descr: 'request after reg period', 
+                        from: EventState.DRAFT,
+                        to: EventState.REVIEW,
+                        for: [Role.USER],
+                        requestDate: new Date('2024-04-30T00:00:01.000Z'),
+                        departments: [Departments.FMS],
+                        event: {start: '2024-04-16T23:59:00.000Z', end: '2024-04-29T12:00:00.000Z' },
+                    },
+                    { 
+                        descr: 'department not in reg period', 
+                        from: EventState.DRAFT,
+                        to: EventState.REVIEW,
+                        for: [Role.USER],
+                        requestDate: new Date('2024-03-08T08:00:00.000Z'),
+                        departments: [Departments.GYMF],
+                        event: {start: '2024-04-16T00:00:00.000Z', end: '2024-04-29T12:00:00.000Z' },
+                    }
+                ]
+                FORBIDDEN_TRANSITIONS.forEach((transition) => {
+                    transition.for.forEach((role) => {
+                        describe(transition.descr, () => {
+                            beforeEach(() => {
+                                jest.spyOn(eventModel, "getCurrentDate").mockReturnValue(new Date(transition.requestDate));
+                            })
+                            it(`lets ${role} change state from ${transition.from} to ${transition.to} with ${transition.descr}`, async () => {
+                                const reqUser = (role === Role.USER) ? user : admin;
+                                const deps = [transition.departments.includes(Departments.FMS) && fms.id, transition.departments.includes(Departments.GYMD) && gymd.id, transition.departments.includes(Departments.GYMF) && gymf.id].filter(d => !!d) as string[];
+                                const event = await prisma.event.create({ 
+                                    data: generateEvent({
+                                        ...transition.event,
+                                        state: transition.from,
+                                        authorId: reqUser.id,
+                                        departmentIds: deps
+                                    })
+                                });                    
+                                const result = await request(app)
+                                    .post(`${API_URL}/events/change_state`)
+                                    .set('authorization', JSON.stringify({ email: reqUser.email }))
+                                    .send({ data: { ids: [event.id], state: transition.to } });
+                                    expect(result.statusCode).toEqual(400);
+                                    await expect(prisma.event.findUnique({ where: { id: event.id } }))
+                                        .resolves
+                                        .toMatchObject({ state: transition.from });
+                            });
+                        })
+                    });
+                });
+            });
+        });
     });
 });
 

@@ -459,42 +459,47 @@ describe('allEvents', () => {
 		const maria = await createUser({});
 		const jack = await createUser({role: Role.ADMIN });
 
-		const pub1 = await createEvent({ start: new Date('2023-12-01'), authorId: maria.id, state: EventState.PUBLISHED });
-		const draft1 = await createEvent({  start: new Date('2023-12-02'), authorId: maria.id, state: EventState.DRAFT });
-		const refused1 = await createEvent({ start: new Date('2023-12-03'), authorId: maria.id, state: EventState.REFUSED });
-		const review1 = await createEvent({ start: new Date('2023-12-04'), authorId: maria.id, state: EventState.REVIEW });
+		const pub1 = await createEvent({ authorId: maria.id, state: EventState.PUBLISHED });
+		const draft1 = await createEvent({  authorId: maria.id, state: EventState.DRAFT });
+		const refused1 = await createEvent({ authorId: maria.id, state: EventState.REFUSED });
+		const review1 = await createEvent({ authorId: maria.id, state: EventState.REVIEW });
 
-		const pub2 = await createEvent({ start: new Date('2023-12-29'), authorId: jack.id, state: EventState.PUBLISHED });
-		const draft2 = await createEvent({ start: new Date('2023-12-30'), authorId: jack.id, state: EventState.DRAFT });
+		const pub2 = await createEvent({ authorId: jack.id, state: EventState.PUBLISHED });
+		const draft2 = await createEvent({ authorId: jack.id, state: EventState.DRAFT });
 		return { maria, jack, pub1, draft1, refused1, review1, pub2, draft2};
 	};
 	test('all published Events for anonyme user', async () => {
 		const {pub1, pub2} = await setup();
-
-		await expect(Events.published()).resolves.toEqual([
+		const published = await Events.published();
+		expect(published).toHaveLength(2);
+		expect(_.orderBy(published, ['id'])).toEqual(_.orderBy([
 			prepareEvent(pub1),
 			prepareEvent(pub2),
-		]);
+		], ['id']));
 	});
 	test('all published Events and the owned events for user', async () => {
 		const {maria, pub1, draft1, refused1, review1, pub2 } = await setup();
-		await expect(Events.all(maria)).resolves.toEqual([
+		const all = await Events.all(maria);
+		expect(all).toHaveLength(5);
+		expect(_.orderBy(all, ['id'])).toEqual(_.orderBy([
 			prepareEvent(pub1),
 			prepareEvent(pub2),
 			prepareEvent(draft1),
 			prepareEvent(refused1),
 			prepareEvent(review1),
-		]);
+		], ['id']));
 	});
 	test('all Published, Reviews, Refuesd and owned events for admin', async () => {
 		const { jack, pub1, refused1, review1, pub2, draft2} = await setup();
-		await expect(Events.all(jack)).resolves.toEqual([
+		const all = await Events.all(jack);
+		expect(all).toHaveLength(5);
+		expect(_.sortBy(all, ['id'])).toEqual(_.sortBy([
 			prepareEvent(pub1),
 			prepareEvent(pub2),
 			prepareEvent(refused1),
 			prepareEvent(review1),
 			prepareEvent(draft2),
-		]);
+		], ['id']));
 	});
 });
 
