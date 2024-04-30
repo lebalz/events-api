@@ -82,11 +82,11 @@ export const sessionMiddleware = session({
     saveUninitialized: false,
     resave: false,
     cookie: {
-        secure: false, // process.env.NODE_ENV === 'production',
+        secure: process.env.NODE_ENV === 'production',
         httpOnly: true,
         sameSite: 'lax',
         domain: domain.length > 0 ? domain : undefined,
-        maxAge: 1000 * 60 * 60 * 24, // 1 day
+        maxAge: 1000 * 60 * 60 * 24 * 30, // 30 days
     },
 });
 
