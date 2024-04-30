@@ -1,5 +1,5 @@
 import { strategyForEnvironment } from "./auth/index";
-import express, { Request } from "express";
+import express, { NextFunction, Request } from "express";
 import session from 'express-session';
 import compression from "compression";
 import prisma from "./prisma";
@@ -75,8 +75,9 @@ const subdomain = process.env.EVENTS_APP_URL ? new URL(process.env.EVENTS_APP_UR
 const subdomainParts = subdomain.split('.');
 const domain = subdomainParts.slice(subdomainParts.length - 2).join('.');
 
+const SESSION_MAX_AGE = 2592000000 as const; // 1000 * 60 * 60 * 24 * 30 = 2592000000 = 30 days
 export const sessionMiddleware = session({
-    name: 'events-api-session',
+    name: 'eventsApiSession',
     store: store,
     secret: process.env.SESSION_SECRET || 'secret',
     saveUninitialized: false,
@@ -86,7 +87,7 @@ export const sessionMiddleware = session({
         httpOnly: true,
         sameSite: 'strict',
         domain: domain.length > 0 ? domain : undefined,
-        maxAge: 1000 * 60 * 60 * 24 * 30, // 30 days
+        maxAge: SESSION_MAX_AGE, // 30 days
     },
 });
 
@@ -176,7 +177,13 @@ app.get(`${API_URL}`, (req, res) => {
 });
 
 app.get(`${API_URL}/checklogin`,
-    passport.authenticate("oauth-bearer", { session: true }),
+    (req, res, next) => {
+        
+        if (req.isAuthenticated()) {
+            return next()
+        }
+        passport.authenticate("oauth-bearer", { session: true })(req, res, next);
+    },
     async (req, res, next) => {
         try {
             if (req.user) {
@@ -244,32 +251,36 @@ export const configure = (_app: typeof app) => {
     }
     
     
-    _app.use(`${API_URL}`, (req, res, next) => {
-        passport.authenticate('oauth-bearer', { session: true }, (err: Error, user: User, info: any) => {
-            if (err) {
-                /**
-                 * An error occurred during authorization. Send a Not Autohrized 
-                 * status code.
-                 */
-                /* istanbul ignore next */
-                return res.status(HttpStatusCode.UNAUTHORIZED).json({ error: err.message });
+    _app.use(`${API_URL}`,
+        (req, res, next) => {
+            if (req.isAuthenticated()) {
+                return next()
             }
-    
-            if (!user && !(
-                            PUBLIC_GET_ACCESS.has(req.path.toLowerCase()) ||
-                            PUBLIC_GET_ACCESS_REGEX.some((regex) => regex.test(req.path))
-                        )) {
-                // If no user object found, send a 401 response.
-                return res.status(HttpStatusCode.UNAUTHORIZED).json({ error: 'Unauthorized' });
-            }
-            req.user = user;
-            if (info) {
-                // access token payload will be available in req.authInfo downstream
-                req.authInfo = info;
-                return next();
-            }
-        })(req, res, next);
-    },
+            passport.authenticate('oauth-bearer', { session: true }, (err: Error, user: User, info: any) => {
+                if (err) {
+                    /**
+                     * An error occurred during authorization. Send a Not Autohrized 
+                     * status code.
+                     */
+                    /* istanbul ignore next */
+                    return res.status(HttpStatusCode.UNAUTHORIZED).json({ error: err.message });
+                }
+        
+                if (!user && !(
+                                PUBLIC_GET_ACCESS.has(req.path.toLowerCase()) ||
+                                PUBLIC_GET_ACCESS_REGEX.some((regex) => regex.test(req.path))
+                            )) {
+                    // If no user object found, send a 401 response.
+                    return res.status(HttpStatusCode.UNAUTHORIZED).json({ error: 'Unauthorized' });
+                }
+                req.user = user;
+                if (info) {
+                    // access token payload will be available in req.authInfo downstream
+                    req.authInfo = info;
+                    return next();
+                }
+            })(req, res, next);
+        },
         routeGuard(AccessRules), // route guard middleware
         router // the router with all the routes
     );
