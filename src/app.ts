@@ -76,14 +76,18 @@ const subdomainParts = subdomain.split('.');
 const domain = subdomainParts.slice(subdomainParts.length - 2).join('.');
 
 const SESSION_MAX_AGE = 2592000000 as const; // 1000 * 60 * 60 * 24 * 30 = 2592000000 = 30 days
+
+app.set('trust proxy', 1);
+
 export const sessionMiddleware = session({
     name: 'eventsApiKey',
     store: store,
     secret: process.env.SESSION_SECRET || 'secret',
     saveUninitialized: false,
     resave: false,
+    proxy: process.env.NODE_ENV === "production",
     cookie: {
-        secure: false, // process.env.NODE_ENV === 'production',
+        secure: process.env.NODE_ENV === 'production',
         httpOnly: true,
         sameSite: 'strict',
         domain: domain.length > 0 ? domain : undefined,
