@@ -10,12 +10,18 @@ import { createUser } from "./users.test";
 import { translate } from "../../../src/services/helpers/i18n";
 import { createUntisClass } from "./untisClasses.test";
 import { createDepartment } from "./departments.test";
-import { Event, EventState } from "@prisma/client";
+import { Event, EventState, Semester, User } from "@prisma/client";
 import { createIcsForClasses } from "../../../src/services/createIcs";
 import { existsSync, readFileSync } from "fs";
 import { ICAL_DIR } from "../../../src/app";
 import prisma from "../../../src/prisma";
 import { createEvents } from "ics";
+import stubs from '../../integration/stubs/semesters.json';
+import { syncUntis2DB } from "../../../src/services/syncUntis2DB";
+import { generateUser } from "../../factories/user";
+import { affectedLessons } from "../../../src/services/eventCheckUnpersisted";
+
+jest.mock('../../../src/services/fetchUntis');
 
 describe('import csv gbjb', () => {
     test('can extract raw event data', async () => {
@@ -196,4 +202,57 @@ describe('createIcs', () => {
             icsDeGbsl.forEach((e, idx) => expect(icalDeGbsl.normalize()).toContain(e.normalize()));
         })        
     })
+})
+
+describe('event > check > unpersisted', () => {
+    let user: User;
+    let semester: Semester;
+
+    beforeEach(async () => {
+        await prisma.semester.createMany({
+            data: stubs.map((e: any) => ({
+                id: e.id,
+                name: e.name,
+                start: e.start,
+                end: e.end,
+                untisSyncDate: e.untisSyncDate
+            }))
+        });
+        user = await prisma.user.create({ data: generateUser({}) });
+        semester = await prisma.semester.findFirstOrThrow({ where: { name: 'HS2023' } });
+        await syncUntis2DB(semester!.id);
+        const teachers = await prisma.untisTeacher.findMany();
+        for (const teacher of teachers) {
+            await prisma.user.create({ data: generateUser({untisId: teacher.id}) });
+        }
+    });
+
+    it('creates and destroys temporary event', async () => {
+        expect(prisma.event.count()).resolves.toBe(0);
+        const tmpEventData = generateEvent({
+            authorId: 'whatever-gets-replaced',
+            start: new Date('2023-10-10T14:00:00.000Z'), 
+            end: new Date('2023-10-10T15:00:00.000Z')
+        });
+        const res = await affectedLessons(user.id, prepareEvent(tmpEventData as unknown as Event), semester.id);
+        expect(res).toHaveLength(0);
+        expect(prisma.event.count()).resolves.toBe(0);
+    });
+
+    it('returns affected lessons', async () => {
+        expect(prisma.event.count()).resolves.toBe(0);
+        const tmpEventData = generateEvent({
+            authorId: 'whatever-gets-replaced',
+            start: new Date('2023-10-10T14:00:00.000Z'), 
+            end: new Date('2023-10-10T15:00:00.000Z'),
+            classes: ['25Gh']
+        });
+        const res = await affectedLessons(user.id, prepareEvent(tmpEventData as unknown as Event), semester.id);
+        console.log(res)
+        expect(res).toHaveLength(1);
+        expect(res[0].subject).toEqual('M');
+        expect(res[0].startHHMM).toEqual(1455);
+        expect(res[0].endHHMM).toEqual(1540);
+        expect(prisma.event.count()).resolves.toBe(0);
+    });
 })

@@ -1,5 +1,5 @@
 import { strategyForEnvironment } from "./auth/index";
-import express, { NextFunction, Request } from "express";
+import express, { NextFunction, Request, Response } from "express";
 import session from 'express-session';
 import compression from "compression";
 import prisma from "./prisma";
@@ -180,15 +180,17 @@ app.get(`${API_URL}`, (req, res) => {
     return res.status(200).send("Welcome to the EVENTES-API V1.0");
 });
 
+const SessionOauthStrategy = (req: Request, res: Response, next: NextFunction) => {
+    /* istanbul ignore next */
+    if (req.isAuthenticated()) {
+        return next()
+    }
+    passport.authenticate("oauth-bearer", { session: true })(req, res, next);
+};
+
 app.get(`${API_URL}/checklogin`,
     /* istanbul ignore next */
-    (req, res, next) => {
-        /* istanbul ignore next */
-        if (req.isAuthenticated()) {
-            return next()
-        }
-        passport.authenticate("oauth-bearer", { session: true })(req, res, next);
-    },
+    SessionOauthStrategy,
     /* istanbul ignore next */
     async (req, res, next) => {
         try {
@@ -201,6 +203,11 @@ app.get(`${API_URL}/checklogin`,
         }
     }
 );
+
+app.post(`${API_URL}/logout`, SessionOauthStrategy, async (req, res) => {
+    await prisma.session.delete({ where: { sid: req.session.id } });
+    res.clearCookie('eventsApiKey').status(200).send('OK');
+});
 
 export const configure = (_app: typeof app) => {
     /**
