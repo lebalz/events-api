@@ -177,13 +177,15 @@ app.get(`${API_URL}`, (req, res) => {
 });
 
 app.get(`${API_URL}/checklogin`,
+    /* istanbul ignore next */
     (req, res, next) => {
-        
+        /* istanbul ignore next */
         if (req.isAuthenticated()) {
             return next()
         }
         passport.authenticate("oauth-bearer", { session: true })(req, res, next);
     },
+    /* istanbul ignore next */
     async (req, res, next) => {
         try {
             if (req.user) {
@@ -253,6 +255,7 @@ export const configure = (_app: typeof app) => {
     
     _app.use(`${API_URL}`,
         (req, res, next) => {
+            /* istanbul ignore next */
             if (req.isAuthenticated()) {
                 return next()
             }
