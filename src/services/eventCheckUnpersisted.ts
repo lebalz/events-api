@@ -8,7 +8,7 @@ const withTmpEvent = async <T>(userId: string, data: Partial<ApiEvent>, callback
     const tempId = uuidv4();
     try {
         const { departmentIds } = data;
-        ['departmentIds', 'publishedVersionIds', 'userId'].forEach((key) => {
+        ['departmentIds', 'publishedVersionIds', 'authorId', 'jobId', 'parentId'].forEach((key) => {
             delete (data as any)[key];
         });
 
@@ -49,7 +49,7 @@ export const affectedTeachers = async (userId: string, event: ApiEvent, semester
                 userId: true
             }
         });
-        return result;
+        return result.map(({ userId }) => userId);
     });
 }
 

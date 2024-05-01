@@ -19,7 +19,7 @@ import { createEvents } from "ics";
 import stubs from '../../integration/stubs/semesters.json';
 import { syncUntis2DB } from "../../../src/services/syncUntis2DB";
 import { generateUser } from "../../factories/user";
-import { affectedLessons } from "../../../src/services/eventCheckUnpersisted";
+import { affectedLessons, affectedTeachers } from "../../../src/services/eventCheckUnpersisted";
 
 jest.mock('../../../src/services/fetchUntis');
 
@@ -253,6 +253,22 @@ describe('event > check > unpersisted', () => {
         expect(res[0].subject).toEqual('M');
         expect(res[0].startHHMM).toEqual(1455);
         expect(res[0].endHHMM).toEqual(1540);
+        expect(res[0].teacherIds).toHaveLength(1);
+        expect(res[0].teacherIds[0]).toEqual(1);
+        expect(prisma.event.count()).resolves.toBe(0);
+    });
+    it('returns affected teachers', async () => {
+        expect(prisma.event.count()).resolves.toBe(0);
+        const tmpEventData = generateEvent({
+            authorId: 'whatever-gets-replaced',
+            start: new Date('2023-10-10T14:00:00.000Z'), 
+            end: new Date('2023-10-10T15:00:00.000Z'),
+            classes: ['25Gh']
+        });
+        const expectedUser = await prisma.user.findFirstOrThrow({ where: { untisId: 1 }});
+        const res = await affectedTeachers(user.id, prepareEvent(tmpEventData as unknown as Event), semester.id);
+        expect(res).toHaveLength(1);
+        expect(res[0]).toEqual(expectedUser.id);
         expect(prisma.event.count()).resolves.toBe(0);
     });
 })

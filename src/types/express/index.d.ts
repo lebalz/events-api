@@ -1,6 +1,6 @@
 import type { User as pUser } from '@prisma/client';
 import { Server } from "socket.io";
-import { Notification } from '../../routes/socketEventTypes';
+import { ClientToServerEvents, Notification, ServerToClientEvents } from '../../routes/socketEventTypes';
 
 
 // to make the file a module and avoid the TypeScript error
@@ -11,7 +11,7 @@ declare global {
     export interface User extends pUser {
     }
     export interface Request {        
-      io?: Server;
+      io?: Server<ClientToServerEvents, ServerToClientEvents>;
     }
 
     export interface Response {

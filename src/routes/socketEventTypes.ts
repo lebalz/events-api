@@ -1,5 +1,7 @@
-import type { EventState } from "@prisma/client";
+import type { EventState, Prisma } from "@prisma/client";
 import { IoRoom } from "./socketEvents";
+import { ApiEvent } from "../models/event.helpers";
+import { DefaultArgs } from "@prisma/client/runtime/library";
 
 export enum IoEvent {
     NEW_RECORD = 'NEW_RECORD',
@@ -22,6 +24,11 @@ export interface ChangedRecord {
     id: string;
 }
 
+export interface DeletedRecord { 
+    record: RecordTypes, 
+    id: string
+}
+
 export interface ChangedMembers {
     record: RecordTypes;
     id: string;
@@ -35,12 +42,57 @@ export interface ChangedState {
     ids: string[];
 }
 export interface ReloadAffectingEvents {
+    record: 'SEMESTER',
     semesterIds: string[];
 }
 
+type NotificationMessage = NewRecord | ChangedRecord | ChangedState | ReloadAffectingEvents | ChangedMembers;
+
 export interface Notification {
-    message: NewRecord | ChangedRecord | ChangedState | ReloadAffectingEvents | ChangedMembers;
+    message: NotificationMessage
     event: IoEvent;
     to: IoRoom | string;
     toSelf?: true | boolean;
+}
+
+export enum IoEvents {
+    AffectedLessons = 'affectedLessons',
+    AffectedLessonsTmp = 'affectedLessons:tmp',
+    AffectedTeachers = 'affectedTeachers',
+    AffectedTeachersTmp = 'affectedTeachers:tmp',
+}
+
+export type ServerToClientEvents = {
+    [notification in IoEvent]: (message: NotificationMessage) => void
+}
+
+export interface ClientToServerEvents {
+    [IoEvents.AffectedLessons]: (
+        event_id: string, 
+        semester_id: string, 
+        callback: (
+            result: { state: 'success', lessons: Prisma.view_LessonsAffectedByEventsGetPayload<{}>[] } 
+                  | { state: 'error', message: string}
+        ) => void
+    ) => void;
+    [IoEvents.AffectedLessonsTmp]: (
+        event: ApiEvent, 
+        semester_id: string, 
+        callback: (
+            result: { state: 'success', lessons: Prisma.view_LessonsAffectedByEventsGetPayload<{}>[] } 
+                  | { state: 'error', message: string}
+        ) => void
+    ) => void;
+    [IoEvents.AffectedTeachers]: (
+        event_id: string, 
+        semester_id: string, 
+        callback: (result: { state: 'success', usersIds: string[] } 
+                         | {state: 'error', message: string}) => void
+    ) => void;
+    [IoEvents.AffectedTeachersTmp]: (
+        event: ApiEvent,
+        semester_id: string, 
+        callback: (result: { state: 'success', usersIds: string[] } 
+                         | {state: 'error', message: string}) => void
+    ) => void;
 }

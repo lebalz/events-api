@@ -237,7 +237,7 @@ export const configure = (_app: typeof app) => {
                         .to(notification.to)
                         .emit(
                             notification.event, 
-                            JSON.stringify(notification.message)
+                            notification.message
                         );
                 });
             }

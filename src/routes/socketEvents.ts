@@ -6,13 +6,14 @@ import { checkEvent } from "../services/eventChecker";
 import { affectedLessons as checkUnpersisted } from "../services/eventCheckUnpersisted";
 import Logger from "../utils/logger";
 import { ApiEvent } from "../models/event.helpers";
+import { ClientToServerEvents, IoEvents, ServerToClientEvents } from "./socketEventTypes";
 
 export enum IoRoom {
     ADMIN = 'admin',
     ALL = 'all'
 }
 
-const EventRouter = (io: Server) => {
+const EventRouter = (io: Server<ClientToServerEvents, ServerToClientEvents>) => {
     io.on("connection", (socket) => {
         const user = (socket.request as { user?: User }).user;
         if (!user) {
@@ -29,22 +30,22 @@ const EventRouter = (io: Server) => {
 
         socket.join(user.id);
 
-        socket.on('checkEvent', async ({ event_id, semester_id }: { event_id: string, semester_id: string }) => {
+        socket.on(IoEvents.AffectedLessons, async (eventId, semesterId, callback) => {
             try {
-                const result = await checkEvent(event_id, semester_id);
-                socket.emit('checkEvent', { state: 'success', result });
-            } catch (error) /* istanbul ignore next */ {
-                Logger.error(error);
-                socket.emit('checkEvent', { state: 'error', result: {} });
+                const result = await checkEvent(eventId, semesterId);
+                callback({state: 'success', lessons: result});
+            } catch (e) /* istanbul ignore next */ {
+                Logger.error(e);
+                callback({state: 'error', message: (e as Error).message});
             }
         })
-        socket.on('checkUnpersistedEvent', async ({ event, semester_id }: { event: ApiEvent, semester_id: string }) => {
+        socket.on(IoEvents.AffectedLessonsTmp, async (event, semesterId, callback) => {
             try {
-                const result = await checkUnpersisted(user.id, event, semester_id);
-                socket.emit('checkEvent', { state: 'success', result });
+                const result = await checkUnpersisted(user.id, event, semesterId);
+                callback({state: 'success', lessons: result});
             } catch (error) /* istanbul ignore next */ {
                 Logger.error(error);
-                socket.emit('checkEvent', { state: 'error', result: {} });
+                callback({state: 'error', message: (error as Error).message});
             }
         })
     });

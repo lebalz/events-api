@@ -8,6 +8,7 @@ import EventRouter from "./routes/socketEvents";
 import { NextFunction, Request, Response } from "express";
 import Bree from 'bree';
 import path from "path";
+import { ClientToServerEvents, ServerToClientEvents } from "./routes/socketEventTypes";
 
 const PORT = process.env.PORT || 3002;
 
@@ -16,7 +17,7 @@ const server = http.createServer(app);
 const corsOrigin = process.env.EVENTS_APP_URL ? [process.env.EVENTS_APP_URL, 'https://admin.socket.io'] : true;
 
 
-const io = new Server(server, {
+const io = new Server<ClientToServerEvents, ServerToClientEvents>(server, {
     cors: {
         origin: corsOrigin,
         credentials: true,
