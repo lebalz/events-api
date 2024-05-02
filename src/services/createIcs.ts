@@ -105,7 +105,7 @@ const exportIcs = async (events: Event[], filename: string) => {
 
 export const createIcs = async (userId: string) => {
     const timeRange = getTimeRange();
-    const user = await prisma.user.findUnique({
+    const user = await prisma.user.findUniqueOrThrow({
         where: { id: userId }
     });
     
@@ -120,7 +120,7 @@ export const createIcs = async (userId: string) => {
             ]
         }
     });
-    const fileName = user?.icsLocator || `${uuidv4()}.ics`;
+    const fileName = user.icsLocator || `${uuidv4()}.ics`;
     const fileCreated = await exportIcs(publicEventsRaw, fileName);
     if (fileCreated) {
         if (user?.icsLocator === fileName) {
@@ -138,7 +138,7 @@ export const createIcs = async (userId: string) => {
         return updated;
     } else {
         // no events found - delete the ics file, since empty ics files are not valid
-        if (user?.icsLocator) {
+        if (user.icsLocator) {
             const updated = await prisma.user.update({
                 where: { id: userId },
                 data: {
