@@ -123,6 +123,12 @@ export const createIcs = async (userId: string) => {
     const fileName = user?.icsLocator || `${uuidv4()}.ics`;
     const fileCreated = await exportIcs(publicEventsRaw, fileName);
     if (fileCreated) {
+        if (user?.icsLocator === fileName) {
+            /**
+             * nothing to do since the ics file locator is already set
+             */
+            return user;
+        }
         const updated = await prisma.user.update({
             where: { id: userId },
             data: {
@@ -132,13 +138,16 @@ export const createIcs = async (userId: string) => {
         return updated;
     } else {
         // no events found - delete the ics file, since empty ics files are not valid
-        const updated = await prisma.user.update({
-            where: { id: userId },
-            data: {
-                icsLocator: null
-            }
-        });
-        return updated;
+        if (user?.icsLocator) {
+            const updated = await prisma.user.update({
+                where: { id: userId },
+                data: {
+                    icsLocator: null
+                }
+            });
+            return updated;
+        }
+        return user;
     }
 }
 
