@@ -23,6 +23,10 @@ import { affectedLessons, affectedTeachers } from "../../../src/services/eventCh
 
 jest.mock('../../../src/services/fetchUntis');
 
+export const withoutDTSTAMP = (str: string) => {
+    return str.replace(/\s*DTSTAMP.*/g, '');
+};
+
 describe('import csv gbjb', () => {
     test('can extract raw event data', async () => {
         const result = await importCsv(`${__dirname}/../__fixtures__/gbjb.csv`);
@@ -171,19 +175,19 @@ describe('createIcs', () => {
             expect(existsSync(`${ICAL_DIR}/de/42h.ics`)).toBeTruthy();
             expect(existsSync(`${ICAL_DIR}/fr/41i.ics`)).toBeTruthy();
             expect(existsSync(`${ICAL_DIR}/fr/42h.ics`)).toBeTruthy();
-            const icalDe41i = readFileSync(`${ICAL_DIR}/de/41i.ics`, { encoding: 'utf-8' });
-            const icsDe41i = createEvents([
+            const icalDe41i = withoutDTSTAMP(readFileSync(`${ICAL_DIR}/de/41i.ics`, { encoding: 'utf-8' }));
+            const icsDe41i = withoutDTSTAMP(createEvents([
                 prepareIcsEvent(event41i, 'de'),
                 prepareIcsEvent(eventGbsl, 'de')
-            ]).value!.replace('END:VCALENDAR', '').split('BEGIN:VEVENT').slice(1).map((e, idx) => `BEGIN:VEVENT${e}`.trim());
-            icsDe41i.forEach((e, idx) => expect(icalDe41i.normalize()).toContain(e.normalize()));
+            ]).value!).replace('END:VCALENDAR', '').split('BEGIN:VEVENT').slice(1).map((e, idx) => `BEGIN:VEVENT${e}`.trim());
+            icsDe41i.forEach((e, idx) => expect(icalDe41i).toContain(e));
 
-            const icalDe42h = readFileSync(`${ICAL_DIR}/fr/42h.ics`, { encoding: 'utf-8' });
-            const icsDe42h = createEvents([
+            const icalDe42h = withoutDTSTAMP(readFileSync(`${ICAL_DIR}/fr/42h.ics`, { encoding: 'utf-8' }));
+            const icsDe42h = withoutDTSTAMP(createEvents([
                 prepareIcsEvent(event42h, 'fr'),
                 prepareIcsEvent(eventGbsl, 'fr')
-            ]).value!.replace('END:VCALENDAR', '').split('BEGIN:VEVENT').slice(1).map((e, idx) => `BEGIN:VEVENT${e}`.trim());
-            icsDe42h.forEach((e, idx) => expect(icalDe42h.normalize()).toContain(e.normalize()));
+            ]).value!).replace('END:VCALENDAR', '').split('BEGIN:VEVENT').slice(1).map((e, idx) => `BEGIN:VEVENT${e}`.trim());
+            icsDe42h.forEach((e, idx) => expect(icalDe42h).toContain(e));
 
         })
     })
@@ -193,13 +197,13 @@ describe('createIcs', () => {
             await createIcsForDepartments();
             expect(existsSync(`${ICAL_DIR}/de/GYMD.ics`)).toBeTruthy();
             expect(existsSync(`${ICAL_DIR}/fr/GYMD.ics`)).toBeTruthy();
-            const icalDeGbsl = readFileSync(`${ICAL_DIR}/de/GYMD.ics`, { encoding: 'utf-8' });
-            const icsDeGbsl = createEvents([
+            const icalDeGbsl = withoutDTSTAMP(readFileSync(`${ICAL_DIR}/de/GYMD.ics`, { encoding: 'utf-8' }));
+            const icsDeGbsl = withoutDTSTAMP(createEvents([
                 prepareIcsEvent(event41i, 'de'),
                 prepareIcsEvent(event42h, 'de'),
                 prepareIcsEvent(eventGbsl, 'de')
-            ]).value!.replace('END:VCALENDAR', '').split('BEGIN:VEVENT').slice(1).map((e, idx) => `BEGIN:VEVENT${e}`.trim());
-            icsDeGbsl.forEach((e, idx) => expect(icalDeGbsl.normalize()).toContain(e.normalize()));
+            ]).value!).replace('END:VCALENDAR', '').split('BEGIN:VEVENT').slice(1).map((e, idx) => `BEGIN:VEVENT${e}`.trim());
+            icsDeGbsl.forEach((e, idx) => expect(icalDeGbsl).toContain(e));
         })        
     })
 })
@@ -248,7 +252,6 @@ describe('event > check > unpersisted', () => {
             classes: ['25Gh']
         });
         const res = await affectedLessons(user.id, prepareEvent(tmpEventData as unknown as Event), semester.id);
-        console.log(res)
         expect(res).toHaveLength(1);
         expect(res[0].subject).toEqual('M');
         expect(res[0].startHHMM).toEqual(1455);
