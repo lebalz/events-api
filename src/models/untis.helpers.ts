@@ -1,4 +1,4 @@
-import { UntisLesson, UntisTeacher } from "@prisma/client";
+import { UntisClass, UntisLesson, UntisTeacher } from "@prisma/client";
 
 export interface ApiLesson extends Omit<UntisLesson, 'teachers' | 'classes'> {
     teacherIds: number[];
@@ -10,6 +10,11 @@ export interface ApiTeacher extends UntisTeacher {
     lessons?: ApiLesson[]
 }
 
+export interface ApiClass extends UntisClass {
+    teacherIds: number[];
+    lessonIds: number[];
+}
+
 export const prepareLesson = (lesson: UntisLesson & { teachers: { id: number }[], classes: { id: number }[] }) => {
     const prepared: ApiLesson = {
         ...(lesson as Omit<UntisLesson, 'teachers' | 'classes'>),
@@ -17,6 +22,18 @@ export const prepareLesson = (lesson: UntisLesson & { teachers: { id: number }[]
         classIds: lesson.classes.map((c) => c.id)
     };
     ['classes', 'teachers'].forEach((key) => {
+        delete (prepared as any)[key];
+    });
+    return prepared;
+}
+
+export const prepareClass = (klass: UntisClass & { teachers?: { id: number }[], lessons?: { id: number }[] }) => {
+    const prepared: ApiClass = {
+        ...(klass as Omit<UntisClass, 'teachers' | 'lessons'>),
+        teacherIds: klass.teachers?.map((t) => t.id) || [],
+        lessonIds: klass.lessons?.map((l) => l.id) || []
+    };
+    ['lessons', 'teachers'].forEach((key) => {
         delete (prepared as any)[key];
     });
     return prepared;

@@ -34,13 +34,13 @@ describe('UntisClass', () => {
             await expect(UntisClasses.all()).resolves.toEqual([
                 {
                     ...c24i,
-                    lessons: [],
-                    teachers: []
+                    lessonIds: [],
+                    teacherIds: []
                 },
                 {
                     ...c25h,
-                    lessons: [],
-                    teachers: []
+                    lessonIds: [],
+                    teacherIds: []
                 }
             ])
         });

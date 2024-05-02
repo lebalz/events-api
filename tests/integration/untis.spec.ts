@@ -119,8 +119,8 @@ describe(`GET ${API_URL}/untis/classes`, () => {
         expect(result.statusCode).toEqual(200);
 
         expect(result.body.map((d: UntisTeacher) => d.id).sort()).toEqual(klasses.map(d => d.id).sort());
-        expect(result.body.map((k: {lessons: any[]}) => k.lessons).flat().length).toEqual(0);
-        expect(result.body.map((k: {teachers: any[]}) => k.teachers).flat().length).toEqual(0);
+        expect(result.body.map((k: {lessonIds: string[]}) => k.lessonIds).flat().length).toEqual(0);
+        expect(result.body.map((k: {teacherIds: string[]}) => k.teacherIds).flat().length).toEqual(0);
         expect(mNotification).toHaveBeenCalledTimes(0);
     });
     it("returns all classes for user", async () => {
