@@ -1,7 +1,7 @@
 import type { Event } from "@prisma/client";
 import prisma from "../prisma";
 
-export const checkEvent = async (eventId: string, semesterId: string) => {
+export const affectedLessons = async (eventId: string, semesterId: string) => {
     const result = await prisma.view_LessonsAffectedByEvents.findMany({
         where: {
             eventId: eventId,
@@ -9,4 +9,17 @@ export const checkEvent = async (eventId: string, semesterId: string) => {
         }
     });
     return result;
+}
+
+export const affectedTeachers = async (eventId: string, semesterId: string) => {
+    const result = await prisma.view_UsersAffectedByEvents.findMany({
+        where: {
+            id: eventId,
+            semesterId: semesterId
+        },
+        select: {
+            userId: true
+        }
+    });
+    return result.map(({ userId }) => userId);
 }

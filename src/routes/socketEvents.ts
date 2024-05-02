@@ -2,7 +2,7 @@
 
 import type { Event, User } from "@prisma/client";
 import { Server } from "socket.io";
-import { checkEvent } from "../services/eventChecker";
+import { affectedLessons } from "../services/eventChecker";
 import { affectedLessons as checkUnpersisted } from "../services/eventCheckUnpersisted";
 import Logger from "../utils/logger";
 import { ApiEvent } from "../models/event.helpers";
@@ -32,7 +32,7 @@ const EventRouter = (io: Server<ClientToServerEvents, ServerToClientEvents>) => 
 
         socket.on(IoEvents.AffectedLessons, async (eventId, semesterId, callback) => {
             try {
-                const result = await checkEvent(eventId, semesterId);
+                const result = await affectedLessons(eventId, semesterId);
                 callback({state: 'success', lessons: result});
             } catch (e) /* istanbul ignore next */ {
                 Logger.error(e);

@@ -3,6 +3,8 @@ import prisma from "../prisma";
 import { v4 as uuidv4 } from 'uuid';
 import { ApiEvent } from "../models/event.helpers";
 import Logger from "../utils/logger";
+import { affectedLessons as checkAffectedLessons, affectedTeachers as checkAffectedTeachers } from "./eventChecker";
+
 
 const withTmpEvent = async <T>(userId: string, data: Partial<ApiEvent>, callback: (event: Event) => Promise<T[]>) => {
     const tempId = uuidv4();
@@ -40,27 +42,12 @@ const withTmpEvent = async <T>(userId: string, data: Partial<ApiEvent>, callback
 
 export const affectedTeachers = async (userId: string, event: ApiEvent, semesterId: string) => {
     return withTmpEvent(userId, event, async (tempEvent) => {
-        const result = await prisma.view_UsersAffectedByEvents.findMany({
-            where: {
-                id: tempEvent.id,
-                semesterId: semesterId
-            },
-            select: {
-                userId: true
-            }
-        });
-        return result.map(({ userId }) => userId);
+        return await checkAffectedTeachers(tempEvent.id, semesterId);
     });
 }
 
 export const affectedLessons = async (userId: string, event: ApiEvent, semesterId: string) => {
     return withTmpEvent(userId, event, async (tempEvent) => {
-        const result = await prisma.view_LessonsAffectedByEvents.findMany({
-            where: {
-                eventId: tempEvent.id,
-                semesterId: semesterId
-            }
-        });
-        return result;
+        return await checkAffectedLessons(tempEvent.id, semesterId);
     });
 }
