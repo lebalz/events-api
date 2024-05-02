@@ -1,5 +1,8 @@
 import { PrismaClient } from "@prisma/client";
 import prisma from "../prisma";
+import { HTTP404Error } from "../utils/errors/Errors";
+import { prepareTeacher } from "./untis.helpers";
+
 
 function UntisTeachers(db: PrismaClient['untisTeacher']) {
     return Object.assign(db, {
@@ -8,10 +11,10 @@ function UntisTeachers(db: PrismaClient['untisTeacher']) {
                 include: {
                     classes: false,
                     lessons: false,
-                    user: false
+                    user: { select: { id: true } }
                 }
             });
-            return models;
+            return models.map(prepareTeacher);
         },
         async findModel(id: string | number) {
             const model = await db.findUnique({
@@ -33,9 +36,14 @@ function UntisTeachers(db: PrismaClient['untisTeacher']) {
                             }
                         }
                     },
+                    user: { select: { id: true } }
                 }
             });
-            return model;
+            
+            if (!model) {
+                throw new HTTP404Error('Teacher not found');
+            }
+            return prepareTeacher(model);
         },
     })
 }

@@ -71,15 +71,12 @@ describe(`GET ${API_URL}/untis/teachers/:id`, () => {
         expect(result.statusCode).toEqual(200);
         expect(result.body).toEqual({
             ...teachers[0],
+            hasUser: false,
             lessons: expect.any(Array)
         });
         expect(_.orderBy(result.body.lessons, ['id'], 'asc')).toEqual([
             {
-                classes: [
-                    {
-                        id: 1,
-                    },
-                ],
+                classIds: [ 1 ],
                 description: "Mathematik",
                 endHHMM: 1540,
                 id: 999,
@@ -88,20 +85,12 @@ describe(`GET ${API_URL}/untis/teachers/:id`, () => {
                 semesterNr: 1,
                 startHHMM: 1455,
                 subject: "M",
-                teachers: [
-                    {
-                        id: 1,
-                    },
-                ],
+                teacherIds: [ 1 ],
                 weekDay: 2,
                 year: 2023,
             },
             {
-                classes: [
-                    {
-                        id: 1,
-                    },
-                ],
+                classIds: [ 1 ],
                 description: "Informatik",
                 endHHMM: 1635,
                 id: 1001,
@@ -110,11 +99,7 @@ describe(`GET ${API_URL}/untis/teachers/:id`, () => {
                 semesterNr: 1,
                 startHHMM: 1550,
                 subject: "IN",
-                teachers: [
-                    {
-                        id: 1,
-                    },
-                ],
+                teacherIds: [ 1 ],
                 weekDay: 2,
                 year: 2023,
             },
