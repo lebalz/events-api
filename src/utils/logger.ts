@@ -5,7 +5,9 @@ const levels = {
   warn: 1,
   info: 2,
   http: 3,
-  debug: 4,
+  verbose: 4,
+  debug: 5,
+  silly: 6
 }
 
 const level = () => {

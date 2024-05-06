@@ -16,8 +16,8 @@ const stream: StreamOptions = {
 // we already told to the logger that it should print
 // only warning and error messages in production.
 const skip = () => {
-  const env = process.env.NODE_ENV || "development";
-  return env !== "development";
+  // const env = process.env.NODE_ENV || "development";
+  return false;
 };
 
 // Build the morgan middleware
@@ -29,7 +29,10 @@ const morganMiddleware = morgan(
   ":method :url :status :res[content-length] - :response-time ms",
   // Options: in this case, I overwrote the stream and the skip logic.
   // See the methods above.
-  { stream, skip }
+  { 
+    stream,
+    skip
+  }
 );
 
 export default morganMiddleware;
