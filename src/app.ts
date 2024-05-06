@@ -1,7 +1,6 @@
 import { strategyForEnvironment } from "./auth/index";
 import express, { NextFunction, Request, Response } from "express";
 import session from 'express-session';
-import compression from "compression";
 import prisma from "./prisma";
 import path from "path";
 import cors from "cors";
@@ -9,7 +8,7 @@ import morganMiddleware from './middlewares/morgan.middleware'
 import passport from "passport";
 import router from './routes/router';
 import routeGuard, { PUBLIC_GET_ACCESS, PUBLIC_GET_ACCESS_REGEX, createAccessRules } from './auth/guard';
-import authConfig, { PUBLIC_ROUTES } from './routes/authConfig';
+import authConfig from './routes/authConfig';
 import type { User } from "@prisma/client";
 import { HttpStatusCode } from "./utils/errors/BaseError";
 import { notify } from "./middlewares/notify.nop";
@@ -52,8 +51,11 @@ if (!existsSync(`${STATIC_DIR}/fr`)) {
     mkdirSync(`${STATIC_DIR}/fr`, { recursive: true });
 }
 
-
-app.use(compression(), express.json({ limit: "5mb" }));
+/**
+ *  this shall not be needed when running behind a reverse proxy
+ *  as is the case with dokku
+ */
+//  app.use(compression(), express.json({ limit: "5mb" }));
 
 // ensure the server can call other domains: enable cross origin resource sharing (cors)
 app.use(cors({

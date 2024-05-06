@@ -83,7 +83,7 @@ if (process.env.NODE_ENV !== 'test') {
             {
                 name: 'sync-ics',
                 timeout: '10 secondes',
-                interval: 'every 4 hours'
+                interval: 'every 6 hours'
             },
         ],
         /**
