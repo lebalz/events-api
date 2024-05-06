@@ -2,6 +2,7 @@ import { parentPort } from "worker_threads";
 import prisma from "../prisma";
 import Users from "../models/users";
 import { createIcsForClasses, createIcsForDepartments } from "../services/createIcs";
+import Logger from "../utils/logger";
 
 (async () => {
     try {
@@ -22,6 +23,11 @@ import { createIcsForClasses, createIcsForDepartments } from "../services/create
         /** sync department ics files  */
         await createIcsForDepartments();
     
+        await prisma.$disconnect().then(() => {
+            Logger.info('Prisma disconnected');
+        }).catch(err => {
+            Logger.error('Prisma disconnect failed', err);
+        });
         // signal to parent that the job is done
         if (parentPort) {
             parentPort.postMessage('done');
@@ -30,6 +36,11 @@ import { createIcsForClasses, createIcsForDepartments } from "../services/create
         }
     } catch (err) {
         console.error(err);
+        await prisma.$disconnect().then(() => {
+            Logger.info('Prisma disconnected');
+        }).catch(err => {
+            Logger.error('Prisma disconnect failed', err);
+        });
         if (parentPort) {
             parentPort.postMessage('error');
         } else {
