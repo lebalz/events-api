@@ -58,7 +58,7 @@
     "typescript": "^5.4",
     "uuid": "^9.0.0",
     "webuntis": "^2.2.1",
-    "winston": "^3.10.0"
+    "winston": "^3.13.0"
   },
   "devDependencies": {
     "@faker-js/faker": "^8.0.2",
