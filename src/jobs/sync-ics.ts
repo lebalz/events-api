@@ -13,9 +13,9 @@ import Logger from "../utils/logger";
                 untisId: { not: null }
             }
         });
-        await Promise.all(users.map(user => {
-            return Users.createIcs(user, user.id);
-        }));
+        for (const user of users) {
+            await Users.createIcs(user, user.id);
+        }
     
         /** sync class ics files  */
         await createIcsForClasses();
