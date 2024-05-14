@@ -5,13 +5,13 @@ import { KlassName } from "./klassNames";
 
 const GYMD = ['a' , 'b' , 'c' , 'd' , 'e' , 'f' , 'g' , 'h' , 'i' , 'j' , 'k' , 'l' , 'm' , 'n' , 'o' , 'p' , 'q' , 'r' , 's'] as const;
 export type GYMD_Letter = typeof GYMD[number];
-const GYMDBilingual = ['w' , 'x' , 'y'] as const;
+export const GYMDBilingual = ['w' , 'x' , 'y'] as const;
 export type GYMDBilingual_Letter = typeof GYMDBilingual[number];
 const FMS = ['a' , 'b' , 'c' , 'd' , 'e' , 'f' , 'g' , 'h' , 'i' , 'j' , 'k' , 'l' , 'm' , 'n' , 'o'] as const;
 export type FMS_Letter = typeof FMS[number];
 const FMSBilingual = ['w' , 'x' , 'y'] as const;
 export type FMSBilingual_Letter = typeof FMSBilingual[number];
-const FMPaed = ['p' , 'q' , 'r' , 's'] as const;
+export const FMPaed = ['p' , 'q' , 'r' , 's'] as const;
 export type FMPaed_Letter = typeof FMPaed[number];
 const WMS = ['a' , 'b' , 'c'] as const;
 export type WMS_Letter = typeof WMS[number];

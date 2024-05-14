@@ -49,9 +49,10 @@ const toDate = (date: Date | string): Date | undefined => {
     return newDate;
 }
 
-export const importExcel = async (file: string): Promise<ImportRawEvent[]> => {
+export const importExcel = async (file: string): Promise<(ImportRawEvent & {classYears: string, departments: { gym: boolean, fms: boolean, wms: boolean}})[]> => {
     const xlsx = await readXlsxFile(file, { dateFormat: 'YYYY-MM-DD' });
     return xlsx.slice(1).filter((e => !e[COLUMNS.deletedAt])).map((e) => {
+        console.log(e)
         const start = toDate(e[COLUMNS.startDate] as string)!;
         const startTime = e[COLUMNS.startTime] as string;
         const allDay = !startTime;
@@ -70,15 +71,24 @@ export const importExcel = async (file: string): Promise<ImportRawEvent[]> => {
         } else {
             ende.setUTCHours(24, 0, 0, 0);
         }
+        if (ende.getTime() < start.getTime()) {
+            ende.setDate(start.getDate() + 15 * 60 * 1000);
+        }
         return {
             description: e[COLUMNS.description] as string || '',
             descriptionLong: e[COLUMNS.descriptionLong] as string || '',
             location: e[COLUMNS.location] as string || '',
             start: start,
             end: ende,
+            departments: {
+                gym: !!e[COLUMNS.gbsl] as boolean,
+                fms: !!e[COLUMNS.fms] as boolean,
+                wms: !!e[COLUMNS.wms] as boolean,
+            },
+            classYears: e[COLUMNS.classYears] as string || '',
             classesRaw: e[COLUMNS.classes] as string || '',
-            teachingAffected: e[COLUMNS.teachingAffected] as TeachingAffected,
-            audience: e[COLUMNS.audience] as EventAudience,
+            teachingAffected: TeachingAffected.YES, // e[COLUMNS.teachingAffected] as TeachingAffected,
+            audience: EventAudience.STUDENTS, // e[COLUMNS.audience] as EventAudience,
         };
     });
 }
