@@ -47,6 +47,7 @@ Table events {
   createdAt DateTime [default: `now()`, not null]
   updatedAt DateTime [default: `now()`, not null]
   deletedAt DateTime
+  meta Json
 }
 
 Table event_groups {
@@ -263,6 +264,7 @@ Table view__users_affected_by_events {
   createdAt DateTime [default: `now()`, not null]
   updatedAt DateTime [default: `now()`, not null]
   deletedAt DateTime
+  meta Json
 
   indexes {
     (id, userId, semesterId) [unique]
@@ -312,6 +314,7 @@ Table view__events_classes {
   createdAt DateTime [default: `now()`, not null]
   updatedAt DateTime [default: `now()`, not null]
   deletedAt DateTime
+  meta Json
 
   indexes {
     (id, classId, departmentId) [unique]

@@ -1,7 +1,9 @@
 import { Event, EventState, Prisma } from "@prisma/client";
+import _ from "lodash";
 
-export interface ApiEvent extends Omit<Event, 'job' | 'author' | 'departments' | 'children' > {
+export interface ApiEvent extends Omit<Event, 'job' | 'author' | 'departments' | 'children' | 'meta' > {
     jobId: string | null;
+    meta: Prisma.JsonValue | null;
     authorId: string;
     departmentIds: string[];
     publishedVersionIds: string[];
@@ -38,6 +40,7 @@ export const prepareEvent = (event: (Event & {
     const children = event?.children || [];
     const prepared: ApiEvent = {
         ...event,
+        meta: event.meta || null,
         departmentIds: event?.departments?.map((d) => d.id) || [],
         publishedVersionIds: children.filter(e => e.state === EventState.PUBLISHED).sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime()).map((c) => c.id),
     };
@@ -93,6 +96,7 @@ export const clonedProps = (config: CloneConfig | FullCloneConfig | AllPropsClon
                 connect: config.event.groups.map((g) => ({ id: g.id }))
             }
         }
+        props.meta = event.meta ? _.cloneDeep(event.meta) : undefined;
         if (config.allProps) {
             if (event.jobId) {
                 props.job = {connect: {id: event.jobId}};

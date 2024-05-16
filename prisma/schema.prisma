@@ -81,6 +81,8 @@ model Event {
     updatedAt DateTime  @default(now()) @updatedAt @map("updated_at")
     deletedAt DateTime? @map("deleted_at")
 
+    meta      Json?
+
     @@map("events")
 }
 
@@ -346,6 +348,8 @@ view view_UsersAffectedByEvents {
     updatedAt DateTime  @default(now()) @updatedAt @map("updated_at")
     deletedAt DateTime? @map("deleted_at")
 
+    meta Json?
+
     @@unique([id, userId, semesterId])
     @@map("view__users_affected_by_events")
 }
@@ -407,6 +411,8 @@ view view_EventsClasses {
     createdAt DateTime  @default(now()) @map("created_at")
     updatedAt DateTime  @default(now()) @updatedAt @map("updated_at")
     deletedAt DateTime? @map("deleted_at")
+
+    meta Json?
 
     @@unique([id, classId, departmentId])
     @@map("view__events_classes")

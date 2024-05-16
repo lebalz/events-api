@@ -2,12 +2,11 @@ import { RequestHandler } from "express";
 import prisma from "../prisma";
 import { IoEvent } from "../routes/socketEventTypes";
 import { notifyChangedRecord } from "../routes/notify";
-import type { Event } from "@prisma/client";
+import type { Event, Prisma } from "@prisma/client";
 import { EventState, Role } from "@prisma/client";
 import { IoRoom } from "../routes/socketEvents";
 import Events from "../models/events";
-import path from "path";
-import { HTTP400Error, HTTP403Error } from "../utils/errors/Errors";
+import { HTTP403Error } from "../utils/errors/Errors";
 import { ImportType } from "../services/importEvents";
 import { notifyOnDelete, notifyOnUpdate } from "../services/notifications/notifyUsers";
 
@@ -23,7 +22,7 @@ export const find: RequestHandler = async (req, res, next) => {
     }
 }
 
-export const update: RequestHandler<{ id: string }, any, { data: Event & { departmentIds?: string[] } }> = async (req, res, next) => {
+export const update: RequestHandler<{ id: string }, any, { data: Event & { departmentIds?: string[], meta?: any } }> = async (req, res, next) => {
     try {
         const model = await Events.updateModel(req.user!, req.params.id, req.body.data);
         res.notifications = [

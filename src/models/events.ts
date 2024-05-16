@@ -134,7 +134,7 @@ function Events(db: PrismaClient['event']) {
                         cloned: false,
                         departments: {
                             set: departmentIds.map((id) => ({ id }))
-                        }
+                        },
                     },
                     include: { departments: true, children: true },
                 });

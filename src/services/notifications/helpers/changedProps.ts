@@ -14,7 +14,8 @@ const EXCLUDED_PROPS = new Set<keyof ApiEvent>([
     'affectsDepartment2',
     'parentId',
     'departmentIds',
-    'cloned'
+    'cloned',
+    'meta'
 ]);
 
 const getValue = (event: ApiEvent, key: keyof Event, locale: 'de' | 'fr') => {
