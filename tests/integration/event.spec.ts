@@ -1422,9 +1422,10 @@ describe(`POST ${API_URL}/events/import`, () => {
             }
 
             expect(job.log).toMatch(`Success: 2/3 events imported
-Failed: 1
-
-Error at row: 2:`);
+# Failed: 1
+---------------------------------
+FAILED:
+    Error at row: 2`);
             const events = await prisma.event.findMany({
                 include: {
                     groups: {
