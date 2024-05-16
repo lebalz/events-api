@@ -3,13 +3,13 @@ import prisma from "../prisma";
 import { createDataExtractor } from "../controllers/helpers";
 import { ApiEvent, clonedProps, clonedUpdateProps, prepareEvent } from "./event.helpers";
 import { HTTP400Error, HTTP403Error, HTTP404Error } from "../utils/errors/Errors";
-import { importEvents as importService, ImportType } from "../services/importEvents";
+import { importEvents as importService, ImportType, LogMessage } from "../services/importEvents";
 import Logger from "../utils/logger";
 import Semesters from "./semesters";
 import RegistrationPeriods from "./registrationPeriods";
 import _ from "lodash";
 import { rmUndefined } from "../utils/filterHelpers";
-import { LogMessage, Meta } from "../services/importGBSL_xlsx";
+import { Meta } from "../services/importGBSL_xlsx";
 const getData = createDataExtractor<Prisma.EventUncheckedUpdateInput>(
     [
         'audience',
@@ -559,7 +559,7 @@ function Events(db: PrismaClient['event']) {
                 if (warnings.length > 0) {
                     log.push('---------------------------------');
                     log.push('WARNINGS:');
-                    log.push(...warnings.map((w) => `  ${LogMessage(w)}`));
+                    log.push(...warnings.map((w) => `  ${LogMessage(type, w)}`));
                 }
                 if (failedImports.length > 0) {
                     log.push('---------------------------------');

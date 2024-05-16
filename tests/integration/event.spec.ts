@@ -36,6 +36,9 @@ const prepareEvent = (event: Event): any => {
         updatedAt: event.updatedAt.toISOString(),
         createdAt: event.createdAt.toISOString()
     };
+    if (!event.meta) {
+        delete (prepared as any).meta;
+    }
     return prepared;
 }
 

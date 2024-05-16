@@ -1,9 +1,9 @@
-import { EventAudience, EventState, Prisma, TeachingAffected } from "@prisma/client";
-import { importExcel as importGBSL_xlsx } from "./importGBSL_xlsx";
+import { Event, EventAudience, EventState, Prisma, TeachingAffected } from "@prisma/client";
+import { importExcel as importGBSL_xlsx, LogMessage as LogMessageGBSL } from "./importGBSL_xlsx";
 import prisma from "../prisma";
 import { KlassName, mapLegacyClassName } from "./helpers/klassNames";
 import { importCsv as importGBJB_csv } from "./importGBJB_csv";
-import { importExcel as importV1 } from "./importV1";
+import { importExcel as importV1, LogMessage as LogMessageV1 } from "./importV1";
 import { DepartmentLetter, FMPaed, GYMDBilingual } from "./helpers/departmentNames";
 
 export enum ImportType {
@@ -23,6 +23,17 @@ export interface ImportRawEvent {
     teachingAffected?: TeachingAffected;
     audience?: EventAudience;
 
+}
+
+export const LogMessage = (type: ImportType, event: Event) => {
+    switch (type) {
+        case ImportType.GBSL_XLSX:
+            return LogMessageGBSL(event);
+        case ImportType.GBJB_CSV:
+            return;
+        case ImportType.V1:
+            return LogMessageV1(event);
+    }
 }
 
 const extractClasses = (classesRaw?: string): KlassName[] => {

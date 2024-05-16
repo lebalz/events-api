@@ -1,4 +1,4 @@
-import { Department, EventAudience, TeachingAffected } from "@prisma/client";
+import { Department, Event, EventAudience, TeachingAffected } from "@prisma/client";
 import readXlsxFile, { Row } from 'read-excel-file/node';
 import { ImportRawEvent } from "./importEvents";
 import prisma from "../prisma"
@@ -7,6 +7,38 @@ import { Cell } from "read-excel-file/types";
 import { Departments } from "./helpers/departmentNames";
 
 const CLASS_NAME_MATCHER = /(\d\d)([a-z][A-Z]|[A-Z][a-z])/g;
+
+
+export type Meta = {
+    type: 'import',
+    version: 'v1',
+    rowNr: number,
+    warnings: string[],
+    warningsReviewed: boolean,
+    raw: {
+        description: string,
+        location: string,
+        descriptionLong: string,
+        classes: string,
+        excludedClasses: string,
+        affects: string,
+        teachingAffected: string,
+        bilingueLPsAffected: string,
+        startDate: string,
+        startTime: string,
+        endDate: string,
+        endTime: string,
+        departments: string[],
+    }
+} 
+
+export const LogMessage = (event: Event) => {
+    if (!event.meta) {
+        return;
+    }
+    const meta = event.meta as unknown as Meta;
+    return `Row ${meta.rowNr} [${event.description}]: ${meta.warnings.join(', ')}`;
+}
 
 const extractTime = (time?: string): [number, number] => {
     if (!time) {
@@ -105,7 +137,8 @@ export const importExcel = async (file: string) => {
     const header = xlsx[0];
     const COLUMNS = getColumnIndices(header, departments);
 
-    return Promise.all(xlsx.slice(1).filter((e => !e[COLUMNS.deletedAt])).map(async (e) => {
+    return Promise.all(xlsx.slice(1).filter((e => !e[COLUMNS.deletedAt])).map(async (e, idx) => {
+        const warnings: string[] = [];
         const start = toDate(e[COLUMNS.dateStart] as string)!;
         const startTime = e[COLUMNS.timeStart] as string;
         if (startTime) {
@@ -122,6 +155,10 @@ export const importExcel = async (file: string) => {
             ende.setUTCHours(hours, minutes, 0, 0);
         } else {
             ende.setUTCHours(24, 0, 0, 0);
+        }
+        if (ende.getTime() < start.getTime()) {
+            warnings.push(`Invalid end: ${start.toISOString().slice(0, 16)} - ${ende.toISOString().slice(0, 16)}. Autofix applied: end date set to 15 minutes after the start.`);
+            ende = new Date(start.getTime() + 15 * 60 * 1000);
         }
         const classesRaw = e[COLUMNS.classes] as string || '';
         const classes = new Set(classesRaw.match(CLASS_NAME_MATCHER)?.map((c) => c) || []);
@@ -158,7 +195,29 @@ export const importExcel = async (file: string) => {
             classGroups: [...classGroups],
             audience: asAudience(e[COLUMNS.affects]),
             teachingAffected: asTeachingAffected(e[COLUMNS.teachingAffected]),
-            departments: assignedDeps
+            departments: assignedDeps,
+            meta: {
+                type: 'import',
+                version: 'v1',
+                rowNr: idx + 1,
+                warnings: warnings,
+                warningsReviewed: false,
+                raw: {
+                    description: e[COLUMNS.description] as string || '',
+                    location: e[COLUMNS.location] as string || '',
+                    descriptionLong: e[COLUMNS.descriptionLong] as string || '',
+                    classes: e[COLUMNS.classes] as string || '',
+                    excludedClasses: e[COLUMNS.excludedClasses] as string || '',
+                    affects: e[COLUMNS.affects] as string || '',
+                    teachingAffected: e[COLUMNS.teachingAffected] as string || '',
+                    bilingueLPsAffected: e[COLUMNS.bilingueLPsAffected] as string || '',
+                    startDate: e[COLUMNS.dateStart] as string || '',
+                    startTime: e[COLUMNS.timeStart] as string || '',
+                    endDate: e[COLUMNS.dateEnd] as string || '',
+                    endTime: e[COLUMNS.timeEnd] as string || '',
+                    departments: departments.filter(dep => e[(COLUMNS as {[key: string]: number})[dep.name]] === 1).map(dep => dep.name),
+                }
+            } satisfies Meta
         };
     }));
 }

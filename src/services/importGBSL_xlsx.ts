@@ -29,6 +29,7 @@ export type Meta = {
     version: 'gbsl_xlsx',
     rowNr: number,
     warnings: string[],
+    warningsReviewed: boolean,
     raw: {
         KW: number,
         weekday: string,
@@ -126,7 +127,6 @@ export const importExcel = async (file: string): Promise<(
             ende.setUTCHours(24, 0, 0, 0);
         }
         if (ende.getTime() < start.getTime()) {
-            console.log('brrr', idx)
             warnings.push(`Invalid end: ${start.toISOString().slice(0, 16)} - ${ende.toISOString().slice(0, 16)}. Autofix applied: end date set to 15 minutes after the start.`);
             ende = new Date(start.getTime() + 15 * 60 * 1000);
         }
@@ -169,7 +169,7 @@ export const importExcel = async (file: string): Promise<(
                     classYears: e[COLUMNS.classYears] as string || '',
                     classes: e[COLUMNS.classes] as string || '',
                 }
-            }
+            } satisfies Meta
         };
     });
 }
