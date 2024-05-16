@@ -27,7 +27,7 @@ const COLUMNS = {
 export type Meta = {
     type: 'import',
     version: 'gbsl_xlsx',
-    row: number,
+    rowNr: number,
     warnings: string[],
     raw: {
         KW: number,
@@ -53,7 +53,7 @@ export const LogMessage = (event: Event) => {
         return;
     }
     const meta = event.meta as unknown as Meta;
-    return `Row ${meta.row} [${event.description}]: ${meta.warnings.join(', ')}`;
+    return `Row ${meta.rowNr} [${event.description}]: ${meta.warnings.join(', ')}`;
 }
 
 const extractTime = (time: string): [number, number] => {
@@ -127,7 +127,7 @@ export const importExcel = async (file: string): Promise<(
         }
         if (ende.getTime() < start.getTime()) {
             console.log('brrr', idx)
-            warnings.push(`Invalid end: ${start.toISOString().slice(0, 16)} - ${ende.toISOString().slice(0, 16)}. Correct the end date to be 15 minutes after the start date.`);
+            warnings.push(`Invalid end: ${start.toISOString().slice(0, 16)} - ${ende.toISOString().slice(0, 16)}. Autofix applied: end date set to 15 minutes after the start.`);
             ende = new Date(start.getTime() + 15 * 60 * 1000);
         }
         const audience = extractAudience(e[COLUMNS.affectedTeachers] as string);
@@ -149,8 +149,9 @@ export const importExcel = async (file: string): Promise<(
             meta: {
                 type: 'import',
                 version: 'gbsl_xlsx',
-                row: idx + 1,
+                rowNr: idx + 1,
                 warnings: warnings,
+                warningsReviewed: false,
                 raw: {
                     KW: e[COLUMNS.KW] as number || 0,
                     weekday: e[COLUMNS.weekday] as string || '',
