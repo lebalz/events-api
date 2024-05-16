@@ -1,6 +1,7 @@
 import { EventAudience, TeachingAffected } from "@prisma/client";
 import readXlsxFile from 'read-excel-file/node';
 import { ImportRawEvent } from "./importEvents";
+import { rmUndefined } from "../utils/filterHelpers";
 
 const COLUMNS = {
     KW: 0,
@@ -18,9 +19,9 @@ const COLUMNS = {
     descriptionLong: 12,
     classYears: 13,
     classes: 14,
-    audience: 15,
-    teachingAffected: 16,
-    deletedAt: 17
+    audience: 15, // not existing in sl import
+    teachingAffected: 16, // not existing in sl import
+    deletedAt: 17 // not existing in sl import
 }
 
 const extractTime = (time: string): [number, number] => {
@@ -48,14 +49,41 @@ const toDate = (date: Date | string): Date | undefined => {
     newDate.setUTCHours(0, 0, 0, 0);
     return newDate;
 }
+/*                          negative lookbehind --> only match LP but not KLP */
+const LP = /(Lehrer\:innen|(?<!K)L[Pp]|Klassenteam|Fachlehrer\*innen|Fachschaftsvorstände|Delegierte\:r|Betreuer\:innen|Expert\:innen|[Ll]ehrperson(en)?|Eine Person pro Abteilung|Mentor\:innen|Betreuer\*innen|[Ff]achschaft|LK|(([a-z]{3}(, |$)+){2,}))/
+const KLP = /(KLP?|[Kk]lassenlehrperson(en)?|[Kk]lassenlehrer\*innen)/
 
-export const importExcel = async (file: string): Promise<(ImportRawEvent & {classYears: string, departments: { gym: boolean, fms: boolean, wms: boolean}})[]> => {
+const extractAudience = (audience: string): EventAudience => {
+    if (!audience) {
+        return EventAudience.STUDENTS;
+    }
+    if (LP.test(audience)) {
+        return EventAudience.LP;
+    }
+    if (KLP.test(audience)) {
+        return EventAudience.KLP;
+    }
+    return EventAudience.STUDENTS;
+}
+
+export const importExcel = async (file: string): Promise<(
+    ImportRawEvent & {
+        classYears: string,
+        departments: { gym: boolean, fms: boolean, wms: boolean},
+        meta: {
+            type: 'import',
+            version: 'gbsl_xlsx',
+            row: number,
+            warnings: string[],
+            raw: any
+        }
+    })[]> => {
     const xlsx = await readXlsxFile(file, { dateFormat: 'YYYY-MM-DD' });
-    return xlsx.slice(1).filter((e => !e[COLUMNS.deletedAt])).map((e) => {
-        console.log(e)
+    return xlsx.slice(1).filter((e => !e[COLUMNS.deletedAt])).map((e, idx) => {
         const start = toDate(e[COLUMNS.startDate] as string)!;
         const startTime = e[COLUMNS.startTime] as string;
         const allDay = !startTime;
+        const warnings = [];
         if (startTime) {
             const [hours, minutes] = extractTime(startTime);
             start.setUTCHours(hours, minutes, 0, 0);
@@ -73,7 +101,9 @@ export const importExcel = async (file: string): Promise<(ImportRawEvent & {clas
         }
         if (ende.getTime() < start.getTime()) {
             ende.setDate(start.getDate() + 15 * 60 * 1000);
+            warnings.push(`Ende vor Start: ${start.toISOString()} - ${ende.toISOString()}. Korrigiere Ende auf 15 Minuten später.`);
         }
+        const audience = extractAudience(e[COLUMNS.affectedTeachers] as string);
         return {
             description: e[COLUMNS.description] as string || '',
             descriptionLong: e[COLUMNS.descriptionLong] as string || '',
@@ -87,8 +117,31 @@ export const importExcel = async (file: string): Promise<(ImportRawEvent & {clas
             },
             classYears: e[COLUMNS.classYears] as string || '',
             classesRaw: e[COLUMNS.classes] as string || '',
-            teachingAffected: TeachingAffected.YES, // e[COLUMNS.teachingAffected] as TeachingAffected,
-            audience: EventAudience.STUDENTS, // e[COLUMNS.audience] as EventAudience,
+            audience: audience,
+            teachingAffected: TeachingAffected.YES,
+            meta: {
+                type: 'import',
+                version: 'gbsl_xlsx',
+                row: idx + 1,
+                warnings: warnings,
+                raw: {
+                    KW: e[COLUMNS.KW] as number || 0,
+                    weekday: e[COLUMNS.weekday] as string || '',
+                    startDate: e[COLUMNS.startDate] as string || '',
+                    startTime: e[COLUMNS.startTime] as string || '',
+                    endDate: e[COLUMNS.endDate] as string || '',
+                    endTime: e[COLUMNS.endTime] as string || '',
+                    location: e[COLUMNS.location] as string || '',
+                    categories: {
+                        gbsl: !!e[COLUMNS.gbsl] as boolean,
+                        fms: !!e[COLUMNS.fms] as boolean,
+                        wms: !!e[COLUMNS.wms] as boolean,
+                    },
+                    affectedTeachers: e[COLUMNS.affectedTeachers] as string || '',
+                    classYears: e[COLUMNS.classYears] as string || '',
+                    classes: e[COLUMNS.classes] as string || '',
+                }
+            }
         };
     });
 }

@@ -984,39 +984,54 @@ describe(`POST ${API_URL}/events/import`, () => {
                 expect(e.jobId).toEqual(job.id);
                 expect(e.parentId).toBeNull();
                 expect(e.groups).toEqual([]);
-                expect(e.audience).toBe(EventAudience.STUDENTS);
                 expect(e.deletedAt).toBeNull();
                 expect(e.start.getTime()).toBeLessThanOrEqual(e.end.getTime());
                 expect(e.classGroups).toEqual([]);
             });
+            const departments = await prisma.department.findMany();
             const event1 = events.find(e => e.description === '1. Schultag gemäss Programm');
             expect(event1?.descriptionLong).toEqual('');
             expect(event1?.location).toEqual('GBSL');
+            expect(event1?.audience).toBe(EventAudience.STUDENTS);
             expect(event1?.start.toISOString()).toEqual('2023-08-21T00:00:00.000Z');
             expect(event1?.end.toISOString()).toEqual('2023-08-22T00:00:00.000Z');
             expect(event1?.classes).toEqual([]);
+            expect(event1?.departments).toHaveLength(4);
+            expect(event1?.departments.map(d => d.id).sort()).toEqual([
+                departments.find(d => d.name === 'GYMD')?.id,
+                departments.find(d => d.name === 'GYMD/GYMF')?.id,
+                departments.find(d => d.name === 'FMS')?.id,
+                departments.find(d => d.name === 'WMS')?.id
+            ].sort());
 
 
             const event2 = events.find(e => e.description === '26Fa FMS1 Kurzklassenkonferenz');
             expect(event2?.descriptionLong).toEqual('');
             expect(event2?.location).toEqual('');
+            expect(event2?.audience).toBe(EventAudience.LP);
             expect(event2?.start.toISOString()).toEqual('2023-08-24T12:15:00.000Z');
             expect(event2?.end.toISOString()).toEqual('2023-08-24T12:30:00.000Z');
             expect(event2?.classes).toEqual([]);
+            expect(event2?.departments).toHaveLength(1);
+            expect(event2?.departments.map(d => d.id)).toEqual([departments.find(d => d.name === 'FMS')?.id]);
 
             const event3 = events.find(e => e.description === 'Koordinationssitzung LK der neuen Bilingue-Klassen 27Gw, 27Gx, 27mT, 27mU');
             expect(event3?.descriptionLong).toEqual('');
             expect(event3?.location).toEqual('M208');
+            expect(event3?.audience).toBe(EventAudience.LP);
             expect(event3?.start.toISOString()).toEqual('2023-08-24T12:15:00.000Z');
             expect(event3?.end.toISOString()).toEqual('2023-08-24T13:00:00.000Z');
             expect(event3?.classes).toEqual(['27Gw', '27Gx', '27mT', '27mU']);
+            expect(event3?.departments).toHaveLength(0);
 
             const event4 = events.find(e => e.description === 'Information IDAF 1 Geschichte / Französisch');
             expect(event4?.descriptionLong).toEqual('Die Lehrpersonen informieren die Klasse in einer der Lektionen über den Zeitpunkt und Ablauf des IDAF-Moduls');
             expect(event4?.location).toEqual('');
+            expect(event4?.audience).toBe(EventAudience.KLP);
             expect(event4?.start.toISOString()).toEqual('2023-08-28T00:00:00.000Z');
             expect(event4?.end.toISOString()).toEqual('2023-09-02T00:00:00.000Z');
             expect(event4?.classes).toEqual(['26Wa']);
+            expect(event4?.departments).toHaveLength(0);
         });
 
         it("prevents users from importing events", async () => {

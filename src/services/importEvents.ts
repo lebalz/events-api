@@ -122,7 +122,7 @@ export const importEvents = async (file: string, userId: string, jobId: string, 
             const fms = departments.find(d => d.name.toLowerCase() === 'fms');
             const fmsBilingue = departments.find(d => d.name.toLowerCase() === 'fms/ecg');
             const wms = departments.find(d => d.name.toLowerCase() === 'wms');
-            return await Promise.all(data.map((e, idx) => {
+            return await Promise.all(data.map(async (e, idx) => {
                 const classes = extractClasses(e.classesRaw);
                 const departmentIds: string[] = [];
                 const classGroups: string[] = [];
@@ -150,6 +150,19 @@ export const importEvents = async (file: string, userId: string, jobId: string, 
                         classes.push(...classYears.classes);
                     }
                 }
+                if ((e.meta).warnings.length > 0) {
+                    const job = await prisma.job.findUnique({where: {id: jobId}});
+                    if (job) {
+                        await prisma.job.update({
+                            where: { id: jobId },
+                            data: {
+                                log: {
+                                    set: `${job.log}\n${JSON.stringify(e.meta, null, 2)}` 
+                                }
+                            }
+                        });
+                    }
+                }
                 return prisma.event.create({
                     data: {
                         description: e.description || '',
@@ -169,8 +182,9 @@ export const importEvents = async (file: string, userId: string, jobId: string, 
                         departments: departmentIds.length > 0 
                             ? { connect: departmentIds.map((id) => ({ id })) }
                             : undefined,
-                        teachingAffected: e.teachingAffected || TeachingAffected.YES,
-                        audience: e.audience || EventAudience.STUDENTS,
+                        teachingAffected: e.teachingAffected ?? TeachingAffected.YES,
+                        audience: e.audience,
+                        meta: e.meta
                     }
                 }).catch((e) => {
                     return Promise.resolve(`Error at row: ${idx + 1}: ${JSON.stringify(e.message, undefined, 2)}`);
