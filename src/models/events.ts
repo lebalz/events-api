@@ -156,6 +156,50 @@ function Events(db: PrismaClient['event']) {
             }
             return prepareEvent(model);
         },
+        async updateMeta(actor: User, id: string, metaData: Prisma.JsonObject | null): Promise<ApiEvent> {
+            const record = await db.findUnique({ 
+                where: { id: id },
+                include: { 
+                    departments: {
+                        select: {
+                            id: true
+                        }
+                    },
+                    groups: {
+                        select: {
+                            id: true,
+                            users: {
+                                select: {
+                                    id: true
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+            if (!record) {
+                throw new HTTP404Error('Event not found');
+            }
+            if (!(record.state === EventState.DRAFT || record.state === EventState.REVIEW)) {
+                throw new HTTP404Error('Not allowed');
+            }
+            if (!(record.authorId === actor.id || record.groups.some(g => g.users.map(user => user.id).includes(actor.id)) || actor.role === Role.ADMIN)) {
+                throw new HTTP403Error('Not authorized');
+            }
+            const model = await db.update({
+                where: { id: id },
+                data: {
+                    meta: metaData === null 
+                            ? Prisma.DbNull 
+                            : {
+                                ...(record.meta as Prisma.JsonObject || {}),
+                                ...metaData
+                            } as Prisma.JsonObject
+                },
+                include: { departments: {select: {id: true}}, children: {select: {id: true, state: true, createdAt: true}} },
+            });
+            return prepareEvent(model);
+        },
         async setState(actor: User, id: string, requested: EventState): Promise<{event: ApiEvent, affected: ApiEvent[]}> {
             const isAdmin = actor!.role === Role.ADMIN;
             const record = await db.findUnique({ 

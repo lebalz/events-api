@@ -149,6 +149,93 @@ describe(`PUT ${API_URL}/events/:id`, () => {
     /** TODO: check that only accepted attributes are updated */
 });
 
+
+describe(`PUT ${API_URL}/events/:id/meta`, () => {
+    it('Lets users update the meta data of draft events', async () => {
+        const user = await prisma.user.create({
+            data: generateUser({ email: 'foo@bar.ch' })
+        });
+        const event = await prisma.event.create({ data: generateEvent({ authorId: user.id, description: 'foo bar!', meta: { warnings: ['hello'], warningsReviewed: false}}) });
+        expect(event.meta).toEqual({ warnings: ['hello'], warningsReviewed: false});
+        const result = await request(app)
+            .put(`${API_URL}/events/${event.id}/meta`)
+            .set('authorization', JSON.stringify({ email: user.email }))
+            .send({ data: { warningsReviewed: true } });
+        expect(result.statusCode).toEqual(200);
+        expect(result.body).toEqual({
+            ...prepareEvent(event),
+            updatedAt: expect.any(String),
+            meta: { warnings: ['hello'], warningsReviewed: true }
+        });
+        expect(mNotification).toHaveBeenCalledTimes(1);
+        expect(mNotification.mock.calls[0][0]).toEqual({
+            event: IoEvent.CHANGED_RECORD,
+            message: { record: 'EVENT', id: result.body.id },
+            to: user.id
+        });
+        const result2 = await request(app)
+            .put(`${API_URL}/events/${event.id}/meta`)
+            .set('authorization', JSON.stringify({ email: user.email }))
+            .send({ data: null });
+        const withoutMeta = { ...prepareEvent(event)};
+        delete (withoutMeta as any).meta;
+        expect(result2.body).toEqual({
+            ...withoutMeta,
+            updatedAt: expect.any(String)
+        });
+    });
+    it('Lets users/admins update the meta data of review events', async () => {
+        const user = await prisma.user.create({
+            data: generateUser({ email: 'foo@bar.ch' })
+        });
+        const event = await prisma.event.create({ data: generateEvent({ authorId: user.id,  state: EventState.REVIEW, description: 'foo bar!', meta: { warnings: ['hello'], warningsReviewed: false}}) });
+        expect(event.meta).toEqual({ warnings: ['hello'], warningsReviewed: false});
+        const result = await request(app)
+            .put(`${API_URL}/events/${event.id}/meta`)
+            .set('authorization', JSON.stringify({ email: user.email }))
+            .send({ data: { warningsReviewed: true } });
+        expect(result.statusCode).toEqual(200);
+        expect(result.body).toEqual({
+            ...prepareEvent(event),
+            updatedAt: expect.any(String),
+            meta: { warnings: ['hello'], warningsReviewed: true }
+        });
+        expect(mNotification).toHaveBeenCalledTimes(1);
+        expect(mNotification.mock.calls[0][0]).toEqual({
+            event: IoEvent.CHANGED_RECORD,
+            message: { record: 'EVENT', id: result.body.id },
+            to: user.id
+        });
+        const admin = await prisma.user.create({
+            data: generateUser({ email: 'admin@bar.ch', role: Role.ADMIN })
+        });
+        const result2 = await request(app)
+            .put(`${API_URL}/events/${event.id}/meta`)
+            .set('authorization', JSON.stringify({ email: admin.email }))
+            .send({ data: {warningsReviewed: false} });
+        expect(result2.body).toEqual({
+            ...prepareEvent(event),
+            updatedAt: expect.any(String),
+            meta: { warnings: ['hello'], warningsReviewed: false }
+        });
+    });
+    [EventState.PUBLISHED, EventState.REFUSED].forEach((state) => {
+        [Role.USER, Role.ADMIN].forEach((role) => {
+            it(`Prevents ${role} to update the meta data of ${state} events`, async () => {
+                const user = await prisma.user.create({
+                    data: generateUser({ email: 'foo@bar.ch', role: role })
+                });
+                const event = await prisma.event.create({ data: generateEvent({ authorId: user.id,  state: state, description: 'foo bar!', meta: { warnings: ['hello'], warningsReviewed: false}}) });
+                const result = await request(app)
+                    .put(`${API_URL}/events/${event.id}/meta`)
+                    .set('authorization', JSON.stringify({ email: user.email }))
+                    .send({ data: {warningsReviewed: false} });
+                expect(result.statusCode).toEqual(404);
+            });
+        })
+    });
+});
+
 describe(`POST ${API_URL}/events`, () => {
     it('Lets users create a new draft', async () => {
         expect(mNotification).toHaveBeenCalledTimes(0);
@@ -964,7 +1051,7 @@ describe(`POST ${API_URL}/events/import`, () => {
             });
 
             expect(job.state).toEqual(JobState.DONE);
-            expect(job.log.trim()).toEqual('Success: 4/4 events imported\nFailed: 0');
+            expect(job.log.trim()).toEqual('# Success: 4/4 events imported');
 
             const events = await prisma.event.findMany({
                 include: {
@@ -1111,7 +1198,7 @@ describe(`POST ${API_URL}/events/import`, () => {
             });
 
             expect(job.state).toEqual(JobState.DONE);
-            expect(job.log.trim()).toEqual('Success: 3/3 events imported\nFailed: 0');
+            expect(job.log.trim()).toEqual('# Success: 3/3 events imported');
 
             const events = await prisma.event.findMany({
                 include: {
@@ -1196,7 +1283,7 @@ describe(`POST ${API_URL}/events/import`, () => {
             });
 
             expect(job.state).toEqual(JobState.DONE);
-            expect(job.log.trim()).toEqual(`Success: 4/4 events imported\nFailed: 0`);
+            expect(job.log.trim()).toEqual(`# Success: 4/4 events imported`);
 
             const events = await prisma.event.findMany({
                 include: {
@@ -1421,11 +1508,11 @@ describe(`POST ${API_URL}/events/import`, () => {
                 job = await Jobs.findModel(user, result.body.id);
             }
 
-            expect(job.log).toMatch(`Success: 2/3 events imported
+            expect(job.log).toMatch(`# Success: 2/3 events imported
 # Failed: 1
 ---------------------------------
 FAILED:
-    Error at row: 2`);
+  Error at row: 2`);
             const events = await prisma.event.findMany({
                 include: {
                     groups: {

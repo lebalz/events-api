@@ -42,6 +42,23 @@ export const update: RequestHandler<{ id: string }, any, { data: Event & { depar
     }
 }
 
+
+export const updateMeta: RequestHandler<{ id: string }, any, { data: any }> = async (req, res, next) => {
+    try {
+        const model = await Events.updateMeta(req.user!, req.params.id, req.body.data);
+        res.notifications = [
+            {
+                message: { record: NAME, id: model.id },
+                event: IoEvent.CHANGED_RECORD,
+                to: model.state === EventState.PUBLISHED ? IoRoom.ALL : req.user!.id
+            }
+        ]
+        res.status(200).json(model);
+    } catch (error) /* istanbul ignore next */ {
+        next(error);
+    }
+}
+
 export const setState: RequestHandler<{}, any, { data: { ids: string[], state: EventState, message?: string } }> = async (req, res, next) => {
     try {
         const { ids, state, message } = req.body.data;

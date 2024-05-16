@@ -13,7 +13,13 @@ const levels = {
 const level = () => {
   const env = process.env.NODE_ENV || 'development'
   const isDevelopment = env === 'development'
-  return isDevelopment ? 'debug' : 'http'
+  const isProd = env === 'production'
+  if (isProd) {
+    return 'http'
+  }
+  return isDevelopment 
+          ? 'debug' 
+          : 'warn'
 }
 
 const colors = {

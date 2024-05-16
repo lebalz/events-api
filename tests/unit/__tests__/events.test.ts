@@ -29,7 +29,7 @@ describe('find event', () => {
 			/** expect the prepared event to be returned
 			 * @see event.helpers.ts#prepareEvent 
 			 */
-			...event,
+			...prepareEvent(event),
 			author: undefined,
 			departments: undefined,
 			departmentIds: [],
@@ -210,7 +210,7 @@ describe('setState transitions', () => {
 				/** expect the prepared event to be returned
 				 * @see event.helpers.ts#prepareEvent 
 				 */
-				...event,
+				...prepareEvent(event),
 				state: EventState.REVIEW,
 				departmentIds: [gbsl.id],
 				publishedVersionIds: [],
@@ -266,7 +266,7 @@ describe('setState transitions', () => {
 		 */
 		await expect(Events.setState(user, event.id, EventState.REVIEW)).resolves.toEqual({
 			event: {
-				...event,
+				...prepareEvent(event),
 				state: EventState.REVIEW,
 				departmentIds: [],
 				publishedVersionIds: [],
@@ -286,7 +286,7 @@ describe('setState transitions', () => {
 		 */
 		await expect(Events.setState(admin, event.id, EventState.PUBLISHED)).resolves.toEqual({
 			event: {
-				...event,
+				...prepareEvent(event),
 				state: EventState.PUBLISHED,
 				departmentIds: [],
 				publishedVersionIds: [],
@@ -307,7 +307,7 @@ describe('setState transitions', () => {
 		 */
 		await expect(Events.setState(user, event.id, EventState.REVIEW)).resolves.toEqual({
 			event: {
-				...event,
+				...prepareEvent(event),
 				state: EventState.REVIEW,
 				departmentIds: [],
 				parentId: ancestor1.id,
@@ -325,7 +325,7 @@ describe('setState transitions', () => {
 		await setTimeout(100);
 		
 		const newCurrent = {
-			...nextCurrent,
+			...prepareEvent(nextCurrent),
 			id: current.id,
 			updatedAt: expect.any(Date),
 			state: EventState.PUBLISHED,
@@ -337,7 +337,7 @@ describe('setState transitions', () => {
 		};
 
 		const oldCurrent = {
-			...current,
+			...prepareEvent(current),
 			id: nextCurrent.id,
 			updatedAt: expect.any(Date),
 			departmentIds: [],
@@ -363,7 +363,7 @@ describe('setState transitions', () => {
 		 */
 		await expect(Events.setState(admin, event.id, EventState.PUBLISHED)).resolves.toEqual({
 			event: {
-				...event,
+				...prepareEvent(event),
 				id: current.id,
 				state: EventState.PUBLISHED,
 				departmentIds: [],
@@ -372,7 +372,7 @@ describe('setState transitions', () => {
 				updatedAt: expect.any(Date)
 			},
 			affected: [{
-				...current,
+				...prepareEvent(current),
 				id: event.id,
 				parentId: current.id,
 				departmentIds: [],
@@ -381,7 +381,7 @@ describe('setState transitions', () => {
 			}]
 		});
 		await expect(EventGroups.events(user, group.id)).resolves.toEqual([{
-			...event,
+			...prepareEvent(event),
 			id: current.id,
 			state: EventState.PUBLISHED,
 			departmentIds: [],

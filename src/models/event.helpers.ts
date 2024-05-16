@@ -3,7 +3,7 @@ import _ from "lodash";
 
 export interface ApiEvent extends Omit<Event, 'job' | 'author' | 'departments' | 'children' | 'meta' > {
     jobId: string | null;
-    meta: Prisma.JsonValue | null;
+    meta?: Prisma.JsonValue | null;
     authorId: string;
     departmentIds: string[];
     publishedVersionIds: string[];
@@ -47,6 +47,9 @@ export const prepareEvent = (event: (Event & {
     ['author', 'departments', 'children', 'job'].forEach((key) => {
         delete (prepared as any)[key];
     });
+    if (!event.meta) {
+        delete (prepared as any).meta;
+    }
     return prepared;
 }
 
