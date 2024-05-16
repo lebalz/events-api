@@ -1,4 +1,4 @@
-import { EventAudience, TeachingAffected } from "@prisma/client";
+import { Event, EventAudience, TeachingAffected } from "@prisma/client";
 import readXlsxFile from 'read-excel-file/node';
 import { ImportRawEvent } from "./importEvents";
 import { rmUndefined } from "../utils/filterHelpers";
@@ -22,6 +22,38 @@ const COLUMNS = {
     audience: 15, // not existing in sl import
     teachingAffected: 16, // not existing in sl import
     deletedAt: 17 // not existing in sl import
+}
+
+export type Meta = {
+    type: 'import',
+    version: 'gbsl_xlsx',
+    row: number,
+    warnings: string[],
+    raw: {
+        KW: number,
+        weekday: string,
+        startDate: string,
+        startTime: string,
+        endDate: string,
+        endTime: string,
+        location: string,
+        categories: {
+            gbsl: boolean,
+            fms: boolean,
+            wms: boolean,
+        },
+        affectedTeachers: string,
+        classYears: string,
+        classes: string
+    }
+} 
+
+export const LogMessage = (event: Event) => {
+    if (!event.meta) {
+        return;
+    }
+    const meta = event.meta as unknown as Meta;
+    return `Row ${meta.row} [${event.description}]: ${meta.warnings.join(', ')}`;
 }
 
 const extractTime = (time: string): [number, number] => {
@@ -70,20 +102,14 @@ export const importExcel = async (file: string): Promise<(
     ImportRawEvent & {
         classYears: string,
         departments: { gym: boolean, fms: boolean, wms: boolean},
-        meta: {
-            type: 'import',
-            version: 'gbsl_xlsx',
-            row: number,
-            warnings: string[],
-            raw: any
-        }
+        meta: Meta
     })[]> => {
     const xlsx = await readXlsxFile(file, { dateFormat: 'YYYY-MM-DD' });
     return xlsx.slice(1).filter((e => !e[COLUMNS.deletedAt])).map((e, idx) => {
         const start = toDate(e[COLUMNS.startDate] as string)!;
         const startTime = e[COLUMNS.startTime] as string;
         const allDay = !startTime;
-        const warnings = [];
+        const warnings: string[] = [];
         if (startTime) {
             const [hours, minutes] = extractTime(startTime);
             start.setUTCHours(hours, minutes, 0, 0);
@@ -100,8 +126,9 @@ export const importExcel = async (file: string): Promise<(
             ende.setUTCHours(24, 0, 0, 0);
         }
         if (ende.getTime() < start.getTime()) {
-            ende.setDate(start.getDate() + 15 * 60 * 1000);
-            warnings.push(`Ende vor Start: ${start.toISOString()} - ${ende.toISOString()}. Korrigiere Ende auf 15 Minuten später.`);
+            console.log('brrr', idx)
+            warnings.push(`Invalid end: ${start.toISOString().slice(0, 16)} - ${ende.toISOString().slice(0, 16)}. Correct the end date to be 15 minutes after the start date.`);
+            ende = new Date(start.getTime() + 15 * 60 * 1000);
         }
         const audience = extractAudience(e[COLUMNS.affectedTeachers] as string);
         return {

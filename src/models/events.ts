@@ -9,6 +9,7 @@ import Semesters from "./semesters";
 import RegistrationPeriods from "./registrationPeriods";
 import _ from "lodash";
 import { rmUndefined } from "../utils/filterHelpers";
+import { LogMessage, Meta } from "../services/importGBSL_xlsx";
 const getData = createDataExtractor<Prisma.EventUncheckedUpdateInput>(
     [
         'audience',
@@ -501,13 +502,31 @@ function Events(db: PrismaClient['event']) {
                 }
             });
             const importer = importService(filepath, actor.id, importJob.id, type).then(async (events) => {
-                const successfulImports = events.filter((e) => !(typeof e === 'string'));
-                const failedImports = events.filter((e) => typeof e === 'string'); 
+                const successfulImports = events.filter((e) => !(typeof e === 'string')) as Event[];
+                const failedImports = events.filter((e) => typeof e === 'string') as string[];
+                const warnings = successfulImports.filter((e) => (((e.meta as Meta)?.warnings?.length || 0) > 0)) as Event[]; 
+                const log: string[] = [ `# Success: ${successfulImports.length}/${events.length} events imported`];
+                if (warnings.length > 0) {
+                    log.push(`# Warnings: ${warnings.length}`);
+                }
+                if (failedImports.length > 0) {
+                    log.push(`# Failed: ${failedImports.length}`);
+                }
+                if (warnings.length > 0) {
+                    log.push('---------------------------------');
+                    log.push('WARNINGS:');
+                    log.push(...warnings.map((w) => `  ${LogMessage(w)}`));
+                }
+                if (failedImports.length > 0) {
+                    log.push('---------------------------------');
+                    log.push('FAILED:');
+                    log.push(...failedImports.map(f => `  ${f}`));
+                }
                 return await prisma.job.update({
                     where: { id: importJob.id },
                     data: {
                         state: JobState.DONE,
-                        log: `Success: ${successfulImports.length}/${events.length} events imported\nFailed: ${failedImports.length}\n\n${failedImports.join('\n')}`
+                        log: log.join('\n')
                     }
                 });
             }).catch(async (e) => {

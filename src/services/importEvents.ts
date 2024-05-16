@@ -1,4 +1,4 @@
-import { EventAudience, EventState, TeachingAffected } from "@prisma/client";
+import { EventAudience, EventState, Prisma, TeachingAffected } from "@prisma/client";
 import { importExcel as importGBSL_xlsx } from "./importGBSL_xlsx";
 import prisma from "../prisma";
 import { KlassName, mapLegacyClassName } from "./helpers/klassNames";
@@ -150,19 +150,6 @@ export const importEvents = async (file: string, userId: string, jobId: string, 
                         classes.push(...classYears.classes);
                     }
                 }
-                if ((e.meta).warnings.length > 0) {
-                    const job = await prisma.job.findUnique({where: {id: jobId}});
-                    if (job) {
-                        await prisma.job.update({
-                            where: { id: jobId },
-                            data: {
-                                log: {
-                                    set: `${job.log}\n${JSON.stringify(e.meta, null, 2)}` 
-                                }
-                            }
-                        });
-                    }
-                }
                 return prisma.event.create({
                     data: {
                         description: e.description || '',
@@ -187,7 +174,7 @@ export const importEvents = async (file: string, userId: string, jobId: string, 
                         meta: e.meta
                     }
                 }).catch((e) => {
-                    return Promise.resolve(`Error at row: ${idx + 1}: ${JSON.stringify(e.message, undefined, 2)}`);
+                    return Promise.resolve(`Error at row: ${idx + 1}: ${JSON.stringify(e.message, null, 2)}`);
                 });
             }));
         case ImportType.GBJB_CSV:
