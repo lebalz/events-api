@@ -44,7 +44,7 @@ export enum DepartmentLetter {
 export const Departments = {
   WMS: 'WMS',
   ESC: 'ESC',
-  FMPaed: 'FMPaed',
+  FMPaed: 'FMPäd',
   MSOP: 'MSOP',
   FMS: 'FMS',
   FMSBilingual: 'FMS/ECG',
