@@ -3,6 +3,7 @@ import readXlsxFile, { Row } from 'read-excel-file/node';
 import prisma from "../prisma"
 import { i18nKey, translate } from "./helpers/i18n";
 import { Departments } from "./helpers/departmentNames";
+import { Cell } from "read-excel-file/types";
 
 const CLASS_NAME_MATCHER = /(\d\d)([a-z][A-Z]|[A-Z][a-z])/g;
 
@@ -80,11 +81,11 @@ const mapAlias = (name: string): string => {
 
 
 const getColumnIndex = (header: Row, key: string) => {
-    const headerNames = header.map((h) => mapAlias(h.toString().trim().replace(' ?', '?')).toLowerCase())
+    const sanitizer = (s: Cell) => mapAlias(`${s}`).replaceAll(/[^a-zA-Z0-9]/g, '').toLowerCase();
+    const headerNames = header.map(sanitizer)
     return Math.max(
-        headerNames.indexOf(translate(key as i18nKey, 'de').toLowerCase()),
-        headerNames.indexOf(translate(key as i18nKey, 'fr').toLowerCase()),
-
+        headerNames.indexOf(sanitizer(translate(key as i18nKey, 'de'))),
+        headerNames.indexOf(sanitizer(translate(key as i18nKey, 'fr'))),
     );
 }
 
