@@ -262,7 +262,7 @@ const i18n = {
     },
     bilingueLPsAffected: {
         de: 'Bilingue LP\'s betroffen',
-        fr: 'LPs bilingues concernés'
+        fr: 'Concerne profs des classes bilingues?'
     },
     affects: {
         de: 'Betrifft',

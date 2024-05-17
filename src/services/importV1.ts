@@ -1,9 +1,7 @@
 import { Department, Event, EventAudience, TeachingAffected } from "@prisma/client";
 import readXlsxFile, { Row } from 'read-excel-file/node';
-import { ImportRawEvent } from "./importEvents";
 import prisma from "../prisma"
 import { i18nKey, translate } from "./helpers/i18n";
-import { Cell } from "read-excel-file/types";
 import { Departments } from "./helpers/departmentNames";
 
 const CLASS_NAME_MATCHER = /(\d\d)([a-z][A-Z]|[A-Z][a-z])/g;
