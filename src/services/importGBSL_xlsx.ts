@@ -2,6 +2,7 @@ import { Event, EventAudience, TeachingAffected } from "@prisma/client";
 import readXlsxFile from 'read-excel-file/node';
 import { ImportRawEvent } from "./importEvents";
 import { rmUndefined } from "../utils/filterHelpers";
+import { Cell } from "read-excel-file/types";
 
 const COLUMNS = {
     KW: 0,
@@ -22,7 +23,7 @@ const COLUMNS = {
     audience: 15, // not existing in sl import
     teachingAffected: 16, // not existing in sl import
     deletedAt: 17 // not existing in sl import
-}
+} as const;
 
 export type Meta = {
     type: 'import',
@@ -45,7 +46,9 @@ export type Meta = {
         },
         affectedTeachers: string,
         classYears: string,
-        classes: string
+        classes: string,
+        audience: number | undefined,
+        teachingAffected: number | undefined,
     }
 } 
 
@@ -99,6 +102,37 @@ const extractAudience = (audience: string): EventAudience => {
     return EventAudience.STUDENTS;
 }
 
+const extractAudienceFromNumber = (audience?: number) => {
+    switch (audience) {
+        case 0:
+            return EventAudience.KLP;
+        case 1:
+            return EventAudience.LP;
+        case 2:
+            return EventAudience.STUDENTS;
+        case 3:
+            return EventAudience.ALL;
+    }
+}
+const extractTeachingAffectedFromNumber = (audience?: number) => {
+    switch (audience) {
+        case 0:
+            return TeachingAffected.NO;
+        case 1:
+            return TeachingAffected.PARTIAL;
+        case 2:
+            return TeachingAffected.YES;
+    }
+}
+
+const extractNumericCell = (cell: Cell): number | undefined => {
+    try {
+        return Number.parseInt(`${cell}`, 10);
+    } catch (e) {
+        return undefined;
+    }
+}
+
 export const importExcel = async (file: string): Promise<(
     ImportRawEvent & {
         classYears: string,
@@ -130,7 +164,10 @@ export const importExcel = async (file: string): Promise<(
             warnings.push(`Invalid end: ${start.toISOString().slice(0, 16)} - ${ende.toISOString().slice(0, 16)}. Autofix applied: end date set to 15 minutes after the start.`);
             ende = new Date(start.getTime() + 15 * 60 * 1000);
         }
-        const audience = extractAudience(e[COLUMNS.affectedTeachers] as string);
+        const audienceValue = extractNumericCell(e[COLUMNS.audience]);
+        const audience = extractAudienceFromNumber(audienceValue) || EventAudience.ALL;
+        const teachingAffectedValue = extractNumericCell(e[COLUMNS.teachingAffected]);
+        const teachingAffected = extractTeachingAffectedFromNumber(teachingAffectedValue) || TeachingAffected.YES;
         return {
             description: e[COLUMNS.description] as string || '',
             descriptionLong: e[COLUMNS.descriptionLong] as string || '',
@@ -145,7 +182,7 @@ export const importExcel = async (file: string): Promise<(
             classYears: e[COLUMNS.classYears] as string || '',
             classesRaw: e[COLUMNS.classes] as string || '',
             audience: audience,
-            teachingAffected: TeachingAffected.YES,
+            teachingAffected: teachingAffected,
             meta: {
                 type: 'import',
                 version: 'gbsl_xlsx',
@@ -168,6 +205,8 @@ export const importExcel = async (file: string): Promise<(
                     affectedTeachers: e[COLUMNS.affectedTeachers] as string || '',
                     classYears: e[COLUMNS.classYears] as string || '',
                     classes: e[COLUMNS.classes] as string || '',
+                    audience: audienceValue,
+                    teachingAffected: teachingAffectedValue
                 }
             } satisfies Meta
         };

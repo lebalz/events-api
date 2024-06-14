@@ -1069,7 +1069,6 @@ describe(`POST ${API_URL}/events/import`, () => {
             expect(events.length).toEqual(4);
             events.forEach((e) => {
                 expect(e.state).toEqual(EventState.DRAFT);
-                expect(e.teachingAffected).toEqual(TeachingAffected.YES);
                 expect(e.cloned).toBeFalsy();
                 expect(e.jobId).toEqual(job.id);
                 expect(e.parentId).toBeNull();
@@ -1083,6 +1082,7 @@ describe(`POST ${API_URL}/events/import`, () => {
             expect(event1?.descriptionLong).toEqual('');
             expect(event1?.location).toEqual('GBSL');
             expect(event1?.audience).toBe(EventAudience.STUDENTS);
+            expect(event1?.teachingAffected).toEqual(TeachingAffected.PARTIAL);
             expect(event1?.start.toISOString()).toEqual('2023-08-21T00:00:00.000Z');
             expect(event1?.end.toISOString()).toEqual('2023-08-22T00:00:00.000Z');
             expect(event1?.classes).toEqual([]);
@@ -1099,6 +1099,7 @@ describe(`POST ${API_URL}/events/import`, () => {
             expect(event2?.descriptionLong).toEqual('');
             expect(event2?.location).toEqual('');
             expect(event2?.audience).toBe(EventAudience.LP);
+            expect(event2?.teachingAffected).toEqual(TeachingAffected.NO);
             expect(event2?.start.toISOString()).toEqual('2023-08-24T12:15:00.000Z');
             expect(event2?.end.toISOString()).toEqual('2023-08-24T12:30:00.000Z');
             expect(event2?.classes).toEqual([]);
@@ -1108,7 +1109,8 @@ describe(`POST ${API_URL}/events/import`, () => {
             const event3 = events.find(e => e.description === 'Koordinationssitzung LK der neuen Bilingue-Klassen 27Gw, 27Gx, 27mT, 27mU');
             expect(event3?.descriptionLong).toEqual('');
             expect(event3?.location).toEqual('M208');
-            expect(event3?.audience).toBe(EventAudience.LP);
+            expect(event3?.audience).toBe(EventAudience.ALL);
+            expect(event3?.teachingAffected).toEqual(TeachingAffected.YES);
             expect(event3?.start.toISOString()).toEqual('2023-08-24T12:15:00.000Z');
             expect(event3?.end.toISOString()).toEqual('2023-08-24T13:00:00.000Z');
             expect(event3?.classes).toEqual(['27Gw', '27Gx', '27mT', '27mU']);
@@ -1118,6 +1120,7 @@ describe(`POST ${API_URL}/events/import`, () => {
             expect(event4?.descriptionLong).toEqual('Die Lehrpersonen informieren die Klasse in einer der Lektionen über den Zeitpunkt und Ablauf des IDAF-Moduls');
             expect(event4?.location).toEqual('');
             expect(event4?.audience).toBe(EventAudience.KLP);
+            expect(event4?.teachingAffected).toEqual(TeachingAffected.YES);
             expect(event4?.start.toISOString()).toEqual('2023-08-28T00:00:00.000Z');
             expect(event4?.end.toISOString()).toEqual('2023-09-02T00:00:00.000Z');
             expect(event4?.classes).toEqual(['26Wa']);
