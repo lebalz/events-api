@@ -481,7 +481,11 @@ function Events(db: PrismaClient['event']) {
                                     { 
                                         groups: {
                                             some: {
-                                                id: actor.id
+                                                users: {
+                                                    some: {
+                                                        id: actor?.id
+                                                    }
+                                                }
                                             }
                                         }
                                     },
