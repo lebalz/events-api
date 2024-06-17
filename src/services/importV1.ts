@@ -4,8 +4,10 @@ import prisma from "../prisma"
 import { i18nKey, translate } from "./helpers/i18n";
 import { Departments } from "./helpers/departmentNames";
 import { Cell } from "read-excel-file/types";
+import { mapLegacyClassName } from "./helpers/klassNames";
 
 const CLASS_NAME_MATCHER = /(\d\d)([a-z][A-Z]|[A-Z][a-z])/g;
+const LEGACY_CLASS_NAME_MATCHER = /(2[456][a-zA-Z])(?=[^a-zA-Z\*]|$)/g;
 
 
 export type Meta = {
@@ -30,6 +32,18 @@ export type Meta = {
         departments: string[],
     }
 } 
+
+/**
+ * 
+ * @param raw string to be mapped to class names
+ * @example '25A, 25B, 27m*' -> ['25mA', '25mB']
+ */
+export const mapClassNames = (raw: string) => {
+    return new Set([
+        ...(raw.match(CLASS_NAME_MATCHER)?.map((c) => c) || []), 
+        ...(raw.match(LEGACY_CLASS_NAME_MATCHER)?.map((c) => mapLegacyClassName(c)) || [])
+    ]);
+}
 
 export const LogMessage = (event: Event) => {
     if (!event.meta) {
@@ -140,9 +154,9 @@ export const importExcel = async (file: string) => {
         const warnings: string[] = [];
         const start = toDate(e[COLUMNS.dateStart] as string)!;
         const startTime = e[COLUMNS.timeStart] as string;
+        const [startHours, startMinutes] = extractTime(startTime);
         if (startTime) {
-            const [hours, minutes] = extractTime(startTime);
-            start.setUTCHours(hours, minutes, 0, 0);
+            start.setUTCHours(startHours, startMinutes, 0, 0);
         }
         let ende = toDate(e[COLUMNS.dateEnd] as string);
         if (!ende) {
@@ -150,20 +164,33 @@ export const importExcel = async (file: string) => {
         }
         const endTime = e[COLUMNS.timeEnd] as string;
         if (!!endTime) {
+            /**
+             * if end-time is set, use it
+             */
             const [hours, minutes] = extractTime(endTime);
             ende.setUTCHours(hours, minutes, 0, 0);
-        } else {
+        } else if (startHours === 0 && startMinutes === 0) {
+            /**
+             * if start-time is midnight, set end-time to midnight
+             * of the following day
+             */
             ende.setUTCHours(24, 0, 0, 0);
+        } else {
+            /**
+             * otherwise: use start-time as end-time
+             * if start-time is set
+             */
+            ende.setUTCHours(startHours, startMinutes, 0, 0);
         }
         if (ende.getTime() < start.getTime()) {
             warnings.push(`Invalid end: ${start.toISOString().slice(0, 16)} - ${ende.toISOString().slice(0, 16)}. Autofix applied: end date set to 15 minutes after the start.`);
             ende = new Date(start.getTime() + 15 * 60 * 1000);
         }
         const classesRaw = e[COLUMNS.classes] as string || '';
-        const classes = new Set(classesRaw.match(CLASS_NAME_MATCHER)?.map((c) => c) || []);
+        const classes = mapClassNames(classesRaw);
         const excludedClassesRaw = e[COLUMNS.excludedClasses] as string || '';
         const classGroups = new Set(classesRaw.match(/(\d\d)(\*|[a-z]\*|[A-Z]\*)/g)?.map((c) => c.replace(/\*/g, '')) || []);
-        const excludedClasses = excludedClassesRaw.match(CLASS_NAME_MATCHER)?.map((c) => c) || [];
+        const excludedClasses = [...mapClassNames(excludedClassesRaw)];
         if (excludedClasses.length > 0 && (classGroups.size > 0 || classes.size > 0)) {
             for (const excludedClass of excludedClasses) {
                 for (const cg of classGroups) {
