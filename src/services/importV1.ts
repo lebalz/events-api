@@ -188,8 +188,15 @@ export const importExcel = async (file: string) => {
         }
         const classesRaw = e[COLUMNS.classes] as string || '';
         const classes = mapClassNames(classesRaw);
-        const excludedClassesRaw = e[COLUMNS.excludedClasses] as string || '';
         const classGroups = new Set(classesRaw.match(/(\d\d)(\*|[a-z]\*|[A-Z]\*)/g)?.map((c) => c.replace(/\*/g, '')) || []);
+        for (const cg of classGroups) {
+            for (const c of classes) {
+                if (c.startsWith(cg)) {
+                    classes.delete(c);
+                }
+            }
+        }
+        const excludedClassesRaw = e[COLUMNS.excludedClasses] as string || '';
         const excludedClasses = [...mapClassNames(excludedClassesRaw)];
         if (excludedClasses.length > 0 && (classGroups.size > 0 || classes.size > 0)) {
             for (const excludedClass of excludedClasses) {
