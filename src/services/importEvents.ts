@@ -58,17 +58,17 @@ const extractClasses = (classesRaw?: string): KlassName[] => {
      return [...new Set((singleClasses || []).concat(groupedClasses || []))].map(c => mapLegacyClassName(c)).filter(c => !!c) as KlassName[];
 }
 
-const getYear = (depAndYear: string) => {
+const getYear = (refDate: Date, depAndYear: string) => {
     const yearRaw = depAndYear.match(/\d/);
     if (!yearRaw || yearRaw.length < 1) {
         return;
     }
     const year = Number.parseInt(yearRaw[0], 10);
-    const shift = (new Date()).getMonth() > 7 ? 1 : 0;
-    return  (new Date()).getFullYear() % 100 + (4 - year) + shift;
+    const shift = refDate.getMonth() > 7 ? 1 : 0;
+    return  refDate.getFullYear() % 100 + (4 - year) + shift;
 }
 
-const extractClassYears = (classYearsRaw?: string) => {
+const extractClassYears = (refDate: Date, classYearsRaw?: string) => {
     if (!classYearsRaw) {
         return {
             classes: [],
@@ -92,7 +92,7 @@ const extractClassYears = (classYearsRaw?: string) => {
             break;
         }
         const [matched] = match;
-        const year = getYear(matched);
+        const year = getYear(refDate, matched);
         if (GYM_BILI.test(matched)) {
             classYearsRaw = classYearsRaw.replace(matched, '');
             GYMDBilingual.forEach((letter) => {
@@ -139,7 +139,7 @@ export const importEvents = async (file: string, userId: string, jobId: string, 
                 const classGroups: string[] = [];
                 if (classes.length === 0) {
                     /** check for classYears */
-                    const classYears = extractClassYears(e.classYears);
+                    const classYears = extractClassYears(e.start, e.classYears);
                     if (classYears.classes.length === 0 && classYears.years.length === 0) {
                         if (e.departments.gym && gymd) {
                             departmentIds.push(gymd.id)
