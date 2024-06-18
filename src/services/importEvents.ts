@@ -106,14 +106,15 @@ const extractClassYears = (refDate: Date, classYearsRaw?: string) => {
             classYears.add(`${year}${DepartmentLetter.GYMD}`);
         } else if (FMS.test(matched)) {
             classYearsRaw = classYearsRaw.replace(matched, '');
-            classYears.add(`${year}${DepartmentLetter.FMS}`);
+            classYears.add(`${year! - 1}${DepartmentLetter.FMS}`);
         } else if (WMS.test(matched)) {
             classYearsRaw = classYearsRaw.replace(matched, '');
             classYears.add(`${year}${DepartmentLetter.WMS}`);
         } else if (FMSP.test(matched)) {
             classYearsRaw = classYearsRaw.replace(matched, '');
+            const fmpYear = refDate.getFullYear() % 100 + refDate.getMonth() > 6 ? 1 : 0;
             FMPaed.forEach((letter) => {
-                classes.add(`${year}${DepartmentLetter.FMS}${letter}` as KlassName)
+                classes.add(`${fmpYear}${DepartmentLetter.FMS}${letter}` as KlassName)
             });
         } else if (ESC.test(matched)) {
             classYearsRaw = classYearsRaw.replace(matched, '');
