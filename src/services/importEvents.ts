@@ -4,7 +4,7 @@ import prisma from "../prisma";
 import { KlassName, mapLegacyClassName } from "./helpers/klassNames";
 import { importCsv as importGBJB_csv } from "./importGBJB_csv";
 import { importExcel as importV1, LogMessage as LogMessageV1 } from "./importV1";
-import { DepartmentLetter, FMPaed, GYMDBilingual } from "./helpers/departmentNames";
+import { DepartmentLetter, FMPaed, GYMDBilingual, GYMFBilingual } from "./helpers/departmentNames";
 
 export enum ImportType {
     GBSL_XLSX = 'GBSL_XLSX',
@@ -97,6 +97,9 @@ const extractClassYears = (refDate: Date, classYearsRaw?: string) => {
             classYearsRaw = classYearsRaw.replace(matched, '');
             GYMDBilingual.forEach((letter) => {
                 classes.add(`${year}${DepartmentLetter.GYMD}${letter}` as KlassName)
+            });
+            GYMFBilingual.forEach((letter) => {
+                classes.add(`${year}${DepartmentLetter.GYMF}${letter}` as KlassName)
             });
         } else if (GYM.test(matched)) {
             classYearsRaw = classYearsRaw.replace(matched, '');
