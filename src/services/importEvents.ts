@@ -64,7 +64,7 @@ const getYear = (refDate: Date, depAndYear: string) => {
         return;
     }
     const year = Number.parseInt(yearRaw[0], 10);
-    const shift = refDate.getMonth() > 7 ? 1 : 0;
+    const shift = refDate.getMonth() > 6 ? 1 : 0; /** getMonth() returns zero-based month, e.g. january->0, february->1,... */
     return  refDate.getFullYear() % 100 + (4 - year) + shift;
 }
 

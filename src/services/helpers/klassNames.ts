@@ -24,7 +24,7 @@ type ESC = `${Digit}${Digit}${DepartmentLetter.ESC}${ESC_Letter}`;
 
 export type KlassName = GYM | GYMBilingual | FMS | FMPaed | FMSBilingual | WMS | Maturite | MaturiteBilingual | ECG | ECGBilingual | MSOP | Passerelle | ESC;
 const today = new Date();
-const currentGraduationYear = (today.getFullYear() % 100) + today.getMonth() > 7 ? 1 : 0;
+const currentGraduationYear = (today.getFullYear() % 100) + today.getMonth() > 6 ? 1 : 0; /** getMonth() returns zero-based month, e.g. january->0, february->1,... */
 export const mapLegacyClassName: (name: string) => `${number}${DepartmentLetter}${string}` = (name: string) => {
     if (!name || name.length < 3) {
         return name as `${number}${DepartmentLetter}${string}`;
