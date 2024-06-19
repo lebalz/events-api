@@ -1,10 +1,11 @@
-import { Event, EventAudience, EventState, Prisma, TeachingAffected } from "@prisma/client";
+import { Event, EventAudience, EventState, Prisma, TeachingAffected, UntisClass } from "@prisma/client";
 import { importExcel as importGBSL_xlsx, LogMessage as LogMessageGBSL } from "./importGBSL_xlsx";
 import prisma from "../prisma";
 import { KlassName, mapLegacyClassName } from "./helpers/klassNames";
 import { importCsv as importGBJB_csv } from "./importGBJB_csv";
 import { importExcel as importV1, LogMessage as LogMessageV1 } from "./importV1";
 import { DepartmentLetter, FMPaed, GYMDBilingual, GYMFBilingual } from "./helpers/departmentNames";
+import _ from "lodash";
 
 export enum ImportType {
     GBSL_XLSX = 'GBSL_XLSX',
@@ -36,9 +37,13 @@ export const LogMessage = (type: ImportType, event: Event) => {
     }
 }
 
-const extractClasses = (classesRaw?: string): KlassName[] => {
+const extractClasses = (refDate: Date, classesRaw: string | undefined, klasses: UntisClass[]): {classes: KlassName[], warnings: string[], info: string[]} => {
     if (!classesRaw) {
-        return [];
+        return {
+            classes: [],
+            warnings: [],
+            info: []
+        };
     }
      /**
          * \d matches a digit (equivalent to [0-9])
@@ -55,7 +60,34 @@ const extractClasses = (classesRaw?: string): KlassName[] => {
          const cls = c.substring(2).split('').map((c) => `${yr}${c}`);
          return cls;
      }).filter(c => !!c).reduce((a, b) => a!.concat(b!), []);
-     return [...new Set((singleClasses || []).concat(groupedClasses || []))].map(c => mapLegacyClassName(c)).filter(c => !!c) as KlassName[];
+     
+     const currentGratudationYear = (refDate.getFullYear() % 100) + (refDate.getMonth() > 6 ? 1 : 0);
+     const all = [...new Set((singleClasses || []).concat(groupedClasses || []))].map(c => mapLegacyClassName(c)).filter(c => !!c) as KlassName[];
+     const validated = _.groupBy(all, (c) => {
+            const year = Number.parseInt(c.slice(0, 2), 10);
+            const departmentLetter = c.charAt(2);
+            if (year < currentGratudationYear) {
+                return 'invalid'
+            }
+            if (departmentLetter === DepartmentLetter.FMS || departmentLetter === DepartmentLetter.ESC) {
+                if (year > currentGratudationYear + 3) {
+                    return 'invalid';
+                }
+            } else {
+                if (year > currentGratudationYear + 4) {
+                    return 'invalid';
+                }
+            }
+            if (klasses.some(k => k.year === currentGratudationYear + 4) && !klasses.find(k => k.name === c)) {
+                return 'unknown';
+            }
+            return 'valid';
+     });
+    return {
+        classes: [...validated.valid, ...validated.unknown] || [],
+        warnings: validated.invalid.map(invalid => `removed class '${invalid}', because it was outside the valid range`) || [],
+        info: validated.unknown.map(unknown => `unkown class: '${unknown}`) || []
+    }
 }
 
 const getYear = (refDate: Date, depAndYear: string) => {
@@ -68,7 +100,7 @@ const getYear = (refDate: Date, depAndYear: string) => {
     return  refDate.getFullYear() % 100 + (4 - year) + shift;
 }
 
-const extractClassYears = (refDate: Date, classYearsRaw?: string) => {
+const extractClassYears = (refDate: Date, classYearsRaw: string | undefined, klasses: UntisClass[]) => {
     if (!classYearsRaw) {
         return {
             classes: [],
@@ -92,33 +124,55 @@ const extractClassYears = (refDate: Date, classYearsRaw?: string) => {
             break;
         }
         const [matched] = match;
-        const year = getYear(refDate, matched);
+        const finalYear = getYear(refDate, matched);
+        const hasUntisClass = klasses.some((k) => k.year === finalYear)
         if (GYM_BILI.test(matched)) {
             classYearsRaw = classYearsRaw.replace(matched, '');
             GYMDBilingual.forEach((letter) => {
-                classes.add(`${year}${DepartmentLetter.GYMD}${letter}` as KlassName)
+                const kn = `${finalYear}${DepartmentLetter.GYMD}${letter}` as KlassName;
+                if (hasUntisClass) {
+                    if (klasses.find((k) => k.name === kn)) {
+                        classes.add(kn)
+                    }
+                } else {
+                    classes.add(kn)
+                }
             });
             GYMFBilingual.forEach((letter) => {
-                classes.add(`${year}${DepartmentLetter.GYMF}${letter}` as KlassName)
+                const kn = `${finalYear}${DepartmentLetter.GYMF}${letter}` as KlassName;
+                if (hasUntisClass) {
+                    if (klasses.find((k) => k.name === kn)) {
+                        classes.add(kn)
+                    }
+                } else {
+                    classes.add(kn)
+                }
             });
         } else if (GYM.test(matched)) {
             classYearsRaw = classYearsRaw.replace(matched, '');
-            classYears.add(`${year}${DepartmentLetter.GYMD}`);
+            classYears.add(`${finalYear}${DepartmentLetter.GYMD}`);
         } else if (FMS.test(matched)) {
             classYearsRaw = classYearsRaw.replace(matched, '');
-            classYears.add(`${year! - 1}${DepartmentLetter.FMS}`);
+            classYears.add(`${finalYear! - 1}${DepartmentLetter.FMS}`);
         } else if (WMS.test(matched)) {
             classYearsRaw = classYearsRaw.replace(matched, '');
-            classYears.add(`${year}${DepartmentLetter.WMS}`);
+            classYears.add(`${finalYear}${DepartmentLetter.WMS}`);
         } else if (FMSP.test(matched)) {
             classYearsRaw = classYearsRaw.replace(matched, '');
             const fmpYear = refDate.getFullYear() % 100 + refDate.getMonth() > 6 ? 1 : 0;
             FMPaed.forEach((letter) => {
-                classes.add(`${fmpYear}${DepartmentLetter.FMS}${letter}` as KlassName)
+                const kn = `${fmpYear}${DepartmentLetter.FMS}${letter}` as KlassName;
+                if (hasUntisClass) {
+                    if (klasses.find((k) => k.name === kn)) {
+                        classes.add(kn)
+                    }
+                } else {
+                    classes.add(kn)
+                }
             });
         } else if (ESC.test(matched)) {
             classYearsRaw = classYearsRaw.replace(matched, '');
-            classYears.add(`${year}${DepartmentLetter.ESC}`);
+            classYears.add(`${finalYear}${DepartmentLetter.ESC}`);
         }
     }
     return {
@@ -128,6 +182,7 @@ const extractClassYears = (refDate: Date, classYearsRaw?: string) => {
 }
 
 export const importEvents = async (file: string, userId: string, jobId: string, type: ImportType) => {
+    const klasses = await prisma.untisClass.findMany();
     switch (type) {
         case ImportType.GBSL_XLSX:
             const data = await importGBSL_xlsx(file);
@@ -138,12 +193,12 @@ export const importEvents = async (file: string, userId: string, jobId: string, 
             const fmsBilingue = departments.find(d => d.name.toLowerCase() === 'fms/ecg');
             const wms = departments.find(d => d.name.toLowerCase() === 'wms');
             return await Promise.all(data.map(async (e, idx) => {
-                const classes = extractClasses(e.classesRaw);
+                const classes = extractClasses(e.start, e.classesRaw, klasses);
                 const departmentIds: string[] = [];
                 const classGroups: string[] = [];
-                if (classes.length === 0) {
+                if (classes.classes.length + classes.warnings.length === 0) {
                     /** check for classYears */
-                    const classYears = extractClassYears(e.start, e.classYears);
+                    const classYears = extractClassYears(e.start, e.classYears, klasses);
                     if (classYears.classes.length === 0 && classYears.years.length === 0) {
                         if (e.departments.gym && gymd) {
                             departmentIds.push(gymd.id)
@@ -162,8 +217,14 @@ export const importEvents = async (file: string, userId: string, jobId: string, 
                         }
                     } else {
                         classGroups.push(...classYears.years);
-                        classes.push(...classYears.classes);
+                        classes.classes.push(...classYears.classes);
                     }
+                }
+                if (classes.warnings.length > 0) {
+                    e.meta.warnings.push(...classes.warnings);
+                }
+                if (classes.info.length > 0) {
+                    e.meta.info.push(...classes.info);
                 }
                 return prisma.event.create({
                     data: {
@@ -173,7 +234,7 @@ export const importEvents = async (file: string, userId: string, jobId: string, 
                         start: e.start,
                         end: e.end,
                         state: EventState.DRAFT,
-                        classes: classes,
+                        classes: classes.classes,
                         classGroups: classGroups,
                         author: {
                             connect: { id: userId }
@@ -195,7 +256,7 @@ export const importEvents = async (file: string, userId: string, jobId: string, 
         case ImportType.GBJB_CSV:
             const dataGbjb = await importGBJB_csv(file);
             return await Promise.all(dataGbjb.map((e, idx) => {
-                const classes = extractClasses(e.classesRaw)
+                const classes = extractClasses(e.start, e.classesRaw, klasses);
                 return prisma.event.create({
                     data: {
                         description: e.description || '',
@@ -204,7 +265,7 @@ export const importEvents = async (file: string, userId: string, jobId: string, 
                         start: e.start,
                         end: e.end,
                         state: EventState.DRAFT,
-                        classes: classes,
+                        classes: classes.classes,
                         author: {
                             connect: { id: userId }
                         },

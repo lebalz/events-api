@@ -29,6 +29,7 @@ export type Meta = {
     type: 'import',
     version: 'gbsl_xlsx',
     rowNr: number,
+    info: string[],
     warnings: string[],
     warningsReviewed: boolean,
     raw: {
@@ -143,7 +144,6 @@ export const importExcel = async (file: string): Promise<(
     return xlsx.slice(1).filter((e => !e[COLUMNS.deletedAt])).map((e, idx) => {
         const start = toDate(e[COLUMNS.startDate] as string)!;
         const startTime = e[COLUMNS.startTime] as string;
-        const allDay = !startTime;
         const warnings: string[] = [];
         if (startTime) {
             const [hours, minutes] = extractTime(startTime);
@@ -186,8 +186,9 @@ export const importExcel = async (file: string): Promise<(
             meta: {
                 type: 'import',
                 version: 'gbsl_xlsx',
-                rowNr: idx + 1,
+                rowNr: idx + 2,
                 warnings: warnings,
+                info: [],
                 warningsReviewed: false,
                 raw: {
                     KW: e[COLUMNS.KW] as number || 0,
