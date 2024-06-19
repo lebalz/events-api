@@ -29,7 +29,8 @@ export type Meta = {
     type: 'import',
     version: 'gbsl_xlsx',
     rowNr: number,
-    info: string[],
+    infos: string[],
+    infosReviewed: boolean,
     warnings: string[],
     warningsReviewed: boolean,
     raw: {
@@ -187,8 +188,9 @@ export const importExcel = async (file: string): Promise<(
                 type: 'import',
                 version: 'gbsl_xlsx',
                 rowNr: idx + 2,
+                infos: [],
+                infosReviewed: false,
                 warnings: warnings,
-                info: [],
                 warningsReviewed: false,
                 raw: {
                     KW: e[COLUMNS.KW] as number || 0,
