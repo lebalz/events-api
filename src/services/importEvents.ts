@@ -37,7 +37,7 @@ export const LogMessage = (type: ImportType, event: Event) => {
     }
 }
 
-const extractClasses = (refDate: Date, classesRaw: string | undefined, klasses: UntisClass[]): {classes: KlassName[], warnings: string[], info: string[]} => {
+const extractClasses = (refDate: Date, classesRaw: string | undefined, klasses: UntisClass[]): { classes: KlassName[], warnings: string[], info: string[] } => {
     if (!classesRaw) {
         return {
             classes: [],
@@ -45,48 +45,48 @@ const extractClasses = (refDate: Date, classesRaw: string | undefined, klasses: 
             info: []
         };
     }
-     /**
-         * \d matches a digit (equivalent to [0-9])
-         * \d matches a digit (equivalent to [0-9])
-         * [a-zA-Z] matches any alphabetical character
-         */
-     const singleClasses = classesRaw.match(/(\d\d[a-z][A-Z]?|\d\d[A-Z][a-z]?)($|\W+)/g)?.map((c) => c).map(c => c.replace(/\W+/g, ''));
-     /*                                  e.g.  24hi              24KL         24hiKL     */
-     const groupedClasses = classesRaw.match(/(\d\d)([a-z][a-z]|[A-Z][A-Z]|[a-zA-Z][a-zA-Z][a-zA-Z]+)[a-zA-Z]*/g)?.map((c) => c)?.map((c) => {
-         if (!c || c.length < 3) {
-             return;
-         }
-         const yr = c.substring(0, 2);
-         const cls = c.substring(2).split('').map((c) => `${yr}${c}`);
-         return cls;
-     }).filter(c => !!c).reduce((a, b) => a!.concat(b!), []);
-     
-     const currentGratudationYear = (refDate.getFullYear() % 100) + (refDate.getMonth() > 6 ? 1 : 0);
-     const all = [...new Set((singleClasses || []).concat(groupedClasses || []))].map(c => mapLegacyClassName(c)).filter(c => !!c) as KlassName[];
-     const validated = _.groupBy(all, (c) => {
-            const year = Number.parseInt(c.slice(0, 2), 10);
-            const departmentLetter = c.charAt(2);
-            if (year < currentGratudationYear) {
-                return 'invalid'
+    /**
+        * \d matches a digit (equivalent to [0-9])
+        * \d matches a digit (equivalent to [0-9])
+        * [a-zA-Z] matches any alphabetical character
+        */
+    const singleClasses = classesRaw.match(/(\d\d[a-z][A-Z]?|\d\d[A-Z][a-z]?)($|\W+)/g)?.map((c) => c).map(c => c.replace(/\W+/g, ''));
+    /*                                  e.g.  24hi              24KL         24hiKL     */
+    const groupedClasses = classesRaw.match(/(\d\d)([a-z][a-z]|[A-Z][A-Z]|[a-zA-Z][a-zA-Z][a-zA-Z]+)[a-zA-Z]*/g)?.map((c) => c)?.map((c) => {
+        if (!c || c.length < 3) {
+            return;
+        }
+        const yr = c.substring(0, 2);
+        const cls = c.substring(2).split('').map((c) => `${yr}${c}`);
+        return cls;
+    }).filter(c => !!c).reduce((a, b) => a!.concat(b!), []);
+
+    const currentGratudationYear = (refDate.getFullYear() % 100) + (refDate.getMonth() > 6 ? 1 : 0);
+    const all = [...new Set((singleClasses || []).concat(groupedClasses || []))].map(c => mapLegacyClassName(c)).filter(c => !!c) as KlassName[];
+    const validated = _.groupBy(all, (c) => {
+        const year = Number.parseInt(c.slice(0, 2), 10);
+        const departmentLetter = c.charAt(2);
+        if (year < currentGratudationYear) {
+            return 'invalid'
+        }
+        if (departmentLetter === DepartmentLetter.FMS || departmentLetter === DepartmentLetter.ESC) {
+            if (year > currentGratudationYear + 3) {
+                return 'invalid';
             }
-            if (departmentLetter === DepartmentLetter.FMS || departmentLetter === DepartmentLetter.ESC) {
-                if (year > currentGratudationYear + 3) {
-                    return 'invalid';
-                }
-            } else {
-                if (year > currentGratudationYear + 4) {
-                    return 'invalid';
-                }
+        } else {
+            if (year > currentGratudationYear + 4) {
+                return 'invalid';
             }
-            if (klasses.some(k => k.year === currentGratudationYear + 4) && !klasses.find(k => k.name === c)) {
-                return 'unknown';
-            }
-            return 'valid';
-     });
+        }
+        if (klasses.some(k => k.year === currentGratudationYear + 4) && !klasses.find(k => k.name === c)) {
+            return 'unknown';
+        }
+        return 'valid';
+    });
     return {
-        classes: [...validated.valid, ...validated.unknown] || [],
-        warnings: validated.invalid.map(invalid => `removed class '${invalid}', because it was outside the valid range`) || [],
-        info: validated.unknown.map(unknown => `unkown class: '${unknown}`) || []
+        classes: [...(validated.valid || []), ...(validated.unknown || [])],
+        warnings: (validated.invalid || []).map(invalid => `removed class '${invalid}', because it was outside the valid range`) || [],
+        info: (validated.unknown || []).map(unknown => `unkown class: '${unknown}`) || []
     }
 }
 
@@ -97,7 +97,7 @@ const getYear = (refDate: Date, depAndYear: string) => {
     }
     const year = Number.parseInt(yearRaw[0], 10);
     const shift = refDate.getMonth() > 6 ? 1 : 0; /** getMonth() returns zero-based month, e.g. january->0, february->1,... */
-    return  refDate.getFullYear() % 100 + (4 - year) + shift;
+    return refDate.getFullYear() % 100 + (4 - year) + shift;
 }
 
 const extractClassYears = (refDate: Date, classYearsRaw: string | undefined, klasses: UntisClass[]) => {
@@ -211,7 +211,7 @@ export const importEvents = async (file: string, userId: string, jobId: string, 
                             if (fmsBilingue) {
                                 departmentIds.push(fmsBilingue.id)
                             }
-                        } 
+                        }
                         if (e.departments.wms && wms) {
                             departmentIds.push(wms.id)
                         }
@@ -242,7 +242,7 @@ export const importEvents = async (file: string, userId: string, jobId: string, 
                         job: {
                             connect: { id: jobId }
                         },
-                        departments: departmentIds.length > 0 
+                        departments: departmentIds.length > 0
                             ? { connect: departmentIds.map((id) => ({ id })) }
                             : undefined,
                         teachingAffected: e.teachingAffected ?? TeachingAffected.YES,
