@@ -78,7 +78,7 @@ const extractClasses = (refDate: Date, classesRaw: string | undefined, klasses: 
                 return 'invalid';
             }
         }
-        if (klasses.some(k => k.year === currentGratudationYear + 4) && !klasses.find(k => k.name === c)) {
+        if (klasses.some(k => (k.year % 100) === year) && !klasses.find(k => k.name === c)) {
             return 'unknown';
         }
         return 'valid';
@@ -125,7 +125,7 @@ const extractClassYears = (refDate: Date, classYearsRaw: string | undefined, kla
         }
         const [matched] = match;
         const finalYear = getYear(refDate, matched);
-        const hasUntisClass = klasses.some((k) => k.year === finalYear)
+        const hasUntisClass = klasses.some((k) => (k.year % 100) === finalYear)
         if (GYM_BILI.test(matched)) {
             classYearsRaw = classYearsRaw.replace(matched, '');
             GYMDBilingual.forEach((letter) => {
