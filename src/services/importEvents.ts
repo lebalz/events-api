@@ -37,12 +37,12 @@ export const LogMessage = (type: ImportType, event: Event) => {
     }
 }
 
-const extractClasses = (refDate: Date, classesRaw: string | undefined, klasses: UntisClass[]): { classes: KlassName[], warnings: string[], info: string[] } => {
+const extractClasses = (refDate: Date, classesRaw: string | undefined, klasses: UntisClass[]): { classes: KlassName[], warnings: string[], infos: string[] } => {
     if (!classesRaw) {
         return {
             classes: [],
             warnings: [],
-            info: []
+            infos: []
         };
     }
     /**
@@ -86,7 +86,7 @@ const extractClasses = (refDate: Date, classesRaw: string | undefined, klasses: 
     return {
         classes: [...(validated.valid || []), ...(validated.unknown || [])],
         warnings: (validated.invalid || []).map(invalid => `removed class '${invalid}', because it was outside the valid range`) || [],
-        info: (validated.unknown || []).map(unknown => `unkown class: '${unknown}`) || []
+        infos: (validated.unknown || []).map(unknown => `unkown class: '${unknown}`) || []
     }
 }
 
@@ -223,8 +223,8 @@ export const importEvents = async (file: string, userId: string, jobId: string, 
                 if (classes.warnings.length > 0) {
                     e.meta.warnings.push(...classes.warnings);
                 }
-                if (classes.info.length > 0) {
-                    e.meta.info.push(...classes.info);
+                if (classes.infos.length > 0) {
+                    e.meta.infos.push(...classes.infos);
                 }
                 return prisma.event.create({
                     data: {
