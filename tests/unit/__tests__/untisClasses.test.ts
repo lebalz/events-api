@@ -1,13 +1,13 @@
-import { Prisma } from "@prisma/client";
-import UntisClasses from "../../../src/models/untisClasses";
+import { Prisma } from '@prisma/client';
+import UntisClasses from '../../../src/models/untisClasses';
 import prisma from '../../../src/prisma';
-import { generateUntisClass } from "../../factories/untisClass";
+import { generateUntisClass } from '../../factories/untisClass';
 
 export const createUntisClass = async (props: Partial<Prisma.UntisClassUncheckedCreateInput>) => {
     return await prisma.untisClass.create({
         data: generateUntisClass(props)
     });
-}
+};
 
 describe('UntisClass', () => {
     describe('all', () => {
@@ -15,7 +15,8 @@ describe('UntisClass', () => {
             // const teacherA = await createUntisTeacher({ name: 'fba' });
             // const teacherB = await createUntisTeacher({ name: 'fbb' });
             // const teacherC = await createUntisTeacher({ name: 'fbc' });
-            const c24i = await createUntisClass({ name: '24i', 
+            const c24i = await createUntisClass({
+                name: '24i'
                 // teachers: {
                 // connect: [
                 //     { id: teacherA.id },
@@ -23,13 +24,14 @@ describe('UntisClass', () => {
                 // ]
                 // }
             });
-            const c25h = await createUntisClass({ name: '25h', 
-            // teachers: {
+            const c25h = await createUntisClass({
+                name: '25h'
+                // teachers: {
                 // connect: [
                 //     { id: teacherA.id },
                 //     { id: teacherB.id },
                 // ]
-            // }
+                // }
             });
             await expect(UntisClasses.all()).resolves.toEqual([
                 {
@@ -42,7 +44,7 @@ describe('UntisClass', () => {
                     lessonIds: [],
                     teacherIds: []
                 }
-            ])
+            ]);
         });
     });
 });

@@ -1,9 +1,9 @@
-import { Semester } from "@prisma/client";
-import { RequestHandler } from "express";
-import { IoEvent } from "../routes/socketEventTypes";
-import { notifyChangedRecord } from "../routes/notify";
-import Semesters from "../models/semesters";
-import { IoRoom } from "../routes/socketEvents";
+import { Semester } from '@prisma/client';
+import { RequestHandler } from 'express';
+import { IoEvent } from '../routes/socketEventTypes';
+import { notifyChangedRecord } from '../routes/notify';
+import Semesters from '../models/semesters';
+import { IoRoom } from '../routes/socketEvents';
 
 const NAME = 'SEMESTER';
 
@@ -14,7 +14,7 @@ export const all: RequestHandler = async (req, res, next) => {
     } catch (error) /* istanbul ignore next */ {
         next(error);
     }
-}
+};
 
 export const find: RequestHandler<{ id: string }, any, any> = async (req, res, next) => {
     try {
@@ -23,7 +23,7 @@ export const find: RequestHandler<{ id: string }, any, any> = async (req, res, n
     } catch (error) /* istanbul ignore next */ {
         next(error);
     }
-}
+};
 
 export const create: RequestHandler<any, any, Semester> = async (req, res, next) => {
     try {
@@ -35,12 +35,12 @@ export const create: RequestHandler<any, any, Semester> = async (req, res, next)
                 event: IoEvent.NEW_RECORD,
                 to: IoRoom.ALL
             }
-        ]
+        ];
         res.status(201).json(model);
     } catch (e) /* istanbul ignore next */ {
-        next(e)
+        next(e);
     }
-}
+};
 
 export const update: RequestHandler<{ id: string }, any, { data: Semester }> = async (req, res, next) => {
     try {
@@ -51,27 +51,28 @@ export const update: RequestHandler<{ id: string }, any, { data: Semester }> = a
                 event: IoEvent.CHANGED_RECORD,
                 to: IoRoom.ALL
             }
-        ]
+        ];
         res.status(200).json(model);
     } catch (e) /* istanbul ignore next */ {
-        next(e)
+        next(e);
     }
-}
+};
 
 export const destroy: RequestHandler<{ id: string }, any, any> = async (req, res, next) => {
     try {
         const model = await Semesters.destroy(req.user!, req.params.id);
-        res.notifications = [{
-            message: { record: NAME, id: model.id },
-            event: IoEvent.DELETED_RECORD,
-            to: IoRoom.ALL
-        }]
+        res.notifications = [
+            {
+                message: { record: NAME, id: model.id },
+                event: IoEvent.DELETED_RECORD,
+                to: IoRoom.ALL
+            }
+        ];
         res.status(204).send();
     } catch (error) /* istanbul ignore next */ {
         next(error);
     }
-}
-
+};
 
 export const sync: RequestHandler<{ id: string }, any, any> = async (req, res, next) => {
     try {
@@ -91,4 +92,4 @@ export const sync: RequestHandler<{ id: string }, any, any> = async (req, res, n
     } catch (error) /* istanbul ignore next */ {
         next(error);
     }
-}
+};

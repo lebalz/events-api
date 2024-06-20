@@ -2,8 +2,6 @@ import { PrismaClient, User } from '@prisma/client';
 import { getNameFromEmail } from '../src/helpers/email';
 const prisma = new PrismaClient();
 
-
-
 async function main() {
     if (process.env.NODE_ENV === 'production' || process.env.NODE_ENV === 'test') {
         return;
@@ -17,7 +15,7 @@ async function main() {
         user = await prisma.user.upsert({
             where: { id: USER_ID },
             update: {},
-            create: { email: USER_EMAIL, id: USER_ID, firstName: firstName, lastName: lastName, role: 'USER' },
+            create: { email: USER_EMAIL, id: USER_ID, firstName: firstName, lastName: lastName, role: 'USER' }
         });
         console.log('CREATED USER', user);
     }
@@ -26,7 +24,13 @@ async function main() {
         admin = await prisma.user.upsert({
             where: { id: ADMIN_ID },
             update: {},
-            create: { email: ADMIN_EMAIL, id: ADMIN_ID, firstName: firstName, lastName: lastName, role: 'ADMIN' },
+            create: {
+                email: ADMIN_EMAIL,
+                id: ADMIN_ID,
+                firstName: firstName,
+                lastName: lastName,
+                role: 'ADMIN'
+            }
         });
         console.log('CREATED ADMIN', admin);
     }
@@ -36,7 +40,7 @@ async function main() {
         end: new Date('2024-02-05T00:00:00.000Z'),
         name: 'HS2023',
         untisSyncDate: new Date('2023-09-25')
-    }
+    };
     const semesterHS = await prisma.semester.upsert({
         where: { id: 'e98eed75-e2a1-473f-be37-adb412e6be4e' },
         update: { ...hs },
@@ -50,7 +54,7 @@ async function main() {
         end: new Date('2024-08-12T00:00:00.000Z'),
         name: 'FS2024',
         untisSyncDate: new Date('2024-02-19')
-    }
+    };
     const semesterFS = await prisma.semester.upsert({
         where: { id: '169a5d47-b698-4006-80c0-34bd99c27603' },
         update: { ...fs },
@@ -62,97 +66,164 @@ async function main() {
     console.log('CREATED SEMESTERS', semesterHS, semesterFS);
     const departments = [
         {
-            name: "WMS",
-            description: "",
-            letter: "W",
-            classLetters: ["a", "b", "c"],
-            color: "#31a555"
+            name: 'WMS',
+            description: '',
+            letter: 'W',
+            classLetters: ['a', 'b', 'c'],
+            color: '#31a555'
         },
         {
-            name: "FMPaed",
-            description: "",
-            letter: "F",
-            classLetters: ["p", "q", "r", "s"],
-            color: "#805cdd"
+            name: 'FMPaed',
+            description: '',
+            letter: 'F',
+            classLetters: ['p', 'q', 'r', 's'],
+            color: '#805cdd'
         },
         {
-            name: "GYMF",
-            description: "",
-            letter: "m",
-            classLetters: ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S"],
-            color: "#0dbf19"
+            name: 'GYMF',
+            description: '',
+            letter: 'm',
+            classLetters: [
+                'A',
+                'B',
+                'C',
+                'D',
+                'E',
+                'F',
+                'G',
+                'H',
+                'I',
+                'J',
+                'K',
+                'L',
+                'M',
+                'N',
+                'O',
+                'P',
+                'Q',
+                'R',
+                'S'
+            ],
+            color: '#0dbf19'
         },
         {
-            name: "FMS",
-            description: "",
-            letter: "F",
-            classLetters: ["a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o"],
-            color: "#5f34f3"
+            name: 'FMS',
+            description: '',
+            letter: 'F',
+            classLetters: ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o'],
+            color: '#5f34f3'
         },
         {
-            name: "MSOP",
-            description: "",
-            letter: "s",
-            classLetters: ["P", "Q", "R", "S"],
-            color: "#d0cb4c"
+            name: 'MSOP',
+            description: '',
+            letter: 's',
+            classLetters: ['P', 'Q', 'R', 'S'],
+            color: '#d0cb4c'
         },
         {
-            name: "FMS/ECG",
-            description: "",
-            letter: "F",
-            classLetters: ["w", "x", "y"],
-            color: "#86b033"
+            name: 'FMS/ECG',
+            description: '',
+            letter: 'F',
+            classLetters: ['w', 'x', 'y'],
+            color: '#86b033'
         },
         {
-            name: "ESC",
-            description: "",
-            letter: "c",
-            classLetters: ["A", "B", "C", "D"],
-            color: "#3ac22c"
+            name: 'ESC',
+            description: '',
+            letter: 'c',
+            classLetters: ['A', 'B', 'C', 'D'],
+            color: '#3ac22c'
         },
         {
-            name: "Passerelle",
-            description: "",
-            letter: "p",
-            classLetters: ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z"],
-            color: "#c968b5"
+            name: 'Passerelle',
+            description: '',
+            letter: 'p',
+            classLetters: [
+                'A',
+                'B',
+                'C',
+                'D',
+                'E',
+                'F',
+                'G',
+                'H',
+                'I',
+                'J',
+                'K',
+                'L',
+                'M',
+                'N',
+                'O',
+                'P',
+                'Q',
+                'R',
+                'S',
+                'T',
+                'U',
+                'V',
+                'W',
+                'X',
+                'Y',
+                'Z'
+            ],
+            color: '#c968b5'
         },
         {
-            name: "GYMD/GYMF",
-            description: "",
-            letter: "G",
-            classLetters: ["w", "x", "y"],
-            color: "#5cd5d9"
+            name: 'GYMD/GYMF',
+            description: '',
+            letter: 'G',
+            classLetters: ['w', 'x', 'y'],
+            color: '#5cd5d9'
         },
         {
-            name: "ECG",
-            description: "",
-            letter: "s",
-            classLetters: ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O"],
-            color: "#b3a62d"
+            name: 'ECG',
+            description: '',
+            letter: 's',
+            classLetters: ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O'],
+            color: '#b3a62d'
         },
         {
-            name: "GYMD",
-            description: "",
-            letter: "G",
-            classLetters: ["a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s"],
-            color: "#41b9bc"
+            name: 'GYMD',
+            description: '',
+            letter: 'G',
+            classLetters: [
+                'a',
+                'b',
+                'c',
+                'd',
+                'e',
+                'f',
+                'g',
+                'h',
+                'i',
+                'j',
+                'k',
+                'l',
+                'm',
+                'n',
+                'o',
+                'p',
+                'q',
+                'r',
+                's'
+            ],
+            color: '#41b9bc'
         },
         {
-            name: "GYMF/GYMD",
-            description: "",
-            letter: "m",
-            classLetters: ["T", "U", "V"],
-            color: "#5989d9"
+            name: 'GYMF/GYMD',
+            description: '',
+            letter: 'm',
+            classLetters: ['T', 'U', 'V'],
+            color: '#5989d9'
         },
         {
-            name: "ECG/FMS",
-            description: "",
-            letter: "s",
-            classLetters: ["T", "U", "V"],
-            color: "#86b033"
+            name: 'ECG/FMS',
+            description: '',
+            letter: 's',
+            classLetters: ['T', 'U', 'V'],
+            color: '#86b033'
         }
-    ]
+    ];
     for (var i = 0; i < departments.length; i++) {
         const department = departments[i];
         if (department.name === 'FMPaed') {
@@ -165,7 +236,6 @@ async function main() {
         });
         console.log('CREATED DEPARTMENT', dep);
     }
-
 
     //  /** IMPORT terminpläne in bin/excel */
     //  const seedFiles = fs.readdirSync('./bin/excel');
@@ -182,16 +252,14 @@ async function main() {
     //      return importExcel(fname, user.id, importJob.id);
     //  });
     //  await Promise.all(promises);
-
 }
-
 
 main()
     .then(async () => {
-        await prisma.$disconnect()
+        await prisma.$disconnect();
     })
     .catch(async (e) => {
-        console.error(e)
-        await prisma.$disconnect()
-        process.exit(1)
-    })
+        console.error(e);
+        await prisma.$disconnect();
+        process.exit(1);
+    });

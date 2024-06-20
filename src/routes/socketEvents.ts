@@ -1,12 +1,12 @@
 /* istanbul ignore file */
 
-import type { Event, User } from "@prisma/client";
-import { Server } from "socket.io";
-import { affectedLessons } from "../services/eventChecker";
-import { affectedLessons as checkUnpersisted } from "../services/eventCheckUnpersisted";
-import Logger from "../utils/logger";
-import { ApiEvent } from "../models/event.helpers";
-import { ClientToServerEvents, IoEvents, ServerToClientEvents } from "./socketEventTypes";
+import type { Event, User } from '@prisma/client';
+import { Server } from 'socket.io';
+import { affectedLessons } from '../services/eventChecker';
+import { affectedLessons as checkUnpersisted } from '../services/eventCheckUnpersisted';
+import Logger from '../utils/logger';
+import { ApiEvent } from '../models/event.helpers';
+import { ClientToServerEvents, IoEvents, ServerToClientEvents } from './socketEventTypes';
 
 export enum IoRoom {
     ADMIN = 'admin',
@@ -14,7 +14,7 @@ export enum IoRoom {
 }
 
 const EventRouter = (io: Server<ClientToServerEvents, ServerToClientEvents>) => {
-    io.on("connection", (socket) => {
+    io.on('connection', (socket) => {
         const user = (socket.request as { user?: User }).user;
         if (!user) {
             return socket.disconnect();
@@ -33,25 +33,25 @@ const EventRouter = (io: Server<ClientToServerEvents, ServerToClientEvents>) => 
         socket.on(IoEvents.AffectedLessons, async (eventId, semesterId, callback) => {
             try {
                 const result = await affectedLessons(eventId, semesterId);
-                callback({state: 'success', lessons: result});
+                callback({ state: 'success', lessons: result });
             } catch (e) /* istanbul ignore next */ {
                 Logger.error(e);
-                callback({state: 'error', message: (e as Error).message});
+                callback({ state: 'error', message: (e as Error).message });
             }
-        })
+        });
         socket.on(IoEvents.AffectedLessonsTmp, async (event, semesterId, callback) => {
             try {
                 const result = await checkUnpersisted(user.id, event, semesterId);
-                callback({state: 'success', lessons: result});
+                callback({ state: 'success', lessons: result });
             } catch (error) /* istanbul ignore next */ {
                 Logger.error(error);
-                callback({state: 'error', message: (error as Error).message});
+                callback({ state: 'error', message: (error as Error).message });
             }
-        })
+        });
     });
 
     io.on('disconnect', (socket) => {
-        const { user } = (socket.request as { user?: User });
+        const { user } = socket.request as { user?: User };
         /* istanbul ignore next */
         Logger.info('Socket.io disconnect');
     });
@@ -59,13 +59,13 @@ const EventRouter = (io: Server<ClientToServerEvents, ServerToClientEvents>) => 
     io.on('error', (socket) => {
         /* istanbul ignore next */
         Logger.error(`Socket.io error`);
-    })
+    });
 
     io.on('reconnect', (socket) => {
-        const { user } = (socket.request as { user?: User });
+        const { user } = socket.request as { user?: User };
         /* istanbul ignore next */
         Logger.info('Socket.io reconnect');
-    })
-}
+    });
+};
 
 export default EventRouter;

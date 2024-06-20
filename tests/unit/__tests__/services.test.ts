@@ -1,25 +1,25 @@
-import _ from "lodash";
-import { ApiEvent, prepareEvent } from "../../../src/models/event.helpers";
-import { createIcsForDepartments, prepareEvent as prepareIcsEvent} from '../../../src/services/createIcs';
-import { getDateTime } from "../../../src/services/helpers/time";
-import { importCsv } from "../../../src/services/importGBJB_csv";
-import { getChangedProps, getEventProps } from "../../../src/services/notifications/helpers/changedProps";
-import { generateEvent } from "../../factories/event";
-import { createEvent } from "./events.test";
-import { createUser } from "./users.test";
-import { translate } from "../../../src/services/helpers/i18n";
-import { createUntisClass } from "./untisClasses.test";
-import { createDepartment } from "./departments.test";
-import { Event, EventState, Semester, User } from "@prisma/client";
-import { createIcsForClasses } from "../../../src/services/createIcs";
-import { existsSync, readFileSync } from "fs";
-import { ICAL_DIR } from "../../../src/app";
-import prisma from "../../../src/prisma";
-import { createEvents } from "ics";
+import _ from 'lodash';
+import { ApiEvent, prepareEvent } from '../../../src/models/event.helpers';
+import { createIcsForDepartments, prepareEvent as prepareIcsEvent } from '../../../src/services/createIcs';
+import { getDateTime } from '../../../src/services/helpers/time';
+import { importCsv } from '../../../src/services/importGBJB_csv';
+import { getChangedProps, getEventProps } from '../../../src/services/notifications/helpers/changedProps';
+import { generateEvent } from '../../factories/event';
+import { createEvent } from './events.test';
+import { createUser } from './users.test';
+import { translate } from '../../../src/services/helpers/i18n';
+import { createUntisClass } from './untisClasses.test';
+import { createDepartment } from './departments.test';
+import { Event, EventState, Semester, User } from '@prisma/client';
+import { createIcsForClasses } from '../../../src/services/createIcs';
+import { existsSync, readFileSync } from 'fs';
+import { ICAL_DIR } from '../../../src/app';
+import prisma from '../../../src/prisma';
+import { createEvents } from 'ics';
 import stubs from '../../integration/stubs/semesters.json';
-import { syncUntis2DB } from "../../../src/services/syncUntis2DB";
-import { generateUser } from "../../factories/user";
-import { affectedLessons, affectedTeachers } from "../../../src/services/eventCheckUnpersisted";
+import { syncUntis2DB } from '../../../src/services/syncUntis2DB';
+import { generateUser } from '../../factories/user';
+import { affectedLessons, affectedTeachers } from '../../../src/services/eventCheckUnpersisted';
 
 jest.mock('../../../src/services/fetchUntis');
 
@@ -31,14 +31,14 @@ describe('import csv gbjb', () => {
     test('can extract raw event data', async () => {
         const result = await importCsv(`${__dirname}/../__fixtures__/gbjb.csv`);
         // even the csv has 4 data rows, only 3 are valid (coordination = 1, work = 0, planning = 0 are skipped)
-        expect(result).toHaveLength(3)
+        expect(result).toHaveLength(3);
         expect(result[0]).toEqual({
             description: 'Dispense',
             descriptionLong: 'Dispense de cours pour les élèves participant au concert de bienvenue',
             start: new Date('2023-08-22T00:00:00.000Z'),
             end: new Date('2023-08-23T00:00:00.000Z'),
             location: '',
-            classesRaw: '',
+            classesRaw: ''
         });
         expect(result[1]).toEqual({
             description: 'début OC/EF',
@@ -46,7 +46,7 @@ describe('import csv gbjb', () => {
             start: new Date('2023-08-25T14:55:00.000Z'),
             end: new Date('2023-08-25T15:40:00.000Z'),
             location: '',
-            classesRaw: '',
+            classesRaw: ''
         });
         expect(result[2]).toEqual({
             description: 'Présentation OP',
@@ -54,7 +54,7 @@ describe('import csv gbjb', () => {
             start: new Date('2023-08-29T08:25:00.000Z'),
             end: new Date('2023-08-29T12:05:00.000Z'),
             location: '',
-            classesRaw: '24A 24H 24KL 25A 25M 25KL 26A 26I 26KLP',
+            classesRaw: '24A 24H 24KL 25A 25M 25KL 26A 26I 26KLP'
         });
     });
 });
@@ -62,17 +62,21 @@ describe('import csv gbjb', () => {
 describe('notifications > helpers > changedProps', () => {
     let current: ApiEvent;
     beforeEach(async () => {
-        const user = await createUser({})
-        const raw = await createEvent({authorId: user.id, start: new Date('2024-04-03T12:00:00.000Z'), end: new Date('2024-04-03T13:00:00.000Z')});
+        const user = await createUser({});
+        const raw = await createEvent({
+            authorId: user.id,
+            start: new Date('2024-04-03T12:00:00.000Z'),
+            end: new Date('2024-04-03T13:00:00.000Z')
+        });
         current = prepareEvent(raw);
     });
     test('getChangedProps: no changes', () => {
-        const updated = {...current} satisfies ApiEvent;
+        const updated = { ...current } satisfies ApiEvent;
         const changes = getChangedProps(current, updated, 'de');
         expect(changes).toHaveLength(0);
     });
     test('getChangedProps: string changes', () => {
-        const updated = {...current, description: `${current.description} updated`} satisfies ApiEvent;
+        const updated = { ...current, description: `${current.description} updated` } satisfies ApiEvent;
         const changes = getChangedProps(current, updated, 'de');
         expect(changes).toHaveLength(1);
         expect(changes[0].path).toEqual(['description']);
@@ -81,7 +85,7 @@ describe('notifications > helpers > changedProps', () => {
         expect(changes[0].value).toEqual(updated.description);
     });
     test('getChangedProps: date changes', () => {
-        const updated = {...current, start: new Date('2024-04-03T12:45:00.000Z')} satisfies ApiEvent;
+        const updated = { ...current, start: new Date('2024-04-03T12:45:00.000Z') } satisfies ApiEvent;
         const changes = getChangedProps(current, updated, 'de');
         expect(changes).toHaveLength(1);
         expect(changes[0].path).toEqual(['start']);
@@ -90,84 +94,98 @@ describe('notifications > helpers > changedProps', () => {
         expect(changes[0].value).toEqual(updated.start);
     });
     test('getChangedProps: exclude props', () => {
-        const updated = {...current, description: `${current.description} updated`} satisfies ApiEvent;
+        const updated = { ...current, description: `${current.description} updated` } satisfies ApiEvent;
         const changes = getChangedProps(current, updated, 'de', ['description']);
         expect(changes).toHaveLength(0);
     });
-})
+});
 describe('notifications > helpers > getEventProps', () => {
     let current: ApiEvent;
     beforeEach(async () => {
-        const user = await createUser({})
-        const raw = await createEvent({authorId: user.id, start: new Date('2024-04-03T12:00:00.000Z'), end: new Date('2024-04-03T13:00:00.000Z')});
+        const user = await createUser({});
+        const raw = await createEvent({
+            authorId: user.id,
+            start: new Date('2024-04-03T12:00:00.000Z'),
+            end: new Date('2024-04-03T13:00:00.000Z')
+        });
         current = prepareEvent(raw);
     });
     test('getEventProps', () => {
         const eventProps = getEventProps(current, 'de');
-        expect(_.orderBy(eventProps, ['name'])).toEqual(_.orderBy([
-            {name: translate('description', 'de'), value: current.description},
-            {name: translate('descriptionLong', 'de'), value: current.descriptionLong},
-            {name: translate('classes', 'de'), value: current.classes},
-            {name: translate('location', 'de'), value: current.location},
-            {name: translate('start', 'de'), value: getDateTime(current.start)},
-            {name: translate('end', 'de'), value: getDateTime(current.end)},
-            {name: translate('updatedAt', 'de'), value: getDateTime(current.updatedAt)},
-            {name: translate('deletedAt', 'de'), value: '-'},
-            {name: translate('state', 'de'), value: translate('DRAFT', 'de')},
-            {name: translate('teachingAffected', 'de'), value: translate('YES', 'de')},
-            {name: translate('audience', 'de'), value: translate('STUDENTS', 'de')},
-            {name: translate('classGroups', 'de'), value: current.classGroups},
-        ], ['name']));
+        expect(_.orderBy(eventProps, ['name'])).toEqual(
+            _.orderBy(
+                [
+                    { name: translate('description', 'de'), value: current.description },
+                    { name: translate('descriptionLong', 'de'), value: current.descriptionLong },
+                    { name: translate('classes', 'de'), value: current.classes },
+                    { name: translate('location', 'de'), value: current.location },
+                    { name: translate('start', 'de'), value: getDateTime(current.start) },
+                    { name: translate('end', 'de'), value: getDateTime(current.end) },
+                    { name: translate('updatedAt', 'de'), value: getDateTime(current.updatedAt) },
+                    { name: translate('deletedAt', 'de'), value: '-' },
+                    { name: translate('state', 'de'), value: translate('DRAFT', 'de') },
+                    { name: translate('teachingAffected', 'de'), value: translate('YES', 'de') },
+                    { name: translate('audience', 'de'), value: translate('STUDENTS', 'de') },
+                    { name: translate('classGroups', 'de'), value: current.classGroups }
+                ],
+                ['name']
+            )
+        );
     });
     test('getEventProps: excluded Props', () => {
         const eventProps = getEventProps(current, 'de', ['classGroups']);
-        expect(_.orderBy(eventProps, ['name'])).toEqual(_.orderBy([
-            {name: translate('description', 'de'), value: current.description},
-            {name: translate('descriptionLong', 'de'), value: current.descriptionLong},
-            {name: translate('classes', 'de'), value: current.classes},
-            {name: translate('location', 'de'), value: current.location},
-            {name: translate('start', 'de'), value: getDateTime(current.start)},
-            {name: translate('end', 'de'), value: getDateTime(current.end)},
-            {name: translate('updatedAt', 'de'), value: getDateTime(current.updatedAt)},
-            {name: translate('deletedAt', 'de'), value: '-'},
-            {name: translate('state', 'de'), value: translate('DRAFT', 'de')},
-            {name: translate('teachingAffected', 'de'), value: translate('YES', 'de')},
-            {name: translate('audience', 'de'), value: translate('STUDENTS', 'de')}
-        ], ['name']));
+        expect(_.orderBy(eventProps, ['name'])).toEqual(
+            _.orderBy(
+                [
+                    { name: translate('description', 'de'), value: current.description },
+                    { name: translate('descriptionLong', 'de'), value: current.descriptionLong },
+                    { name: translate('classes', 'de'), value: current.classes },
+                    { name: translate('location', 'de'), value: current.location },
+                    { name: translate('start', 'de'), value: getDateTime(current.start) },
+                    { name: translate('end', 'de'), value: getDateTime(current.end) },
+                    { name: translate('updatedAt', 'de'), value: getDateTime(current.updatedAt) },
+                    { name: translate('deletedAt', 'de'), value: '-' },
+                    { name: translate('state', 'de'), value: translate('DRAFT', 'de') },
+                    { name: translate('teachingAffected', 'de'), value: translate('YES', 'de') },
+                    { name: translate('audience', 'de'), value: translate('STUDENTS', 'de') }
+                ],
+                ['name']
+            )
+        );
     });
-})
+});
 
 describe('createIcs', () => {
     let event41i: Event;
     let event42h: Event;
     let eventGbsl: Event;
     beforeEach(async () => {
-        const gbsl = await createDepartment({name: 'GYMD'});
+        const gbsl = await createDepartment({ name: 'GYMD' });
         const author = await createUser({});
-        await createUntisClass({name: '41i', year: 2041, departmentId: gbsl.id});
-        await createUntisClass({name: '42h', year: 2042, departmentId: gbsl.id});
+        await createUntisClass({ name: '41i', year: 2041, departmentId: gbsl.id });
+        await createUntisClass({ name: '42h', year: 2042, departmentId: gbsl.id });
         event41i = await createEvent({
-            start: new Date(Date.now() + 1000), 
+            start: new Date(Date.now() + 1000),
             end: new Date(Date.now() + 2000),
             authorId: author.id,
             state: EventState.PUBLISHED,
             classes: ['41i']
         });
         event42h = await createEvent({
-            start: new Date(Date.now() + 1000), 
+            start: new Date(Date.now() + 1000),
             end: new Date(Date.now() + 2000),
             authorId: author.id,
             state: EventState.PUBLISHED,
             classes: ['42h']
         });
         eventGbsl = await createEvent({
-            start: new Date(Date.now() + 1000), 
+            start: new Date(Date.now() + 1000),
             end: new Date(Date.now() + 2000),
             authorId: author.id,
             state: EventState.PUBLISHED,
             departmentIds: [gbsl.id]
         });
-    })
+    });
     describe('for classes', () => {
         test('creates ics for classes', async () => {
             await createIcsForClasses();
@@ -176,21 +194,26 @@ describe('createIcs', () => {
             expect(existsSync(`${ICAL_DIR}/fr/41i.ics`)).toBeTruthy();
             expect(existsSync(`${ICAL_DIR}/fr/42h.ics`)).toBeTruthy();
             const icalDe41i = withoutDTSTAMP(readFileSync(`${ICAL_DIR}/de/41i.ics`, { encoding: 'utf-8' }));
-            const icsDe41i = withoutDTSTAMP(createEvents([
-                prepareIcsEvent(event41i, 'de'),
-                prepareIcsEvent(eventGbsl, 'de')
-            ]).value!).replace('END:VCALENDAR', '').split('BEGIN:VEVENT').slice(1).map((e, idx) => `BEGIN:VEVENT${e}`.trim());
+            const icsDe41i = withoutDTSTAMP(
+                createEvents([prepareIcsEvent(event41i, 'de'), prepareIcsEvent(eventGbsl, 'de')]).value!
+            )
+                .replace('END:VCALENDAR', '')
+                .split('BEGIN:VEVENT')
+                .slice(1)
+                .map((e, idx) => `BEGIN:VEVENT${e}`.trim());
             icsDe41i.forEach((e, idx) => expect(icalDe41i).toContain(e));
 
             const icalDe42h = withoutDTSTAMP(readFileSync(`${ICAL_DIR}/fr/42h.ics`, { encoding: 'utf-8' }));
-            const icsDe42h = withoutDTSTAMP(createEvents([
-                prepareIcsEvent(event42h, 'fr'),
-                prepareIcsEvent(eventGbsl, 'fr')
-            ]).value!).replace('END:VCALENDAR', '').split('BEGIN:VEVENT').slice(1).map((e, idx) => `BEGIN:VEVENT${e}`.trim());
+            const icsDe42h = withoutDTSTAMP(
+                createEvents([prepareIcsEvent(event42h, 'fr'), prepareIcsEvent(eventGbsl, 'fr')]).value!
+            )
+                .replace('END:VCALENDAR', '')
+                .split('BEGIN:VEVENT')
+                .slice(1)
+                .map((e, idx) => `BEGIN:VEVENT${e}`.trim());
             icsDe42h.forEach((e, idx) => expect(icalDe42h).toContain(e));
-
-        })
-    })
+        });
+    });
 
     describe('for departments', () => {
         test('creates ics for classes', async () => {
@@ -198,15 +221,21 @@ describe('createIcs', () => {
             expect(existsSync(`${ICAL_DIR}/de/GYMD.ics`)).toBeTruthy();
             expect(existsSync(`${ICAL_DIR}/fr/GYMD.ics`)).toBeTruthy();
             const icalDeGbsl = withoutDTSTAMP(readFileSync(`${ICAL_DIR}/de/GYMD.ics`, { encoding: 'utf-8' }));
-            const icsDeGbsl = withoutDTSTAMP(createEvents([
-                prepareIcsEvent(event41i, 'de'),
-                prepareIcsEvent(event42h, 'de'),
-                prepareIcsEvent(eventGbsl, 'de')
-            ]).value!).replace('END:VCALENDAR', '').split('BEGIN:VEVENT').slice(1).map((e, idx) => `BEGIN:VEVENT${e}`.trim());
+            const icsDeGbsl = withoutDTSTAMP(
+                createEvents([
+                    prepareIcsEvent(event41i, 'de'),
+                    prepareIcsEvent(event42h, 'de'),
+                    prepareIcsEvent(eventGbsl, 'de')
+                ]).value!
+            )
+                .replace('END:VCALENDAR', '')
+                .split('BEGIN:VEVENT')
+                .slice(1)
+                .map((e, idx) => `BEGIN:VEVENT${e}`.trim());
             icsDeGbsl.forEach((e, idx) => expect(icalDeGbsl).toContain(e));
-        })        
-    })
-})
+        });
+    });
+});
 
 describe('event > check > unpersisted', () => {
     let user: User;
@@ -227,7 +256,7 @@ describe('event > check > unpersisted', () => {
         await syncUntis2DB(semester!.id);
         const teachers = await prisma.untisTeacher.findMany();
         for (const teacher of teachers) {
-            await prisma.user.create({ data: generateUser({untisId: teacher.id}) });
+            await prisma.user.create({ data: generateUser({ untisId: teacher.id }) });
         }
     });
 
@@ -235,10 +264,14 @@ describe('event > check > unpersisted', () => {
         expect(prisma.event.count()).resolves.toBe(0);
         const tmpEventData = generateEvent({
             authorId: 'whatever-gets-replaced',
-            start: new Date('2023-10-10T14:00:00.000Z'), 
+            start: new Date('2023-10-10T14:00:00.000Z'),
             end: new Date('2023-10-10T15:00:00.000Z')
         });
-        const res = await affectedLessons(user.id, prepareEvent(tmpEventData as unknown as Event), semester.id);
+        const res = await affectedLessons(
+            user.id,
+            prepareEvent(tmpEventData as unknown as Event),
+            semester.id
+        );
         expect(res).toHaveLength(0);
         expect(prisma.event.count()).resolves.toBe(0);
     });
@@ -247,11 +280,15 @@ describe('event > check > unpersisted', () => {
         expect(prisma.event.count()).resolves.toBe(0);
         const tmpEventData = generateEvent({
             authorId: 'whatever-gets-replaced',
-            start: new Date('2023-10-10T14:00:00.000Z'), 
+            start: new Date('2023-10-10T14:00:00.000Z'),
             end: new Date('2023-10-10T15:00:00.000Z'),
             classes: ['25Gh']
         });
-        const res = await affectedLessons(user.id, prepareEvent(tmpEventData as unknown as Event), semester.id);
+        const res = await affectedLessons(
+            user.id,
+            prepareEvent(tmpEventData as unknown as Event),
+            semester.id
+        );
         expect(res).toHaveLength(1);
         expect(res[0].subject).toEqual('M');
         expect(res[0].startHHMM).toEqual(1455);
@@ -264,14 +301,18 @@ describe('event > check > unpersisted', () => {
         expect(prisma.event.count()).resolves.toBe(0);
         const tmpEventData = generateEvent({
             authorId: 'whatever-gets-replaced',
-            start: new Date('2023-10-10T14:00:00.000Z'), 
+            start: new Date('2023-10-10T14:00:00.000Z'),
             end: new Date('2023-10-10T15:00:00.000Z'),
             classes: ['25Gh']
         });
-        const expectedUser = await prisma.user.findFirstOrThrow({ where: { untisId: 1 }});
-        const res = await affectedTeachers(user.id, prepareEvent(tmpEventData as unknown as Event), semester.id);
+        const expectedUser = await prisma.user.findFirstOrThrow({ where: { untisId: 1 } });
+        const res = await affectedTeachers(
+            user.id,
+            prepareEvent(tmpEventData as unknown as Event),
+            semester.id
+        );
         expect(res).toHaveLength(1);
         expect(res[0]).toEqual(expectedUser.id);
         expect(prisma.event.count()).resolves.toBe(0);
     });
-})
+});

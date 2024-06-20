@@ -1,9 +1,9 @@
-import { JobState, JobType, Job as Jobs, Prisma, PrismaClient, Role, Semester, User } from "@prisma/client";
-import prisma from "../prisma";
-import { HTTP403Error, HTTP404Error } from "../utils/errors/Errors";
-import { createDataExtractor } from "../controllers/helpers";
-import { prepareEvent } from "./event.helpers";
-import Events from "./events";
+import { JobState, JobType, Job as Jobs, Prisma, PrismaClient, Role, Semester, User } from '@prisma/client';
+import prisma from '../prisma';
+import { HTTP403Error, HTTP404Error } from '../utils/errors/Errors';
+import { createDataExtractor } from '../controllers/helpers';
+import { prepareEvent } from './event.helpers';
+import Events from './events';
 
 const PROPS: (keyof Prisma.JobUncheckedUpdateInput)[] = ['description'];
 const ADMIN_PROPS: (keyof Prisma.JobUncheckedUpdateInput)[] = [...PROPS, 'state'];
@@ -20,13 +20,13 @@ function Jobs(db: PrismaClient['job']) {
                     events: {
                         include: {
                             departments: true,
-                            children: true,
+                            children: true
                         }
                     }
-                },
+                }
             });
             if (!job) {
-                throw new HTTP404Error(`Job with id ${id} not found`)
+                throw new HTTP404Error(`Job with id ${id} not found`);
             }
             if (job?.userId !== actor.id && actor.role !== Role.ADMIN) {
                 throw new HTTP403Error('Not authorized');
@@ -49,28 +49,29 @@ function Jobs(db: PrismaClient['job']) {
             const sanitized = actor.role === 'ADMIN' ? getAdminData(data) : getData(data);
             const model = await db.update({
                 where: {
-                    id: id,
+                    id: id
                 },
                 data: sanitized,
-                include: {events: true}
+                include: { events: true }
             });
             return model;
         },
         async destroy(actor: User, id: string) {
             const job = await this.findModel(actor, id);
             if (job.events.length > 0) {
-                const destroyEvents = job.events.map(e => Events._forceDestroy(e, { unlinkFromJob: false }));
+                const destroyEvents = job.events.map((e) =>
+                    Events._forceDestroy(e, { unlinkFromJob: false })
+                );
                 await Promise.all(destroyEvents);
                 const cleanedUp = await this.findModel(actor, id);
                 if (cleanedUp.events.length === 0) {
                     return await db.delete({ where: { id: id }, include: { events: true } });
                 } else {
-                    return cleanedUp
+                    return cleanedUp;
                 }
             } else {
                 return await db.delete({ where: { id: id }, include: { events: true } });
             }
-
         },
         async _createSyncJob(user: User, semester: Semester) {
             const job = await db.create({
@@ -78,7 +79,7 @@ function Jobs(db: PrismaClient['job']) {
                     type: JobType.SYNC_UNTIS,
                     user: { connect: { id: user.id } },
                     syncDate: new Date(semester.untisSyncDate ?? new Date()),
-                    semester: { connect: { id: semester.id } },
+                    semester: { connect: { id: semester.id } }
                 }
             });
             return job;
@@ -94,6 +95,5 @@ function Jobs(db: PrismaClient['job']) {
         }
     });
 }
-
 
 export default Jobs(prisma.job);

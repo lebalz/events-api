@@ -1,9 +1,9 @@
 /* istanbul ignore file */
 
-import { Server } from "socket.io";
-import { ChangedRecord, IoEvent } from "./socketEventTypes";
+import { Server } from 'socket.io';
+import { ChangedRecord, IoEvent } from './socketEventTypes';
 
-export const notify = (io: Server |undefined, type: IoEvent, payload: Object, to?: string) => {
+export const notify = (io: Server | undefined, type: IoEvent, payload: Object, to?: string) => {
     if (!io) {
         return;
     }
@@ -13,8 +13,8 @@ export const notify = (io: Server |undefined, type: IoEvent, payload: Object, to
     } else {
         io.emit(type, JSON.stringify(payload));
     }
-}
+};
 
 export const notifyChangedRecord = (io: Server | undefined, payload: ChangedRecord, to?: string) => {
     notify(io, IoEvent.CHANGED_RECORD, payload, to);
-}
+};

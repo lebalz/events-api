@@ -1,12 +1,12 @@
 /* istanbul ignore file */
-import Mailgen from "mailgen";
-import { getEventProps } from "../helpers/changedProps";
-import { authConfig, sendMail } from "./authConfig";
-import { ApiEvent } from "../../../models/event.helpers";
-import { getDate } from "../../helpers/time";
-import { translate } from "../../helpers/i18n";
-import { Color } from "../helpers/colors";
-import { User } from "@prisma/client";
+import Mailgen from 'mailgen';
+import { getEventProps } from '../helpers/changedProps';
+import { authConfig, sendMail } from './authConfig';
+import { ApiEvent } from '../../../models/event.helpers';
+import { getDate } from '../../helpers/time';
+import { translate } from '../../helpers/i18n';
+import { Color } from '../helpers/colors';
+import { User } from '@prisma/client';
 const APP_URL = process.env.EVENTS_APP_URL || 'https://events.gbsl.website';
 const APP_URL_FR = `${APP_URL}/fr`;
 
@@ -22,11 +22,12 @@ export const mailOnDelete = async (config: Config) => {
     if (to.length === 0 || deleted.state === 'DRAFT' || !deleted.deletedAt) {
         return false;
     }
-    const link = locale === 'de' ? `${APP_URL}/event?id=${deleted.id}` : `${APP_URL_FR}/event?id=${deleted.id}`
+    const link =
+        locale === 'de' ? `${APP_URL}/event?id=${deleted.id}` : `${APP_URL_FR}/event?id=${deleted.id}`;
     const MailGenerator = new Mailgen({
         theme: 'default',
         product: {
-            name: `${translate('eventAppName',locale)} ${locale === 'de' ? 'GBSL' : 'GBJB'}: 🗑️ ${translate('deletedEvent', locale)}`,
+            name: `${translate('eventAppName', locale)} ${locale === 'de' ? 'GBSL' : 'GBJB'}: 🗑️ ${translate('deletedEvent', locale)}`,
             link: link
         }
     });
@@ -35,17 +36,15 @@ export const mailOnDelete = async (config: Config) => {
         body: {
             title: title,
             signature: false,
-            intro: [
-                `${actor.firstName} ${actor.lastName} ${translate('deletedEventMessage', locale)}`
-            ],
+            intro: [`${actor.firstName} ${actor.lastName} ${translate('deletedEventMessage', locale)}`],
             table: [
                 {
                     title: translate('deletedEvent', locale),
-                    data: getEventProps(deleted, locale).map(({name, value}) => {
+                    data: getEventProps(deleted, locale).map(({ name, value }) => {
                         return {
                             [translate('field', locale)]: name,
                             [translate('value', locale)]: `${value}`
-                        }
+                        };
                     })
                 }
             ],
@@ -59,9 +58,8 @@ export const mailOnDelete = async (config: Config) => {
                 }
             }
         }
-      
     };
-    
+
     const mail = MailGenerator.generate(response);
     const txt = MailGenerator.generatePlaintext(response);
 
@@ -72,13 +70,15 @@ export const mailOnDelete = async (config: Config) => {
         html: mail,
         replyTo: `${actor.firstName} ${actor.lastName} <${actor.email}>`,
         text: txt
-    }).then(info => {
-        console.log(info);
-        return true;
-    }).catch(err => {
-        console.error(err);
-        return false;
-    });
+    })
+        .then((info) => {
+            console.log(info);
+            return true;
+        })
+        .catch((err) => {
+            console.error(err);
+            return false;
+        });
 
     return result;
-}
+};

@@ -3,7 +3,22 @@
  * MUST BE IN SYNC WITH THE CLIENT SIDE
  */
 
-import { DepartmentLetter, ECGBilingual_Letter, ECG_Letter, ESC_Letter, FMPaed_Letter, FMSBilingual_Letter, FMS_Letter, GYMDBilingual_Letter, GYMD_Letter, GYMFBilingual_Letter, GYMF_Letter, MSOP_Letter, PASSERELLE_Letter, WMS_Letter } from "./departmentNames";
+import {
+    DepartmentLetter,
+    ECGBilingual_Letter,
+    ECG_Letter,
+    ESC_Letter,
+    FMPaed_Letter,
+    FMSBilingual_Letter,
+    FMS_Letter,
+    GYMDBilingual_Letter,
+    GYMD_Letter,
+    GYMFBilingual_Letter,
+    GYMF_Letter,
+    MSOP_Letter,
+    PASSERELLE_Letter,
+    WMS_Letter
+} from './departmentNames';
 
 export type Digit = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9;
 
@@ -22,10 +37,28 @@ type MSOP = `${Digit}${Digit}${DepartmentLetter.ECG}${MSOP_Letter}`;
 type Passerelle = `${Digit}${Digit}${DepartmentLetter.PASSERELLE}${PASSERELLE_Letter}`;
 type ESC = `${Digit}${Digit}${DepartmentLetter.ESC}${ESC_Letter}`;
 
-export type KlassName = GYM | GYMBilingual | FMS | FMPaed | FMSBilingual | WMS | Maturite | MaturiteBilingual | ECG | ECGBilingual | MSOP | Passerelle | ESC;
+export type KlassName =
+    | GYM
+    | GYMBilingual
+    | FMS
+    | FMPaed
+    | FMSBilingual
+    | WMS
+    | Maturite
+    | MaturiteBilingual
+    | ECG
+    | ECGBilingual
+    | MSOP
+    | Passerelle
+    | ESC;
 const today = new Date();
-const currentGraduationYear = (today.getFullYear() % 100) + today.getMonth() > 6 ? 1 : 0; /** getMonth() returns zero-based month, e.g. january->0, february->1,... */
-export const mapLegacyClassName: (name: string) => `${number}${DepartmentLetter}${string}` = (name: string) => {
+const currentGraduationYear =
+    (today.getFullYear() % 100) + today.getMonth() > 6
+        ? 1
+        : 0; /** getMonth() returns zero-based month, e.g. january->0, february->1,... */
+export const mapLegacyClassName: (name: string) => `${number}${DepartmentLetter}${string}` = (
+    name: string
+) => {
     if (!name || name.length < 3) {
         return name as `${number}${DepartmentLetter}${string}`;
     }
@@ -47,7 +80,8 @@ export const mapLegacyClassName: (name: string) => `${number}${DepartmentLetter}
         return name as `${number}${DepartmentLetter}${string}`;
     }
 
-    if (id.charAt(id.length - 1) < 'a') { // Means it is an upper case letter
+    if (id.charAt(id.length - 1) < 'a') {
+        // Means it is an upper case letter
         if (year === currentGraduationYear && ['M', 'L'].includes(id)) {
             // MSOP french --> 27sP (P-S)
             // L = P M = Q
@@ -98,13 +132,16 @@ export const mapLegacyClassName: (name: string) => `${number}${DepartmentLetter}
         const newLetter = String.fromCharCode(id.charCodeAt(0) + 9);
         return `${year}${DepartmentLetter.GYMD}${newLetter}`;
     }
-    if (id < 'r') { // GYM
+    if (id < 'r') {
+        // GYM
         return `${year}${DepartmentLetter.GYMD}${id}`;
-    } else if (id === 'w') { // WMS --> (a-c)
+    } else if (id === 'w') {
+        // WMS --> (a-c)
         const newLetter = String.fromCharCode(id.charCodeAt(0) - 22);
         return `${year}${DepartmentLetter.WMS}${newLetter}`;
-    } else { // FMS --> (a-o)
+    } else {
+        // FMS --> (a-o)
         const newLetter = String.fromCharCode(id.charCodeAt(0) - 17);
         return `${year}${DepartmentLetter.FMS}${newLetter}`;
     }
-}
+};

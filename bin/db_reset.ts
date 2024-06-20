@@ -1,9 +1,8 @@
 import { Prisma } from '@prisma/client';
 import prisma from '../src/prisma';
 
-
 async function main() {
-    const res = await prisma.$queryRaw<{query: string}[]>(
+    const res = await prisma.$queryRaw<{ query: string }[]>(
         Prisma.sql`
             SELECT 'drop table if exists "' || tablename || '" cascade;' as query
             FROM pg_tables

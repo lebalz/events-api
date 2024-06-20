@@ -1,8 +1,8 @@
-import { parentPort } from "worker_threads";
-import prisma from "../prisma";
-import Users from "../models/users";
-import { createIcsForClasses, createIcsForDepartments } from "../services/createIcs";
-import Logger from "../utils/logger";
+import { parentPort } from 'worker_threads';
+import prisma from '../prisma';
+import Users from '../models/users';
+import { createIcsForClasses, createIcsForDepartments } from '../services/createIcs';
+import Logger from '../utils/logger';
 
 (async () => {
     try {
@@ -16,18 +16,21 @@ import Logger from "../utils/logger";
         for (const user of users) {
             await Users.createIcs(user, user.id);
         }
-    
+
         /** sync class ics files  */
         await createIcsForClasses();
-        
+
         /** sync department ics files  */
         await createIcsForDepartments();
-    
-        await prisma.$disconnect().then(() => {
-            Logger.info('Prisma disconnected');
-        }).catch(err => {
-            Logger.error('Prisma disconnect failed', err);
-        });
+
+        await prisma
+            .$disconnect()
+            .then(() => {
+                Logger.info('Prisma disconnected');
+            })
+            .catch((err) => {
+                Logger.error('Prisma disconnect failed', err);
+            });
         // signal to parent that the job is done
         if (parentPort) {
             parentPort.postMessage('done');
@@ -36,11 +39,14 @@ import Logger from "../utils/logger";
         }
     } catch (err) {
         console.error(err);
-        await prisma.$disconnect().then(() => {
-            Logger.info('Prisma disconnected');
-        }).catch(err => {
-            Logger.error('Prisma disconnect failed', err);
-        });
+        await prisma
+            .$disconnect()
+            .then(() => {
+                Logger.info('Prisma disconnected');
+            })
+            .catch((err) => {
+                Logger.error('Prisma disconnect failed', err);
+            });
         if (parentPort) {
             parentPort.postMessage('error');
         } else {

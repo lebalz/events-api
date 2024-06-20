@@ -17,8 +17,8 @@ const mNotification = <jest.Mock<typeof notify>>notify;
 const prepareRegistrationPeriod = (regPeriod: RegistrationPeriod) => {
     return {
         ...JSON.parse(JSON.stringify(apiPreparedRP(regPeriod)))
-    }
-}
+    };
+};
 
 beforeEach(async () => {
     await prisma.registrationPeriod.createMany({
@@ -37,42 +37,41 @@ beforeEach(async () => {
     });
 });
 
-
 describe(`GET ${API_URL}/registration_periods`, () => {
-    it("is not for public users", async () => {
+    it('is not for public users', async () => {
         const regPeriods = await prisma.registrationPeriod.findMany();
-        const result = await request(app)
-            .get(`${API_URL}/registration_periods`);
+        const result = await request(app).get(`${API_URL}/registration_periods`);
         expect(result.statusCode).toEqual(401);
     });
-    it("returns all registration periods for users", async () => {
+    it('returns all registration periods for users', async () => {
         const regPeriods = await prisma.registrationPeriod.findMany();
-        const user = await prisma.user.create({data: generateUser({})});
+        const user = await prisma.user.create({ data: generateUser({}) });
 
         const result = await request(app)
             .get(`${API_URL}/registration_periods`)
-            .set('authorization', JSON.stringify({email: user.email}));
+            .set('authorization', JSON.stringify({ email: user.email }));
         expect(result.statusCode).toEqual(200);
         expect(result.body.length).toEqual(2);
-        expect(result.body.map((d: RegistrationPeriod) => d.id).sort()).toEqual(regPeriods.map(d => d.id).sort());
+        expect(result.body.map((d: RegistrationPeriod) => d.id).sort()).toEqual(
+            regPeriods.map((d) => d.id).sort()
+        );
         expect(mNotification).toHaveBeenCalledTimes(0);
     });
 });
 
 describe(`GET ${API_URL}/registration_periods/:id`, () => {
-    it("prevents public user to get registration period", async () => {
+    it('prevents public user to get registration period', async () => {
         const regPeriod = await prisma.registrationPeriod.findFirst();
-        const result = await request(app)
-            .get(`${API_URL}/registration_periods/${regPeriod!.id}`);
+        const result = await request(app).get(`${API_URL}/registration_periods/${regPeriod!.id}`);
         expect(result.statusCode).toEqual(401);
         expect(mNotification).toHaveBeenCalledTimes(0);
     });
-    it("can get registration period by id", async () => {
-        const user = await prisma.user.create({data: generateUser({})});
+    it('can get registration period by id', async () => {
+        const user = await prisma.user.create({ data: generateUser({}) });
         const regPeriod = await prisma.registrationPeriod.findFirst();
         const result = await request(app)
             .get(`${API_URL}/registration_periods/${regPeriod!.id}`)
-            .set('authorization', JSON.stringify({email: user.email}));
+            .set('authorization', JSON.stringify({ email: user.email }));
         expect(result.statusCode).toEqual(200);
         expect(result.body).toEqual(prepareRegistrationPeriod(regPeriod!));
         expect(mNotification).toHaveBeenCalledTimes(0);
@@ -80,23 +79,23 @@ describe(`GET ${API_URL}/registration_periods/:id`, () => {
 });
 
 describe(`PUT ${API_URL}/registration_periods/:id`, () => {
-    it("prevents user to update Registration Period", async () => {
-        const user = await prisma.user.create({data: generateUser({})});
+    it('prevents user to update Registration Period', async () => {
+        const user = await prisma.user.create({ data: generateUser({}) });
         const dep = await prisma.registrationPeriod.findFirst();
         const result = await request(app)
             .put(`${API_URL}/registration_periods/${dep!.id}`)
-            .set('authorization', JSON.stringify({email: user.email}))
-            .send({data: {name: 'FOO'}});
+            .set('authorization', JSON.stringify({ email: user.email }))
+            .send({ data: { name: 'FOO' } });
         expect(result.statusCode).toEqual(403);
         expect(mNotification).toHaveBeenCalledTimes(0);
     });
-    it("lets admins update Registration Period", async () => {
-        const admin = await prisma.user.create({data: generateUser({role: Role.ADMIN})});
+    it('lets admins update Registration Period', async () => {
+        const admin = await prisma.user.create({ data: generateUser({ role: Role.ADMIN }) });
         const regPeriod = await prisma.registrationPeriod.findFirst();
         const result = await request(app)
             .put(`${API_URL}/registration_periods/${regPeriod!.id}`)
-            .set('authorization', JSON.stringify({email: admin.email}))
-            .send({data: {name: 'FOO'}});
+            .set('authorization', JSON.stringify({ email: admin.email }))
+            .send({ data: { name: 'FOO' } });
         expect(result.statusCode).toEqual(200);
         expect(result.body).toEqual({
             ...prepareRegistrationPeriod(regPeriod!),
@@ -110,15 +109,15 @@ describe(`PUT ${API_URL}/registration_periods/:id`, () => {
             to: 'all'
         });
     });
-    it("can modify departments", async () => {
-        const gbsl = await prisma.department.create({data: generateDepartment({name: 'GYMD'})});
-        const gbjb = await prisma.department.create({data: generateDepartment({name: 'GYMF'})});
-        const admin = await prisma.user.create({data: generateUser({role: Role.ADMIN})});
+    it('can modify departments', async () => {
+        const gbsl = await prisma.department.create({ data: generateDepartment({ name: 'GYMD' }) });
+        const gbjb = await prisma.department.create({ data: generateDepartment({ name: 'GYMF' }) });
+        const admin = await prisma.user.create({ data: generateUser({ role: Role.ADMIN }) });
         const regPeriod = await prisma.registrationPeriod.findFirst();
         const result = await request(app)
             .put(`${API_URL}/registration_periods/${regPeriod!.id}`)
-            .set('authorization', JSON.stringify({email: admin.email}))
-            .send({data: {departmentIds: [gbsl.id, gbjb.id]}});
+            .set('authorization', JSON.stringify({ email: admin.email }))
+            .send({ data: { departmentIds: [gbsl.id, gbjb.id] } });
         expect(result.statusCode).toEqual(200);
         expect(result.body).toEqual({
             ...prepareRegistrationPeriod(regPeriod!),
@@ -132,48 +131,48 @@ describe(`PUT ${API_URL}/registration_periods/:id`, () => {
             to: 'all'
         });
     });
-    it("can not update start Date to be later than the end date", async () => {
+    it('can not update start Date to be later than the end date', async () => {
         const regPeriod = await prisma.registrationPeriod.findFirst();
-        const admin = await prisma.user.create({data: generateUser({role: Role.ADMIN})});
+        const admin = await prisma.user.create({ data: generateUser({ role: Role.ADMIN }) });
 
         const result = await request(app)
             .put(`${API_URL}/registration_periods/${regPeriod!.id}`)
-            .set('authorization', JSON.stringify({email: admin.email}))
-            .send({data: { start: faker.date.future({refDate: regPeriod!.end})}});
+            .set('authorization', JSON.stringify({ email: admin.email }))
+            .send({ data: { start: faker.date.future({ refDate: regPeriod!.end }) } });
         expect(result.statusCode).toEqual(400);
         expect(mNotification).toHaveBeenCalledTimes(0);
     });
-    it("can not update end Date to be earlier than the start date", async () => {
+    it('can not update end Date to be earlier than the start date', async () => {
         const regPeriod = await prisma.registrationPeriod.findFirst();
-        const admin = await prisma.user.create({data: generateUser({role: Role.ADMIN})});
+        const admin = await prisma.user.create({ data: generateUser({ role: Role.ADMIN }) });
 
         const result = await request(app)
             .put(`${API_URL}/registration_periods/${regPeriod!.id}`)
-            .set('authorization', JSON.stringify({email: admin.email}))
-            .send({data: { end: faker.date.past({refDate: regPeriod?.start})}});
+            .set('authorization', JSON.stringify({ email: admin.email }))
+            .send({ data: { end: faker.date.past({ refDate: regPeriod?.start }) } });
         expect(result.statusCode).toEqual(400);
         expect(mNotification).toHaveBeenCalledTimes(0);
     });
 });
 
 describe(`POST ${API_URL}/registration_periods`, () => {
-    it("prevents user to create a regPeriod", async () => {
-        const user = await prisma.user.create({data: generateUser({})});
+    it('prevents user to create a regPeriod', async () => {
+        const user = await prisma.user.create({ data: generateUser({}) });
         const result = await request(app)
             .post(`${API_URL}/registration_periods`)
-            .set('authorization', JSON.stringify({email: user.email}))
-            .send({name: 'FOO', description: 'BAR'});
+            .set('authorization', JSON.stringify({ email: user.email }))
+            .send({ name: 'FOO', description: 'BAR' });
         expect(result.statusCode).toEqual(403);
         expect(mNotification).toHaveBeenCalledTimes(0);
     });
-    it("admin can create a new Regitration Period", async () => {
-        const admin = await prisma.user.create({data: generateUser({role: Role.ADMIN})});
+    it('admin can create a new Regitration Period', async () => {
+        const admin = await prisma.user.create({ data: generateUser({ role: Role.ADMIN }) });
         const start = faker.date.soon();
-        const end = faker.date.future({refDate: start});
+        const end = faker.date.future({ refDate: start });
         const result = await request(app)
             .post(`${API_URL}/registration_periods`)
-            .set('authorization', JSON.stringify({email: admin.email}))
-            .send({name: 'FOO', start: start, end: end, eventRangeStart: start, eventRangeEnd: end });
+            .set('authorization', JSON.stringify({ email: admin.email }))
+            .send({ name: 'FOO', start: start, end: end, eventRangeStart: start, eventRangeEnd: end });
         expect(result.statusCode).toEqual(201);
         expect(result.body.name).toEqual('FOO');
         expect(result.body.start).toEqual(start.toISOString());
@@ -189,27 +188,27 @@ describe(`POST ${API_URL}/registration_periods`, () => {
 });
 
 describe(`DELETE ${API_URL}/registration_periods/:id`, () => {
-    it("prevents user to delete a registration period", async () => {
+    it('prevents user to delete a registration period', async () => {
         const regPeriod = await prisma.registrationPeriod.findFirst();
-        const user = await prisma.user.create({data: generateUser({})});
+        const user = await prisma.user.create({ data: generateUser({}) });
         const result = await request(app)
             .delete(`${API_URL}/registration_periods/${regPeriod!.id}`)
-            .set('authorization', JSON.stringify({email: user.email}));
+            .set('authorization', JSON.stringify({ email: user.email }));
         expect(result.statusCode).toEqual(403);
         expect(mNotification).toHaveBeenCalledTimes(0);
     });
-    it("admin can delete a Regitration Period", async () => {
-        const admin = await prisma.user.create({data: generateUser({role: Role.ADMIN})});
+    it('admin can delete a Regitration Period', async () => {
+        const admin = await prisma.user.create({ data: generateUser({ role: Role.ADMIN }) });
         const regPeriods = await prisma.registrationPeriod.findMany();
         expect(regPeriods).toHaveLength(2);
         const regPeriod = regPeriods[0];
         const result = await request(app)
             .delete(`${API_URL}/registration_periods/${regPeriod!.id}`)
-            .set('authorization', JSON.stringify({email: admin.email}));
+            .set('authorization', JSON.stringify({ email: admin.email }));
         expect(result.statusCode).toEqual(204);
         const regPeriodsAfter = await prisma.registrationPeriod.findMany();
         expect(regPeriodsAfter).toHaveLength(1);
-        expect(regPeriodsAfter.map(d => d.id)).not.toContain(regPeriod!.id);
+        expect(regPeriodsAfter.map((d) => d.id)).not.toContain(regPeriod!.id);
         expect(mNotification).toHaveBeenCalledTimes(1);
         expect(mNotification.mock.calls[0][0]).toEqual({
             event: IoEvent.DELETED_RECORD,
@@ -220,12 +219,12 @@ describe(`DELETE ${API_URL}/registration_periods/:id`, () => {
 });
 
 describe(`POST ${API_URL}/registration_periods/:id/sync_untis`, () => {
-    it("prevents user to sync with untis", async () => {
+    it('prevents user to sync with untis', async () => {
         const regPeriod = await prisma.registrationPeriod.findFirst();
-        const user = await prisma.user.create({data: generateUser({})});
+        const user = await prisma.user.create({ data: generateUser({}) });
         const result = await request(app)
             .post(`${API_URL}/registration_periods/${regPeriod!.id}/sync_untis`)
-            .set('authorization', JSON.stringify({email: user.email}));
+            .set('authorization', JSON.stringify({ email: user.email }));
         expect(result.statusCode).toEqual(403);
         expect(mNotification).toHaveBeenCalledTimes(0);
     });

@@ -1,20 +1,17 @@
-import { Event, EventState, Prisma, PrismaClient, Role, User as Users } from "@prisma/client";
-import { createIcs as createIcsFile} from '../services/createIcs';
-import prisma from "../prisma";
-import { HTTP400Error, HTTP403Error, HTTP404Error } from "../utils/errors/Errors";
-import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
-import { ApiEvent, prepareEvent } from "./event.helpers";
-import { existsSync, rmSync } from "fs";
+import { Event, EventState, Prisma, PrismaClient, Role, User as Users } from '@prisma/client';
+import { createIcs as createIcsFile } from '../services/createIcs';
+import prisma from '../prisma';
+import { HTTP400Error, HTTP403Error, HTTP404Error } from '../utils/errors/Errors';
+import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
+import { ApiEvent, prepareEvent } from './event.helpers';
+import { existsSync, rmSync } from 'fs';
 import { ICAL_DIR } from '../app';
-import { createDataExtractor } from "../controllers/helpers";
-const getData = createDataExtractor<Prisma.UserUncheckedUpdateInput>(
-    [
-        'notifyOnEventUpdate',
-        'notifyAdminOnReviewRequest',
-        'notifyAdminOnReviewDecision'
-    ]
-);
-
+import { createDataExtractor } from '../controllers/helpers';
+const getData = createDataExtractor<Prisma.UserUncheckedUpdateInput>([
+    'notifyOnEventUpdate',
+    'notifyAdminOnReviewRequest',
+    'notifyAdminOnReviewDecision'
+]);
 
 function Users(db: PrismaClient['user']) {
     return Object.assign(db, {
@@ -57,7 +54,7 @@ function Users(db: PrismaClient['user']) {
                     },
                     data: {
                         untisId: untisId || null,
-                        icsLocator: untisId ? (icsLocator || null) : null
+                        icsLocator: untisId ? icsLocator || null : null
                     }
                 });
                 if (untisId) {
@@ -115,14 +112,13 @@ function Users(db: PrismaClient['user']) {
             if (!user) {
                 throw new HTTP404Error('User not found');
             }
-            const semester = semesterId ? 
-                await prisma.semester.findUnique({ where: { id: semesterId } }) :
-                await prisma.semester.findFirst({ where: {
-                    AND: [
-                        { start: { lte: new Date() } },
-                        { end: { gte: new Date() } }
-                    ]
-                }});
+            const semester = semesterId
+                ? await prisma.semester.findUnique({ where: { id: semesterId } })
+                : await prisma.semester.findFirst({
+                      where: {
+                          AND: [{ start: { lte: new Date() } }, { end: { gte: new Date() } }]
+                      }
+                  });
             if (!semester) {
                 throw new HTTP404Error('Semester not found');
             }
@@ -134,9 +130,9 @@ function Users(db: PrismaClient['user']) {
                     state: EventState.PUBLISHED
                 }
             });
-            return events.map(e => prepareEvent(e));
+            return events.map((e) => prepareEvent(e));
         }
-    })
+    });
 }
 
 export default Users(prisma.user);

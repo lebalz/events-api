@@ -11,9 +11,9 @@ export const authConfig: Readonly<SMTPTransport.Options> = Object.freeze({
     auth: Object.freeze({
         type: 'LOGIN',
         user: process.env.MAIL_USERNAME || '', // your email address
-        pass: process.env.MAIL_PASSWORD || '', // your email password
+        pass: process.env.MAIL_PASSWORD || '' // your email password
     }),
-    authMethod: 'PLAIN',
+    authMethod: 'PLAIN'
 });
 
 export const sendMail = async (config: Mail.Options) => {

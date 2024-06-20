@@ -7,7 +7,7 @@ export const truncate = async (deleteFiles: boolean = true) => {
         throw new Error('DATABASE_URL not set');
     }
     if (deleteFiles) {
-        ['uploads', 'ical/de', 'ical/fr', 'exports'].forEach(dir => {
+        ['uploads', 'ical/de', 'ical/fr', 'exports'].forEach((dir) => {
             const path = `${__dirname}/../test-data/${dir}`;
             try {
                 rmSync(path, { recursive: true });
@@ -29,6 +29,6 @@ export const truncate = async (deleteFiles: boolean = true) => {
         prisma.untisTeacher.deleteMany(),
         prisma.event.deleteMany(),
         prisma.eventGroup.deleteMany(),
-        prisma.user.deleteMany(),
-    ])
+        prisma.user.deleteMany()
+    ]);
 };

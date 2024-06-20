@@ -1,14 +1,12 @@
-import { Department, Event, Prisma, PrismaClient, User } from "@prisma/client";
-import {clonedProps as clonedEventProps, prepareEvent} from './event.helpers';
-import prisma from "../prisma";
-import { HTTP403Error, HTTP404Error, HTTP500Error } from "../utils/errors/Errors";
-import { createDataExtractor } from "../controllers/helpers";
-import Events from "./events";
-import { prepareEventGroup, ApiEventGroup } from "./eventGroup.helpers";
+import { Department, Event, Prisma, PrismaClient, User } from '@prisma/client';
+import { clonedProps as clonedEventProps, prepareEvent } from './event.helpers';
+import prisma from '../prisma';
+import { HTTP403Error, HTTP404Error, HTTP500Error } from '../utils/errors/Errors';
+import { createDataExtractor } from '../controllers/helpers';
+import Events from './events';
+import { prepareEventGroup, ApiEventGroup } from './eventGroup.helpers';
 
-const getData = createDataExtractor<Prisma.EventGroupUncheckedUpdateInput>(
-    ['name', 'description']
-);
+const getData = createDataExtractor<Prisma.EventGroupUncheckedUpdateInput>(['name', 'description']);
 
 function EventGroups(db: PrismaClient['eventGroup']) {
     return Object.assign(db, {
@@ -62,7 +60,7 @@ function EventGroups(db: PrismaClient['eventGroup']) {
         },
         async _findRawModel(actor: User, id: string) {
             const model = await db.findUnique({
-                where: { 
+                where: {
                     id: id,
                     users: {
                         some: {
@@ -93,7 +91,7 @@ function EventGroups(db: PrismaClient['eventGroup']) {
             const model = await this._findRawModel(actor, id);
             return prepareEventGroup(model);
         },
-        async createModel(actor: User, data:{ name: string, description: string, event_ids: string[] }) {
+        async createModel(actor: User, data: { name: string; description: string; event_ids: string[] }) {
             const { name, description, event_ids } = data;
             const allowedEvents = await Events.allByIds(actor, event_ids);
             const model = await db.create({
@@ -106,7 +104,7 @@ function EventGroups(db: PrismaClient['eventGroup']) {
                         }
                     },
                     events: {
-                        connect: allowedEvents.map(e => ({ id: e.id }))
+                        connect: allowedEvents.map((e) => ({ id: e.id }))
                     }
                 },
                 include: {
@@ -124,7 +122,7 @@ function EventGroups(db: PrismaClient['eventGroup']) {
             });
             return prepareEventGroup(model);
         },
-        async updateModel(actor: User, id: string, data: Partial<ApiEventGroup> ) {
+        async updateModel(actor: User, id: string, data: Partial<ApiEventGroup>) {
             /** ensure correct permissions */
             await this.findModel(actor, id);
 
@@ -133,13 +131,13 @@ function EventGroups(db: PrismaClient['eventGroup']) {
             if (data.eventIds) {
                 const allowedEvents = await Events.allByIds(actor, data.eventIds);
                 sanitized.events = {
-                    set: allowedEvents.map(e => ({ id: e.id }))
-                }
+                    set: allowedEvents.map((e) => ({ id: e.id }))
+                };
             }
             if (data.userIds) {
                 sanitized.users = {
-                    set: data.userIds.map(uId => ({ id: uId }))
-                }
+                    set: data.userIds.map((uId) => ({ id: uId }))
+                };
             }
             const model = await db.update({
                 where: { id: id },
@@ -171,15 +169,15 @@ function EventGroups(db: PrismaClient['eventGroup']) {
                 }
                 await db.delete({
                     where: {
-                        id: id,
-                    },
+                        id: id
+                    }
                 });
                 return prepareEventGroup(cleanedUp);
             } else {
                 await db.delete({
                     where: {
-                        id: id,
-                    },
+                        id: id
+                    }
                 });
                 return prepareEventGroup(model);
             }
@@ -211,7 +209,9 @@ function EventGroups(db: PrismaClient['eventGroup']) {
                         }
                     },
                     events: {
-                        create: events.map(event => clonedEventProps({ event: event, uid: actor.id, type: 'basic'}))
+                        create: events.map((event) =>
+                            clonedEventProps({ event: event, uid: actor.id, type: 'basic' })
+                        )
                     }
                 },
                 include: {
@@ -253,9 +253,9 @@ function EventGroups(db: PrismaClient['eventGroup']) {
                     }
                 }
             });
-            return events.map(e => prepareEvent(e));
+            return events.map((e) => prepareEvent(e));
         }
-    })
+    });
 }
 
 export default EventGroups(prisma.eventGroup);

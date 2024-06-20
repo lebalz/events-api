@@ -1,32 +1,32 @@
-import { WebUntisElementType } from "webuntis"
-import { UntisData } from "../../src/services/fetchUntis"
-import { DAYS } from "../../src/services/helpers/time";
+import { WebUntisElementType } from 'webuntis';
+import { UntisData } from '../../src/services/fetchUntis';
+import { DAYS } from '../../src/services/helpers/time';
 
 const SUNDAY = 20231015; /* the 15.10.2023 is a sunday */
 export interface UntisDataProps {
-    schoolyear: {start: number},
-    subjects: {name: string, longName: string}[],
-    teachers: {name: string, longName: string, sex: 'M' | 'F'}[],
-    classes: {name: string, sf: string}[],
+    schoolyear: { start: number };
+    subjects: { name: string; longName: string }[];
+    teachers: { name: string; longName: string; sex: 'M' | 'F' }[];
+    classes: { name: string; sf: string }[];
     lessons: {
-        subject: string, 
-        day: typeof DAYS[number],
-        teachers: string[], 
-        classes: string[], 
-        start: number, 
-        end: number, 
-        room: string
-    }[]
+        subject: string;
+        day: (typeof DAYS)[number];
+        teachers: string[];
+        classes: string[];
+        start: number;
+        end: number;
+        room: string;
+    }[];
 }
 
-const idSequence = (() => {
-    const ids = {schoolyear: 0, subjects: 0, teachers: 0, classes: 0, lessons: 0}
+const idSequence = () => {
+    const ids = { schoolyear: 0, subjects: 0, teachers: 0, classes: 0, lessons: 0 };
     const nextId = (type: keyof typeof ids) => {
         ids[type] += 1;
         return ids[type];
-    }
+    };
     return nextId;
-});
+};
 
 export const generateUntisData = (props: UntisDataProps): UntisData => {
     const nextId = idSequence();
@@ -37,16 +37,16 @@ export const generateUntisData = (props: UntisDataProps): UntisData => {
         startDate: new Date(props.schoolyear.start, 7, 30),
         endDate: new Date(props.schoolyear.start + 1, 7, 29)
     };
-    data.subjects = props.subjects.map(s => ({
+    data.subjects = props.subjects.map((s) => ({
         id: nextId('subjects'),
         name: s.name,
         longName: s.longName,
         alternateName: '',
         active: true,
         foreColor: 'ffffff',
-        backColor: '0000ff',
+        backColor: '0000ff'
     }));
-    data.teachers = props.teachers.map(t => ({
+    data.teachers = props.teachers.map((t) => ({
         id: nextId('teachers'),
         name: t.name,
         foreName: '',
@@ -57,13 +57,13 @@ export const generateUntisData = (props: UntisDataProps): UntisData => {
         backColor: '0000ff',
         dids: []
     }));
-    data.classes = props.classes.map(c => ({
+    data.classes = props.classes.map((c) => ({
         id: nextId('classes'),
         name: c.name,
         longName: c.sf,
-        active: true,
+        active: true
     }));
-    data.timetable = props.lessons.map(l => {
+    data.timetable = props.lessons.map((l) => {
         const id = nextId('lessons');
         return {
             id: id,
@@ -82,8 +82,8 @@ export const generateUntisData = (props: UntisDataProps): UntisData => {
             code: 0,
             hasInfo: false,
             studentGroup: l.classes.join('_'),
-            classes: l.classes.map(c => {
-                const cl = data.classes!.find(cl => cl.name === c);
+            classes: l.classes.map((c) => {
+                const cl = data.classes!.find((cl) => cl.name === c);
                 if (!cl) {
                     throw new Error(`Class ${c} not found`);
                 }
@@ -103,10 +103,10 @@ export const generateUntisData = (props: UntisDataProps): UntisData => {
                         roomCapacity: 0,
                         canViewTimetable: true
                     }
-                }
+                };
             }),
-            teachers: l.teachers.map(t => {
-                const te = data.teachers!.find(te => te.name === t);
+            teachers: l.teachers.map((t) => {
+                const te = data.teachers!.find((te) => te.name === t);
                 if (!te) {
                     throw new Error(`Teacher ${t} not found`);
                 }
@@ -124,14 +124,14 @@ export const generateUntisData = (props: UntisDataProps): UntisData => {
                         externalKey: '',
                         roomCapacity: 0
                     }
-                }
+                };
             }),
-            subjects: [l.subject].map(s => {
-                const su = data.subjects!.find(se => se.name === s);
+            subjects: [l.subject].map((s) => {
+                const su = data.subjects!.find((se) => se.name === s);
                 if (!su) {
                     throw new Error(`Subject ${s} not found`);
                 }
-                return  {
+                return {
                     type: WebUntisElementType.SUBJECT,
                     id: su.id,
                     orgId: 0,
@@ -148,33 +148,35 @@ export const generateUntisData = (props: UntisDataProps): UntisData => {
                         canViewTimetable: true,
                         roomCapacity: 0
                     }
-                }
+                };
             }),
-            rooms: [{
-                type: WebUntisElementType.ROOM,
-                id: 1,
-                orgId: 0,
-                missing: false,
-                state: 'REGULAR',
-                element: {
+            rooms: [
+                {
                     type: WebUntisElementType.ROOM,
                     id: 1,
-                    name: l.room,
-                    longName: l.room,
-                    displayname: l.room,
-                    alternatename: '',
-                    canViewTimetable: true,
-                    roomCapacity: 25
+                    orgId: 0,
+                    missing: false,
+                    state: 'REGULAR',
+                    element: {
+                        type: WebUntisElementType.ROOM,
+                        id: 1,
+                        name: l.room,
+                        longName: l.room,
+                        displayname: l.room,
+                        alternatename: '',
+                        canViewTimetable: true,
+                        roomCapacity: 25
+                    }
                 }
-            }],
+            ],
             students: [],
             substText: '',
             date: SUNDAY + DAYS.indexOf(l.day),
             elements: [],
-            is: {event: false},
+            is: { event: false },
             roomCapacity: 25,
             studentCount: 25
-        }
+        };
     });
     return data as UntisData;
-}
+};

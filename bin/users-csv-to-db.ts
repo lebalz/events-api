@@ -21,26 +21,26 @@ interface Record {
 // Read and process the CSV file
 const processFile = async (filePath: string) => {
     const records: Record[] = [];
-    const parser = fs
-        .createReadStream(filePath)
-        .pipe(parse({
+    const parser = fs.createReadStream(filePath).pipe(
+        parse({
             delimiter: ',',
-            columns: true,
-        }));
+            columns: true
+        })
+    );
 
     parser.on('readable', async function () {
-        let record: Record; 
+        let record: Record;
         while ((record = parser.read()) !== null) {
             if (record.jobTitle !== 'Lehrer') {
                 continue;
             }
             const name = `${record.surname} ${record.givenName}`;
             if (record.surname.length < 2 || record.givenName.length < 2) {
-                console.log('Skipping', name)
+                console.log('Skipping', name);
                 continue;
             }
             if (/\d/.test(name)) {
-                console.log('Skipping', name)
+                console.log('Skipping', name);
                 continue;
             }
             const sql = Prisma.sql`
@@ -60,7 +60,7 @@ const processFile = async (filePath: string) => {
                     email: record.mail.toLowerCase(),
                     firstName: record.givenName,
                     lastName: record.surname,
-                    untisId: untisTeacher[0]?.id ?? null,
+                    untisId: untisTeacher[0]?.id ?? null
                 },
                 create: {
                     id: record.id,
@@ -81,6 +81,6 @@ processFile(`${__dirname}/excel/gbsl-2023-10-17.csv`)
         // console.log(recs);
         return processFile(`${__dirname}/excel/gbjb-2023-10-17.csv`);
     })
-    .then(
-        // (recs) => console.log(recs)
-    );
+    .then
+    // (recs) => console.log(recs)
+    ();

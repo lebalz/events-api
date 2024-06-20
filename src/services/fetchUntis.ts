@@ -25,28 +25,29 @@ const untis = new WebUntisSecretAuth(
 );
 
 const login = async (rethrow?: boolean) => {
-    let success = await untis.login()
+    let success = await untis
+        .login()
         .then(() => !!untis.sessionInformation?.sessionId)
         .catch((err) => {
             Logger.error(err);
             if (rethrow) {
                 throw err;
             }
-            return false
+            return false;
         });
     if (success) {
         return true;
     } else {
         return false;
     }
-}
+};
 
 const ensureLogin = async () => {
     let loggedIn = await login();
     let tries = 1;
     while (!loggedIn) {
         tries += 1;
-        await new Promise(resolve => setTimeout(resolve, 2000));
+        await new Promise((resolve) => setTimeout(resolve, 2000));
         loggedIn = await login(tries > MAX_LOGIN_TRIES);
         Logger.info('Login Try', tries);
     }
@@ -54,7 +55,7 @@ const ensureLogin = async () => {
         Logger.info('Login Tries', tries);
     }
     return loggedIn;
-}
+};
 
 export interface UntisData {
     schoolyear: SchoolYear;
@@ -65,7 +66,7 @@ export interface UntisData {
 }
 
 export const fetchUntis = async (semester: Semester): Promise<UntisData> => {
-    Logger.info('Start fetching Untis Data')
+    Logger.info('Start fetching Untis Data');
     const data = await ensureLogin()
         .then(async (loggedIn) => {
             if (!loggedIn) {
@@ -78,41 +79,53 @@ export const fetchUntis = async (semester: Semester): Promise<UntisData> => {
             /** find the school year for the events-app semester
              * expectation: the middle of start-end from the events semester
              *              lies within the start-end of the untis year
-            */
+             */
             const semStart = semester.start.getTime();
             const semEnd = semester.end.getTime();
-            const semMiddle = semStart + ((semEnd - semStart) / 2);
+            const semMiddle = semStart + (semEnd - semStart) / 2;
             const sj = sjs.find((sj) => {
                 if (sj.startDate.getTime() < semMiddle && sj.endDate.getTime() > semMiddle) {
                     return true;
                 }
                 return false;
-            })
+            });
             if (!sj) {
                 Logger.info('No Schoolyear found for this period');
                 throw new Error('No Schoolyear found');
             }
-            return { schoolyear: sj }
-        }).then(async (data) => {
+            return { schoolyear: sj };
+        })
+        .then(async (data) => {
             Logger.info('Fetch Subjects');
             const subjects = await untis.getSubjects();
-            return { ...data, subjects }
-        }).then(async (data) => {
+            return { ...data, subjects };
+        })
+        .then(async (data) => {
             Logger.info('Fetch Teachers');
             const teachers = await untis.getTeachers();
-            return { ...data, teachers }
-        }).then(async (data) => {
+            return { ...data, teachers };
+        })
+        .then(async (data) => {
             Logger.info('Fetch Classes');
-            const classes = (await untis.getClasses(true, data.schoolyear.id)).filter((c) => !Number.isNaN(getClassYear(c)));
-            return { ...data, classes }
-        }).then(async (data) => {
+            const classes = (await untis.getClasses(true, data.schoolyear.id)).filter(
+                (c) => !Number.isNaN(getClassYear(c))
+            );
+            return { ...data, classes };
+        })
+        .then(async (data) => {
             Logger.info('Fetch Timetables');
             const s1: WebAPITimetable[][] = [];
             for (const kl of data.classes) {
                 try {
-                    const tt = await untis.getTimetableForWeek(semester.untisSyncDate, kl.id, Base.TYPES.CLASS, 2, true);
+                    const tt = await untis.getTimetableForWeek(
+                        semester.untisSyncDate,
+                        kl.id,
+                        Base.TYPES.CLASS,
+                        2,
+                        true
+                    );
                     s1.push(tt);
-                    await new Promise(resolve => setTimeout(resolve, API_FETCH_DELAY));
+                    await new Promise((resolve) => setTimeout(resolve, API_FETCH_DELAY));
                 } catch (e) {
                     Logger.error('Error fetching Untis Timetables', e);
                     s1.splice(0, s1.length);
@@ -130,15 +143,24 @@ export const fetchUntis = async (semester: Semester): Promise<UntisData> => {
             // const [tt] = await Promise.all([s1]);
             const flattend_tt = s1.flat().filter((t) => t.lessonCode === 'LESSON');
             /** Fak Kurse */
-            const optLessonIds = data.subjects.filter((s) => OPTIONAL_COURSE_REGEX.test(s.name)).map(s => s.id);
+            const optLessonIds = data.subjects
+                .filter((s) => OPTIONAL_COURSE_REGEX.test(s.name))
+                .map((s) => s.id);
             const optLessons: WebAPITimetable[] = [];
             for (const id of optLessonIds) {
-                const fakTT = await untis.getTimetableForWeek(semester.untisSyncDate, id, Base.TYPES.SUBJECT, 2, true);
+                const fakTT = await untis.getTimetableForWeek(
+                    semester.untisSyncDate,
+                    id,
+                    Base.TYPES.SUBJECT,
+                    2,
+                    true
+                );
                 optLessons.push(...fakTT.filter((t) => t.lessonCode === 'LESSON'));
-                await new Promise(resolve => setTimeout(resolve, API_FETCH_DELAY));
+                await new Promise((resolve) => setTimeout(resolve, API_FETCH_DELAY));
             }
             return { ...data, timetable: [...flattend_tt, ...optLessons] };
-        }).then((data) => {
+        })
+        .then((data) => {
             Object.keys(data).forEach((key) => {
                 const len = (data as any)[key].length;
                 if (len) {
@@ -149,9 +171,10 @@ export const fetchUntis = async (semester: Semester): Promise<UntisData> => {
             Logger.info(`Synced Week: ${semester.untisSyncDate}`);
             // writeFileSync('untis.data.json', JSON.stringify(data, null, 2));
             return data;
-        }).finally(async () => {
-            Logger.info('logout untis')
-            return untis.logout()
+        })
+        .finally(async () => {
+            Logger.info('logout untis');
+            return untis.logout();
         });
-    return data
-}
+    return data;
+};

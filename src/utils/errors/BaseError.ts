@@ -4,7 +4,7 @@ export enum HttpStatusCode {
     UNAUTHORIZED = 401,
     FORBIDDEN = 403,
     NOT_FOUND = 404,
-    INTERNAL_SERVER = 500,
+    INTERNAL_SERVER = 500
 }
 
 export default class BaseError extends Error {

@@ -1,5 +1,5 @@
-import { Prisma, PrismaClient } from "@prisma/client";
-import prisma from "../prisma";
+import { Prisma, PrismaClient } from '@prisma/client';
+import prisma from '../prisma';
 
 export interface UntisSubject {
     name: string;
@@ -22,7 +22,7 @@ function UntisLessons(db: PrismaClient['untisLesson']) {
             );
             return result;
         }
-    })
+    });
 }
 
 export default UntisLessons(prisma.untisLesson);

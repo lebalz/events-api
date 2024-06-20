@@ -1,6 +1,6 @@
-import { PrismaClient, User } from "@prisma/client";
-import prisma from "../prisma";
-import { prepareClass } from "./untis.helpers";
+import { PrismaClient, User } from '@prisma/client';
+import prisma from '../prisma';
+import { prepareClass } from './untis.helpers';
 
 function UntisClasses(db: PrismaClient['untisClass']) {
     return Object.assign(db, {
@@ -10,12 +10,12 @@ function UntisClasses(db: PrismaClient['untisClass']) {
                     include: {
                         teachers: {
                             select: {
-                                id: true,
+                                id: true
                             }
                         },
                         lessons: {
                             select: {
-                                id: true,
+                                id: true
                             }
                         }
                     }
@@ -25,7 +25,7 @@ function UntisClasses(db: PrismaClient['untisClass']) {
             const models = await prisma.untisClass.findMany();
             return models.map(prepareClass);
         }
-    })
+    });
 }
 
 export default UntisClasses(prisma.untisClass);

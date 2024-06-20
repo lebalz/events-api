@@ -1,5 +1,5 @@
-import type { Event } from "@prisma/client";
-import prisma from "../prisma";
+import type { Event } from '@prisma/client';
+import prisma from '../prisma';
 
 export const affectedLessons = async (eventId: string, semesterId: string) => {
     const result = await prisma.view_LessonsAffectedByEvents.findMany({
@@ -9,7 +9,7 @@ export const affectedLessons = async (eventId: string, semesterId: string) => {
         }
     });
     return result;
-}
+};
 
 export const affectedTeachers = async (eventId: string, semesterId: string) => {
     const result = await prisma.view_UsersAffectedByEvents.findMany({
@@ -22,4 +22,4 @@ export const affectedTeachers = async (eventId: string, semesterId: string) => {
         }
     });
     return result.map(({ userId }) => userId);
-}
+};

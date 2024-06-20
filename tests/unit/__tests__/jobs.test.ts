@@ -1,19 +1,21 @@
-import { JobType, Prisma, Role, User } from "@prisma/client";
-import Jobs from "../../../src/models/jobs";
+import { JobType, Prisma, Role, User } from '@prisma/client';
+import Jobs from '../../../src/models/jobs';
 import prisma from '../../../src/prisma';
-import { createUser } from "./users.test";
-import { HTTP403Error, HTTP404Error } from "../../../src/utils/errors/Errors";
-import { createEvent } from "./events.test";
-import Events from "../../../src/models/events";
-import { prepareEvent } from "../../../src/models/event.helpers";
-import { generateJob } from "../../factories/job";
-import _ from "lodash";
+import { createUser } from './users.test';
+import { HTTP403Error, HTTP404Error } from '../../../src/utils/errors/Errors';
+import { createEvent } from './events.test';
+import Events from '../../../src/models/events';
+import { prepareEvent } from '../../../src/models/event.helpers';
+import { generateJob } from '../../factories/job';
+import _ from 'lodash';
 
-export const createJob = async (props: Partial<Prisma.JobUncheckedCreateInput> & { userId: string, type: 'IMPORT' }) => {
+export const createJob = async (
+    props: Partial<Prisma.JobUncheckedCreateInput> & { userId: string; type: 'IMPORT' }
+) => {
     return await prisma.job.create({
         data: generateJob(props)
     });
-}
+};
 
 describe('Jobs', () => {
     describe('find job', () => {
@@ -29,9 +31,7 @@ describe('Jobs', () => {
             const user = await createUser({ firstName: 'Reto' });
             const malory = await createUser({ firstName: 'Malory' });
             const job = await createJob({ userId: user.id, type: JobType.IMPORT });
-            await expect(Jobs.findModel(malory, job.id)).rejects.toEqual(
-                new HTTP403Error('Not authorized')
-            );
+            await expect(Jobs.findModel(malory, job.id)).rejects.toEqual(new HTTP403Error('Not authorized'));
         });
         test('admin can get other users job', async () => {
             const user = await createUser({ firstName: 'Reto' });
@@ -79,13 +79,18 @@ describe('Jobs', () => {
         test('user can only update description', async () => {
             const user = await createUser({ firstName: 'Reto' });
             const job = await createJob({ userId: user.id, type: JobType.IMPORT });
-            await expect(Jobs.updateModel(user, job.id, {
-                type: JobType.CLONE, state: "DONE",
-                log: 'Blaa', filename: 'foobar.xlsx', semesterId: 'sid',
-                userId: 'another-ones', 
-                syncDate: new Date()
-            })).resolves.toEqual({
-                ...job,   
+            await expect(
+                Jobs.updateModel(user, job.id, {
+                    type: JobType.CLONE,
+                    state: 'DONE',
+                    log: 'Blaa',
+                    filename: 'foobar.xlsx',
+                    semesterId: 'sid',
+                    userId: 'another-ones',
+                    syncDate: new Date()
+                })
+            ).resolves.toEqual({
+                ...job,
                 events: []
             });
         });
@@ -105,52 +110,64 @@ describe('Jobs', () => {
         test('user can destroy empty job', async () => {
             const user = await createUser({ firstName: 'Reto' });
             const job = await createJob({ userId: user.id, type: JobType.IMPORT });
-            await expect(Jobs.destroy(user, job.id)).resolves.toEqual({...job, events: []});
-            await expect(Jobs.findModel(user, job.id)).rejects.toEqual(new HTTP404Error(`Job with id ${job.id} not found`));
+            await expect(Jobs.destroy(user, job.id)).resolves.toEqual({ ...job, events: [] });
+            await expect(Jobs.findModel(user, job.id)).rejects.toEqual(
+                new HTTP404Error(`Job with id ${job.id} not found`)
+            );
         });
         test('user can destroy job including connected draft events', async () => {
             const user = await createUser({ firstName: 'Reto' });
             const job = await createJob({ userId: user.id, type: JobType.IMPORT });
-            const event1 = await createEvent({authorId: user.id, jobId: job.id });
-            const event2 = await createEvent({authorId: user.id, jobId: job.id });
+            const event1 = await createEvent({ authorId: user.id, jobId: job.id });
+            const event2 = await createEvent({ authorId: user.id, jobId: job.id });
             await expect(Jobs.destroy(user, job.id)).resolves.toEqual({
                 ...job,
                 events: []
             });
-            await expect(Jobs.findModel(user, job.id)).rejects.toEqual(new HTTP404Error(`Job with id ${job.id} not found`));
-            await expect(Events.findModel(user, event1.id)).rejects.toEqual(new HTTP404Error('Event not found'));
-            await expect(Events.findModel(user, event2.id)).rejects.toEqual(new HTTP404Error('Event not found'));
+            await expect(Jobs.findModel(user, job.id)).rejects.toEqual(
+                new HTTP404Error(`Job with id ${job.id} not found`)
+            );
+            await expect(Events.findModel(user, event1.id)).rejects.toEqual(
+                new HTTP404Error('Event not found')
+            );
+            await expect(Events.findModel(user, event2.id)).rejects.toEqual(
+                new HTTP404Error('Event not found')
+            );
         });
         test('user can not destroy job with published/reviewed/refused events', async () => {
             const user = await createUser({ firstName: 'Reto' });
             const job = await createJob({ userId: user.id, type: JobType.IMPORT });
-            await createEvent({authorId: user.id, jobId: job.id, state: 'DRAFT' });
-            const reviewed = await createEvent({authorId: user.id, jobId: job.id, state: 'REVIEW' });
-            const refused = await createEvent({authorId: user.id, jobId: job.id, state: 'REFUSED' });
-            const published = await createEvent({authorId: user.id, jobId: job.id, state: 'PUBLISHED' });
+            await createEvent({ authorId: user.id, jobId: job.id, state: 'DRAFT' });
+            const reviewed = await createEvent({ authorId: user.id, jobId: job.id, state: 'REVIEW' });
+            const refused = await createEvent({ authorId: user.id, jobId: job.id, state: 'REFUSED' });
+            const published = await createEvent({ authorId: user.id, jobId: job.id, state: 'PUBLISHED' });
             const result = await Jobs.destroy(user, job.id);
             expect(result).toEqual({
                 ...job,
                 events: expect.any(Array)
             });
-            expect(_.orderBy(result.events, ['id'])).toEqual(_.orderBy([
-                {
-                    ...prepareEvent(reviewed),
-                    deletedAt: expect.any(Date),
-                    updatedAt: expect.any(Date),
-                },
-                {
-                    ...prepareEvent(refused),
-                    deletedAt: expect.any(Date),
-                    updatedAt: expect.any(Date),
-                },
-                {
-                    ...prepareEvent(published),
-                    deletedAt: expect.any(Date),
-                    updatedAt: expect.any(Date),
-                }
-            ], ['id']));
+            expect(_.orderBy(result.events, ['id'])).toEqual(
+                _.orderBy(
+                    [
+                        {
+                            ...prepareEvent(reviewed),
+                            deletedAt: expect.any(Date),
+                            updatedAt: expect.any(Date)
+                        },
+                        {
+                            ...prepareEvent(refused),
+                            deletedAt: expect.any(Date),
+                            updatedAt: expect.any(Date)
+                        },
+                        {
+                            ...prepareEvent(published),
+                            deletedAt: expect.any(Date),
+                            updatedAt: expect.any(Date)
+                        }
+                    ],
+                    ['id']
+                )
+            );
         });
     });
-
 });

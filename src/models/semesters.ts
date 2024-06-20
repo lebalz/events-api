@@ -1,15 +1,18 @@
-import { JobState, Prisma, PrismaClient, Role, Semester, User } from "@prisma/client";
-import prisma from "../prisma";
-import { HTTP400Error, HTTP403Error, HTTP404Error } from "../utils/errors/Errors";
-import { createDataExtractor } from "../controllers/helpers";
-import Logger from "../utils/logger";
-import Jobs from "./jobs";
-import { syncUntis2DB } from "../services/syncUntis2DB";
-import { WEEK_2_MS } from "../services/helpers/time";
+import { JobState, Prisma, PrismaClient, Role, Semester, User } from '@prisma/client';
+import prisma from '../prisma';
+import { HTTP400Error, HTTP403Error, HTTP404Error } from '../utils/errors/Errors';
+import { createDataExtractor } from '../controllers/helpers';
+import Logger from '../utils/logger';
+import Jobs from './jobs';
+import { syncUntis2DB } from '../services/syncUntis2DB';
+import { WEEK_2_MS } from '../services/helpers/time';
 
-const getData = createDataExtractor<Prisma.SemesterUncheckedUpdateInput>(
-    ['name', 'start', 'end', 'untisSyncDate']
-);
+const getData = createDataExtractor<Prisma.SemesterUncheckedUpdateInput>([
+    'name',
+    'start',
+    'end',
+    'untisSyncDate'
+]);
 
 function Semesters(db: PrismaClient['semester']) {
     return Object.assign(db, {
@@ -31,15 +34,15 @@ function Semesters(db: PrismaClient['semester']) {
                 return curr;
             }
             const defSem: Semester = {
-                id: '00000000-0000-4000-8000-000000000000', /* valid dummy uuid */
+                id: '00000000-0000-4000-8000-000000000000' /* valid dummy uuid */,
                 name: 'Default Semester',
-                start: new Date((Date.now() - 12 * WEEK_2_MS)),
-                end: new Date((Date.now() + 12 * WEEK_2_MS)),
+                start: new Date(Date.now() - 12 * WEEK_2_MS),
+                end: new Date(Date.now() + 12 * WEEK_2_MS),
                 untisSyncDate: new Date(),
                 createdAt: new Date(),
                 updatedAt: new Date()
             };
-            return Promise.resolve(defSem); 
+            return Promise.resolve(defSem);
         },
         async findModel(id: string) {
             const model = await db.findUnique({ where: { id } });
@@ -48,7 +51,7 @@ function Semesters(db: PrismaClient['semester']) {
             }
             return model;
         },
-        async createModel(actor: User, data: {name: string, start: Date | string, end: Date | string}) {
+        async createModel(actor: User, data: { name: string; start: Date | string; end: Date | string }) {
             if (actor.role !== Role.ADMIN) {
                 throw new HTTP403Error('Not authorized');
             }
@@ -76,7 +79,7 @@ function Semesters(db: PrismaClient['semester']) {
             const semester = await this.findModel(id);
             /** remove fields not updatable*/
             const sanitized = getData(data);
-            const { start, end, untisSyncDate } = {...semester, ...sanitized};
+            const { start, end, untisSyncDate } = { ...semester, ...sanitized };
 
             const nStart = new Date(start as string);
             const nEnd = new Date(end as string);
@@ -108,19 +111,26 @@ function Semesters(db: PrismaClient['semester']) {
             Logger.info(semester.untisSyncDate);
             const syncJob = await Jobs._createSyncJob(actor, semester);
             /** start async untis synchronisation */
-            syncUntis2DB(id).then((summary) => {
-                return Jobs._completeJob(syncJob, JobState.DONE, JSON.stringify(summary));
-            }).catch((error) => {
-                Logger.error(error);
-                return Jobs._completeJob(syncJob, JobState.ERROR, JSON.stringify(error, Object.getOwnPropertyNames(error)));
-            }).finally(() => {
-                if (onComplete) {
-                    onComplete(syncJob.id);
-                }
-            });
+            syncUntis2DB(id)
+                .then((summary) => {
+                    return Jobs._completeJob(syncJob, JobState.DONE, JSON.stringify(summary));
+                })
+                .catch((error) => {
+                    Logger.error(error);
+                    return Jobs._completeJob(
+                        syncJob,
+                        JobState.ERROR,
+                        JSON.stringify(error, Object.getOwnPropertyNames(error))
+                    );
+                })
+                .finally(() => {
+                    if (onComplete) {
+                        onComplete(syncJob.id);
+                    }
+                });
             return syncJob;
         }
-    })
+    });
 }
 
 export default Semesters(prisma.semester);

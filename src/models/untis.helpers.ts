@@ -1,4 +1,4 @@
-import { UntisClass, UntisLesson, UntisTeacher } from "@prisma/client";
+import { UntisClass, UntisLesson, UntisTeacher } from '@prisma/client';
 
 export interface ApiLesson extends Omit<UntisLesson, 'teachers' | 'classes'> {
     teacherIds: number[];
@@ -7,7 +7,7 @@ export interface ApiLesson extends Omit<UntisLesson, 'teachers' | 'classes'> {
 
 export interface ApiTeacher extends UntisTeacher {
     hasUser: boolean;
-    lessons?: ApiLesson[]
+    lessons?: ApiLesson[];
 }
 
 export interface ApiClass extends UntisClass {
@@ -15,7 +15,9 @@ export interface ApiClass extends UntisClass {
     lessonIds: number[];
 }
 
-export const prepareLesson = (lesson: UntisLesson & { teachers: { id: number }[], classes: { id: number }[] }) => {
+export const prepareLesson = (
+    lesson: UntisLesson & { teachers: { id: number }[]; classes: { id: number }[] }
+) => {
     const prepared: ApiLesson = {
         ...(lesson as Omit<UntisLesson, 'teachers' | 'classes'>),
         teacherIds: lesson.teachers.map((t) => t.id),
@@ -25,9 +27,11 @@ export const prepareLesson = (lesson: UntisLesson & { teachers: { id: number }[]
         delete (prepared as any)[key];
     });
     return prepared;
-}
+};
 
-export const prepareClass = (klass: UntisClass & { teachers?: { id: number }[], lessons?: { id: number }[] }) => {
+export const prepareClass = (
+    klass: UntisClass & { teachers?: { id: number }[]; lessons?: { id: number }[] }
+) => {
     const prepared: ApiClass = {
         ...(klass as Omit<UntisClass, 'teachers' | 'lessons'>),
         teacherIds: klass.teachers?.map((t) => t.id) || [],
@@ -37,12 +41,14 @@ export const prepareClass = (klass: UntisClass & { teachers?: { id: number }[], 
         delete (prepared as any)[key];
     });
     return prepared;
-}
+};
 
-export const prepareTeacher = (teacher: (UntisTeacher & {
-    user?: { id: string } | null,
-    lessons?: (UntisLesson & { teachers: { id: number }[], classes: { id: number }[] })[] | null
-})): ApiTeacher => {
+export const prepareTeacher = (
+    teacher: UntisTeacher & {
+        user?: { id: string } | null;
+        lessons?: (UntisLesson & { teachers: { id: number }[]; classes: { id: number }[] })[] | null;
+    }
+): ApiTeacher => {
     const prepared: ApiTeacher = {
         ...(teacher as Omit<ApiTeacher, 'hasUser' | 'lessons'>),
         hasUser: !!teacher.user?.id
@@ -54,4 +60,4 @@ export const prepareTeacher = (teacher: (UntisTeacher & {
         prepared.lessons = teacher.lessons.map(prepareLesson);
     }
     return prepared;
-}
+};

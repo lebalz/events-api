@@ -1,10 +1,12 @@
-import { EventGroup } from "@prisma/client";
+import { EventGroup } from '@prisma/client';
 export interface ApiEventGroup extends Omit<EventGroup, 'events' | 'users'> {
     eventIds: string[];
     userIds: string[];
 }
 
-export const prepareEventGroup = (eventGroup: (EventGroup & { events: { id: string }[], users: { id: string }[]})): ApiEventGroup => {
+export const prepareEventGroup = (
+    eventGroup: EventGroup & { events: { id: string }[]; users: { id: string }[] }
+): ApiEventGroup => {
     const prepared: ApiEventGroup = {
         ...eventGroup,
         eventIds: eventGroup.events.map((e) => e.id).sort(),
@@ -14,4 +16,4 @@ export const prepareEventGroup = (eventGroup: (EventGroup & { events: { id: stri
         delete (prepared as any)[key];
     });
     return prepared;
-}
+};

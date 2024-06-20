@@ -1,25 +1,38 @@
 import { WebAPITimetable } from 'webuntis';
-import type { Department, Prisma, Semester, UntisLesson } from "@prisma/client";
+import type { Department, Prisma, Semester, UntisLesson } from '@prisma/client';
 import prisma from '../prisma';
-import { ClassLetterMap, Colors, DepartmentLetterMap, Departments, SchoolDepartments } from './helpers/departmentNames';
+import {
+    ClassLetterMap,
+    Colors,
+    DepartmentLetterMap,
+    Departments,
+    SchoolDepartments
+} from './helpers/departmentNames';
 import { KlassName, mapLegacyClassName } from './helpers/klassNames';
 import Logger from '../utils/logger';
 import { UntisData, fetchUntis as defaultFetchUntis } from './fetchUntis';
 import { getClassYear } from './helpers/untisKlasse';
 
-
-export const syncUntis2DB = async (semesterId: string, fetchUntis: (semester: Semester) => Promise<UntisData> = defaultFetchUntis) => {
-    const semester = await prisma.semester.findUnique({ where: { id: semesterId }, include: { lessons: { include: { classes: true } } } });
+export const syncUntis2DB = async (
+    semesterId: string,
+    fetchUntis: (semester: Semester) => Promise<UntisData> = defaultFetchUntis
+) => {
+    const semester = await prisma.semester.findUnique({
+        where: { id: semesterId },
+        include: { lessons: { include: { classes: true } } }
+    });
     /* istanbul ignore if */
     if (!semester) {
         throw new Error('No Semester found');
     }
-    const data = await fetchUntis(semester)
+    const data = await fetchUntis(semester);
 
     /* istanbul ignore if */
     if (data.timetable.length === 0) {
         Logger.info('No Data');
-        throw new Error(`No timetable data for semester "${semester.name}" in the Week of ${semester.untisSyncDate.toISOString().slice(0, 10)} found`)
+        throw new Error(
+            `No timetable data for semester "${semester.name}" in the Week of ${semester.untisSyncDate.toISOString().slice(0, 10)} found`
+        );
     }
     const User2Teacher = await prisma.user.findMany({
         where: {
@@ -33,7 +46,6 @@ export const syncUntis2DB = async (semesterId: string, fetchUntis: (semester: Se
         }
     });
 
-
     /** UPSERT DEPARTMENTS */
     const upsertDepPromise: Prisma.PrismaPromise<Department>[] = [];
     (Object.keys(SchoolDepartments) as (keyof typeof Departments)[]).forEach((d) => {
@@ -42,18 +54,20 @@ export const syncUntis2DB = async (semesterId: string, fetchUntis: (semester: Se
         const letter = DepartmentLetterMap[d];
         const clsLetters = ClassLetterMap[d];
         if (school.dep_1 || school.dep_2) {
-            return
+            return;
         }
-        upsertDepPromise.push(prisma.department.upsert({
-            where: { name: school.main },
-            update: {},
-            create: {
-                name: school.main,
-                color: color,
-                letter: letter,
-                classLetters: [...clsLetters]
-            }
-        }))
+        upsertDepPromise.push(
+            prisma.department.upsert({
+                where: { name: school.main },
+                update: {},
+                create: {
+                    name: school.main,
+                    color: color,
+                    letter: letter,
+                    classLetters: [...clsLetters]
+                }
+            })
+        );
     });
     await Promise.all(upsertDepPromise);
     const schoolDepartments = await prisma.department.findMany({});
@@ -65,22 +79,24 @@ export const syncUntis2DB = async (semesterId: string, fetchUntis: (semester: Se
         const letter = DepartmentLetterMap[d];
         const clsLetters = ClassLetterMap[d];
         if (!school.dep_1 && !school.dep_2) {
-            return
+            return;
         }
         const dep1 = schoolDepartments.find((dep) => dep.name === school.dep_1);
         const dep2 = schoolDepartments.find((dep) => dep.name === school.dep_2);
-        upsertDepPromise.push(prisma.department.upsert({
-            where: { name: school.main },
-            update: {},
-            create: {
-                name: school.main,
-                color: color,
-                letter: letter,
-                classLetters: [...clsLetters],
-                department1: dep1 ? { connect: { id: dep1.id } } : undefined,
-                department2: dep2 ? { connect: { id: dep2.id } } : undefined
-            }
-        }))
+        upsertDepPromise.push(
+            prisma.department.upsert({
+                where: { name: school.main },
+                update: {},
+                create: {
+                    name: school.main,
+                    color: color,
+                    letter: letter,
+                    classLetters: [...clsLetters],
+                    department1: dep1 ? { connect: { id: dep1.id } } : undefined,
+                    department2: dep2 ? { connect: { id: dep2.id } } : undefined
+                }
+            })
+        );
     });
 
     await Promise.all(upsertDepPromise);
@@ -139,10 +155,12 @@ export const syncUntis2DB = async (semesterId: string, fetchUntis: (semester: Se
         const isoName = mapLegacyClassName(c.name) as KlassName;
         const dLetter = isoName.slice(2, 3); /** third letter, e.g. 26gA --> g */
         const cLetter = isoName.slice(3, 4); /** fourth letter, e.g. 26gA --> A */
-        const department = departments.find(d => d.letter === dLetter && d.classLetters.includes(cLetter));
+        const department = departments.find((d) => d.letter === dLetter && d.classLetters.includes(cLetter));
         /* istanbul ignore if */
         if (!department) {
-            Logger.info(`No Department found for ${dLetter}, ${c.id}, ${c.longName}, ${c.active}, ${c.name}, ${isoName}`);
+            Logger.info(
+                `No Department found for ${dLetter}, ${c.id}, ${c.longName}, ${c.active}, ${c.name}, ${isoName}`
+            );
             unknownClassDepartments[c.name] = {
                 classId: c.id,
                 className: c.name,
@@ -154,7 +172,7 @@ export const syncUntis2DB = async (semesterId: string, fetchUntis: (semester: Se
                 unknownClassDepartments[c.name].isoClassName = isoName;
             }
             return;
-        };
+        }
         const update = prisma.untisClass.update({
             where: { id: classIdMap.get(c.id) || c.id },
             data: {
@@ -172,12 +190,12 @@ export const syncUntis2DB = async (semesterId: string, fetchUntis: (semester: Se
             name: t.name,
             longName: t.longName,
             title: (t as any).title as string | '',
-            active: (t as any).active as boolean || false,
-        }
+            active: ((t as any).active as boolean) || false
+        };
         const tchr = prisma.untisTeacher.upsert({
             where: { id: t.id },
             update: {
-                ...data,
+                ...data
             },
             create: {
                 id: t.id,
@@ -185,7 +203,7 @@ export const syncUntis2DB = async (semesterId: string, fetchUntis: (semester: Se
             }
         });
         dbTransactions.push(tchr);
-    })
+    });
 
     /** CONNECT DB USERS TO TEACHERS  */
     data.teachers.forEach((t) => {
@@ -194,7 +212,7 @@ export const syncUntis2DB = async (semesterId: string, fetchUntis: (semester: Se
             const update = prisma.user.update({
                 where: { id: user.id },
                 data: {
-                    untisId: t.id,
+                    untisId: t.id
                 }
             });
             dbTransactions.push(update);
@@ -208,9 +226,9 @@ export const syncUntis2DB = async (semesterId: string, fetchUntis: (semester: Se
         const sub = data.subjects.find((s) => s.id === id);
         return {
             subject: sub?.name || 'Unbekannt',
-            description: sub?.longName || 'Unbekannt',
-        }
-    }
+            description: sub?.longName || 'Unbekannt'
+        };
+    };
     /* istanbul ignore if */
     if (process.env.NODE_ENV !== 'test') {
         Logger.info(`Next ID: ${nextId}`);
@@ -234,15 +252,18 @@ export const syncUntis2DB = async (semesterId: string, fetchUntis: (semester: Se
         return {
             id: lesson.id,
             room: lesson.rooms.map((r) => r.element.name).join(', '),
-            ...findSubject(lesson.subjects[0].id), /** there is always only one subject */
-            semesterNr: semester.start.getMonth() > 6 ? 1 : 2, /** getMonth() returns zero-based month, e.g. january->0, february->1,... */
+            ...findSubject(lesson.subjects[0].id) /** there is always only one subject */,
+            semesterNr:
+                semester.start.getMonth() > 6
+                    ? 1
+                    : 2 /** getMonth() returns zero-based month, e.g. january->0, february->1,... */,
             year: semester.untisSyncDate.getFullYear(),
             semesterId: semesterId,
             weekDay: date.getUTCDay(),
             startHHMM: lesson.startTime,
             endHHMM: lesson.endTime
-        }
-    }
+        };
+    };
 
     /** UPSERT LESSONS */
     data.timetable.forEach((lesson) => {
@@ -259,12 +280,11 @@ export const syncUntis2DB = async (semesterId: string, fetchUntis: (semester: Se
         dbTransactions.push(lsn);
     });
 
+    /** CONNECT CLASSES TO LESSONS, CLASSES TO TEACHERS
+     * AND TEACHERS TO LESSONS
+     */
 
-    /** CONNECT CLASSES TO LESSONS, CLASSES TO TEACHERS 
-     * AND TEACHERS TO LESSONS 
-    */
-
-    const classes: { [key: number]: { lessons: { id: number }[], teachers: { id: number }[] } } = {};
+    const classes: { [key: number]: { lessons: { id: number }[]; teachers: { id: number }[] } } = {};
     const teachers: { [key: number]: { id: number }[] } = {};
     [...data.timetable].forEach((lesson) => {
         lesson.classes.forEach((cls) => {
@@ -273,29 +293,36 @@ export const syncUntis2DB = async (semesterId: string, fetchUntis: (semester: Se
                 classes[cid] = {
                     lessons: [],
                     teachers: []
-                }
+                };
             }
             /* istanbul ignore else */
             if (lessonIdSet.has(lesson.id)) {
                 classes[cid].lessons.push({ id: lesson.id });
             } else {
-                Logger.info(`Lesson not found: ${lesson.id}, ${findSubject(lesson.subjects[0].id)}, ${lesson.classes.map((c) => c.element.name).join(', ')}`);
+                Logger.info(
+                    `Lesson not found: ${lesson.id}, ${findSubject(lesson.subjects[0].id)}, ${lesson.classes.map((c) => c.element.name).join(', ')}`
+                );
             }
             if (lesson.teachers.length > 0) {
-                classes[cid].teachers.push(...lesson.teachers.map((t) => ({ id: t.id })).filter(t => t.id));
+                classes[cid].teachers.push(...lesson.teachers.map((t) => ({ id: t.id })).filter((t) => t.id));
             }
         });
         lesson.teachers.forEach((tchr) => {
             if (!teachers[tchr.id]) {
-                teachers[tchr.id] = []
+                teachers[tchr.id] = [];
             }
             /* istanbul ignore else */
             if (lessonIdSet.has(lesson.id)) {
                 teachers[tchr.id].push({ id: lesson.id });
             } else {
-                Logger.info('Lesson not found', lesson.id, findSubject(lesson.subjects[0].id), lesson.classes.map((c) => c.element.name).join(', '));
+                Logger.info(
+                    'Lesson not found',
+                    lesson.id,
+                    findSubject(lesson.subjects[0].id),
+                    lesson.classes.map((c) => c.element.name).join(', ')
+                );
             }
-        })
+        });
     });
 
     data.classes.forEach((cls) => {
@@ -360,4 +387,4 @@ export const syncUntis2DB = async (semesterId: string, fetchUntis: (semester: Se
         Logger.info('Summary', summary);
     }
     return summary;
-}
+};

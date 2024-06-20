@@ -1,30 +1,28 @@
-import { strategyForEnvironment } from "./auth/index";
-import express, { NextFunction, Request, Response } from "express";
+import { strategyForEnvironment } from './auth/index';
+import express, { NextFunction, Request, Response } from 'express';
 import session from 'express-session';
-import prisma from "./prisma";
-import path from "path";
-import cors from "cors";
-import morganMiddleware from './middlewares/morgan.middleware'
-import passport from "passport";
+import prisma from './prisma';
+import path from 'path';
+import cors from 'cors';
+import morganMiddleware from './middlewares/morgan.middleware';
+import passport from 'passport';
 import router from './routes/router';
 import routeGuard, { PUBLIC_GET_ACCESS, PUBLIC_GET_ACCESS_REGEX, createAccessRules } from './auth/guard';
 import authConfig from './routes/authConfig';
-import type { User } from "@prisma/client";
-import { HttpStatusCode } from "./utils/errors/BaseError";
-import { notify } from "./middlewares/notify.nop";
-import { HTTP401Error } from "./utils/errors/Errors";
-import connectPgSimple from "connect-pg-simple";
-import { existsSync, mkdirSync } from "fs";
-import { request } from "https";
-
+import type { User } from '@prisma/client';
+import { HttpStatusCode } from './utils/errors/BaseError';
+import { notify } from './middlewares/notify.nop';
+import { HTTP401Error } from './utils/errors/Errors';
+import connectPgSimple from 'connect-pg-simple';
+import { existsSync, mkdirSync } from 'fs';
+import { request } from 'https';
 
 const AccessRules = createAccessRules(authConfig.accessMatrix);
-
 
 /**
  * Architecture samples
  * @link https://github.com/Azure-Samples/ms-identity-javascript-react-tutorial/blob/main/5-AccessControl/1-call-api-roles/API/app.js
- * 
+ *
  */
 
 const app = express();
@@ -32,18 +30,20 @@ export const API_VERSION = 'v1';
 export const API_URL = `/api/${API_VERSION}`;
 const ICAL_DEFAULT = process.env.EXPORT_DIR || `${__dirname}/../../ical`;
 const ICAL_DEFAULT_DIRS = {
-    'test': `${__dirname}/../tests/test-data/ical`,
-    'development': ICAL_DEFAULT,
-    'production': ICAL_DEFAULT,
-}
+    test: `${__dirname}/../tests/test-data/ical`,
+    development: ICAL_DEFAULT,
+    production: ICAL_DEFAULT
+};
 const STATIC_DEFAULT = process.env.STATIC_DIR || `${__dirname}/../../static`;
 const STATIC_DEFAULT_DIRS = {
-    'test': `${__dirname}/../tests/test-data/static`,
-    'development': STATIC_DEFAULT,
-    'production': STATIC_DEFAULT,
-}
-export const ICAL_DIR = ICAL_DEFAULT_DIRS[process.env.NODE_ENV as keyof typeof ICAL_DEFAULT_DIRS] || ICAL_DEFAULT;
-export const STATIC_DIR = STATIC_DEFAULT_DIRS[process.env.NODE_ENV as keyof typeof STATIC_DEFAULT_DIRS] || STATIC_DEFAULT;
+    test: `${__dirname}/../tests/test-data/static`,
+    development: STATIC_DEFAULT,
+    production: STATIC_DEFAULT
+};
+export const ICAL_DIR =
+    ICAL_DEFAULT_DIRS[process.env.NODE_ENV as keyof typeof ICAL_DEFAULT_DIRS] || ICAL_DEFAULT;
+export const STATIC_DIR =
+    STATIC_DEFAULT_DIRS[process.env.NODE_ENV as keyof typeof STATIC_DEFAULT_DIRS] || STATIC_DEFAULT;
 if (!existsSync(`${STATIC_DIR}/de`)) {
     mkdirSync(`${STATIC_DIR}/de`, { recursive: true });
 }
@@ -58,11 +58,13 @@ if (!existsSync(`${STATIC_DIR}/fr`)) {
 //  app.use(compression(), express.json({ limit: "5mb" }));
 
 // ensure the server can call other domains: enable cross origin resource sharing (cors)
-app.use(cors({
-    credentials: true,
-    origin: process.env.EVENTS_APP_URL || true, /* true = strict origin */
-    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS", "HEAD"],
-}));
+app.use(
+    cors({
+        credentials: true,
+        origin: process.env.EVENTS_APP_URL || true /* true = strict origin */,
+        methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'HEAD']
+    })
+);
 
 // received packages should be presented in the JSON format
 app.use(express.json());
@@ -87,14 +89,14 @@ export const sessionMiddleware = session({
     secret: process.env.SESSION_SECRET || 'secret',
     saveUninitialized: false,
     resave: false,
-    proxy: process.env.NODE_ENV === "production",
+    proxy: process.env.NODE_ENV === 'production',
     cookie: {
         secure: process.env.NODE_ENV === 'production',
         httpOnly: true,
         sameSite: 'strict',
         domain: domain.length > 0 ? domain : undefined,
-        maxAge: SESSION_MAX_AGE, // 30 days
-    },
+        maxAge: SESSION_MAX_AGE // 30 days
+    }
 });
 
 app.use(sessionMiddleware);
@@ -107,7 +109,6 @@ app.use(sessionMiddleware);
 
 // app.use(sessionMiddleware)
 
-
 app.use(passport.initialize());
 app.use(passport.session()); /** alias for passport.authenticate('session'); e.g. to use the session... */
 
@@ -116,8 +117,7 @@ passport.use(strategyForEnvironment());
 passport.serializeUser((user, done) => {
     /** ignore this socket */
     done(null, user.id);
-})
-
+});
 
 /** ignore this socket */
 passport.deserializeUser(async (id, done) => {
@@ -126,14 +126,14 @@ passport.deserializeUser(async (id, done) => {
 });
 
 const HOSTNAME = new URL(process.env.EVENTS_APP_URL || 'http://localhost').hostname;
-const UMAMI_HOSTNAME = new URL(process.env.UMAMI_URL || 'http://localhost').hostname
+const UMAMI_HOSTNAME = new URL(process.env.UMAMI_URL || 'http://localhost').hostname;
 /** Static folders */
 app.use(
     '/ical',
     (req, res, next) => {
         /**
          * Umami Middleware
-         */        
+         */
         /* istanbul ignore next */
         if (process.env.UMAMI_URL && process.env.UMAMI_ID) {
             const [_, lang, ical] = req.path.split('/');
@@ -148,7 +148,7 @@ app.use(
                     website: process.env.UMAMI_ID || 'eventes-api',
                     name: 'access-ical'
                 },
-                type: 'event',
+                type: 'event'
             };
             const body = JSON.stringify(data);
             const umamiReq = request({
@@ -156,15 +156,14 @@ app.use(
                 headers: {
                     'Content-Type': 'application/json',
                     'user-agent': req.headers['user-agent'],
-                    'content-length': body.length,
+                    'content-length': body.length
                 },
                 hostname: UMAMI_HOSTNAME,
-                path: '/api/send',
-    
+                path: '/api/send'
             });
             umamiReq.on('error', (e) => {
                 console.error(e);
-            })
+            });
             umamiReq.write(body);
             umamiReq.end();
         }
@@ -175,22 +174,23 @@ app.use(
 );
 
 // Serve the static files to be accessed by the docs app
-app.use(express.static(path.join(__dirname,'..', 'docs')));
+app.use(express.static(path.join(__dirname, '..', 'docs')));
 
 // Public Endpoints
 app.get(`${API_URL}`, (req, res) => {
-    return res.status(200).send("Welcome to the EVENTES-API V1.0");
+    return res.status(200).send('Welcome to the EVENTES-API V1.0');
 });
 
 const SessionOauthStrategy = (req: Request, res: Response, next: NextFunction) => {
     /* istanbul ignore next */
     if (req.isAuthenticated()) {
-        return next()
+        return next();
     }
-    passport.authenticate("oauth-bearer", { session: true })(req, res, next);
+    passport.authenticate('oauth-bearer', { session: true })(req, res, next);
 };
 
-app.get(`${API_URL}/checklogin`,
+app.get(
+    `${API_URL}/checklogin`,
     /* istanbul ignore next */
     SessionOauthStrategy,
     /* istanbul ignore next */
@@ -200,7 +200,7 @@ app.get(`${API_URL}/checklogin`,
                 return res.status(200).send('OK');
             }
             throw new HTTP401Error();
-        } catch /* istanbul ignore next */ (error) {
+        } catch (/* istanbul ignore next */ error) {
             next(error);
         }
     }
@@ -223,7 +223,7 @@ export const configure = (_app: typeof app) => {
                 return;
             }
             const io = req.io;
-    
+
             /* istanbul ignore next */
             if (res.notifications && io) {
                 res.notifications.forEach((notification) => {
@@ -235,25 +235,20 @@ export const configure = (_app: typeof app) => {
                             except.push(socketID);
                         }
                     }
-                    io.except(except)
-                        .to(notification.to)
-                        .emit(
-                            notification.event, 
-                            notification.message
-                        );
+                    io.except(except).to(notification.to).emit(notification.event, notification.message);
                 });
             }
             res.locals.notifications = res.notifications;
         });
         next();
     });
-    
+
     if (process.env.NODE_ENV === 'test') {
         _app.use((req: Request, res, next) => {
             res.on('finish', async () => {
                 if (res.statusCode >= 400) {
                     return;
-                }    
+                }
                 if (res.notifications) {
                     res.notifications.forEach((notification) => {
                         notify(notification);
@@ -264,28 +259,31 @@ export const configure = (_app: typeof app) => {
             next();
         });
     }
-    
-    
-    _app.use(`${API_URL}`,
+
+    _app.use(
+        `${API_URL}`,
         (req, res, next) => {
             /* istanbul ignore next */
             if (req.isAuthenticated()) {
-                return next()
+                return next();
             }
             passport.authenticate('oauth-bearer', { session: true }, (err: Error, user: User, info: any) => {
                 if (err) {
                     /**
-                     * An error occurred during authorization. Send a Not Autohrized 
+                     * An error occurred during authorization. Send a Not Autohrized
                      * status code.
                      */
                     /* istanbul ignore next */
                     return res.status(HttpStatusCode.UNAUTHORIZED).json({ error: err.message });
                 }
-        
-                if (!user && !(
-                                PUBLIC_GET_ACCESS.has(req.path.toLowerCase()) ||
-                                PUBLIC_GET_ACCESS_REGEX.some((regex) => regex.test(req.path))
-                            )) {
+
+                if (
+                    !user &&
+                    !(
+                        PUBLIC_GET_ACCESS.has(req.path.toLowerCase()) ||
+                        PUBLIC_GET_ACCESS_REGEX.some((regex) => regex.test(req.path))
+                    )
+                ) {
                     // If no user object found, send a 401 response.
                     return res.status(HttpStatusCode.UNAUTHORIZED).json({ error: 'Unauthorized' });
                 }
@@ -300,13 +298,10 @@ export const configure = (_app: typeof app) => {
         routeGuard(AccessRules), // route guard middleware
         router // the router with all the routes
     );
-}
+};
 
 if (process.env.NODE_ENV === 'test') {
     configure(app);
 }
-
-
-
 
 export default app;

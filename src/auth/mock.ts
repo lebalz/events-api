@@ -18,9 +18,9 @@ class MockStrat extends Strategy {
         let where: { email: string } | { id: string } = { id: process.env.TEST_USER_ID || '-1' };
         if (process.env.NODE_ENV === 'test' && req.headers.authorization) {
             try {
-                const auth = JSON.parse(req.headers.authorization) as { email: string };           
-                where = { email: auth.email || 'anonymous@user.ch'};
-            } catch /* istanbul ignore next */ (err) {
+                const auth = JSON.parse(req.headers.authorization) as { email: string };
+                where = { email: auth.email || 'anonymous@user.ch' };
+            } catch (/* istanbul ignore next */ err) {
                 Logger.warn('Bearer Verify Error', err);
                 return this.fail('Could not parse authorization header');
             }
@@ -31,12 +31,12 @@ class MockStrat extends Strategy {
         try {
             const user = await prisma.user.findUnique({
                 where: where
-            })
+            });
             if (!user) {
                 return this.fail(`No User found for ${where}`);
             }
-            return this.success(user, { preferred_username: user.email });            
-        } catch /* istanbul ignore next */ (err) {
+            return this.success(user, { preferred_username: user.email });
+        } catch (/* istanbul ignore next */ err) {
             Logger.error('Bearer Verify Error', err);
             return this.fail(`No User found for ${where}`);
         }

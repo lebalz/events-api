@@ -1,7 +1,7 @@
-import { RequestHandler } from "express";
-import UntisClasses from "../models/untisClasses";
-import UntisTeachers from "../models/untisTeachers";
-import UntisLessons from "../models/untisLessons";
+import { RequestHandler } from 'express';
+import UntisClasses from '../models/untisClasses';
+import UntisTeachers from '../models/untisTeachers';
+import UntisLessons from '../models/untisLessons';
 
 export const teachers: RequestHandler = async (req, res, next) => {
     try {
@@ -10,7 +10,7 @@ export const teachers: RequestHandler = async (req, res, next) => {
     } catch (error) /* istanbul ignore next */ {
         next(error);
     }
-}
+};
 
 export const teacher: RequestHandler = async (req, res, next) => {
     try {
@@ -19,7 +19,7 @@ export const teacher: RequestHandler = async (req, res, next) => {
     } catch (error) /* istanbul ignore next */ {
         next(error);
     }
-}
+};
 
 export const classes: RequestHandler = async (req, res, next) => {
     try {
@@ -28,7 +28,7 @@ export const classes: RequestHandler = async (req, res, next) => {
     } catch (error) /* istanbul ignore next */ {
         next(error);
     }
-}
+};
 
 export const subjects: RequestHandler = async (req, res, next) => {
     try {
@@ -37,4 +37,4 @@ export const subjects: RequestHandler = async (req, res, next) => {
     } catch (error) /* istanbul ignore next */ {
         next(error);
     }
-}
+};

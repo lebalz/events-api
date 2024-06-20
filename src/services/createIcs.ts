@@ -12,17 +12,21 @@ export const SEC_2_MS = 1000;
 export const MINUTE_2_MS = 60 * SEC_2_MS;
 const MONTH_TO_MS = 31 * 24 * 60 * MINUTE_2_MS;
 
-export const toDateArray = (date: Date): DateArray => {   
-    return [date.getUTCFullYear(), date.getUTCMonth() + 1, date.getUTCDate(), date.getUTCHours(), date.getUTCMinutes()];
-}
+export const toDateArray = (date: Date): DateArray => {
+    return [
+        date.getUTCFullYear(),
+        date.getUTCMonth() + 1,
+        date.getUTCDate(),
+        date.getUTCHours(),
+        date.getUTCMinutes()
+    ];
+};
 
 const TEACHING_AFFECTED = {
     YES: '🔴',
     NO: '🟢',
     PARTIAL: '🟡'
-}
-
-
+};
 
 export const prepareEvent = (event: Event, lang: 'de' | 'fr'): EventAttributes => {
     const start = toDateArray(new Date(event.start));
@@ -34,15 +38,21 @@ export const prepareEvent = (event: Event, lang: 'de' | 'fr'): EventAttributes =
         description.push(event.descriptionLong);
     }
     if (event.classes.length > 0 || event.classGroups.length > 0) {
-        description.push(`${translate('classes', lang)}: ${[...event.classes, ...event.classGroups].join(', ')}`);
+        description.push(
+            `${translate('classes', lang)}: ${[...event.classes, ...event.classGroups].join(', ')}`
+        );
     }
     if (event.deletedAt) {
         description.push(`${translate('deletedAt', lang)}: ${event.deletedAt}`);
     }
-    description.push(`${translate('teachingAffected', lang)} ${translate(event.teachingAffected, lang)} ${TEACHING_AFFECTED[event.teachingAffected]}`)
+    description.push(
+        `${translate('teachingAffected', lang)} ${translate(event.teachingAffected, lang)} ${TEACHING_AFFECTED[event.teachingAffected]}`
+    );
     description.push(`👉 ${process.env.EVENTS_APP_URL}/${lang === 'fr' ? 'fr/' : ''}event?id=${event.id}`);
 
-    const title = event.deletedAt ? `❌ ${event.description} ${TEACHING_AFFECTED[event.teachingAffected]}` : `${event.description} ${TEACHING_AFFECTED[event.teachingAffected]}`;
+    const title = event.deletedAt
+        ? `❌ ${event.description} ${TEACHING_AFFECTED[event.teachingAffected]}`
+        : `${event.description} ${TEACHING_AFFECTED[event.teachingAffected]}`;
 
     return {
         title: title,
@@ -57,16 +67,16 @@ export const prepareEvent = (event: Event, lang: 'de' | 'fr'): EventAttributes =
         endOutputType: 'local',
         categories: event.classes,
         lastModified: updatedAt,
-        created: createdAt 
-    }
-}
+        created: createdAt
+    };
+};
 
 const getTimeRange = () => {
     const today = new Date();
     const _1MonthAgo = new Date(today.getTime() - MONTH_TO_MS);
     const _15MonthForward = new Date(today.getTime() + 15 * MONTH_TO_MS);
-    return {from: _1MonthAgo, to: _15MonthForward};
-}
+    return { from: _1MonthAgo, to: _15MonthForward };
+};
 
 const exportIcs = async (events: Event[], filename: string) => {
     if (events.length === 0 || !filename) {
@@ -74,7 +84,7 @@ const exportIcs = async (events: Event[], filename: string) => {
     }
     const eventsDe: EventAttributes[] = [];
     const eventsFr: EventAttributes[] = [];
-    events.forEach(event => {
+    events.forEach((event) => {
         eventsDe.push(prepareEvent(event, 'de'));
         eventsFr.push(prepareEvent(event, 'fr'));
     });
@@ -84,40 +94,37 @@ const exportIcs = async (events: Event[], filename: string) => {
             if (error) {
                 Logger.error(error);
                 return resolve(false);
-            }            
-            writeFileSync(`${ICAL_DIR}/de/${filename}`, value, { encoding: 'utf-8', flag: 'w' })
+            }
+            writeFileSync(`${ICAL_DIR}/de/${filename}`, value, { encoding: 'utf-8', flag: 'w' });
             resolve(true);
-        }
-    )});
+        });
+    });
     const fileCreatedFr = new Promise<boolean>((resolve, reject) => {
         createEvents(eventsFr, (error, value) => {
             if (error) {
                 Logger.error(error);
                 return resolve(false);
-            }            
-            writeFileSync(`${ICAL_DIR}/fr/${filename}`, value, { encoding: 'utf-8', flag: 'w' })
+            }
+            writeFileSync(`${ICAL_DIR}/fr/${filename}`, value, { encoding: 'utf-8', flag: 'w' });
             resolve(true);
-        }
-    )});
+        });
+    });
     const filesCreated = await Promise.all([fileCreatedDe, fileCreatedFr]);
     return filesCreated.every((res) => !!res);
-}
+};
 
 export const createIcs = async (userId: string) => {
     const timeRange = getTimeRange();
     const user = await prisma.user.findUniqueOrThrow({
         where: { id: userId }
     });
-    
+
     const publicEventsRaw = await prisma.view_UsersAffectedByEvents.findMany({
         where: {
             userId: userId,
             parentId: null,
             state: EventState.PUBLISHED,
-            OR: [
-                {start: { lte: timeRange.to }},
-                {end: { gte: timeRange.from }}
-            ]
+            OR: [{ start: { lte: timeRange.to } }, { end: { gte: timeRange.from } }]
         }
     });
     const fileName = user.icsLocator || `${uuidv4()}.ics`;
@@ -149,14 +156,14 @@ export const createIcs = async (userId: string) => {
         }
         return user;
     }
-}
+};
 
 export const createIcsForClasses = async () => {
     const timeRange = getTimeRange();
     const today = new Date();
     const untisClasses = await prisma.untisClass.findMany({
         where: {
-            year: {gte: today.getFullYear()}
+            year: { gte: today.getFullYear() }
         }
     });
     for (const untisClass of untisClasses) {
@@ -165,19 +172,16 @@ export const createIcsForClasses = async () => {
                 classId: untisClass.id,
                 parentId: null,
                 state: EventState.PUBLISHED,
-                audience: {in: [EventAudience.ALL, EventAudience.STUDENTS]},
-                OR: [
-                    {start: { lte: timeRange.to }},
-                    {end: { gte: timeRange.from }}
-                ]
+                audience: { in: [EventAudience.ALL, EventAudience.STUDENTS] },
+                OR: [{ start: { lte: timeRange.to } }, { end: { gte: timeRange.from } }]
             }
         });
         const fileCreated = await exportIcs(publicEvents, `${untisClass.name}.ics`);
         if (!fileCreated) {
             Logger.error(`Could not create ics file for class ${untisClass.name}`);
         }
-    }    
-}
+    }
+};
 
 export const createIcsForDepartments = async () => {
     const timeRange = getTimeRange();
@@ -189,15 +193,12 @@ export const createIcsForDepartments = async () => {
                 departmentId: department.id,
                 parentId: null,
                 state: EventState.PUBLISHED,
-                OR: [
-                    {start: { lte: timeRange.to }},
-                    {end: { gte: timeRange.from }}
-                ]
+                OR: [{ start: { lte: timeRange.to } }, { end: { gte: timeRange.from } }]
             }
         });
-        const fileCreated = await exportIcs(publicEvents, `${department.name.replaceAll('/','_')}.ics`);
+        const fileCreated = await exportIcs(publicEvents, `${department.name.replaceAll('/', '_')}.ics`);
         if (!fileCreated) {
-            Logger.error(`Could not create ics file for department ${department.name.replaceAll('/','_')}`);
+            Logger.error(`Could not create ics file for department ${department.name.replaceAll('/', '_')}`);
         }
-    }   
-}
+    }
+};

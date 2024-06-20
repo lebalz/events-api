@@ -16,7 +16,7 @@ const auth = {
     scope: ['access_as_user'],
     validateIssuer: authConfig.settings.validateIssuer,
     passReqToCallback: authConfig.settings.passReqToCallback,
-    loggingLevel: authConfig.settings.loggingLevel,
+    loggingLevel: authConfig.settings.loggingLevel
 };
 
 const options: IBearerStrategyOptionWithRequest = {
@@ -28,7 +28,7 @@ const options: IBearerStrategyOptionWithRequest = {
     passReqToCallback: auth.passReqToCallback,
     loggingLevel: auth.loggingLevel as 'info' | 'warn' | 'error' | undefined,
     loggingNoPII: true,
-    scope: auth.scope,
+    scope: auth.scope
 };
 
 const BearerVerify: VerifyBearerFunction = async (token, done) => {
@@ -37,15 +37,17 @@ const BearerVerify: VerifyBearerFunction = async (token, done) => {
         return done(null, false, token);
     }
     // @link https://medium.com/@prashantramnyc/node-js-with-passport-authentication-simplified-76ca65ee91e5
-    const user = await prisma.user.upsert({
-        where: { id: oid },
-        update: userProps(token, false),
-        create: userProps(token, true),
-        include: { untis: true }
-    }).catch((err) => {
-        Logger.error('Bearer Verify Error', err);
-        return false;
-    });
+    const user = await prisma.user
+        .upsert({
+            where: { id: oid },
+            update: userProps(token, false),
+            create: userProps(token, true),
+            include: { untis: true }
+        })
+        .catch((err) => {
+            Logger.error('Bearer Verify Error', err);
+            return false;
+        });
     // Send user info using the second argument
     done(null, user, token);
 };

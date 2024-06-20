@@ -98,11 +98,11 @@ const i18n = {
     },
     eventChangeAccepted: {
         de: 'Terminänderung angenommen',
-        fr: 'Changement d\'événement accepté'
+        fr: "Changement d'événement accepté"
     },
     eventAcceptedMessage: {
         de: 'Der eingereichte Termin wurde angenommen und ist nun veröffentlicht',
-        fr: 'L\'événement soumis a été accepté et est maintenant publié'
+        fr: "L'événement soumis a été accepté et est maintenant publié"
     },
     publishedEvent: {
         de: 'Veröffentlichter Termin',
@@ -146,7 +146,7 @@ const i18n = {
     },
     seeEvent: {
         de: 'Termin Ansehen',
-        fr: 'Voir l\'événement'
+        fr: "Voir l'événement"
     },
     seeNewEvent: {
         de: 'Neuer Termin Ansehen',
@@ -154,11 +154,11 @@ const i18n = {
     },
     seeUpdatedEvent: {
         de: 'Aktualisierter Termin Ansehen',
-        fr: 'Voir l\'événement actualisé'
+        fr: "Voir l'événement actualisé"
     },
     seeDeletedEvent: {
         de: 'Gelöschter Termin Ansehen',
-        fr: 'Voir l\'événement supprimé'
+        fr: "Voir l'événement supprimé"
     },
     eventAppName: {
         de: 'Terminplan',
@@ -261,7 +261,7 @@ const i18n = {
         fr: 'Heure fin'
     },
     bilingueLPsAffected: {
-        de: 'Bilingue LP\'s betroffen',
+        de: "Bilingue LP's betroffen",
         fr: 'Concerne profs des classes bilingues?'
     },
     affects: {
@@ -270,14 +270,13 @@ const i18n = {
     },
     events: {
         de: 'Termine',
-        fr: 'Evénements'    
+        fr: 'Evénements'
     },
     excludedClasses: {
         de: 'Ausgeschlossene Klassen',
         fr: 'Classes exclues'
     }
-    
-} satisfies {[key: string]: i18nMessage};
+} satisfies { [key: string]: i18nMessage };
 
 export type i18nKey = keyof typeof i18n;
 
@@ -286,4 +285,4 @@ export const translate = (key: i18nKey, language: 'de' | 'fr'): string => {
         return i18n[key as keyof typeof i18n][language];
     }
     return key;
-}
+};

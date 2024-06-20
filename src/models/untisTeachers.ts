@@ -1,8 +1,7 @@
-import { PrismaClient } from "@prisma/client";
-import prisma from "../prisma";
-import { HTTP404Error } from "../utils/errors/Errors";
-import { prepareTeacher } from "./untis.helpers";
-
+import { PrismaClient } from '@prisma/client';
+import prisma from '../prisma';
+import { HTTP404Error } from '../utils/errors/Errors';
+import { prepareTeacher } from './untis.helpers';
 
 function UntisTeachers(db: PrismaClient['untisTeacher']) {
     return Object.assign(db, {
@@ -26,12 +25,12 @@ function UntisTeachers(db: PrismaClient['untisTeacher']) {
                         include: {
                             teachers: {
                                 select: {
-                                    id: true,
+                                    id: true
                                 }
                             },
                             classes: {
                                 select: {
-                                    id: true,
+                                    id: true
                                 }
                             }
                         }
@@ -39,13 +38,13 @@ function UntisTeachers(db: PrismaClient['untisTeacher']) {
                     user: { select: { id: true } }
                 }
             });
-            
+
             if (!model) {
                 throw new HTTP404Error('Teacher not found');
             }
             return prepareTeacher(model);
-        },
-    })
+        }
+    });
 }
 
 export default UntisTeachers(prisma.untisTeacher);

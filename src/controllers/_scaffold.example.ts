@@ -1,14 +1,12 @@
-import { Semester } from "@prisma/client";
-import { RequestHandler } from "express";
-import prisma from "../prisma";
-import { IoEvent } from "../routes/socketEventTypes";
-import { createDataExtractor } from "./helpers";
-import { IoRoom } from "../routes/socketEvents";
+import { Semester } from '@prisma/client';
+import { RequestHandler } from 'express';
+import prisma from '../prisma';
+import { IoEvent } from '../routes/socketEventTypes';
+import { createDataExtractor } from './helpers';
+import { IoRoom } from '../routes/socketEvents';
 
 const NAME = 'SEMESTER';
-const getData = createDataExtractor<Semester>(
-    ['name', 'start', 'end']
-);
+const getData = createDataExtractor<Semester>(['name', 'start', 'end']);
 const db = prisma.semester;
 
 export const all: RequestHandler = async (req, res, next) => {
@@ -18,19 +16,18 @@ export const all: RequestHandler = async (req, res, next) => {
     } catch (error) /* istanbul ignore next */ {
         next(error);
     }
-}
+};
 
 export const find: RequestHandler<{ id: string }, any, any> = async (req, res, next) => {
     try {
-        const model = await db
-            .findUnique({
-                where: { id: req.params.id }
-            });
+        const model = await db.findUnique({
+            where: { id: req.params.id }
+        });
         res.status(200).json(model);
     } catch (error) /* istanbul ignore next */ {
         next(error);
     }
-}
+};
 
 export const create: RequestHandler<any, any, Semester> = async (req, res, next) => {
     const { start, end, name } = req.body;
@@ -50,12 +47,12 @@ export const create: RequestHandler<any, any, Semester> = async (req, res, next)
                 event: IoEvent.NEW_RECORD,
                 to: IoRoom.ALL
             }
-        ]
+        ];
         res.status(201).json(model);
     } catch (e) /* istanbul ignore next */ {
-        next(e)
+        next(e);
     }
-}
+};
 
 export const update: RequestHandler<{ id: string }, any, { data: Semester }> = async (req, res, next) => {
     /** remove fields not updatable*/
@@ -72,27 +69,29 @@ export const update: RequestHandler<{ id: string }, any, { data: Semester }> = a
                 event: IoEvent.CHANGED_RECORD,
                 to: IoRoom.ALL
             }
-        ]
+        ];
         res.status(200).json(model);
     } catch (e) /* istanbul ignore next */ {
-        next(e)
+        next(e);
     }
-}
+};
 
 export const destroy: RequestHandler<{ id: string }, any, any> = async (req, res, next) => {
     try {
         const model = await db.delete({
             where: {
-                id: req.params.id,
-            },
+                id: req.params.id
+            }
         });
-        res.notifications = [{
-            message: { record: NAME, id: model.id },
-            event: IoEvent.DELETED_RECORD,
-            to: IoRoom.ALL
-        }]
+        res.notifications = [
+            {
+                message: { record: NAME, id: model.id },
+                event: IoEvent.DELETED_RECORD,
+                to: IoRoom.ALL
+            }
+        ];
         res.status(204).send();
     } catch (error) /* istanbul ignore next */ {
         next(error);
     }
-}
+};

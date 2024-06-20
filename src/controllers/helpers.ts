@@ -11,4 +11,4 @@ export const createDataExtractor = <T extends Object>(allowedFields: (keyof T)[]
         });
         return data;
     };
-}
+};

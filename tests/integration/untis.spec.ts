@@ -9,9 +9,9 @@ import { notify } from '../../src/middlewares/notify.nop';
 import { syncUntis2DB } from '../../src/services/syncUntis2DB';
 import { UntisSubject } from '../../src/models/untisLessons';
 
-/** checkout ../../src/services/__mocks__/fetchUntis.stub.json 
+/** checkout ../../src/services/__mocks__/fetchUntis.stub.json
  * to see the stubs for the fetchUntis service
- * 
+ *
  */
 
 jest.mock('../../src/services/fetchUntis');
@@ -32,23 +32,21 @@ beforeEach(async () => {
     await syncUntis2DB(semester!.id);
 });
 
-
 describe(`GET ${API_URL}/untis/teachers`, () => {
-    it("prevents public user to fetch untis teachers", async () => {
-        const result = await request(app)
-            .get(`${API_URL}/untis/teachers`);
+    it('prevents public user to fetch untis teachers', async () => {
+        const result = await request(app).get(`${API_URL}/untis/teachers`);
         expect(result.statusCode).toEqual(401);
     });
-    it("returns all teachers for user", async () => {
+    it('returns all teachers for user', async () => {
         const user = await prisma.user.create({ data: generateUser({}) });
         const teachers = await prisma.untisTeacher.findMany();
         expect(teachers.length).toEqual(2);
         const result = await request(app)
             .get(`${API_URL}/untis/teachers`)
-            .set('authorization', JSON.stringify({ email: user.email }))
+            .set('authorization', JSON.stringify({ email: user.email }));
         expect(result.statusCode).toEqual(200);
         expect(result.body.length).toEqual(2);
-        expect(result.body.map((d: UntisTeacher) => d.id).sort()).toEqual(teachers.map(d => d.id).sort());
+        expect(result.body.map((d: UntisTeacher) => d.id).sort()).toEqual(teachers.map((d) => d.id).sort());
         expect(result.body[0]).not.toHaveProperty('lessons');
         expect(result.body[1]).not.toHaveProperty('lessons');
         expect(mNotification).toHaveBeenCalledTimes(0);
@@ -56,9 +54,8 @@ describe(`GET ${API_URL}/untis/teachers`, () => {
 });
 
 describe(`GET ${API_URL}/untis/teachers/:id`, () => {
-    it("prevents public user to fetch untis teachers", async () => {
-        const result = await request(app)
-            .get(`${API_URL}/untis/teachers/1`);
+    it('prevents public user to fetch untis teachers', async () => {
+        const result = await request(app).get(`${API_URL}/untis/teachers/1`);
         expect(result.statusCode).toEqual(401);
     });
     it("returns teacher and it's lessons", async () => {
@@ -67,7 +64,7 @@ describe(`GET ${API_URL}/untis/teachers/:id`, () => {
         expect(teachers.length).toEqual(2);
         const result = await request(app)
             .get(`${API_URL}/untis/teachers/${teachers[0].id}`)
-            .set('authorization', JSON.stringify({ email: user.email }))
+            .set('authorization', JSON.stringify({ email: user.email }));
         expect(result.statusCode).toEqual(200);
         expect(result.body).toEqual({
             ...teachers[0],
@@ -76,83 +73,83 @@ describe(`GET ${API_URL}/untis/teachers/:id`, () => {
         });
         expect(_.orderBy(result.body.lessons, ['id'], 'asc')).toEqual([
             {
-                classIds: [ 1 ],
-                description: "Mathematik",
+                classIds: [1],
+                description: 'Mathematik',
                 endHHMM: 1540,
                 id: 999,
-                room: "D207",
+                room: 'D207',
                 semesterId: expect.any(String),
                 semesterNr: 1,
                 startHHMM: 1455,
-                subject: "M",
-                teacherIds: [ 1 ],
+                subject: 'M',
+                teacherIds: [1],
                 weekDay: 2,
-                year: 2023,
+                year: 2023
             },
             {
-                classIds: [ 1 ],
-                description: "Informatik",
+                classIds: [1],
+                description: 'Informatik',
                 endHHMM: 1635,
                 id: 1001,
-                room: "D207",
+                room: 'D207',
                 semesterId: expect.any(String),
                 semesterNr: 1,
                 startHHMM: 1550,
-                subject: "IN",
-                teacherIds: [ 1 ],
+                subject: 'IN',
+                teacherIds: [1],
                 weekDay: 2,
-                year: 2023,
-            },
-        ])
+                year: 2023
+            }
+        ]);
         expect(mNotification).toHaveBeenCalledTimes(0);
     });
 });
 
 describe(`GET ${API_URL}/untis/classes`, () => {
-    it("allows public user to fetch untis classes (without relations)", async () => {
-        const klasses = await prisma.untisClass.findMany({include: {lessons: true, teachers: true}});
+    it('allows public user to fetch untis classes (without relations)', async () => {
+        const klasses = await prisma.untisClass.findMany({ include: { lessons: true, teachers: true } });
         expect(klasses.length).toEqual(2);
         expect(klasses.map((k) => k.lessons).flat().length).toEqual(3);
         expect(klasses.map((k) => k.teachers).flat().length).toEqual(2);
-        const result = await request(app)
-            .get(`${API_URL}/untis/classes`);
+        const result = await request(app).get(`${API_URL}/untis/classes`);
         expect(result.statusCode).toEqual(200);
 
-        expect(result.body.map((d: UntisTeacher) => d.id).sort()).toEqual(klasses.map(d => d.id).sort());
-        expect(result.body.map((k: {lessonIds: string[]}) => k.lessonIds).flat().length).toEqual(0);
-        expect(result.body.map((k: {teacherIds: string[]}) => k.teacherIds).flat().length).toEqual(0);
+        expect(result.body.map((d: UntisTeacher) => d.id).sort()).toEqual(klasses.map((d) => d.id).sort());
+        expect(result.body.map((k: { lessonIds: string[] }) => k.lessonIds).flat().length).toEqual(0);
+        expect(result.body.map((k: { teacherIds: string[] }) => k.teacherIds).flat().length).toEqual(0);
         expect(mNotification).toHaveBeenCalledTimes(0);
     });
-    it("returns all classes for user", async () => {
+    it('returns all classes for user', async () => {
         const user = await prisma.user.create({ data: generateUser({}) });
         const klasses = await prisma.untisClass.findMany();
         expect(klasses.length).toEqual(2);
         const result = await request(app)
             .get(`${API_URL}/untis/classes`)
-            .set('authorization', JSON.stringify({ email: user.email }))
+            .set('authorization', JSON.stringify({ email: user.email }));
         expect(result.statusCode).toEqual(200);
         expect(result.body.length).toEqual(2);
-        expect(result.body.map((d: UntisTeacher) => d.id).sort()).toEqual(klasses.map(d => d.id).sort());
+        expect(result.body.map((d: UntisTeacher) => d.id).sort()).toEqual(klasses.map((d) => d.id).sort());
         expect(mNotification).toHaveBeenCalledTimes(0);
     });
 });
 
 describe(`GET ${API_URL}/untis/subjects`, () => {
-    it("prevents public user to fetch untis subjects", async () => {
-        const result = await request(app)
-            .get(`${API_URL}/untis/subjects`);
+    it('prevents public user to fetch untis subjects', async () => {
+        const result = await request(app).get(`${API_URL}/untis/subjects`);
         expect(result.statusCode).toEqual(401);
     });
-    it("returns all subjects for user", async () => {
+    it('returns all subjects for user', async () => {
         const user = await prisma.user.create({ data: generateUser({}) });
         const lessons = await prisma.untisLesson.findMany();
         expect(lessons.length).toEqual(3);
         const result = await request(app)
             .get(`${API_URL}/untis/subjects`)
-            .set('authorization', JSON.stringify({ email: user.email }))
+            .set('authorization', JSON.stringify({ email: user.email }));
         expect(result.statusCode).toEqual(200);
         expect(result.body.length).toEqual(2);
-        expect(result.body.map((d: UntisSubject) => d.name).sort()).toEqual([...new Set(lessons.map(d => d.subject))].sort());
+        expect(result.body.map((d: UntisSubject) => d.name).sort()).toEqual(
+            [...new Set(lessons.map((d) => d.subject))].sort()
+        );
         expect(mNotification).toHaveBeenCalledTimes(0);
     });
 });
