@@ -23,7 +23,9 @@
     "db:test": "PATH=\"$(yarn global bin):$PATH\" dotenv -e .test.env -- yarn prisma migrate deploy",
     "db:seed:users": "ts-node -r dotenv/config ./bin/users-csv-to-db.ts",
     "untis:fetch": "ts-node -r dotenv/config ./bin/fetch-untis.ts",
-    "untis:sync": "ts-node -r dotenv/config ./bin/sync-untis-2-db.ts"
+    "untis:sync": "ts-node -r dotenv/config ./bin/sync-untis-2-db.ts",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
   },
   "prisma": {
     "seed": "ts-node -r dotenv/config prisma/seed.ts"
@@ -79,6 +81,7 @@
     "jest": "^29.6.4",
     "jest-mock-extended": "^3.0.5",
     "passport-mock-strategy": "^2.0.0",
+    "prettier": "^3.3.2",
     "prisma": "^5.11.0",
     "prisma-dbml-generator": "^0.12.0",
     "prisma-docs-generator": "^0.8.0",
