@@ -54,12 +54,17 @@ export type Meta = {
     }
 } 
 
-export const LogMessage = (event: Event) => {
+export const LogMessage = (event: Event, logType: 'warning' | 'info'): string => {
     if (!event.meta) {
-        return;
+        return '';
     }
     const meta = event.meta as unknown as Meta;
-    return `Row ${meta.rowNr} [${event.description}]: ${meta.warnings.join(', ')}`;
+    switch (logType) {
+        case 'info':
+            return `Row ${meta.rowNr} [${event.description}]: ${meta.infos.join(', ')}`;
+        case 'warning':
+            return `Row ${meta.rowNr} [${event.description}]: ${meta.warnings.join(', ')}`;
+    }
 }
 
 const extractTime = (time: string): [number, number] => {

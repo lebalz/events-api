@@ -553,22 +553,31 @@ function Events(db: PrismaClient['event']) {
                 const successfulImports = events.filter((e) => !(typeof e === 'string')) as Event[];
                 const failedImports = events.filter((e) => typeof e === 'string') as string[];
                 const warnings = successfulImports.filter((e) => (((e.meta as Meta)?.warnings?.length || 0) > 0)) as Event[]; 
+                const infos = successfulImports.filter((e) => (((e.meta as Meta)?.infos?.length || 0) > 0)) as Event[]; 
                 const log: string[] = [ `# Success: ${successfulImports.length}/${events.length} events imported`];
-                if (warnings.length > 0) {
-                    log.push(`# Warnings: ${warnings.length}`);
-                }
                 if (failedImports.length > 0) {
                     log.push(`# Failed: ${failedImports.length}`);
                 }
                 if (warnings.length > 0) {
-                    log.push('---------------------------------');
-                    log.push('WARNINGS:');
-                    log.push(...warnings.map((w) => `  ${LogMessage(type, w)}`));
+                    log.push(`# Warnings: ${warnings.length}`);
+                }
+                if (infos.length > 0) {
+                    log.push(`# Infos: ${infos.length}`);
                 }
                 if (failedImports.length > 0) {
                     log.push('---------------------------------');
                     log.push('FAILED:');
                     log.push(...failedImports.map(f => `  ${f}`));
+                }
+                if (warnings.length > 0) {
+                    log.push('---------------------------------');
+                    log.push('WARNINGS:');
+                    log.push(...warnings.map((w) => `  ${LogMessage(type, w, 'warning')}`));
+                }
+                if (infos.length > 0) {
+                    log.push('---------------------------------');
+                    log.push('INFOS:');
+                    log.push(...infos.map((w) => `  ${LogMessage(type, w, 'info')}`));
                 }
                 return await prisma.job.update({
                     where: { id: importJob.id },

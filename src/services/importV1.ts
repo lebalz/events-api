@@ -47,7 +47,7 @@ export const mapClassNames = (raw: string) => {
 
 export const LogMessage = (event: Event) => {
     if (!event.meta) {
-        return;
+        return '';
     }
     const meta = event.meta as unknown as Meta;
     return `Row ${meta.rowNr} [${event.description}]: ${meta.warnings.join(', ')}`;

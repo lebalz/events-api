@@ -26,12 +26,12 @@ export interface ImportRawEvent {
 
 }
 
-export const LogMessage = (type: ImportType, event: Event) => {
+export const LogMessage = (type: ImportType, event: Event, logType: 'warning' | 'info'): string => {
     switch (type) {
         case ImportType.GBSL_XLSX:
-            return LogMessageGBSL(event);
+            return LogMessageGBSL(event, logType);
         case ImportType.GBJB_CSV:
-            return;
+            return '';
         case ImportType.V1:
             return LogMessageV1(event);
     }
@@ -62,10 +62,10 @@ const extractClasses = (refDate: Date, classesRaw: string | undefined, klasses: 
     }).filter(c => !!c).reduce((a, b) => a!.concat(b!), []);
 
     const currentGratudationYear = (refDate.getFullYear() % 100) + (refDate.getMonth() > 6 ? 1 : 0);
-    const all = [...new Set((singleClasses || []).concat(groupedClasses || []))].map(c => mapLegacyClassName(c)).filter(c => !!c) as KlassName[];
+    const all = [...new Set((singleClasses || []).concat(groupedClasses || []))].map(c => ({raw: c, name: mapLegacyClassName(c)})).filter(c => !!c.name) as {raw: string, name: KlassName}[];
     const validated = _.groupBy(all, (c) => {
-        const year = Number.parseInt(c.slice(0, 2), 10);
-        const departmentLetter = c.charAt(2);
+        const year = Number.parseInt(c.name.slice(0, 2), 10);
+        const departmentLetter = c.name.charAt(2);
         if (year < currentGratudationYear) {
             return 'invalid'
         }
@@ -78,15 +78,15 @@ const extractClasses = (refDate: Date, classesRaw: string | undefined, klasses: 
                 return 'invalid';
             }
         }
-        if (klasses.some(k => (k.year % 100) === year) && !klasses.find(k => k.name === c)) {
+        if (klasses.some(k => (k.year % 100) === year) && !klasses.find(k => k.name === c.name)) {
             return 'unknown';
         }
         return 'valid';
     });
     return {
-        classes: [...(validated.valid || []), ...(validated.unknown || [])],
-        warnings: (validated.invalid || []).map(invalid => `removed class '${invalid}', because it was outside the valid range`) || [],
-        infos: (validated.unknown || []).map(unknown => `unkown class: '${unknown}`) || []
+        classes: [...(validated.valid || []), ...(validated.unknown || [])].map(c => c.name) || [],
+        warnings: (validated.invalid || []).map(invalid => `removed class '${invalid.raw}'${invalid.raw === invalid.name ? '' : ` (${invalid.name})`}, because it was outside the valid range`) || [],
+        infos: (validated.unknown || []).map(unknown => `unkown class: '${unknown.raw}'${unknown.raw === unknown.name ? '' : ` (${unknown.name})`}`) || []
     }
 }
 
