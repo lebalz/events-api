@@ -12,6 +12,30 @@ export const SEC_2_MS = 1000;
 export const MINUTE_2_MS = 60 * SEC_2_MS;
 const MONTH_TO_MS = 31 * 24 * 60 * MINUTE_2_MS;
 
+const ICS_TIMEZONE_HEADER = `BEGIN:VTIMEZONE
+TZID:Europe/Zurich
+X-LIC-LOCATION:Europe/Zurich
+BEGIN:STANDARD
+TZOFFSETFROM:+0200
+TZOFFSETTO:+0100
+TZNAME:CET
+DTSTART:19701025T030000
+RRULE:FREQ=YEARLY;BYMONTH=10;BYDAY=-1SU
+END:STANDARD
+BEGIN:DAYLIGHT
+TZOFFSETFROM:+0100
+TZOFFSETTO:+0200
+TZNAME:CEST
+DTSTART:19700329T020000
+RRULE:FREQ=YEARLY;BYMONTH=3;BYDAY=-1SU
+END:DAYLIGHT
+END:VTIMEZONE` as const;
+
+const withTimezoneHeader = (ics: string) => {
+    /** insert before the first 'BEGIN:VEVENT' part */
+    return ics.replace(/BEGIN:VEVENT\n/, `${ICS_TIMEZONE_HEADER}\nBEGIN:VEVENT\n`);
+}
+
 export const toDateArray = (date: Date): DateArray => {
     return [
         date.getUTCFullYear(),
@@ -95,7 +119,8 @@ const exportIcs = async (events: Event[], filename: string) => {
                 Logger.error(error);
                 return resolve(false);
             }
-            writeFileSync(`${ICAL_DIR}/de/${filename}`, value, { encoding: 'utf-8', flag: 'w' });
+            const icsString = withTimezoneHeader(value);
+            writeFileSync(`${ICAL_DIR}/de/${filename}`, icsString, { encoding: 'utf-8', flag: 'w' });
             resolve(true);
         });
     });
@@ -105,7 +130,8 @@ const exportIcs = async (events: Event[], filename: string) => {
                 Logger.error(error);
                 return resolve(false);
             }
-            writeFileSync(`${ICAL_DIR}/fr/${filename}`, value, { encoding: 'utf-8', flag: 'w' });
+            const icsString = withTimezoneHeader(value);
+            writeFileSync(`${ICAL_DIR}/fr/${filename}`, icsString, { encoding: 'utf-8', flag: 'w' });
             resolve(true);
         });
     });
