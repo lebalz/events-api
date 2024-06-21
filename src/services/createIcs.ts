@@ -33,7 +33,7 @@ END:VTIMEZONE` as const;
 
 const withTimezoneHeader = (ics: string) => {
     /** insert before the first 'BEGIN:VEVENT' part */
-    return ics.replace(/BEGIN:VEVENT\n/, `${ICS_TIMEZONE_HEADER}\nBEGIN:VEVENT\n`);
+    return ics.replace('BEGIN:VEVENT', `${ICS_TIMEZONE_HEADER}\nBEGIN:VEVENT`);
 }
 
 export const toDateArray = (date: Date): DateArray => {
