@@ -321,6 +321,50 @@ Table view__events_classes {
   }
 }
 
+Table view__events_departments {
+  departmentId String [not null]
+  id String [pk]
+  authorId String [not null]
+  start DateTime [not null]
+  end DateTime [not null]
+  location String [not null]
+  description String [not null]
+  descriptionLong String [not null]
+  state EventState [not null, default: 'DRAFT']
+  cloned Boolean [not null, default: false]
+  jobId String
+  parentId String
+  classes String[] [not null]
+  classGroups String[] [not null]
+  audience EventAudience [not null, default: 'STUDENTS']
+  teachingAffected TeachingAffected [not null, default: 'YES']
+  affectsDepartment2 Boolean [default: false]
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [default: `now()`, not null]
+  deletedAt DateTime
+  meta Json
+
+  indexes {
+    (id, departmentId) [unique]
+  }
+}
+
+Table view__events_registration_periods {
+  eventId String [not null]
+  departmentId String [not null]
+  rpId String [not null]
+  rpName String [not null]
+  rpIsOpen String [not null]
+  rpStart DateTime [not null]
+  rpEnd DateTime [not null]
+  rpEventRangeStart DateTime [not null]
+  rpEventRangeEnd DateTime [not null]
+
+  indexes {
+    (eventId, rpId, departmentId) [unique]
+  }
+}
+
 Table users_to_event_groups {
   eventgroupsId String [ref: > event_groups.id]
   usersId String [ref: > users.id]

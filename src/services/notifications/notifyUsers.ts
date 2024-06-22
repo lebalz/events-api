@@ -67,7 +67,24 @@ export const notifyOnUpdate = async (
     actor: User
 ) => {
     const validMails = await notifiableUsers();
-    const publicEvents = events.filter((e) => e.event.state === EventState.PUBLISHED);
+    const eventIds = events.map((e) => e.event.id);
+    const relevantEventIds = new Set((await prisma.view_EventsRegistrationPeriods.findMany({
+        where: {
+            eventId: {
+                in: eventIds,
+            },
+            rpEnd: {
+                gte: new Date()
+            },
+            rpStart: {
+                lte: new Date()
+            }
+        },
+        select: {
+            eventId: true
+        }
+    })).map((e) => e.eventId));
+    const publicEvents = events.filter((e) => e.event.state === EventState.PUBLISHED && (e.affected.length > 0 || !relevantEventIds.has(e.event.id)));
     const reviewEvents = events.filter((e) => e.event.state === EventState.REVIEW);
     const refusedEvents = events.filter((e) => e.event.state === EventState.REFUSED);
     const deliveries: Promise<boolean>[] = [];

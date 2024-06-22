@@ -418,6 +418,63 @@ view view_EventsClasses {
     @@map("view__events_classes")
 }
 
+view view_EventsDepartments {
+    departmentId String @map("d_id") @db.Uuid
+
+    id       String @id @db.Uuid
+    authorId String @map("author_id") @db.Uuid()
+
+    start DateTime
+    end   DateTime
+
+    location        String
+    description     String
+    descriptionLong String @map("description_long")
+
+    state  EventState @default(DRAFT)
+    cloned Boolean    @default(false)
+
+    jobId String? @map("import_id") @db.Uuid()
+
+    parentId String? @map("parent_id") @db.Uuid()
+
+    // Filter Criterias
+    classes     String[] @default([])
+    // wildcard class names
+    classGroups String[] @default([]) @map("class_groups")
+
+    audience EventAudience @default(STUDENTS)
+
+    teachingAffected   TeachingAffected @default(YES) @map("teaching_affected")
+    // wheter the bilinguale teachers of the classes are affected
+    affectsDepartment2 Boolean?         @default(false) @map("affects_department2")
+
+    createdAt DateTime  @default(now()) @map("created_at")
+    updatedAt DateTime  @default(now()) @updatedAt @map("updated_at")
+    deletedAt DateTime? @map("deleted_at")
+
+    meta Json?
+
+    @@unique([id, departmentId])
+    @@map("view__events_departments")
+}
+
+view view_EventsRegistrationPeriods {
+    eventId String @map("e_id") @db.Uuid
+    departmentId String @map("d_id") @db.Uuid
+
+    rpId String @map("rp_id") @db.Uuid
+    rpName String @map("rp_name")
+    rpIsOpen String @map("rp_is_open")
+    rpStart DateTime @map("rp_start")
+    rpEnd DateTime @map("rp_end")
+    rpEventRangeStart DateTime @map("rp_event_range_start")
+    rpEventRangeEnd DateTime @map("rp_event_range_end")
+
+    @@unique([eventId, rpId, departmentId])
+    @@map("view__events_registration_periods")
+}
+
 enum Role {
     USER
     ADMIN
