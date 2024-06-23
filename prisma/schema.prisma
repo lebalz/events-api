@@ -461,8 +461,6 @@ view view_EventsDepartments {
 
 view view_EventsRegistrationPeriods {
     eventId String @map("e_id") @db.Uuid
-    departmentId String @map("d_id") @db.Uuid
-
     rpId String @map("rp_id") @db.Uuid
     rpName String @map("rp_name")
     rpIsOpen String @map("rp_is_open")
@@ -471,7 +469,7 @@ view view_EventsRegistrationPeriods {
     rpEventRangeStart DateTime @map("rp_event_range_start")
     rpEventRangeEnd DateTime @map("rp_event_range_end")
 
-    @@unique([eventId, rpId, departmentId])
+    @@unique([eventId, rpId])
     @@map("view__events_registration_periods")
 }
 
