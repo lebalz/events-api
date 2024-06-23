@@ -353,7 +353,7 @@ Table view__events_registration_periods {
   eventId String [not null]
   rpId String [not null]
   rpName String [not null]
-  rpIsOpen String [not null]
+  rpIsOpen Boolean [not null]
   rpStart DateTime [not null]
   rpEnd DateTime [not null]
   rpEventRangeStart DateTime [not null]

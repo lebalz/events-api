@@ -9,6 +9,7 @@ import Events from '../models/events';
 import { HTTP403Error } from '../utils/errors/Errors';
 import { ImportType } from '../services/importEvents';
 import { notifyOnDelete, notifyOnUpdate } from '../services/notifications/notifyUsers';
+import { rmUndefined } from '../utils/filterHelpers';
 
 const NAME = 'EVENT';
 
@@ -84,7 +85,7 @@ export const setState: RequestHandler<
          */
 
         const newStateIds = events.map((e) => e.event.id);
-        const updated = events.map((e) => e.affected).flat();
+        const updated = events.flatMap((e) => rmUndefined([e.previous, ...e.refused]));
         const audience = new Set<IoRoom | string>(events.map((e) => e.event.authorId));
         const affectedSemesterIds = await prisma.semester.findMany({
             where: {

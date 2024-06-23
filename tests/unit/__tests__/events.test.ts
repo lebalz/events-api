@@ -257,7 +257,7 @@ describe('setState transitions', () => {
                 publishedVersionIds: [],
                 updatedAt: expect.any(Date)
             },
-            affected: []
+            refused: []
         });
     });
 
@@ -338,7 +338,8 @@ describe('setState transitions', () => {
                 publishedVersionIds: [],
                 updatedAt: expect.any(Date)
             },
-            affected: []
+            parent: prepareEvent(parent),
+            refused: []
         });
     });
 
@@ -358,7 +359,7 @@ describe('setState transitions', () => {
                 publishedVersionIds: [],
                 updatedAt: expect.any(Date)
             },
-            affected: []
+            refused: []
         });
     });
 
@@ -394,7 +395,11 @@ describe('setState transitions', () => {
                 publishedVersionIds: [],
                 updatedAt: expect.any(Date)
             },
-            affected: []
+            parent: {
+                ...prepareEvent(ancestor1),
+                publishedVersionIds: [ancestor2.id]
+            },
+            refused: []
         });
     });
     test('versioned REVIEW version -> PUBLISHED', async () => {
@@ -438,7 +443,8 @@ describe('setState transitions', () => {
         const result = await Events.setState(admin, nextCurrent.id, EventState.PUBLISHED);
         await expect(result).toEqual({
             event: newCurrent,
-            affected: [oldCurrent]
+            previous: oldCurrent,
+            refused: []
         });
     });
 
@@ -466,16 +472,15 @@ describe('setState transitions', () => {
                 publishedVersionIds: [event.id],
                 updatedAt: expect.any(Date)
             },
-            affected: [
-                {
-                    ...prepareEvent(current),
-                    id: event.id,
-                    parentId: current.id,
-                    departmentIds: [],
-                    publishedVersionIds: [],
-                    updatedAt: expect.any(Date)
-                }
-            ]
+            previous: {
+                ...prepareEvent(current),
+                id: event.id,
+                parentId: current.id,
+                departmentIds: [],
+                publishedVersionIds: [],
+                updatedAt: expect.any(Date)
+            },
+            refused: []
         });
         await expect(EventGroups.events(user, group.id)).resolves.toEqual([
             {

@@ -232,7 +232,7 @@ function Events(db: PrismaClient['event']) {
             actor: User,
             id: string,
             requested: EventState
-        ): Promise<{ event: ApiEvent; affected: ApiEvent[] }> {
+        ): Promise<{ event: ApiEvent; parent?: ApiEvent; previous?: ApiEvent; refused: ApiEvent[] }> {
             const isAdmin = actor!.role === Role.ADMIN;
             const record = await db.findUnique({
                 where: { id: id },
@@ -288,27 +288,31 @@ function Events(db: PrismaClient['event']) {
                                     children: { select: { id: true, createdAt: true, state: true } }
                                 }
                             });
-                            return { event: prepareEvent(model), affected: [] };
+                            const parent = await this.findModel(actor, publishedParent[0].id);
+                            return { event: prepareEvent(model), parent: parent, refused: [] };
                         } else {
-                            const eventsDepartments = await prisma.view_Events.findFirstOrThrow({
-                                where: { eventId: record.id },
-                                select: { departmentIds: true, departmentSchoolIds: true }
-                            });
-                            const registrationPeriods = await RegistrationPeriods.openPeriods(
-                                getCurrentDate(),
-                                record.start,
-                                [
-                                    ...new Set([
-                                        ...eventsDepartments.departmentIds,
-                                        ...eventsDepartments.departmentSchoolIds
-                                    ])
-                                ]
-                            );
-                            if (registrationPeriods.length > 0 || isAdmin) {
-                                const model = await updater();
-                                return { event: prepareEvent(model), affected: [] };
+                            const openRegistrationPeriod =
+                                await prisma.view_EventsRegistrationPeriods.findFirst({
+                                    where: {
+                                        eventId: record.id,
+                                        OR: [
+                                            { rpIsOpen: true },
+                                            {
+                                                AND: [
+                                                    { rpStart: { lte: getCurrentDate() } },
+                                                    { rpEnd: { gte: getCurrentDate() } },
+                                                    { rpEventRangeStart: { lte: record.start } },
+                                                    { rpEventRangeEnd: { gte: record.start } }
+                                                ]
+                                            }
+                                        ]
+                                    }
+                                });
+                            if (!openRegistrationPeriod && !isAdmin) {
+                                throw new HTTP400Error('No open registration period found.');
                             }
-                            throw new HTTP400Error('No open registration period found.');
+                            const model = await updater();
+                            return { event: prepareEvent(model), refused: [] };
                         }
                     }
                     throw new HTTP400Error('Draft can only be set to review');
@@ -335,7 +339,7 @@ function Events(db: PrismaClient['event']) {
                         /* istanbul ignore next */
                         if (!parent) {
                             throw new HTTP404Error('Parent not found');
-                        } else if (!!parent.parentId) {
+                        } else if (parent.parentId) {
                             throw new HTTP400Error('Parent must be the current published version');
                         }
                         const groups = [
@@ -416,11 +420,12 @@ function Events(db: PrismaClient['event']) {
                         });
                         return {
                             event: prepareEvent(updatedCurrent!),
-                            affected: [prepareEvent(oldCurrent!), ...siblings.map(prepareEvent)]
+                            previous: prepareEvent(oldCurrent!),
+                            refused: siblings.map(prepareEvent)
                         };
                     } else if (EventState.PUBLISHED === requested || EventState.REFUSED === requested) {
                         const model = await updater();
-                        return { event: prepareEvent(model), affected: [] };
+                        return { event: prepareEvent(model), refused: [] };
                     }
                     throw new HTTP400Error('Review can only be set to Published or to Refused');
                 case EventState.PUBLISHED:

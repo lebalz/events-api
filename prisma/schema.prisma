@@ -463,7 +463,7 @@ view view_EventsRegistrationPeriods {
     eventId String @map("e_id") @db.Uuid
     rpId String @map("rp_id") @db.Uuid
     rpName String @map("rp_name")
-    rpIsOpen String @map("rp_is_open")
+    rpIsOpen Boolean @map("rp_is_open")
     rpStart DateTime @map("rp_start")
     rpEnd DateTime @map("rp_end")
     rpEventRangeStart DateTime @map("rp_event_range_start")

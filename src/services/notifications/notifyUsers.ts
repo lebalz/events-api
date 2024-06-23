@@ -62,7 +62,7 @@ export const notifiableUsers = async () => {
 };
 
 export const notifyOnUpdate = async (
-    events: { event: ApiEvent; affected: ApiEvent[] }[],
+    events: { event: ApiEvent; refused: ApiEvent[]; previous?: ApiEvent; parent?: ApiEvent }[],
     message: string,
     actor: User
 ) => {
@@ -89,12 +89,13 @@ export const notifyOnUpdate = async (
         ).map((e) => e.eventId)
     );
     const publicEvents = events.filter(
-        (e) =>
-            e.event.state === EventState.PUBLISHED &&
-            (e.affected.length > 0 || !relevantEventIds.has(e.event.id))
+        (e) => e.event.state === EventState.PUBLISHED && (e.previous || !relevantEventIds.has(e.event.id))
     );
     const reviewEvents = events.filter((e) => e.event.state === EventState.REVIEW);
-    const refusedEvents = events.filter((e) => e.event.state === EventState.REFUSED);
+    const refusedEvents = [
+        ...events.flatMap((e) => (e.event.state === EventState.REFUSED ? [e.event] : [])),
+        ...events.flatMap((e) => (e.refused ? e.refused : []))
+    ];
     const deliveries: Promise<boolean>[] = [];
 
     for (const record of publicEvents) {
@@ -107,42 +108,25 @@ export const notifyOnUpdate = async (
             },
             distinct: ['userId']
         });
-        if (record.affected.length === 0) {
-            /**
-             * a newly published event
-             */
-            LOCALES.map((locale) => {
-                deliveries.push(
-                    mailOnAccept({
-                        event: record.event,
-                        previous: undefined,
-                        to: rmUndefined(audienceIds.map((e) => validMails[locale].get(e.userId))),
-                        cc: rmUndefined([...validMails.admins.onDecision[locale].values()]),
-                        reviewer: actor,
-                        locale: locale
-                    })
-                );
-            });
-        } else {
+        const { previous } = record;
+        if (previous) {
             const audience = new Set(audienceIds.map((e) => e.userId));
-            const affectedOldIds = record.affected[0]
-                ? await prisma.view_AffectedByEvents.findMany({
-                      where: {
-                          eventId: record.affected[0]?.id
-                      },
-                      select: {
-                          userId: true
-                      },
-                      distinct: ['userId']
-                  })
-                : [];
+            const affectedOldIds = await prisma.view_AffectedByEvents.findMany({
+                where: {
+                    eventId: previous.id
+                },
+                select: {
+                    userId: true
+                },
+                distinct: ['userId']
+            });
             const affectedOld = new Set(affectedOldIds.map((e) => e.userId));
             /** THE EVENT WAS UPDATED AND STILL AFFECTS THE USER */
             LOCALES.forEach((locale) => {
                 deliveries.push(
                     mailOnChange({
                         event: record.event,
-                        previous: record.affected[0],
+                        previous: previous,
                         audienceType: 'AFFECTED',
                         to: rmUndefined(
                             audienceIds
@@ -159,7 +143,7 @@ export const notifyOnUpdate = async (
                 deliveries.push(
                     mailOnChange({
                         event: record.event,
-                        previous: record.affected[0],
+                        previous: previous,
                         audienceType: 'AFFECTED_NOW',
                         to: rmUndefined(
                             audienceIds
@@ -176,7 +160,7 @@ export const notifyOnUpdate = async (
                 deliveries.push(
                     mailOnChange({
                         event: record.event,
-                        previous: record.affected[0],
+                        previous: previous,
                         audienceType: 'AFFECTED_PREVIOUS',
                         to: rmUndefined(
                             affectedOldIds
@@ -194,10 +178,26 @@ export const notifyOnUpdate = async (
                         event: record.event,
                         previous: undefined,
                         to: rmUndefined(
-                            [record.event.authorId, record.affected[0].authorId].map((userId) =>
+                            [record.event.authorId, previous.authorId].map((userId) =>
                                 validMails[locale].get(userId)
                             )
                         ),
+                        cc: rmUndefined([...validMails.admins.onDecision[locale].values()]),
+                        reviewer: actor,
+                        locale: locale
+                    })
+                );
+            });
+        } else {
+            /**
+             * a newly published event
+             */
+            LOCALES.map((locale) => {
+                deliveries.push(
+                    mailOnAccept({
+                        event: record.event,
+                        previous: undefined,
+                        to: rmUndefined(audienceIds.map((e) => validMails[locale].get(e.userId))),
                         cc: rmUndefined([...validMails.admins.onDecision[locale].values()]),
                         reviewer: actor,
                         locale: locale
@@ -211,12 +211,12 @@ export const notifyOnUpdate = async (
             deliveries.push(
                 mailOnReviewRequest({
                     event: record.event,
-                    previous: record.affected[0],
+                    previous: record.parent,
                     author: actor,
                     to: rmUndefined([...validMails.admins.onRequest[locale].values()]),
                     cc: rmUndefined(
-                        [record.event.authorId, record.affected[0]?.authorId].map((userId) =>
-                            validMails[locale].get(userId)
+                        [record.event.authorId, record.parent?.authorId].map((userId) =>
+                            validMails[locale].get(userId || '')
                         )
                     ),
                     locale: locale
@@ -228,10 +228,10 @@ export const notifyOnUpdate = async (
         LOCALES.forEach((locale) => {
             deliveries.push(
                 mailOnRefused({
-                    event: record.event,
+                    event: record,
                     reviewer: actor,
                     message: message,
-                    to: rmUndefined([record.event.authorId].map((userId) => validMails[locale].get(userId))),
+                    to: rmUndefined([record.authorId].map((userId) => validMails[locale].get(userId))),
                     cc: rmUndefined([...validMails.admins.onDecision[locale].values()]),
                     locale: locale
                 })
