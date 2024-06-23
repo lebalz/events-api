@@ -11,20 +11,23 @@ const APP_URL = process.env.EVENTS_APP_URL || 'https://events.gbsl.website';
 const APP_URL_FR = `${APP_URL}/fr`;
 
 interface Config {
-    event: ApiEvent;
-    previous: ApiEvent | undefined;
+    events: {
+        event: ApiEvent;
+        refused: ApiEvent[];
+        previous?: ApiEvent | undefined;
+        parent?: ApiEvent | undefined;
+    }[];
     author: User;
     to: string[];
-    cc: string[];
     locale: 'de' | 'fr';
 }
 
 export const mailOnReviewRequest = async (config: Config) => {
-    const { event, previous, author, to, cc, locale } = config;
-    if (to.length === 0 && cc.length === 0) {
+    const { events, author, to, locale } = config;
+    if (to.length === 0 || events.length === 0) {
         return false;
     }
-    const title = `📨 ${translate('reviewRequested', locale)}: ${getDate(event.start)} ${event.description}`;
+    const title = `📨 ${translate('reviewRequested', locale)}: ${events.length} ${events.length === 1 ? translate('event', locale) : translate('events', locale)}`;
 
     const MailGenerator = new Mailgen({
         theme: 'default',
@@ -34,44 +37,49 @@ export const mailOnReviewRequest = async (config: Config) => {
         }
     });
     const tables: Mailgen.Table[] = [];
-    if (previous) {
-        tables.push({
-            title: translate('changedFields', locale),
-            data: getChangedProps(previous, event, locale, ['deletedAt']).map(({ name, oldValue, value }) => {
-                return {
-                    [translate('field', locale)]: name,
-                    [translate('previous', locale)]: `${oldValue}`,
-                    [translate('new', locale)]: `${value}`
-                };
-            })
-        });
+    if (events.length === 1) {
+        if (events[0].parent) {
+            tables.push({
+                title: translate('changedFields', locale),
+                data: getChangedProps(events[0].parent, events[0].event, locale, ['deletedAt']).map(
+                    ({ name, oldValue, value }) => {
+                        return {
+                            [translate('field', locale)]: name,
+                            [translate('previous', locale)]: `${oldValue}`,
+                            [translate('new', locale)]: `${value}`
+                        };
+                    }
+                )
+            });
+        } else {
+            tables.push({
+                title: translate('newEvent', locale),
+                data: getEventProps(events[0].event, locale, ['deletedAt']).map(({ name, value }) => {
+                    return {
+                        [translate('field', locale)]: name,
+                        [translate('value', locale)]: `${value}`
+                    };
+                })
+            });
+        }
     }
     const response: Mailgen.Content = {
         body: {
             title: title,
             signature: false,
-            intro: [`${author.firstName} ${author.lastName} ${translate('reviewRequestedMessage', locale)}`],
-            table: [
-                ...tables,
-                {
-                    title: translate('newEvent', locale),
-                    data: getEventProps(event, locale, ['deletedAt']).map(({ name, value }) => {
-                        return {
-                            [translate('field', locale)]: name,
-                            [translate('value', locale)]: `${value}`
-                        };
-                    })
-                }
+            intro: [
+                `${author.firstName} ${author.lastName} ${translate(events.length === 1 ? 'reviewRequestedMessage' : 'reviewsRequestedMessage', locale).replace('{n}', `${events.length}`)}`
             ],
+            table: [...tables],
             action: {
-                instructions: translate('seeEvent', locale),
+                instructions: translate(events.length > 1 ? 'seeEvents' : 'seeEvent', locale),
                 button: {
                     color: Color.Info,
-                    text: `👉 ${translate('seeEvent', locale)}`,
+                    text: `👉 ${translate(events.length > 1 ? 'seeEvents' : 'seeEvent', locale)}`,
                     link:
                         locale === 'de'
-                            ? `${APP_URL}/event?id=${event.id}`
-                            : `${APP_URL_FR}/event?id=${event.id}`,
+                            ? `${APP_URL}/event?${events.map((e) => `id=${e.event.id}`).join('&')}`
+                            : `${APP_URL_FR}/event?${events.map((e) => `id=${e.event.id}`).join('&')}`,
                     fallback: true
                 }
             }
@@ -81,11 +89,9 @@ export const mailOnReviewRequest = async (config: Config) => {
     const mail = MailGenerator.generate(response);
     const txt = MailGenerator.generatePlaintext(response);
 
-    const toSet = new Set(to.map((e) => e.toLowerCase()));
     const result = await sendMail({
         from: `${translate('eventAppName', locale)} <${authConfig.auth!.user}>`,
         to: to,
-        cc: cc.filter((e) => !toSet.has(e?.toLowerCase())),
         subject: title,
         html: mail,
         text: txt

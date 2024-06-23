@@ -206,24 +206,22 @@ export const notifyOnUpdate = async (
             });
         }
     }
-    for (const record of reviewEvents) {
-        LOCALES.forEach((locale) => {
-            deliveries.push(
-                mailOnReviewRequest({
-                    event: record.event,
-                    previous: record.parent,
-                    author: actor,
-                    to: rmUndefined([...validMails.admins.onRequest[locale].values()]),
-                    cc: rmUndefined(
-                        [record.event.authorId, record.parent?.authorId].map((userId) =>
-                            validMails[locale].get(userId || '')
-                        )
-                    ),
-                    locale: locale
-                })
-            );
-        });
-    }
+    LOCALES.forEach((locale) => {
+        deliveries.push(
+            mailOnReviewRequest({
+                events: reviewEvents,
+                author: actor,
+                to: rmUndefined([...validMails.admins.onRequest[locale].values()]),
+                locale: locale
+            })
+
+            // cc: rmUndefined(
+            //     [record.event.authorId, record.parent?.authorId].map((userId) =>
+            //         validMails[locale].get(userId || '')
+            //     )
+            // ),
+        );
+    });
     for (const record of refusedEvents) {
         LOCALES.forEach((locale) => {
             deliveries.push(

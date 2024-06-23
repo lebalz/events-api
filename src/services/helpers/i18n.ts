@@ -88,6 +88,10 @@ const i18n = {
         de: 'hat einen Termin zur Überprüfung eingereicht',
         fr: 'a soumis un événement pour examen'
     },
+    reviewsRequestedMessage: {
+        de: 'hat {n} Termine zur Überprüfung eingereicht',
+        fr: 'a soumis {n} événements pour examen'
+    },
     deletedEventMessage: {
         de: 'hat einen Termin gelöscht',
         fr: 'a supprimé un événement'
@@ -147,6 +151,10 @@ const i18n = {
     seeEvent: {
         de: 'Termin Ansehen',
         fr: "Voir l'événement"
+    },
+    seeEvents: {
+        de: 'Termine Ansehen',
+        fr: 'Voir les événements'
     },
     seeNewEvent: {
         de: 'Neuer Termin Ansehen',
