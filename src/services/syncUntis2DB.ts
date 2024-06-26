@@ -254,7 +254,7 @@ export const syncUntis2DB = async (
             room: lesson.rooms.map((r) => r.element.name).join(', '),
             ...findSubject(lesson.subjects[0].id) /** there is always only one subject */,
             semesterNr:
-                semester.start.getMonth() > 6
+                semester.start.getMonth() > 5
                     ? 1
                     : 2 /** getMonth() returns zero-based month, e.g. january->0, february->1,... */,
             year: semester.untisSyncDate.getFullYear(),
