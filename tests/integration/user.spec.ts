@@ -1202,7 +1202,7 @@ describe(`GET ${API_URL}/users/:id/affected-event-ids`, () => {
                     data.teachers.push({ name: 'hij', longName: 'Jimmy Hermann', sex: 'M' });
                     data.teachers.push({ name: 'VWZ', longName: 'Vinny Zimmer', sex: 'M' });
                     data.teachers.push({
-                        name: 'klp',
+                        name: 'KLP',
                         longName: 'Klassenlehrperson',
                         sex: 'F'
                     }); /** not realistic that the KS is not from the main department, anhow... */
@@ -1233,7 +1233,7 @@ describe(`GET ${API_URL}/users/:id/affected-event-ids`, () => {
                     data.lessons.push({
                         subject: 'KS',
                         day: day,
-                        teachers: ['klp'],
+                        teachers: ['KLP'],
                         classes: ['26mT'],
                         start: 1120,
                         end: 1205,
@@ -1258,8 +1258,8 @@ describe(`GET ${API_URL}/users/:id/affected-event-ids`, () => {
                     });
                     klp = await prisma.user.create({
                         data: generateUser({
-                            firstName: 'klp',
-                            untisId: untisTeachers.find((t) => t.name === 'klp')!.id
+                            firstName: 'KLP',
+                            untisId: untisTeachers.find((t) => t.name === 'KLP')!.id
                         })
                     });
                     author = await prisma.user.create({ data: generateUser() });
@@ -1405,11 +1405,21 @@ describe(`GET ${API_URL}/users/:id/affected-event-ids`, () => {
                             )!;
                             data.subjects.push({ name: 'OCIN', longName: 'OC Informatique' });
                             data.classes.push({ name: '26Ga', sf: 'GYMD Class' });
+                            data.classes.push({ name: '26Gx', sf: 'Bilingue De' });
                             data.lessons.push({
                                 subject: 'OCIN',
                                 day: day,
                                 teachers: ['VWZ'],
                                 classes: ['26mT', '26Ga'],
+                                start: 1025,
+                                end: 1110,
+                                room: 'D113'
+                            });
+                            data.lessons.push({
+                                subject: 'M',
+                                day: 'Mo',
+                                teachers: ['hij'],
+                                classes: ['26Gx'],
                                 start: 1025,
                                 end: 1110,
                                 room: 'D113'
@@ -1446,6 +1456,13 @@ describe(`GET ${API_URL}/users/:id/affected-event-ids`, () => {
                             expect(kl!.teachers[0].name).toEqual('VWZ');
                         });
                         it(`displays the event only for gbsl teacher`, async () => {
+                            const gbjbResult = await request(app)
+                                .get(
+                                    `${API_URL}/users/${VWZ.id}/affected-event-ids?semesterId=${semester.id}`
+                                )
+                                .set('authorization', JSON.stringify({ email: VWZ.email }));
+                            expect(gbjbResult.statusCode).toEqual(200);
+                            expect(gbjbResult.body).toHaveLength(0);
                             const gbslResult = await request(app)
                                 .get(
                                     `${API_URL}/users/${hij.id}/affected-event-ids?semesterId=${semester.id}`
@@ -1455,13 +1472,6 @@ describe(`GET ${API_URL}/users/:id/affected-event-ids`, () => {
                             expect(gbslResult.body).toHaveLength(1);
                             expect(gbslResult.body).toEqual([gbslBiliEvent.id]);
 
-                            const gbjbResult = await request(app)
-                                .get(
-                                    `${API_URL}/users/${VWZ.id}/affected-event-ids?semesterId=${semester.id}`
-                                )
-                                .set('authorization', JSON.stringify({ email: VWZ.email }));
-                            expect(gbjbResult.statusCode).toEqual(200);
-                            expect(gbjbResult.body).toHaveLength(0);
                         });
                     });
                 });
@@ -1583,7 +1593,7 @@ describe(`GET ${API_URL}/users/:id/affected-event-ids`, () => {
                         beforeAll(() => {
                             affectsDepartment2 = false;
                         });
-                        it(`displays the event for for gbsl and gbjb teacher, since both hav affected lessons`, async () => {
+                        it(`displays the event for for gbsl and gbjb teacher, since both have affected lessons`, async () => {
                             const klpResult = await request(app)
                                 .get(
                                     `${API_URL}/users/${klp.id}/affected-event-ids?semesterId=${semester.id}`

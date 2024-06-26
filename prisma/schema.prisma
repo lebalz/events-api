@@ -238,75 +238,35 @@ model Session {
     @@map("session")
 }
 
-view view_Events {
-    eventId             String        @map("e_id") @db.Uuid
-    start               DateTime      @map("start")
-    end                 DateTime      @map("end")
-    state               EventState    @map("state")
-    classes             String[]      @map("classes")
-    description         String        @map("description")
-    class_groups        String[]      @map("class_groups")
-    audience            EventAudience @map("audience")
-    departmentIds       String[]      @map("department_ids") @db.Uuid
-    departmentSchoolIds String[]      @map("department_school_ids") @db.Uuid
-    yearStart           Decimal       @map("year_s") @db.Decimal
-    yearEnd             Decimal       @map("year_e") @db.Decimal
-    startWeekDay        Decimal       @map("start_week_day") @db.Decimal
-    endWeekDay          Decimal       @map("end_week_day") @db.Decimal
-    startOffset_m       Decimal       @map("start_offset_m") @db.Decimal
-    endOffset_m         Decimal       @map("end_offset_m") @db.Decimal
-    duration_m          Decimal       @map("duration_m") @db.Decimal
-    semesterId          String        @map("s_id") @db.Uuid
+view view_KLPs {
+    userId   String @map("u_id") @db.Uuid
+    teacherId   String @map("t_id") @db.Uuid
+    teacherName String @map("t_name")
+    classId    String @map("c_id") @db.Uuid 
+    className  String @map("c_name") 
+    semesterId   String @map("s_id") @db.Uuid
 
-    @@unique([eventId, semesterId])
-    @@map("view__events")
+    @@unique([userId, teacherId, classId, semesterId])
+    @@map("view__klps")
 }
 
-view view_UsersTeaching {
-    userId             String  @map("u_id") @db.Uuid
-    userEmail          String  @map("u_email")
-    classId            Int     @map("c_id")
-    className          String  @map("c_name")
-    classNameLegacy    String? @map("c_name_legacy")
-    lessonId           Int     @map("l_id")
-    lessonSubject      String  @map("l_subject")
-    lessonStartHHMM    Int     @map("l_start_hhmm")
-    lessonEndHHMM      Int     @map("l_end_hhmm")
-    lessonWeekDay      Int     @map("l_week_day")
-    lessonSemesterId   String  @map("l_semester_id") @db.Uuid
-    departmentId       String  @map("d_id") @db.Uuid
-    departmentSchoolId String  @map("d_school_id")
-    departmentName     String  @map("d_name")
-    departmentLetter   String  @map("d_letter")
-    untis_teacher_id   Int?    @map("untis_teacher_id")
+view view_AffectedByEvents {    
+    eventId String @map("e_id")  @db.Uuid
+    userId  String @map("u_id")  @db.Uuid
+    semesterId  String @map("s_id")  @db.Uuid
 
-    @@unique([userId, classId, lessonId, departmentId])
-    @@map("view__users_teaching")
-}
+    teacherId Int @map("teacher_id") 
 
-view view_UsersTeachingAggregated {
-    uId                  String   @map("u_id") @db.Uuid
-    lSemesterId          String   @map("l_semester_id") @db.Uuid
-    classIds             Int[]    @map("class_ids")
-    classNames           String[] @map("class_names")
-    classNamesMonolingue String[] @map("class_names_monolingue")
-    subjects             String[] @map("subjects")
-    departmentIds        String[] @map("department_ids") @db.Uuid
-    departmentSchoolIds  String[] @map("department_school_ids") @db.Uuid
-    departmentNames      String[] @map("department_names")
-    klp                  String?  @map("klp")
-    klpDepartmentId      String?  @map("klp_department_id")
+    classId  Int @map("c_id") 
+    className    String @map("c_name") 
+    lessonId  String @map("l_id") 
+    lessonSubject String @map("l_subject") 
+    eventAudience   String @map("e_audience") 
 
-    @@unique([lSemesterId])
-    @@map("view__users_teaching_agg")
-}
-
-view view_AffectedByEvents {
-    userId     String @map("u_id") @db.Uuid
-    eventId    String @map("e_id") @db.Uuid
-    semesterId String @map("s_id") @db.Uuid
-    classId    Int    @map("c_id")
-    lessonId   Int    @map("l_id")
+    affectedDepartmentId String? @map("affected_department_id")
+    affectsClassname Boolean @map("affects_classname")
+    affectsClassgroup Boolean @map("affects_classgroup")
+    affectsLesson Boolean @map("affects_lesson")
 
     @@unique([userId, eventId, semesterId, classId, lessonId])
     @@map("view__affected_by_events")

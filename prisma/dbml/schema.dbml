@@ -168,74 +168,33 @@ Table session {
   expire DateTime [not null]
 }
 
-Table view__events {
-  eventId String [not null]
-  start DateTime [not null]
-  end DateTime [not null]
-  state EventState [not null]
-  classes String[] [not null]
-  description String [not null]
-  class_groups String[] [not null]
-  audience EventAudience [not null]
-  departmentIds String[] [not null]
-  departmentSchoolIds String[] [not null]
-  yearStart Decimal [not null]
-  yearEnd Decimal [not null]
-  startWeekDay Decimal [not null]
-  endWeekDay Decimal [not null]
-  startOffset_m Decimal [not null]
-  endOffset_m Decimal [not null]
-  duration_m Decimal [not null]
+Table view__klps {
+  userId String [not null]
+  teacherId String [not null]
+  teacherName String [not null]
+  classId String [not null]
+  className String [not null]
   semesterId String [not null]
 
   indexes {
-    (eventId, semesterId) [unique]
+    (userId, teacherId, classId, semesterId) [unique]
   }
-}
-
-Table view__users_teaching {
-  userId String [not null]
-  userEmail String [not null]
-  classId Int [not null]
-  className String [not null]
-  classNameLegacy String
-  lessonId Int [not null]
-  lessonSubject String [not null]
-  lessonStartHHMM Int [not null]
-  lessonEndHHMM Int [not null]
-  lessonWeekDay Int [not null]
-  lessonSemesterId String [not null]
-  departmentId String [not null]
-  departmentSchoolId String [not null]
-  departmentName String [not null]
-  departmentLetter String [not null]
-  untis_teacher_id Int
-
-  indexes {
-    (userId, classId, lessonId, departmentId) [unique]
-  }
-}
-
-Table view__users_teaching_agg {
-  uId String [not null]
-  lSemesterId String [unique, not null]
-  classIds Int[] [not null]
-  classNames String[] [not null]
-  classNamesMonolingue String[] [not null]
-  subjects String[] [not null]
-  departmentIds String[] [not null]
-  departmentSchoolIds String[] [not null]
-  departmentNames String[] [not null]
-  klp String
-  klpDepartmentId String
 }
 
 Table view__affected_by_events {
-  userId String [not null]
   eventId String [not null]
+  userId String [not null]
   semesterId String [not null]
+  teacherId Int [not null]
   classId Int [not null]
-  lessonId Int [not null]
+  className String [not null]
+  lessonId String [not null]
+  lessonSubject String [not null]
+  eventAudience String [not null]
+  affectedDepartmentId String
+  affectsClassname Boolean [not null]
+  affectsClassgroup Boolean [not null]
+  affectsLesson Boolean [not null]
 
   indexes {
     (userId, eventId, semesterId, classId, lessonId) [unique]
