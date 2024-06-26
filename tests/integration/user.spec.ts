@@ -1471,7 +1471,6 @@ describe(`GET ${API_URL}/users/:id/affected-event-ids`, () => {
                             expect(gbslResult.statusCode).toEqual(200);
                             expect(gbslResult.body).toHaveLength(1);
                             expect(gbslResult.body).toEqual([gbslBiliEvent.id]);
-
                         });
                     });
                 });
