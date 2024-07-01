@@ -234,7 +234,6 @@ export const configure = (_app: typeof app) => {
 
             /* istanbul ignore next */
             if (res.notifications && io) {
-                console.log('sio notifications', res.notifications);
                 res.notifications.forEach((notification) => {
                     const except: string[] = [];
                     /** ignore this socket */
