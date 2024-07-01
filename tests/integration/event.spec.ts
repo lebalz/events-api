@@ -7,6 +7,7 @@ import {
     Event,
     EventAudience,
     EventState,
+    Job,
     JobState,
     RegistrationPeriod,
     Role,
@@ -20,7 +21,7 @@ import { HttpStatusCode } from '../../src/utils/errors/BaseError';
 import { generateSemester } from '../factories/semester';
 import { faker } from '@faker-js/faker';
 import { notify } from '../../src/middlewares/notify.nop';
-import { IoEvent } from '../../src/routes/socketEventTypes';
+import { IoEvent, RecordType } from '../../src/routes/socketEventTypes';
 import { IoRoom } from '../../src/routes/socketEvents';
 import _ from 'lodash';
 import { generateDepartment } from '../factories/department';
@@ -32,6 +33,7 @@ import { generateUntisClass } from '../factories/untisClass';
 import { createUser } from '../unit/__tests__/users.test';
 import { Departments } from '../../src/services/helpers/departmentNames';
 import * as eventModel from '../../src/models/events';
+import { prepareEvent as originalPrepareEvent } from '../../src/models/event.helpers';
 
 jest.mock('../../src/middlewares/notify.nop');
 const mNotification = <jest.Mock<typeof notify>>notify;
@@ -49,6 +51,31 @@ const prepareEvent = (event: Event): any => {
     if (!event.meta) {
         delete (prepared as any).meta;
     }
+    return prepared;
+};
+
+const prepareNotificationEvent = (event: Event & { publishedVersionIds?: string[] }): any => {
+    const prepared = {
+        departmentIds: [],
+        publishedVersionIds: [],
+        ...event,
+        start: new Date(event.start),
+        end: new Date(event.end),
+        updatedAt: new Date(event.updatedAt),
+        createdAt: new Date(event.createdAt)
+    };
+    if (!event.meta) {
+        delete (prepared as any).meta;
+    }
+    return prepared;
+};
+
+const prepareNotificationJob = (job: Job): any => {
+    const prepared = {
+        ...job,
+        updatedAt: new Date(job.updatedAt),
+        createdAt: new Date(job.createdAt)
+    };
     return prepared;
 };
 
@@ -210,9 +237,10 @@ describe(`PUT ${API_URL}/events/:id`, () => {
             updatedAt: expect.any(String)
         });
         expect(mNotification).toHaveBeenCalledTimes(1);
+        const updated = await prisma.event.findUniqueOrThrow({ where: { id: event.id } });
         expect(mNotification.mock.calls[0][0]).toEqual({
             event: IoEvent.CHANGED_RECORD,
-            message: { record: 'EVENT', id: result.body.id },
+            message: { type: RecordType.Event, record: prepareNotificationEvent(updated) },
             to: user.id
         });
     });
@@ -244,9 +272,10 @@ describe(`PUT ${API_URL}/events/:id/meta`, () => {
             meta: { warnings: ['hello'], warningsReviewed: true }
         });
         expect(mNotification).toHaveBeenCalledTimes(1);
+        const updated = await prisma.event.findUniqueOrThrow({ where: { id: event.id } });
         expect(mNotification.mock.calls[0][0]).toEqual({
             event: IoEvent.CHANGED_RECORD,
-            message: { record: 'EVENT', id: result.body.id },
+            message: { type: RecordType.Event, record: prepareNotificationEvent(updated) },
             to: user.id
         });
         const result2 = await request(app)
@@ -284,9 +313,10 @@ describe(`PUT ${API_URL}/events/:id/meta`, () => {
             meta: { warnings: ['hello'], warningsReviewed: true }
         });
         expect(mNotification).toHaveBeenCalledTimes(1);
+        const updated = await prisma.event.findUniqueOrThrow({ where: { id: event.id } });
         expect(mNotification.mock.calls[0][0]).toEqual({
             event: IoEvent.CHANGED_RECORD,
-            message: { record: 'EVENT', id: result.body.id },
+            message: { type: RecordType.Event, record: prepareNotificationEvent(updated) },
             to: user.id
         });
         const admin = await prisma.user.create({
@@ -345,9 +375,10 @@ describe(`POST ${API_URL}/events`, () => {
         expect(result.body.state).toEqual(EventState.DRAFT);
 
         expect(mNotification).toHaveBeenCalledTimes(1);
+        const updated = await prisma.event.findFirstOrThrow({ where: { id: result.body.id } });
         expect(mNotification.mock.calls[0][0]).toEqual({
             event: IoEvent.NEW_RECORD,
-            message: { record: 'EVENT', id: result.body.id },
+            message: { type: RecordType.Event, record: prepareNotificationEvent(updated) },
             to: user.id
         });
 
@@ -374,9 +405,10 @@ describe(`POST ${API_URL}/events`, () => {
             expect(result.body.state).toEqual(EventState.DRAFT);
 
             expect(mNotification).toHaveBeenCalledTimes(1);
+            const updated = await prisma.event.findFirstOrThrow({ where: { id: result.body.id } });
             expect(mNotification.mock.calls[0][0]).toEqual({
                 event: IoEvent.NEW_RECORD,
-                message: { record: 'EVENT', id: result.body.id },
+                message: { type: RecordType.Event, record: prepareNotificationEvent(updated) },
                 to: user.id
             });
         });
@@ -398,7 +430,7 @@ describe(`DELETE ${API_URL}/events/:id`, () => {
         expect(mNotification).toHaveBeenCalledTimes(1);
         expect(mNotification.mock.calls[0][0]).toEqual({
             event: IoEvent.DELETED_RECORD,
-            message: { record: 'EVENT', id: event.id },
+            message: { type: RecordType.Event, id: event.id },
             to: user.id
         });
     });
@@ -417,12 +449,12 @@ describe(`DELETE ${API_URL}/events/:id`, () => {
             const all = await prisma.event.findMany();
             expect(all.length).toEqual(1);
 
-            const deleted = await prisma.event.findUnique({ where: { id: event.id } });
+            const deleted = await prisma.event.findUniqueOrThrow({ where: { id: event.id } });
             expect(deleted?.deletedAt).not.toBeNull();
             expect(mNotification).toHaveBeenCalledTimes(1);
             expect(mNotification.mock.calls[0][0]).toEqual({
                 event: IoEvent.CHANGED_RECORD,
-                message: { record: 'EVENT', id: event.id },
+                message: { type: RecordType.Event, record: prepareNotificationEvent(deleted) },
                 to: IoRoom.ALL
             });
         });
@@ -455,7 +487,7 @@ describe(`POST ${API_URL}/events/:id/clone`, () => {
         expect(mNotification).toHaveBeenCalledTimes(1);
         expect(mNotification.mock.calls[0][0]).toEqual({
             event: IoEvent.NEW_RECORD,
-            message: { record: 'EVENT', id: result.body.id },
+            message: { type: RecordType.Event, record: prepareNotificationEvent(result.body) },
             to: user.id
         });
     });
@@ -490,7 +522,7 @@ describe(`POST ${API_URL}/events/:id/clone`, () => {
         expect(mNotification).toHaveBeenCalledTimes(1);
         expect(mNotification.mock.calls[0][0]).toEqual({
             event: IoEvent.NEW_RECORD,
-            message: { record: 'EVENT', id: result.body.id },
+            message: { type: RecordType.Event, record: prepareNotificationEvent(result.body) },
             to: user.id
         });
     });
@@ -575,11 +607,13 @@ describe(`POST ${API_URL}/events/change_state`, () => {
                     expect(result.body.length).toEqual(1);
                     expect(result.body[0].state).toEqual(transition.to);
                     expect(mNotification).toHaveBeenCalledTimes(transition.notify.length);
+                    const updated = await prisma.event.findUniqueOrThrow({ where: { id: event.id }, include: { departments: true, children: true } });
                     transition.notify.forEach((to, idx) => {
                         expect(mNotification.mock.calls[idx][0]).toEqual({
-                            event: IoEvent.CHANGED_STATE,
-                            message: { state: transition.to, ids: [event.id] },
-                            to: to === 'user' ? user.id : to
+                            event: IoEvent.CHANGED_RECORD,
+                            message: { type: RecordType.Event, record: originalPrepareEvent(updated) },
+                            to: to === 'user' ? user.id : to,
+                            toSelf: true
                         });
                     });
                 });
@@ -680,11 +714,13 @@ describe(`POST ${API_URL}/events/change_state`, () => {
             expect(result.body[0].state).toEqual(EventState.REVIEW);
             expect(result.body[0].parentId).toEqual(event.id);
             expect(mNotification).toHaveBeenCalledTimes(2);
+            const updated = await prisma.event.findUniqueOrThrow({ where: { id: edit2.id } });
             [user.id, IoRoom.ADMIN].forEach((to, idx) => {
                 expect(mNotification.mock.calls[idx][0]).toEqual({
-                    event: IoEvent.CHANGED_STATE,
-                    message: { state: EventState.REVIEW, ids: [edit2.id] },
-                    to: to
+                    event: IoEvent.CHANGED_RECORD,
+                    message: { type: RecordType.Event, record: prepareNotificationEvent(updated) },
+                    to: to,
+                    toSelf: true
                 });
             });
         });
@@ -753,10 +789,10 @@ describe(`POST ${API_URL}/events/change_state`, () => {
 
             expect(result.body[0].id).toEqual(event.id);
 
-            const updatedEvent = await prisma.event.findUnique({ where: { id: event.id } });
-            const updatedEdit1 = await prisma.event.findUnique({ where: { id: edit1.id } });
-            const updatedEdit2 = await prisma.event.findUnique({ where: { id: edit2.id } });
-            const updatedEdit3 = await prisma.event.findUnique({ where: { id: edit3.id } });
+            const updatedEvent = await prisma.event.findUniqueOrThrow({ where: { id: event.id } });
+            const updatedEdit1 = await prisma.event.findUniqueOrThrow({ where: { id: edit1.id } });
+            const updatedEdit2 = await prisma.event.findUniqueOrThrow({ where: { id: edit2.id } });
+            const updatedEdit3 = await prisma.event.findUniqueOrThrow({ where: { id: edit3.id } });
 
             /** swapped ids - updatedEvent is now the published "edit3" */
             expect(updatedEvent).toEqual({
@@ -786,36 +822,39 @@ describe(`POST ${API_URL}/events/change_state`, () => {
             });
 
             expect(updatedEdit2).toEqual(edit2);
-            expect(mNotification).toHaveBeenCalledTimes(5);
+            expect(mNotification).toHaveBeenCalledTimes(4);
+
+            /* first the newly published event */
             expect(mNotification.mock.calls[0][0]).toEqual({
-                event: IoEvent.RELOAD_AFFECTING_EVENTS,
-                message: { record: 'SEMESTER', semesterIds: [semester.id] },
-                to: IoRoom.ALL
-            });
-            /* first the original event */
-            expect(mNotification.mock.calls[1][0]).toEqual({
-                event: IoEvent.CHANGED_STATE,
-                message: { state: EventState.PUBLISHED, ids: [event.id] },
-                to: IoRoom.ALL
-            });
-            /* then the previously published event */
-            expect(mNotification.mock.calls[2][0]).toEqual({
                 event: IoEvent.CHANGED_RECORD,
-                message: { record: 'EVENT', id: edit3.id },
+                message: {
+                    type: RecordType.Event,
+                    record: prepareNotificationEvent({
+                        ...updatedEvent,
+                        publishedVersionIds: [edit3.id]
+                    }),
+                },
+                toSelf: true,
+                to: IoRoom.ALL
+            });
+            /* then the previously published event -> edit3 */
+            expect(mNotification.mock.calls[1][0]).toEqual({
+                event: IoEvent.CHANGED_RECORD,
+                message: { type: RecordType.Event, record: prepareNotificationEvent(updatedEdit3) },
                 to: IoRoom.ALL,
                 toSelf: true
             });
-            /* then the refused's author */
-            expect(mNotification.mock.calls[3][0]).toEqual({
+            /* then the refused's author -> edit1*/
+            expect(mNotification.mock.calls[2][0]).toEqual({
                 event: IoEvent.CHANGED_RECORD,
-                message: { record: 'EVENT', id: edit1.id },
+                message: { type: RecordType.Event, record: prepareNotificationEvent(updatedEdit1) },
                 to: edit1.authorId,
                 toSelf: true
             });
             /* finally admins */
-            expect(mNotification.mock.calls[4][0]).toEqual({
+            expect(mNotification.mock.calls[3][0]).toEqual({
                 event: IoEvent.CHANGED_RECORD,
-                message: { record: 'EVENT', id: edit1.id },
+                message: { type: RecordType.Event, record: prepareNotificationEvent(updatedEdit1) },
                 to: IoRoom.ADMIN,
                 toSelf: true
             });
@@ -858,10 +897,10 @@ describe(`POST ${API_URL}/events/change_state`, () => {
 
         expect(result.body[0].id).toEqual(event.id);
 
-        const updatedEvent = await prisma.event.findUnique({ where: { id: event.id } });
-        const updatedEdit1 = await prisma.event.findUnique({ where: { id: edit1.id } });
-        const updatedEdit2 = await prisma.event.findUnique({ where: { id: edit2.id } });
-        const updatedEdit3 = await prisma.event.findUnique({ where: { id: edit3.id } });
+        const updatedEvent = await prisma.event.findUniqueOrThrow({ where: { id: event.id } });
+        const updatedEdit1 = await prisma.event.findUniqueOrThrow({ where: { id: edit1.id } });
+        const updatedEdit2 = await prisma.event.findUniqueOrThrow({ where: { id: edit2.id } });
+        const updatedEdit3 = await prisma.event.findUniqueOrThrow({ where: { id: edit3.id } });
 
         /** swapped ids - updatedEvent is now the published "edit3" */
         expect(updatedEvent).toEqual({
@@ -895,27 +934,42 @@ describe(`POST ${API_URL}/events/change_state`, () => {
             state: EventState.REFUSED,
             updatedAt: expect.any(Date)
         });
-        expect(mNotification).toHaveBeenCalledTimes(7);
+        expect(mNotification).toHaveBeenCalledTimes(6);
 
-        expect(mNotification.mock.calls[0][0]).toEqual({
-            event: IoEvent.RELOAD_AFFECTING_EVENTS,
-            message: { record: 'SEMESTER', semesterIds: [] },
-            to: IoRoom.ALL
-        });
 
         /* first the newly published version */
-        expect(mNotification.mock.calls[1][0]).toEqual({
-            event: IoEvent.CHANGED_STATE,
-            message: { state: EventState.PUBLISHED, ids: [event.id] },
-            to: IoRoom.ALL
-        });
-        /* second the previous original event */
-        expect(mNotification.mock.calls[2][0]).toEqual({
+        // expect(mNotification.mock.calls[1][0]).toEqual({
+        //     event: IoEvent.CHANGED_RECORD,
+        //     message: { type: RecordType.Event, record: {...prepareEvent(event), id:  createdAt: expect.any(String), updatedAt: expect.any(String)} },
+        //     to: IoRoom.ALL
+        // });
+        /**
+         * 0: event -> all
+         * 1: edit3 -> all
+         * 2: edit1 -> author
+         * 3: edit1 -> admin
+         * 4: edit2 -> author
+         * 5: edit2 -> admin
+         */
+        
+        /* first the newly published version */
+        expect(mNotification.mock.calls[0][0]).toEqual({
             event: IoEvent.CHANGED_RECORD,
-            message: { record: 'EVENT', id: edit3.id },
+            message: { type: RecordType.Event, record: prepareNotificationEvent({
+                ...updatedEvent,
+                publishedVersionIds: [edit3.id]
+            }) },
             to: IoRoom.ALL,
             toSelf: true
         });
+        /* second the previous original event */
+        expect(mNotification.mock.calls[1][0]).toEqual({
+            event: IoEvent.CHANGED_RECORD,
+            message: { type: RecordType.Event, record: prepareNotificationEvent(updatedEdit3) },
+            to: IoRoom.ALL,
+            toSelf: true
+        });
+
         /* then the refused's authors and to the admins...*/
         const adminNotification = mNotification.mock.calls
             .map((c) => c[0])
@@ -925,28 +979,30 @@ describe(`POST ${API_URL}/events/change_state`, () => {
         expect(authorNotification.length).toEqual(2);
 
         // event1
-        expect(authorNotification.find((n) => n?.message?.id === edit1.id)).toEqual({
+        expect({
             event: IoEvent.CHANGED_RECORD,
-            message: { record: 'EVENT', id: edit1.id },
+            message: { type: RecordType.Event, record: prepareNotificationEvent(updatedEdit1) },
             to: edit1.authorId,
             toSelf: true
-        });
-        expect(adminNotification.find((n) => n?.message?.id === edit1.id)).toEqual({
+        }).toEqual(
+            authorNotification.find((n) => n?.message?.record?.id === edit1.id)
+        );
+        expect(adminNotification.find((n) => n?.message?.record?.id === edit1.id)).toEqual({
             event: IoEvent.CHANGED_RECORD,
-            message: { record: 'EVENT', id: edit1.id },
+            message: { type: RecordType.Event, record: prepareNotificationEvent(updatedEdit1) },
             to: IoRoom.ADMIN,
             toSelf: true
         });
         // event2
-        expect(authorNotification.find((n) => n?.message?.id === edit2.id)).toEqual({
+        expect(authorNotification.find((n) => n?.message?.record?.id === edit2.id)).toEqual({
             event: IoEvent.CHANGED_RECORD,
-            message: { record: 'EVENT', id: edit2.id },
+            message: { type: RecordType.Event, record: prepareNotificationEvent(updatedEdit2) },
             to: edit2.authorId,
             toSelf: true
         });
-        expect(adminNotification.find((n) => n?.message?.id === edit2.id)).toEqual({
+        expect(adminNotification.find((n) => n?.message?.record?.id === edit2.id)).toEqual({
             event: IoEvent.CHANGED_RECORD,
-            message: { record: 'EVENT', id: edit2.id },
+            message: { type: RecordType.Event, record: prepareNotificationEvent(updatedEdit2) },
             to: IoRoom.ADMIN,
             toSelf: true
         });
@@ -1248,7 +1304,7 @@ describe(`POST ${API_URL}/events/import`, () => {
             expect(mNotification).toHaveBeenCalledTimes(1);
             expect(mNotification.mock.calls[0][0]).toEqual({
                 event: IoEvent.NEW_RECORD,
-                message: { record: 'JOB', id: job.id },
+                message: { type: RecordType.Job, record: prepareNotificationJob(result.body) },
                 to: admin.id
             });
 
@@ -1368,7 +1424,7 @@ describe(`POST ${API_URL}/events/import`, () => {
             expect(mNotification).toHaveBeenCalledTimes(1);
             expect(mNotification.mock.calls[0][0]).toEqual({
                 event: IoEvent.NEW_RECORD,
-                message: { record: 'JOB', id: result.body.id },
+                message: { type: RecordType.Job, record: prepareNotificationJob(result.body) },
                 to: admin.id
             });
 
@@ -1409,7 +1465,7 @@ describe(`POST ${API_URL}/events/import`, () => {
             expect(mNotification).toHaveBeenCalledTimes(1);
             expect(mNotification.mock.calls[0][0]).toEqual({
                 event: IoEvent.NEW_RECORD,
-                message: { record: 'JOB', id: job.id },
+                message: { type: RecordType.Job, record: prepareNotificationJob(result.body) },
                 to: admin.id
             });
 
@@ -1514,7 +1570,7 @@ describe(`POST ${API_URL}/events/import`, () => {
             expect(mNotification).toHaveBeenCalledTimes(1);
             expect(mNotification.mock.calls[0][0]).toEqual({
                 event: IoEvent.NEW_RECORD,
-                message: { record: 'JOB', id: job.id },
+                message: { type: RecordType.Job, record: prepareNotificationJob(result.body) },
                 to: user.id
             });
 
@@ -1863,7 +1919,7 @@ FAILED:
             expect(mNotification).toHaveBeenCalledTimes(1);
             expect(mNotification.mock.calls[0][0]).toEqual({
                 event: IoEvent.NEW_RECORD,
-                message: { record: 'JOB', id: result.body.id },
+                message: { type: RecordType.Job, record: prepareNotificationJob(result.body) },
                 to: admin.id
             });
 

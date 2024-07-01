@@ -1,10 +1,10 @@
 import type { EventGroup } from '@prisma/client';
 import { RequestHandler } from 'express';
-import { IoEvent } from '../routes/socketEventTypes';
+import { IoEvent, RecordType } from '../routes/socketEventTypes';
 import UserEventGroups from '../models/eventGroups';
 import { ApiEventGroup } from '../models/eventGroup.helpers';
 
-const NAME = 'EVENT_GROUP';
+const NAME = RecordType.EventGroup;
 
 export const allOfUser: RequestHandler = async (req, res, next) => {
     try {
@@ -34,7 +34,7 @@ export const create: RequestHandler<any, any, EventGroup & { event_ids: string[]
 
         res.notifications = [
             {
-                message: { record: NAME, id: model.id },
+                message: { type: NAME, record: model },
                 event: IoEvent.NEW_RECORD,
                 to: req.user!.id
             }
@@ -56,7 +56,7 @@ export const update: RequestHandler<{ id: string }, any, { data: ApiEventGroup }
 
         res.notifications = model.userIds.map((uId) => {
             return {
-                message: { record: NAME, id: model.id },
+                message: { type: NAME, record: model },
                 event: IoEvent.CHANGED_RECORD,
                 to: uId
             };
@@ -72,7 +72,7 @@ export const destroy: RequestHandler<{ id: string }, any, any> = async (req, res
         const model = await UserEventGroups.destroy(req.user!, req.params.id);
         res.notifications = [
             {
-                message: { record: NAME, id: model.id },
+                message: { type: NAME, id: model.id },
                 event: IoEvent.DELETED_RECORD,
                 to: req.user!.id
             }
@@ -88,7 +88,7 @@ export const clone: RequestHandler<{ id: string }, any, any> = async (req, res, 
         const newGroup = await UserEventGroups.cloneModel(req.user!, req.params.id);
         res.notifications = [
             {
-                message: { record: NAME, id: newGroup.id },
+                message: { type: NAME, record: newGroup },
                 event: IoEvent.NEW_RECORD,
                 to: req.user!.id
             }

@@ -2,7 +2,7 @@ import request from 'supertest';
 import app, { API_URL } from '../../src/app';
 import prisma from '../../src/prisma';
 import { generateUser } from '../factories/user';
-import { JobState, JobType, Role, Semester } from '@prisma/client';
+import { Job, JobState, JobType, Role, Semester } from '@prisma/client';
 import stubs from './stubs/semesters.json';
 import _ from 'lodash';
 import { notify } from '../../src/middlewares/notify.nop';
@@ -10,6 +10,7 @@ import { IoEvent } from '../../src/routes/socketEventTypes';
 import { faker } from '@faker-js/faker';
 import Jobs from '../../src/models/jobs';
 import { IoRoom } from '../../src/routes/socketEvents';
+import { prepareRecord } from '../helpers/prepareRecord';
 
 jest.mock('../../src/services/fetchUntis');
 jest.mock('../../src/middlewares/notify.nop');
@@ -89,7 +90,7 @@ describe(`PUT ${API_URL}/semesters/:id`, () => {
         expect(mNotification).toHaveBeenCalledTimes(1);
         expect(mNotification.mock.calls[0][0]).toEqual({
             event: IoEvent.CHANGED_RECORD,
-            message: { record: 'SEMESTER', id: semester!.id },
+            message: { type: 'SEMESTER', record: prepareRecord(result.body as Semester, {dateFields: ['createdAt', 'updatedAt', 'start', 'end', 'untisSyncDate']}) },
             to: 'all'
         });
     });
@@ -177,7 +178,7 @@ describe(`PUT ${API_URL}/semesters/:id`, () => {
         expect(mNotification).toHaveBeenCalledTimes(1);
         expect(mNotification.mock.calls[0][0]).toEqual({
             event: IoEvent.CHANGED_RECORD,
-            message: { record: 'SEMESTER', id: semester!.id },
+            message: { type: 'SEMESTER', record: prepareRecord(result.body as Semester, {dateFields: ['createdAt', 'updatedAt', 'start', 'end', 'untisSyncDate']}) },
             to: 'all'
         });
     });
@@ -211,7 +212,7 @@ describe(`POST ${API_URL}/semesters`, () => {
         expect(mNotification).toHaveBeenCalledTimes(1);
         expect(mNotification.mock.calls[0][0]).toEqual({
             event: IoEvent.NEW_RECORD,
-            message: { record: 'SEMESTER', id: result.body.id },
+            message: { type: 'SEMESTER', record: prepareRecord(result.body as Semester, {dateFields: ['createdAt', 'updatedAt', 'start', 'end', 'untisSyncDate']}) },
             to: 'all'
         });
     });
@@ -242,7 +243,7 @@ describe(`DELETE ${API_URL}/semesters/:id`, () => {
         expect(mNotification).toHaveBeenCalledTimes(1);
         expect(mNotification.mock.calls[0][0]).toEqual({
             event: IoEvent.DELETED_RECORD,
-            message: { record: 'SEMESTER', id: semester!.id },
+            message: { type: 'SEMESTER', id: semester!.id },
             to: 'all'
         });
     });
@@ -273,7 +274,7 @@ describe(`POST ${API_URL}/semesters/:id/sync_untis`, () => {
         expect(mNotification).toHaveBeenCalledTimes(1);
         expect(mNotification.mock.calls[0][0]).toEqual({
             event: IoEvent.NEW_RECORD,
-            message: { record: 'JOB', id: result.body.id },
+            message: { type: 'JOB', record: prepareRecord(result.body as Job, {dateFields: ['updatedAt', 'createdAt', 'syncDate']}) },
             to: IoRoom.ADMIN
         });
 

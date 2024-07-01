@@ -418,10 +418,16 @@ function Events(db: PrismaClient['event']) {
                             where: { id: parent.id },
                             include: { departments: true, children: true }
                         });
+                        const refused = await db.findMany({
+                            where: {
+                                id: { in: siblings.map((s) => s.id) }
+                            },
+                            include: { departments: true, children: true }
+                        });
                         return {
                             event: prepareEvent(updatedCurrent!),
                             previous: prepareEvent(oldCurrent!),
-                            refused: siblings.map(prepareEvent)
+                            refused: refused.map(prepareEvent)
                         };
                     } else if (EventState.PUBLISHED === requested || EventState.REFUSED === requested) {
                         const model = await updater();

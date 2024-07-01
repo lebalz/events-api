@@ -1,4 +1,4 @@
-import { JobState, Prisma, PrismaClient, Role, Semester, User } from '@prisma/client';
+import { Job, JobState, Prisma, PrismaClient, Role, Semester, User } from '@prisma/client';
 import prisma from '../prisma';
 import { HTTP400Error, HTTP403Error, HTTP404Error } from '../utils/errors/Errors';
 import { createDataExtractor } from '../controllers/helpers';
@@ -106,7 +106,7 @@ function Semesters(db: PrismaClient['semester']) {
                 where: { id: id }
             });
         },
-        async sync(actor: User, id: string, onComplete?: (jobId: string) => void) {
+        async sync(actor: User, id: string, onComplete?: (job: Job) => void) {
             const semester = await this.findModel(id);
             Logger.info(semester.untisSyncDate);
             const syncJob = await Jobs._createSyncJob(actor, semester);
@@ -123,9 +123,9 @@ function Semesters(db: PrismaClient['semester']) {
                         JSON.stringify(error, Object.getOwnPropertyNames(error))
                     );
                 })
-                .finally(() => {
+                .then((job) => {
                     if (onComplete) {
-                        onComplete(syncJob.id);
+                        onComplete(job);
                     }
                 });
             return syncJob;

@@ -8,6 +8,7 @@ import _ from 'lodash';
 import { notify } from '../../src/middlewares/notify.nop';
 import { IoEvent } from '../../src/routes/socketEventTypes';
 import { faker } from '@faker-js/faker';
+import { prepareRecord } from '../helpers/prepareRecord';
 
 jest.mock('../../src/middlewares/notify.nop');
 const mNotification = <jest.Mock<typeof notify>>notify;
@@ -95,7 +96,7 @@ describe(`PUT ${API_URL}/departments/:id`, () => {
         expect(mNotification).toHaveBeenCalledTimes(1);
         expect(mNotification.mock.calls[0][0]).toEqual({
             event: IoEvent.CHANGED_RECORD,
-            message: { record: 'DEPARTMENT', id: dep!.id },
+            message: { type: 'DEPARTMENT', record: prepareRecord(result.body) },
             to: 'all'
         });
     });
@@ -168,7 +169,7 @@ describe(`PUT ${API_URL}/departments/:id`, () => {
         expect(mNotification).toHaveBeenCalledTimes(1);
         expect(mNotification.mock.calls[0][0]).toEqual({
             event: IoEvent.CHANGED_RECORD,
-            message: { record: 'DEPARTMENT', id: fra!.id },
+            message: { type: 'DEPARTMENT', record: prepareRecord(result.body) },
             to: 'all'
         });
     });
@@ -197,7 +198,7 @@ describe(`POST ${API_URL}/departments`, () => {
         expect(mNotification).toHaveBeenCalledTimes(1);
         expect(mNotification.mock.calls[0][0]).toEqual({
             event: IoEvent.NEW_RECORD,
-            message: { record: 'DEPARTMENT', id: result.body.id },
+            message: { type: 'DEPARTMENT', record: prepareRecord(result.body) },
             to: 'all'
         });
     });
@@ -228,7 +229,7 @@ describe(`DELETE ${API_URL}/departments/:id`, () => {
         expect(mNotification).toHaveBeenCalledTimes(1);
         expect(mNotification.mock.calls[0][0]).toEqual({
             event: IoEvent.DELETED_RECORD,
-            message: { record: 'DEPARTMENT', id: dep!.id },
+            message: { type: 'DEPARTMENT', id: dep!.id },
             to: 'all'
         });
     });

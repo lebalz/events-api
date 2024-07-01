@@ -75,7 +75,7 @@ server.listen(PORT || 3002, () => {
     Logger.info('Press Ctrl+C to quit.');
 });
 
-if (process.env.NODE_ENV !== 'test') {
+if (process.env.NODE_ENV === 'production' || process.env.BREE) {
     const bree = new Bree({
         logger: Logger,
         root: path.join(__dirname, 'jobs'),
@@ -103,4 +103,10 @@ if (process.env.NODE_ENV !== 'test') {
     });
 
     bree.start();
+} else if (process.env.NODE_ENV !== 'test') {
+    Logger.info(`
+┌─────────────────────────────────────────────────────────────────┐
+│  Bree not started in development mode (env BREE=1 was not set)  │
+└─────────────────────────────────────────────────────────────────┘
+    `);
 }

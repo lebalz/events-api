@@ -1,10 +1,10 @@
 import type { RegistrationPeriod, Semester } from '@prisma/client';
 import { RequestHandler } from 'express';
-import { IoEvent } from '../routes/socketEventTypes';
+import { IoEvent, RecordType } from '../routes/socketEventTypes';
 import RegistrationPeriods from '../models/registrationPeriods';
 import { IoRoom } from '../routes/socketEvents';
 
-const NAME = 'REGISTRATION_PERIOD';
+const NAME = RecordType.RegistrationPeriod;
 
 export const all: RequestHandler = async (req, res, next) => {
     try {
@@ -29,7 +29,7 @@ export const create: RequestHandler<any, any, RegistrationPeriod> = async (req, 
         const model = await RegistrationPeriods.createModel(req.body);
         res.notifications = [
             {
-                message: { record: NAME, id: model.id },
+                message: { type: NAME, record: model },
                 event: IoEvent.NEW_RECORD,
                 to: IoRoom.ALL
             }
@@ -46,7 +46,7 @@ export const update: RequestHandler<{ id: string }, any, { data: Semester }> = a
 
         res.notifications = [
             {
-                message: { record: NAME, id: model.id },
+                message: { type: NAME, record: model },
                 event: IoEvent.CHANGED_RECORD,
                 to: IoRoom.ALL
             }
@@ -69,7 +69,7 @@ export const destroy: RequestHandler<{ id: string }, any, any> = async (req, res
         const model = await RegistrationPeriods.destroy(req.user!, req.params.id);
         res.notifications = [
             {
-                message: { record: NAME, id: model.id },
+                message: { type: NAME, id: model.id },
                 event: IoEvent.DELETED_RECORD,
                 to: IoRoom.ALL
             }

@@ -188,7 +188,7 @@ Table view__affected_by_events {
   teacherId Int [not null]
   classId Int [not null]
   className String [not null]
-  lessonId String [not null]
+  lessonId Int [not null]
   lessonSubject String [not null]
   eventAudience String [not null]
   affectedDepartmentId String

@@ -1,11 +1,11 @@
 import { Role, User } from '@prisma/client';
 import { RequestHandler } from 'express';
-import { IoEvent } from '../routes/socketEventTypes';
+import { IoEvent, RecordType } from '../routes/socketEventTypes';
 import { IoRoom } from '../routes/socketEvents';
 import Users from '../models/users';
 import Events from '../models/events';
 
-const NAME = 'USER';
+const NAME = RecordType.User;
 
 export const user: RequestHandler = async (req, res) => {
     res.json(req.user);
@@ -26,7 +26,7 @@ export const update: RequestHandler<{ id: string }, any, { data: User }> = async
 
         res.notifications = [
             {
-                message: { record: NAME, id: model.id },
+                message: { type: NAME, record: model },
                 event: IoEvent.CHANGED_RECORD,
                 to: req.user!.id
             }
@@ -66,7 +66,7 @@ export const linkToUntis: RequestHandler<{ id: string }, any, { data: { untisId:
 
         res.notifications = [
             {
-                message: { record: NAME, id: user.id },
+                message: { type: NAME, record: user },
                 event: IoEvent.CHANGED_RECORD,
                 to: IoRoom.ALL
             }
@@ -86,7 +86,7 @@ export const setRole: RequestHandler<{ id: string }, any, { data: { role: Role }
         const user = await Users.setRole(req.user!, req.params.id, req.body.data.role);
         res.notifications = [
             {
-                message: { record: NAME, id: user.id },
+                message: { type: NAME, record: user },
                 event: IoEvent.CHANGED_RECORD,
                 to: user.id,
                 toSelf: false
@@ -103,7 +103,7 @@ export const createIcs: RequestHandler<{ id: string }, any, any> = async (req, r
         const user = await Users.createIcs(req.user!, req.params.id);
         res.notifications = [
             {
-                message: { record: NAME, id: user.id },
+                message: { type: NAME, record: user },
                 event: IoEvent.CHANGED_RECORD,
                 to: user.id,
                 toSelf: false

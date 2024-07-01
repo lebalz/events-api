@@ -1,12 +1,12 @@
 import type { Department } from '@prisma/client';
 import { RequestHandler } from 'express';
 import prisma from '../prisma';
-import { IoEvent } from '../routes/socketEventTypes';
+import { IoEvent, RecordType } from '../routes/socketEventTypes';
 import Departments from '../models/departments';
 import { createDataExtractor } from './helpers';
 import { IoRoom } from '../routes/socketEvents';
 
-const NAME = 'DEPARTMENT';
+const NAME = RecordType.Department;
 
 export const all: RequestHandler = async (req, res, next) => {
     try {
@@ -31,7 +31,7 @@ export const update: RequestHandler<{ id: string }, any, { data: Department }> =
         const model = await Departments.updateModel(req.user!, req.params.id, req.body.data);
         res.notifications = [
             {
-                message: { record: NAME, id: model.id },
+                message: { type: NAME, record: model },
                 event: IoEvent.CHANGED_RECORD,
                 to: IoRoom.ALL
             }
@@ -47,7 +47,7 @@ export const create: RequestHandler<any, any, Department> = async (req, res, nex
         const model = await Departments.createModel(req.user!, req.body);
         res.notifications = [
             {
-                message: { record: NAME, id: model.id },
+                message: { type: NAME, record: model },
                 event: IoEvent.NEW_RECORD,
                 to: IoRoom.ALL
             }
@@ -63,7 +63,7 @@ export const destroy: RequestHandler<{ id: string }, any, any> = async (req, res
         const model = await Departments.destroy(req.user!, req.params.id);
         res.notifications = [
             {
-                message: { record: NAME, id: model.id },
+                message: { type: NAME, id: model.id },
                 event: IoEvent.DELETED_RECORD,
                 to: IoRoom.ALL
             }

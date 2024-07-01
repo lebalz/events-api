@@ -1,6 +1,6 @@
 import { RequestHandler } from 'express';
 import prisma from '../prisma';
-import { IoEvent } from '../routes/socketEventTypes';
+import { IoEvent, RecordType } from '../routes/socketEventTypes';
 import { notifyChangedRecord } from '../routes/notify';
 import type { Event, Prisma } from '@prisma/client';
 import { EventState, Role } from '@prisma/client';
@@ -11,7 +11,7 @@ import { ImportType } from '../services/importEvents';
 import { notifyOnDelete, notifyOnUpdate } from '../services/notifications/notifyUsers';
 import { rmUndefined } from '../utils/filterHelpers';
 
-const NAME = 'EVENT';
+const NAME = RecordType.Event;
 
 export const find: RequestHandler = async (req, res, next) => {
     try {
@@ -31,7 +31,7 @@ export const update: RequestHandler<
         const model = await Events.updateModel(req.user!, req.params.id, req.body.data);
         res.notifications = [
             {
-                message: { record: NAME, id: model.id },
+                message: { type: NAME, record: model },
                 event: IoEvent.CHANGED_RECORD,
                 to: model.state === EventState.PUBLISHED ? IoRoom.ALL : req.user!.id
             }
@@ -54,7 +54,7 @@ export const updateMeta: RequestHandler<{ id: string }, any, { data: any }> = as
         const model = await Events.updateMeta(req.user!, req.params.id, req.body.data);
         res.notifications = [
             {
-                message: { record: NAME, id: model.id },
+                message: { type: NAME, record: model },
                 event: IoEvent.CHANGED_RECORD,
                 to: model.state === EventState.PUBLISHED ? IoRoom.ALL : req.user!.id
             }
@@ -84,62 +84,10 @@ export const setState: RequestHandler<
          *
          */
 
-        const newStateIds = events.map((e) => e.event.id);
-        const updated = events.flatMap((e) => rmUndefined([e.previous, ...e.refused]));
-        const audience = new Set<IoRoom | string>(events.map((e) => e.event.authorId));
-        const affectedSemesterIds = await prisma.semester.findMany({
-            where: {
-                OR: updated
-                    .map((e) => {
-                        return [
-                            { start: { gte: e.start, lte: e.end } },
-                            { end: { gte: e.start, lte: e.end } },
-                            {
-                                AND: {
-                                    start: { lte: e.start },
-                                    end: { gte: e.end }
-                                }
-                            }
-                        ];
-                    })
-                    .flat()
-            },
-            select: {
-                id: true
-            },
-            distinct: ['id']
-        });
+        const updated = events.flatMap((e) => rmUndefined([e.event, e.previous, ...e.refused]));
 
         res.notifications = [];
-        /** NOTIFICATIONS */
-        switch (state) {
-            /** DRAFT is not possible, since DRAFT -> DRAFT is not allowed */
-            case EventState.REVIEW:
-            case EventState.REFUSED:
-                audience.add(IoRoom.ADMIN);
-                break;
-            case EventState.PUBLISHED:
-                audience.clear();
-                audience.add(IoRoom.ALL);
-                if (updated.length > 0) {
-                    res.notifications.push({
-                        message: {
-                            record: 'SEMESTER',
-                            semesterIds: affectedSemesterIds.map((s) => s.id)
-                        },
-                        event: IoEvent.RELOAD_AFFECTING_EVENTS,
-                        to: IoRoom.ALL
-                    });
-                }
-                break;
-        }
-        [...audience].forEach((to) => {
-            res.notifications!.push({
-                message: { state: state, ids: newStateIds },
-                event: IoEvent.CHANGED_STATE,
-                to: to
-            });
-        });
+
         updated.forEach((event) => {
             const audience: (string | IoRoom)[] = [];
             switch (event.state) {
@@ -156,7 +104,7 @@ export const setState: RequestHandler<
             audience.forEach((to) => {
                 res.notifications!.push({
                     event: IoEvent.CHANGED_RECORD,
-                    message: { record: 'EVENT', id: event.id },
+                    message: { type: NAME, record: event },
                     to: to,
                     toSelf: true
                 });
@@ -174,7 +122,7 @@ export const destroy: RequestHandler = async (req, res, next) => {
         if (event.state === EventState.DRAFT) {
             res.notifications = [
                 {
-                    message: { record: NAME, id: event.id },
+                    message: { type: NAME, id: event.id },
                     event: IoEvent.DELETED_RECORD,
                     to: event.authorId
                 }
@@ -183,7 +131,7 @@ export const destroy: RequestHandler = async (req, res, next) => {
             notifyOnDelete(event, req.user!);
             res.notifications = [
                 {
-                    message: { record: NAME, id: event.id },
+                    message: { type: NAME, record: event },
                     event: IoEvent.CHANGED_RECORD,
                     to: IoRoom.ALL
                 }
@@ -219,7 +167,7 @@ export const create: RequestHandler<any, any, Event> = async (req, res, next) =>
 
         res.notifications = [
             {
-                message: { record: NAME, id: event.id },
+                message: { type: NAME, record: event },
                 event: IoEvent.NEW_RECORD,
                 to: req.user!.id
             }
@@ -237,7 +185,7 @@ export const clone: RequestHandler<{ id: string }, any, any> = async (req, res, 
         const newEvent = await Events.cloneModel(req.user!, eid);
         res.notifications = [
             {
-                message: { record: NAME, id: newEvent.id },
+                message: { type: NAME, record: newEvent},
                 event: IoEvent.NEW_RECORD,
                 to: req.user!.id
             }
@@ -264,12 +212,12 @@ export const importEvents: RequestHandler<any, any, any, { type: ImportType }> =
         );
 
         importer.finally(() => {
-            notifyChangedRecord(req.io, { record: 'JOB', id: job.id });
+            notifyChangedRecord(req.io, { type: RecordType.Job, record: job });
         });
 
         res.notifications = [
             {
-                message: { record: 'JOB', id: job.id },
+                message: { type: RecordType.Job, record: job },
                 event: IoEvent.NEW_RECORD,
                 to: req.user!.id
             }

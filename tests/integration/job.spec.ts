@@ -4,11 +4,12 @@ import prisma from '../../src/prisma';
 import { generateUser } from '../factories/user';
 import { generateImportJob, generateSyncJob, jobSequence } from '../factories/job';
 import { generateSemester } from '../factories/semester';
-import { EventState, Job } from '@prisma/client';
+import { Event, EventState, Job, Prisma } from '@prisma/client';
 import { eventSequence } from '../factories/event';
 import { notify } from '../../src/middlewares/notify.nop';
 import { IoEvent } from '../../src/routes/socketEventTypes';
 import { IoRoom } from '../../src/routes/socketEvents';
+import { prepareRecord } from '../helpers/prepareRecord';
 
 jest.mock('../../src/middlewares/notify.nop');
 const mNotification = <jest.Mock<typeof notify>>notify;
@@ -155,7 +156,7 @@ describe(`PUT ${API_URL}/jobs/:id`, () => {
         expect(mNotification).toHaveBeenCalledTimes(1);
         expect(mNotification.mock.calls[0][0]).toEqual({
             event: IoEvent.CHANGED_RECORD,
-            message: { record: 'JOB', id: job.id },
+            message: { type: 'JOB', record: prepareRecord(result.body) },
             to: user.id
         });
     });
@@ -184,7 +185,7 @@ describe(`PUT ${API_URL}/jobs/:id`, () => {
         expect(mNotification).toHaveBeenCalledTimes(1);
         expect(mNotification.mock.calls[0][0]).toEqual({
             event: IoEvent.CHANGED_RECORD,
-            message: { record: 'JOB', id: job.id },
+            message: { type: 'JOB', record: prepareRecord(result.body) },
             to: admin.id
         });
     });
@@ -207,7 +208,18 @@ describe(`PUT ${API_URL}/jobs/:id`, () => {
         expect(mNotification).toHaveBeenCalledTimes(1);
         expect(mNotification.mock.calls[0][0]).toEqual({
             event: IoEvent.CHANGED_RECORD,
-            message: { record: 'JOB', id: job.id },
+            message: { 
+                type: 'JOB', 
+                record: prepareRecord(
+                    result.body as Job & { events: Event[] },
+                    {
+                        fn: (job) => ({
+                            ...job,
+                            events: job.events.map((e) => prepareRecord(e, {dateFields: ['start', 'end', 'createdAt', 'updatedAt']}))
+                        })
+                    }
+                )
+            },
             to: IoRoom.ALL
         });
     });
@@ -231,7 +243,18 @@ describe(`PUT ${API_URL}/jobs/:id`, () => {
             expect(mNotification).toHaveBeenCalledTimes(1);
             expect(mNotification.mock.calls[0][0]).toEqual({
                 event: IoEvent.CHANGED_RECORD,
-                message: { record: 'JOB', id: job.id },
+                message: { 
+                    type: 'JOB',
+                    record: prepareRecord(
+                        result.body as Job & { events: Event[] },
+                        {
+                            fn: (job) => ({
+                                ...job,
+                                events: job.events.map((e) => prepareRecord(e, {dateFields: ['start', 'end', 'createdAt', 'updatedAt']}))
+                            })
+                        }
+                    )
+                },
                 to: IoRoom.ADMIN
             });
         });
@@ -255,7 +278,12 @@ describe(`PUT ${API_URL}/jobs/:id`, () => {
         expect(mNotification).toHaveBeenCalledTimes(1);
         expect(mNotification.mock.calls[0][0]).toEqual({
             event: IoEvent.CHANGED_RECORD,
-            message: { record: 'JOB', id: job.id },
+            message: { type: 'JOB', record: prepareRecord(result.body as Job & { events: Event[]}, {
+                fn: (job) => ({
+                    ...job,
+                    events: job.events.map((e) => prepareRecord(e, {dateFields: ['start', 'end', 'createdAt', 'updatedAt']}))
+                })
+            }) },
             to: user.id
         });
     });
@@ -290,7 +318,7 @@ describe(`PUT ${API_URL}/jobs/:id`, () => {
         expect(mNotification).toHaveBeenCalledTimes(1);
         expect(mNotification.mock.calls[0][0]).toEqual({
             event: IoEvent.CHANGED_RECORD,
-            message: { record: 'JOB', id: job.id },
+            message: { type: 'JOB', record: prepareRecord(result.body) },
             to: user.id
         });
     });
@@ -326,7 +354,7 @@ describe(`PUT ${API_URL}/jobs/:id`, () => {
         expect(mNotification).toHaveBeenCalledTimes(1);
         expect(mNotification.mock.calls[0][0]).toEqual({
             event: IoEvent.CHANGED_RECORD,
-            message: { record: 'JOB', id: job.id },
+            message: { type: 'JOB', record: prepareRecord(result.body) },
             to: admin.id
         });
     });
@@ -356,7 +384,7 @@ describe(`DELETE ${API_URL}/jobs/:id`, () => {
         expect(mNotification).toHaveBeenCalledTimes(1);
         expect(mNotification.mock.calls[0][0]).toEqual({
             event: IoEvent.DELETED_RECORD,
-            message: { record: 'JOB', id: job.id },
+            message: { type: 'JOB', id: job.id },
             to: user.id
         });
     });
@@ -383,7 +411,7 @@ describe(`DELETE ${API_URL}/jobs/:id`, () => {
         expect(mNotification).toHaveBeenCalledTimes(1);
         expect(mNotification.mock.calls[0][0]).toEqual({
             event: IoEvent.DELETED_RECORD,
-            message: { record: 'JOB', id: job.id },
+            message: { type: 'JOB', id: job.id },
             to: user.id
         });
 
@@ -422,7 +450,7 @@ describe(`DELETE ${API_URL}/jobs/:id`, () => {
         expect(mNotification).toHaveBeenCalledTimes(1);
         expect(mNotification.mock.calls[0][0]).toEqual({
             event: IoEvent.DELETED_RECORD,
-            message: { record: 'JOB', id: job.id },
+            message: { type: 'JOB', id: job.id },
             to: IoRoom.ALL
         });
 
@@ -444,7 +472,7 @@ describe(`DELETE ${API_URL}/jobs/:id`, () => {
         expect(mNotification).toHaveBeenCalledTimes(1);
         expect(mNotification.mock.calls[0][0]).toEqual({
             event: IoEvent.DELETED_RECORD,
-            message: { record: 'JOB', id: job.id },
+            message: { type: 'JOB', id: job.id },
             to: user.id
         });
         mNotification.mockReset();

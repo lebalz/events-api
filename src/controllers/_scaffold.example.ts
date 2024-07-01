@@ -1,11 +1,11 @@
 import { Semester } from '@prisma/client';
 import { RequestHandler } from 'express';
 import prisma from '../prisma';
-import { IoEvent } from '../routes/socketEventTypes';
+import { IoEvent, RecordType } from '../routes/socketEventTypes';
 import { createDataExtractor } from './helpers';
 import { IoRoom } from '../routes/socketEvents';
 
-const NAME = 'SEMESTER';
+const NAME = RecordType.Semester;
 const getData = createDataExtractor<Semester>(['name', 'start', 'end']);
 const db = prisma.semester;
 
@@ -43,7 +43,7 @@ export const create: RequestHandler<any, any, Semester> = async (req, res, next)
 
         res.notifications = [
             {
-                message: { record: NAME, id: model.id },
+                message: { type: NAME, record: model },
                 event: IoEvent.NEW_RECORD,
                 to: IoRoom.ALL
             }
@@ -65,7 +65,7 @@ export const update: RequestHandler<{ id: string }, any, { data: Semester }> = a
 
         res.notifications = [
             {
-                message: { record: NAME, id: model.id },
+                message: { type: NAME, record: model },
                 event: IoEvent.CHANGED_RECORD,
                 to: IoRoom.ALL
             }
@@ -85,7 +85,7 @@ export const destroy: RequestHandler<{ id: string }, any, any> = async (req, res
         });
         res.notifications = [
             {
-                message: { record: NAME, id: model.id },
+                message: { type: NAME, id: model.id },
                 event: IoEvent.DELETED_RECORD,
                 to: IoRoom.ALL
             }

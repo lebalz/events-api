@@ -1,12 +1,12 @@
 import { Event, EventState, type Job } from '@prisma/client';
 import { RequestHandler } from 'express';
-import { IoEvent } from '../routes/socketEventTypes';
+import { IoEvent, RecordType } from '../routes/socketEventTypes';
 import Jobs from '../models/jobs';
 import { HTTP404Error } from '../utils/errors/Errors';
 import { IoRoom } from '../routes/socketEvents';
 import { ApiEvent } from '../models/event.helpers';
 
-const NAME = 'JOB';
+const NAME = RecordType.Job;
 
 export const find: RequestHandler = async (req, res, next) => {
     try {
@@ -40,7 +40,7 @@ export const update: RequestHandler<{ id: string }, any, { data: Job }> = async 
         const model = await Jobs.updateModel(req.user!, req.params.id, req.body.data);
         res.notifications = [
             {
-                message: { record: NAME, id: model.id },
+                message: { type: NAME, record: model },
                 event: IoEvent.CHANGED_RECORD,
                 to: getAudience(model)
             }
@@ -57,7 +57,7 @@ export const destroy: RequestHandler = async (req, res, next) => {
             const job = await Jobs.destroy(req.user!, req.params.id);
             res.notifications = [
                 {
-                    message: { record: NAME, id: job.id },
+                    message: { type: NAME, id: job.id },
                     event: IoEvent.DELETED_RECORD,
                     to: getAudience(job)
                 }

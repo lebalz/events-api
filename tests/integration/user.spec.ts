@@ -32,6 +32,7 @@ import { fetchUntis } from '../../src/services/__mocks__/fetchUntis';
 import { UntisDataProps, generateUntisData } from '../factories/untisData';
 import _ from 'lodash';
 import { withoutDTSTAMP } from '../unit/__tests__/services.test';
+import { prepareRecord } from '../helpers/prepareRecord';
 
 jest.mock('../../src/services/fetchUntis');
 jest.mock('../../src/middlewares/notify.nop');
@@ -261,7 +262,7 @@ describe(`PUT ${API_URL}/users/:id/link_to_untis`, () => {
         expect(mNotification).toHaveBeenCalledTimes(1);
         expect(mNotification.mock.calls[0][0]).toEqual({
             event: IoEvent.CHANGED_RECORD,
-            message: { record: 'USER', id: user.id },
+            message: { type: 'USER', record: prepareRecord(result.body) },
             to: IoRoom.ALL
         });
     });
@@ -324,7 +325,7 @@ describe(`PUT ${API_URL}/users/:id/link_to_untis`, () => {
         expect(mNotification).toHaveBeenCalledTimes(1);
         expect(mNotification.mock.calls[0][0]).toEqual({
             event: IoEvent.CHANGED_RECORD,
-            message: { record: 'USER', id: user.id },
+            message: { type: 'USER', record: prepareRecord(result.body) },
             to: IoRoom.ALL
         });
     });
@@ -437,7 +438,7 @@ describe(`POST ${API_URL}/users/:id/create_ics`, () => {
         expect(mNotification).toHaveBeenCalledTimes(1);
         expect(mNotification.mock.calls[0][0]).toEqual({
             event: IoEvent.CHANGED_RECORD,
-            message: { record: 'USER', id: user.id },
+            message: { type: 'USER', record: prepareRecord(result.body) },
             to: user.id,
             toSelf: false
         });
@@ -473,7 +474,7 @@ describe(`POST ${API_URL}/users/:id/set_role`, () => {
         expect(mNotification).toHaveBeenCalledTimes(1);
         expect(mNotification.mock.calls[0][0]).toEqual({
             event: IoEvent.CHANGED_RECORD,
-            message: { record: 'USER', id: admin.id },
+            message: { type: 'USER', record: prepareRecord(result.body) },
             to: admin.id,
             toSelf: false
         });
@@ -498,7 +499,7 @@ describe(`POST ${API_URL}/users/:id/set_role`, () => {
         expect(mNotification).toHaveBeenCalledTimes(1);
         expect(mNotification.mock.calls[0][0]).toEqual({
             event: IoEvent.CHANGED_RECORD,
-            message: { record: 'USER', id: user.id },
+            message: { type: 'USER', record: prepareRecord(result.body) },
             to: user.id,
             toSelf: false
         });
@@ -523,7 +524,7 @@ describe(`POST ${API_URL}/users/:id/set_role`, () => {
         expect(mNotification).toHaveBeenCalledTimes(1);
         expect(mNotification.mock.calls[0][0]).toEqual({
             event: IoEvent.CHANGED_RECORD,
-            message: { record: 'USER', id: user.id },
+            message: { type: 'USER', record: prepareRecord(result.body) },
             to: user.id,
             toSelf: false
         });

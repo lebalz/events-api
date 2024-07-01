@@ -259,7 +259,7 @@ view view_AffectedByEvents {
 
     classId  Int @map("c_id") 
     className    String @map("c_name") 
-    lessonId  String @map("l_id") 
+    lessonId  Int @map("l_id") 
     lessonSubject String @map("l_subject") 
     eventAudience   String @map("e_audience") 
 

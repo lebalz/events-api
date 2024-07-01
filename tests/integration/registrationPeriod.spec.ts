@@ -10,6 +10,7 @@ import { faker } from '@faker-js/faker';
 import { prepareRegistrationPeriod as apiPreparedRP } from '../../src/models/registrationPeriods';
 import { generateDepartment } from '../factories/department';
 import { generateRegistrationPeriod } from '../factories/registrationPeriod';
+import { prepareRecord } from '../helpers/prepareRecord';
 
 jest.mock('../../src/middlewares/notify.nop');
 const mNotification = <jest.Mock<typeof notify>>notify;
@@ -105,7 +106,7 @@ describe(`PUT ${API_URL}/registration_periods/:id`, () => {
         expect(mNotification).toHaveBeenCalledTimes(1);
         expect(mNotification.mock.calls[0][0]).toEqual({
             event: IoEvent.CHANGED_RECORD,
-            message: { record: 'REGISTRATION_PERIOD', id: regPeriod!.id },
+            message: { type: 'REGISTRATION_PERIOD', record: prepareRecord(result.body, {dateFields: ['end', 'start', 'eventRangeEnd', 'eventRangeStart', 'createdAt', 'updatedAt']}) },
             to: 'all'
         });
     });
@@ -127,7 +128,7 @@ describe(`PUT ${API_URL}/registration_periods/:id`, () => {
         expect(mNotification).toHaveBeenCalledTimes(1);
         expect(mNotification.mock.calls[0][0]).toEqual({
             event: IoEvent.CHANGED_RECORD,
-            message: { record: 'REGISTRATION_PERIOD', id: regPeriod!.id },
+            message: { type: 'REGISTRATION_PERIOD', record: prepareRecord(result.body, {dateFields: ['end', 'start', 'eventRangeEnd', 'eventRangeStart', 'createdAt', 'updatedAt']}) },
             to: 'all'
         });
     });
@@ -181,7 +182,7 @@ describe(`POST ${API_URL}/registration_periods`, () => {
         expect(mNotification).toHaveBeenCalledTimes(1);
         expect(mNotification.mock.calls[0][0]).toEqual({
             event: IoEvent.NEW_RECORD,
-            message: { record: 'REGISTRATION_PERIOD', id: result.body.id },
+            message: { type: 'REGISTRATION_PERIOD', record: prepareRecord(result.body as RegistrationPeriod, {dateFields: ['end', 'start', 'eventRangeEnd', 'eventRangeStart', 'createdAt', 'updatedAt']}) },
             to: 'all'
         });
     });
@@ -212,7 +213,7 @@ describe(`DELETE ${API_URL}/registration_periods/:id`, () => {
         expect(mNotification).toHaveBeenCalledTimes(1);
         expect(mNotification.mock.calls[0][0]).toEqual({
             event: IoEvent.DELETED_RECORD,
-            message: { record: 'REGISTRATION_PERIOD', id: regPeriod!.id },
+            message: { type: 'REGISTRATION_PERIOD', id: regPeriod!.id },
             to: 'all'
         });
     });

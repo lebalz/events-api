@@ -1,11 +1,11 @@
-import { Semester } from '@prisma/client';
+import { Job, Semester } from '@prisma/client';
 import { RequestHandler } from 'express';
-import { IoEvent } from '../routes/socketEventTypes';
+import { IoEvent, RecordType } from '../routes/socketEventTypes';
 import { notifyChangedRecord } from '../routes/notify';
 import Semesters from '../models/semesters';
 import { IoRoom } from '../routes/socketEvents';
 
-const NAME = 'SEMESTER';
+const NAME = RecordType.Semester;
 
 export const all: RequestHandler = async (req, res, next) => {
     try {
@@ -31,7 +31,7 @@ export const create: RequestHandler<any, any, Semester> = async (req, res, next)
 
         res.notifications = [
             {
-                message: { record: NAME, id: model.id },
+                message: { type: NAME, record: model },
                 event: IoEvent.NEW_RECORD,
                 to: IoRoom.ALL
             }
@@ -47,7 +47,7 @@ export const update: RequestHandler<{ id: string }, any, { data: Semester }> = a
         const model = await Semesters.updateModel(req.user!, req.params.id, req.body.data);
         res.notifications = [
             {
-                message: { record: NAME, id: model.id },
+                message: { type: NAME, record: model },
                 event: IoEvent.CHANGED_RECORD,
                 to: IoRoom.ALL
             }
@@ -63,7 +63,7 @@ export const destroy: RequestHandler<{ id: string }, any, any> = async (req, res
         const model = await Semesters.destroy(req.user!, req.params.id);
         res.notifications = [
             {
-                message: { record: NAME, id: model.id },
+                message: { type: NAME, id: model.id },
                 event: IoEvent.DELETED_RECORD,
                 to: IoRoom.ALL
             }
@@ -76,14 +76,14 @@ export const destroy: RequestHandler<{ id: string }, any, any> = async (req, res
 
 export const sync: RequestHandler<{ id: string }, any, any> = async (req, res, next) => {
     try {
-        const onComplete = (jobId: string) => {
-            notifyChangedRecord(req.io, { record: 'JOB', id: jobId }, IoRoom.ADMIN);
+        const onComplete = (job: Job) => {
+            notifyChangedRecord(req.io, { type: RecordType.Job, record: job }, IoRoom.ADMIN);
         };
         const syncJob = await Semesters.sync(req.user!, req.params.id, onComplete);
 
         res.notifications = [
             {
-                message: { record: 'JOB', id: syncJob.id },
+                message: { type: RecordType.Job, record: syncJob },
                 event: IoEvent.NEW_RECORD,
                 to: IoRoom.ADMIN
             }
