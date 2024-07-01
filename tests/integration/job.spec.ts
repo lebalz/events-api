@@ -208,17 +208,16 @@ describe(`PUT ${API_URL}/jobs/:id`, () => {
         expect(mNotification).toHaveBeenCalledTimes(1);
         expect(mNotification.mock.calls[0][0]).toEqual({
             event: IoEvent.CHANGED_RECORD,
-            message: { 
-                type: 'JOB', 
-                record: prepareRecord(
-                    result.body as Job & { events: Event[] },
-                    {
-                        fn: (job) => ({
-                            ...job,
-                            events: job.events.map((e) => prepareRecord(e, {dateFields: ['start', 'end', 'createdAt', 'updatedAt']}))
-                        })
-                    }
-                )
+            message: {
+                type: 'JOB',
+                record: prepareRecord(result.body as Job & { events: Event[] }, {
+                    fn: (job) => ({
+                        ...job,
+                        events: job.events.map((e) =>
+                            prepareRecord(e, { dateFields: ['start', 'end', 'createdAt', 'updatedAt'] })
+                        )
+                    })
+                })
             },
             to: IoRoom.ALL
         });
@@ -243,17 +242,16 @@ describe(`PUT ${API_URL}/jobs/:id`, () => {
             expect(mNotification).toHaveBeenCalledTimes(1);
             expect(mNotification.mock.calls[0][0]).toEqual({
                 event: IoEvent.CHANGED_RECORD,
-                message: { 
+                message: {
                     type: 'JOB',
-                    record: prepareRecord(
-                        result.body as Job & { events: Event[] },
-                        {
-                            fn: (job) => ({
-                                ...job,
-                                events: job.events.map((e) => prepareRecord(e, {dateFields: ['start', 'end', 'createdAt', 'updatedAt']}))
-                            })
-                        }
-                    )
+                    record: prepareRecord(result.body as Job & { events: Event[] }, {
+                        fn: (job) => ({
+                            ...job,
+                            events: job.events.map((e) =>
+                                prepareRecord(e, { dateFields: ['start', 'end', 'createdAt', 'updatedAt'] })
+                            )
+                        })
+                    })
                 },
                 to: IoRoom.ADMIN
             });
@@ -278,12 +276,17 @@ describe(`PUT ${API_URL}/jobs/:id`, () => {
         expect(mNotification).toHaveBeenCalledTimes(1);
         expect(mNotification.mock.calls[0][0]).toEqual({
             event: IoEvent.CHANGED_RECORD,
-            message: { type: 'JOB', record: prepareRecord(result.body as Job & { events: Event[]}, {
-                fn: (job) => ({
-                    ...job,
-                    events: job.events.map((e) => prepareRecord(e, {dateFields: ['start', 'end', 'createdAt', 'updatedAt']}))
+            message: {
+                type: 'JOB',
+                record: prepareRecord(result.body as Job & { events: Event[] }, {
+                    fn: (job) => ({
+                        ...job,
+                        events: job.events.map((e) =>
+                            prepareRecord(e, { dateFields: ['start', 'end', 'createdAt', 'updatedAt'] })
+                        )
+                    })
                 })
-            }) },
+            },
             to: user.id
         });
     });

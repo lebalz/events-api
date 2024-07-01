@@ -106,7 +106,12 @@ describe(`PUT ${API_URL}/registration_periods/:id`, () => {
         expect(mNotification).toHaveBeenCalledTimes(1);
         expect(mNotification.mock.calls[0][0]).toEqual({
             event: IoEvent.CHANGED_RECORD,
-            message: { type: 'REGISTRATION_PERIOD', record: prepareRecord(result.body, {dateFields: ['end', 'start', 'eventRangeEnd', 'eventRangeStart', 'createdAt', 'updatedAt']}) },
+            message: {
+                type: 'REGISTRATION_PERIOD',
+                record: prepareRecord(result.body, {
+                    dateFields: ['end', 'start', 'eventRangeEnd', 'eventRangeStart', 'createdAt', 'updatedAt']
+                })
+            },
             to: 'all'
         });
     });
@@ -128,7 +133,12 @@ describe(`PUT ${API_URL}/registration_periods/:id`, () => {
         expect(mNotification).toHaveBeenCalledTimes(1);
         expect(mNotification.mock.calls[0][0]).toEqual({
             event: IoEvent.CHANGED_RECORD,
-            message: { type: 'REGISTRATION_PERIOD', record: prepareRecord(result.body, {dateFields: ['end', 'start', 'eventRangeEnd', 'eventRangeStart', 'createdAt', 'updatedAt']}) },
+            message: {
+                type: 'REGISTRATION_PERIOD',
+                record: prepareRecord(result.body, {
+                    dateFields: ['end', 'start', 'eventRangeEnd', 'eventRangeStart', 'createdAt', 'updatedAt']
+                })
+            },
             to: 'all'
         });
     });
@@ -182,7 +192,12 @@ describe(`POST ${API_URL}/registration_periods`, () => {
         expect(mNotification).toHaveBeenCalledTimes(1);
         expect(mNotification.mock.calls[0][0]).toEqual({
             event: IoEvent.NEW_RECORD,
-            message: { type: 'REGISTRATION_PERIOD', record: prepareRecord(result.body as RegistrationPeriod, {dateFields: ['end', 'start', 'eventRangeEnd', 'eventRangeStart', 'createdAt', 'updatedAt']}) },
+            message: {
+                type: 'REGISTRATION_PERIOD',
+                record: prepareRecord(result.body as RegistrationPeriod, {
+                    dateFields: ['end', 'start', 'eventRangeEnd', 'eventRangeStart', 'createdAt', 'updatedAt']
+                })
+            },
             to: 'all'
         });
     });

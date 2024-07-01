@@ -1,4 +1,13 @@
-import type { Department, EventGroup, EventState, Job, Prisma, RegistrationPeriod, Semester, User } from '@prisma/client';
+import type {
+    Department,
+    EventGroup,
+    EventState,
+    Job,
+    Prisma,
+    RegistrationPeriod,
+    Semester,
+    User
+} from '@prisma/client';
 import { IoRoom } from './socketEvents';
 import { ApiEvent } from '../models/event.helpers';
 
@@ -26,8 +35,7 @@ type TypeRecordMap = {
     [RecordType.Semester]: Semester;
     [RecordType.RegistrationPeriod]: RegistrationPeriod;
     [RecordType.EventGroup]: EventGroup;
-}
-
+};
 
 export interface NewRecord<T extends RecordType> {
     type: T;

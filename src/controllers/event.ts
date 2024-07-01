@@ -185,7 +185,7 @@ export const clone: RequestHandler<{ id: string }, any, any> = async (req, res, 
         const newEvent = await Events.cloneModel(req.user!, eid);
         res.notifications = [
             {
-                message: { type: NAME, record: newEvent},
+                message: { type: NAME, record: newEvent },
                 event: IoEvent.NEW_RECORD,
                 to: req.user!.id
             }

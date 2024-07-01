@@ -607,7 +607,10 @@ describe(`POST ${API_URL}/events/change_state`, () => {
                     expect(result.body.length).toEqual(1);
                     expect(result.body[0].state).toEqual(transition.to);
                     expect(mNotification).toHaveBeenCalledTimes(transition.notify.length);
-                    const updated = await prisma.event.findUniqueOrThrow({ where: { id: event.id }, include: { departments: true, children: true } });
+                    const updated = await prisma.event.findUniqueOrThrow({
+                        where: { id: event.id },
+                        include: { departments: true, children: true }
+                    });
                     transition.notify.forEach((to, idx) => {
                         expect(mNotification.mock.calls[idx][0]).toEqual({
                             event: IoEvent.CHANGED_RECORD,
@@ -832,7 +835,7 @@ describe(`POST ${API_URL}/events/change_state`, () => {
                     record: prepareNotificationEvent({
                         ...updatedEvent,
                         publishedVersionIds: [edit3.id]
-                    }),
+                    })
                 },
                 toSelf: true,
                 to: IoRoom.ALL
@@ -936,7 +939,6 @@ describe(`POST ${API_URL}/events/change_state`, () => {
         });
         expect(mNotification).toHaveBeenCalledTimes(6);
 
-
         /* first the newly published version */
         // expect(mNotification.mock.calls[1][0]).toEqual({
         //     event: IoEvent.CHANGED_RECORD,
@@ -951,14 +953,17 @@ describe(`POST ${API_URL}/events/change_state`, () => {
          * 4: edit2 -> author
          * 5: edit2 -> admin
          */
-        
+
         /* first the newly published version */
         expect(mNotification.mock.calls[0][0]).toEqual({
             event: IoEvent.CHANGED_RECORD,
-            message: { type: RecordType.Event, record: prepareNotificationEvent({
-                ...updatedEvent,
-                publishedVersionIds: [edit3.id]
-            }) },
+            message: {
+                type: RecordType.Event,
+                record: prepareNotificationEvent({
+                    ...updatedEvent,
+                    publishedVersionIds: [edit3.id]
+                })
+            },
             to: IoRoom.ALL,
             toSelf: true
         });
@@ -984,9 +989,7 @@ describe(`POST ${API_URL}/events/change_state`, () => {
             message: { type: RecordType.Event, record: prepareNotificationEvent(updatedEdit1) },
             to: edit1.authorId,
             toSelf: true
-        }).toEqual(
-            authorNotification.find((n) => n?.message?.record?.id === edit1.id)
-        );
+        }).toEqual(authorNotification.find((n) => n?.message?.record?.id === edit1.id));
         expect(adminNotification.find((n) => n?.message?.record?.id === edit1.id)).toEqual({
             event: IoEvent.CHANGED_RECORD,
             message: { type: RecordType.Event, record: prepareNotificationEvent(updatedEdit1) },

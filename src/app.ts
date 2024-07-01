@@ -243,7 +243,9 @@ export const configure = (_app: typeof app) => {
                             except.push(socketID);
                         }
                     }
-                    io.except(except).to(notification.to).emit(notification.event, notification.message as any);
+                    io.except(except)
+                        .to(notification.to)
+                        .emit(notification.event, notification.message as any);
                 });
             }
             res.locals.notifications = res.notifications;

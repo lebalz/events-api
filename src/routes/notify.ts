@@ -15,6 +15,10 @@ export const notify = (io: Server | undefined, type: IoEvent, payload: Object, t
     }
 };
 
-export const notifyChangedRecord = (io: Server | undefined, payload: ChangedRecord<RecordType>, to?: string) => {
+export const notifyChangedRecord = (
+    io: Server | undefined,
+    payload: ChangedRecord<RecordType>,
+    to?: string
+) => {
     notify(io, IoEvent.CHANGED_RECORD, payload, to);
 };

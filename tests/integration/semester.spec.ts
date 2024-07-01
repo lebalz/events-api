@@ -90,7 +90,12 @@ describe(`PUT ${API_URL}/semesters/:id`, () => {
         expect(mNotification).toHaveBeenCalledTimes(1);
         expect(mNotification.mock.calls[0][0]).toEqual({
             event: IoEvent.CHANGED_RECORD,
-            message: { type: 'SEMESTER', record: prepareRecord(result.body as Semester, {dateFields: ['createdAt', 'updatedAt', 'start', 'end', 'untisSyncDate']}) },
+            message: {
+                type: 'SEMESTER',
+                record: prepareRecord(result.body as Semester, {
+                    dateFields: ['createdAt', 'updatedAt', 'start', 'end', 'untisSyncDate']
+                })
+            },
             to: 'all'
         });
     });
@@ -178,7 +183,12 @@ describe(`PUT ${API_URL}/semesters/:id`, () => {
         expect(mNotification).toHaveBeenCalledTimes(1);
         expect(mNotification.mock.calls[0][0]).toEqual({
             event: IoEvent.CHANGED_RECORD,
-            message: { type: 'SEMESTER', record: prepareRecord(result.body as Semester, {dateFields: ['createdAt', 'updatedAt', 'start', 'end', 'untisSyncDate']}) },
+            message: {
+                type: 'SEMESTER',
+                record: prepareRecord(result.body as Semester, {
+                    dateFields: ['createdAt', 'updatedAt', 'start', 'end', 'untisSyncDate']
+                })
+            },
             to: 'all'
         });
     });
@@ -212,7 +222,12 @@ describe(`POST ${API_URL}/semesters`, () => {
         expect(mNotification).toHaveBeenCalledTimes(1);
         expect(mNotification.mock.calls[0][0]).toEqual({
             event: IoEvent.NEW_RECORD,
-            message: { type: 'SEMESTER', record: prepareRecord(result.body as Semester, {dateFields: ['createdAt', 'updatedAt', 'start', 'end', 'untisSyncDate']}) },
+            message: {
+                type: 'SEMESTER',
+                record: prepareRecord(result.body as Semester, {
+                    dateFields: ['createdAt', 'updatedAt', 'start', 'end', 'untisSyncDate']
+                })
+            },
             to: 'all'
         });
     });
@@ -274,7 +289,12 @@ describe(`POST ${API_URL}/semesters/:id/sync_untis`, () => {
         expect(mNotification).toHaveBeenCalledTimes(1);
         expect(mNotification.mock.calls[0][0]).toEqual({
             event: IoEvent.NEW_RECORD,
-            message: { type: 'JOB', record: prepareRecord(result.body as Job, {dateFields: ['updatedAt', 'createdAt', 'syncDate']}) },
+            message: {
+                type: 'JOB',
+                record: prepareRecord(result.body as Job, {
+                    dateFields: ['updatedAt', 'createdAt', 'syncDate']
+                })
+            },
             to: IoRoom.ADMIN
         });
 
