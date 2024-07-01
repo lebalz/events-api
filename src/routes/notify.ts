@@ -9,9 +9,9 @@ export const notify = (io: Server | undefined, type: IoEvent, payload: Object, t
     }
 
     if (to) {
-        io.to(to).emit(type, JSON.stringify(payload));
+        io.to(to).emit(type, payload);
     } else {
-        io.emit(type, JSON.stringify(payload));
+        io.emit(type, payload);
     }
 };
 

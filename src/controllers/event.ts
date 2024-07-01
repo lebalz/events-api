@@ -10,6 +10,7 @@ import { HTTP403Error } from '../utils/errors/Errors';
 import { ImportType } from '../services/importEvents';
 import { notifyOnDelete, notifyOnUpdate } from '../services/notifications/notifyUsers';
 import { rmUndefined } from '../utils/filterHelpers';
+import Jobs from '../models/jobs';
 
 const NAME = RecordType.Event;
 
@@ -211,9 +212,14 @@ export const importEvents: RequestHandler<any, any, any, { type: ImportType }> =
             req.query.type
         );
 
-        importer.finally(() => {
-            notifyChangedRecord(req.io, { type: RecordType.Job, record: job });
-        });
+        importer
+            .catch(() => {
+                return 'error';
+            })
+            .then(async () => {
+                const jobRecord = await Jobs.findModel(req.user!, job.id);
+                notifyChangedRecord(req.io, { type: RecordType.Job, record: jobRecord });
+            });
 
         res.notifications = [
             {
