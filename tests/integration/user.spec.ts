@@ -423,12 +423,12 @@ describe(`POST ${API_URL}/users/:id/create_ics`, () => {
         const icalFr = withoutDTSTAMP(
             readFileSync(`${__dirname}/../test-data/ical/fr/${result.body.icsLocator}`, { encoding: 'utf-8' })
         );
-        const icsDe = createEvents([prepareEvent(event, 'de'), prepareEvent(deletedEvent, 'de')])
+        const icsDe = createEvents([prepareEvent(event, 'de', {}), prepareEvent(deletedEvent, 'de', {})])
             .value!.replace('END:VCALENDAR', '')
             .split('BEGIN:VEVENT')
             .slice(1)
             .map((e, idx) => `BEGIN:VEVENT${e}`.trim());
-        const icsFr = createEvents([prepareEvent(event, 'fr'), prepareEvent(deletedEvent, 'fr')])
+        const icsFr = createEvents([prepareEvent(event, 'fr', {}), prepareEvent(deletedEvent, 'fr', {})])
             .value!.replace('END:VCALENDAR', '')
             .split('BEGIN:VEVENT')
             .slice(1)

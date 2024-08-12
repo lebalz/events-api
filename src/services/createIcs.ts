@@ -52,7 +52,7 @@ const TEACHING_AFFECTED = {
     PARTIAL: '🟡'
 };
 
-export const prepareEvent = (event: Event, lang: 'de' | 'fr'): EventAttributes => {
+export const prepareEvent = (event: Event, lang: 'de' | 'fr', legacyClassNames: {[key: string]: string}): EventAttributes => {
     const start = toDateArray(new Date(event.start));
     const end = toDateArray(new Date(event.end));
     const createdAt = toDateArray(new Date(event.createdAt));
@@ -63,7 +63,7 @@ export const prepareEvent = (event: Event, lang: 'de' | 'fr'): EventAttributes =
     }
     if (event.classes.length > 0 || event.classGroups.length > 0) {
         description.push(
-            `${translate('classes', lang)}: ${[...event.classes, ...event.classGroups].join(', ')}`
+            `${translate('classes', lang)}: ${[...event.classes.map((cls) => legacyClassNames[cls] || cls), ...event.classGroups].join(', ')}`
         );
     }
     if (event.deletedAt) {
@@ -106,11 +106,25 @@ const exportIcs = async (events: Event[], filename: string) => {
     if (events.length === 0 || !filename) {
         return Promise.resolve(false);
     }
+    const legacyClassNamesRaw = await prisma.untisClass.findMany({
+        where: {
+            legacyName: { not: null }
+        },
+        select: {
+            name: true,
+            legacyName: true
+        }
+    });
+
+    const classNameMap = legacyClassNamesRaw.reduce((acc, curr) => {
+        return { ...acc, [curr.name]: curr.legacyName! };
+    }, {} as { [key: string]: string });
+    
     const eventsDe: EventAttributes[] = [];
     const eventsFr: EventAttributes[] = [];
     events.forEach((event) => {
-        eventsDe.push(prepareEvent(event, 'de'));
-        eventsFr.push(prepareEvent(event, 'fr'));
+        eventsDe.push(prepareEvent(event, 'de', classNameMap));
+        eventsFr.push(prepareEvent(event, 'fr', classNameMap));
     });
     const fileCreatedDe = new Promise<boolean>((resolve, reject) => {
         createEvents(eventsDe, (error, value) => {
