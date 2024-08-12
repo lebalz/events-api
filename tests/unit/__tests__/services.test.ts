@@ -195,7 +195,8 @@ describe('createIcs', () => {
             expect(existsSync(`${ICAL_DIR}/fr/42h.ics`)).toBeTruthy();
             const icalDe41i = withoutDTSTAMP(readFileSync(`${ICAL_DIR}/de/41i.ics`, { encoding: 'utf-8' }));
             const icsDe41i = withoutDTSTAMP(
-                createEvents([prepareIcsEvent(event41i, 'de', {}), prepareIcsEvent(eventGbsl, 'de', {})]).value!
+                createEvents([prepareIcsEvent(event41i, 'de', {}), prepareIcsEvent(eventGbsl, 'de', {})])
+                    .value!
             )
                 .replace('END:VCALENDAR', '')
                 .split('BEGIN:VEVENT')
@@ -205,7 +206,8 @@ describe('createIcs', () => {
 
             const icalDe42h = withoutDTSTAMP(readFileSync(`${ICAL_DIR}/fr/42h.ics`, { encoding: 'utf-8' }));
             const icsDe42h = withoutDTSTAMP(
-                createEvents([prepareIcsEvent(event42h, 'fr', {}), prepareIcsEvent(eventGbsl, 'fr', {})]).value!
+                createEvents([prepareIcsEvent(event42h, 'fr', {}), prepareIcsEvent(eventGbsl, 'fr', {})])
+                    .value!
             )
                 .replace('END:VCALENDAR', '')
                 .split('BEGIN:VEVENT')

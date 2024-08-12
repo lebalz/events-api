@@ -52,7 +52,11 @@ const TEACHING_AFFECTED = {
     PARTIAL: '🟡'
 };
 
-export const prepareEvent = (event: Event, lang: 'de' | 'fr', legacyClassNames: {[key: string]: string}): EventAttributes => {
+export const prepareEvent = (
+    event: Event,
+    lang: 'de' | 'fr',
+    legacyClassNames: { [key: string]: string }
+): EventAttributes => {
     const start = toDateArray(new Date(event.start));
     const end = toDateArray(new Date(event.end));
     const createdAt = toDateArray(new Date(event.createdAt));
@@ -116,10 +120,13 @@ const exportIcs = async (events: Event[], filename: string) => {
         }
     });
 
-    const classNameMap = legacyClassNamesRaw.reduce((acc, curr) => {
-        return { ...acc, [curr.name]: curr.legacyName! };
-    }, {} as { [key: string]: string });
-    
+    const classNameMap = legacyClassNamesRaw.reduce(
+        (acc, curr) => {
+            return { ...acc, [curr.name]: curr.legacyName! };
+        },
+        {} as { [key: string]: string }
+    );
+
     const eventsDe: EventAttributes[] = [];
     const eventsFr: EventAttributes[] = [];
     events.forEach((event) => {
