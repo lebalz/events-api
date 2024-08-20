@@ -59,7 +59,7 @@ export const prepareEvent = (
 ): EventAttributes => {
     const start = toDateArray(new Date(event.start));
     const end = toDateArray(new Date(event.end));
-    
+
     const allDayEvent = start[3] === 0 && start[4] === 0 && end[3] === 0 && end[4] === 0;
     if (allDayEvent) {
         start.splice(3, 2); // remove hours and minutes --> format as all day event
