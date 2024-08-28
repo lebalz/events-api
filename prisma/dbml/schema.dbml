@@ -13,7 +13,7 @@ Table users {
   createdAt DateTime [default: `now()`, not null]
   updatedAt DateTime [default: `now()`, not null]
   events events [not null]
-  icsLocator String
+  icsLocator String [unique]
   jobs jobs [not null]
   eventGroups event_groups [not null]
   notifyOnEventUpdate Boolean [default: false]

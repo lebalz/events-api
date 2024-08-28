@@ -24,6 +24,7 @@
     "db:seed:users": "ts-node -r dotenv/config ./bin/users-csv-to-db.ts",
     "untis:fetch": "ts-node -r dotenv/config ./bin/fetch-untis.ts",
     "untis:sync": "ts-node -r dotenv/config ./bin/sync-untis-2-db.ts",
+    "dummy:run": "ts-node -r dotenv/config ./bin/dummy.ts",
     "format": "prettier --write .",
     "format:check": "prettier --check ."
   },

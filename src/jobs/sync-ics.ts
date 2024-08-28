@@ -14,7 +14,11 @@ import Logger from '../utils/logger';
             }
         });
         for (const user of users) {
-            await Users.createIcs(user, user.id);
+            try {
+                await Users.createIcs(user, user.id);
+            } catch (err) {
+                Logger.warning(`Error creating ics file for user ${user.id} --> ${user.email}: ${err}`);
+            }
         }
 
         /** sync class ics files  */

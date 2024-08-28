@@ -171,23 +171,28 @@ export const createIcs = async (userId: string) => {
     const user = await prisma.user.findUniqueOrThrow({
         where: { id: userId }
     });
+    if (!user) {
+        throw new Error(`User with id ${userId} not found`);
+    }
+    let fileName = user.icsLocator;
+    if (!fileName) {
+        const locator = await prisma.$queryRaw<
+            { ics_locator: string }[]
+        >`SELECT gen_random_uuid() ics_locator`;
+        fileName = `${locator[0].ics_locator}.ics`;
+    }
 
     const publicEventsRaw = await prisma.view_UsersAffectedByEvents.findMany({
         where: {
             userId: userId,
             parentId: null,
             state: EventState.PUBLISHED,
-            AND: [
-                {
-                    OR: [{ start: { lte: timeRange.to } }, { end: { gte: timeRange.from } }]
-                }
-            ]
+            OR: [{ start: { lte: timeRange.to } }, { end: { gte: timeRange.from } }]
         }
     });
-    const fileName = user.icsLocator || `${uuidv4()}.ics`;
     const fileCreated = await exportIcs(publicEventsRaw, fileName);
     if (fileCreated) {
-        if (user?.icsLocator === fileName) {
+        if (user.icsLocator === fileName) {
             /**
              * nothing to do since the ics file locator is already set
              */
