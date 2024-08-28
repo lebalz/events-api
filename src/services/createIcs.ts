@@ -177,7 +177,11 @@ export const createIcs = async (userId: string) => {
             userId: userId,
             parentId: null,
             state: EventState.PUBLISHED,
-            OR: [{ start: { lte: timeRange.to } }, { end: { gte: timeRange.from } }]
+            AND: [
+                {
+                    OR: [{ start: { lte: timeRange.to } }, { end: { gte: timeRange.from } }]
+                }
+            ]
         }
     });
     const fileName = user.icsLocator || `${uuidv4()}.ics`;
