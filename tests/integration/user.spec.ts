@@ -1767,7 +1767,6 @@ describe(`GET ${API_URL}/users/:id/affected-event-ids`, () => {
                     expect(resultAbc.body).toHaveLength(1);
                     expect(resultAbc.body).toEqual([affectingEvent.id]);
 
-                    
                     /**
                      * when the same event affects the additionally a department, still show the event
                      * for abc -> one affected event
