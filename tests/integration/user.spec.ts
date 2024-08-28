@@ -1754,6 +1754,37 @@ describe(`GET ${API_URL}/users/:id/affected-event-ids`, () => {
                     expect(resultAbc.body).toEqual([affectingEvent.id]);
                 });
             });
+            describe('selected by class when department is set', () => {
+                it('selects the event', async () => {
+                    /**
+                     * 1 event that is during a lesson of abc, and affects the teaching partially
+                     * abc -> one affected event
+                     */
+                    const resultAbc = await request(app)
+                        .get(`${API_URL}/users/${abc.id}/affected-event-ids?semesterId=${semester.id}`)
+                        .set('authorization', JSON.stringify({ email: abc.email }));
+                    expect(resultAbc.statusCode).toEqual(200);
+                    expect(resultAbc.body).toHaveLength(1);
+                    expect(resultAbc.body).toEqual([affectingEvent.id]);
+
+                    
+                    /**
+                     * when the same event affects the additionally a department, still show the event
+                     * for abc -> one affected event
+                     */
+                    const passerelle = departments.find((d) => d.name === 'Passerelle')!;
+                    await prisma.event.update({
+                        where: { id: affectingEvent.id },
+                        data: { departments: { connect: { id: passerelle.id } } }
+                    });
+                    const result2Abc = await request(app)
+                        .get(`${API_URL}/users/${abc.id}/affected-event-ids?semesterId=${semester.id}`)
+                        .set('authorization', JSON.stringify({ email: abc.email }));
+                    expect(result2Abc.statusCode).toEqual(200);
+                    expect(result2Abc.body).toHaveLength(1);
+                    expect(result2Abc.body).toEqual([affectingEvent.id]);
+                });
+            });
         });
         describe('selected by class and department', () => {
             let unaffected: Event;
