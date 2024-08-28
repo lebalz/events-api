@@ -3,7 +3,7 @@ import prisma from '../prisma';
 import { HTTP403Error, HTTP404Error } from '../utils/errors/Errors';
 import { createDataExtractor } from '../controllers/helpers';
 import { prepareEvent } from './event.helpers';
-import Events from './events';
+import Events from './event';
 
 const PROPS: (keyof Prisma.JobUncheckedUpdateInput)[] = ['description'];
 const ADMIN_PROPS: (keyof Prisma.JobUncheckedUpdateInput)[] = [...PROPS, 'state'];

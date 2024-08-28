@@ -1,5 +1,5 @@
 import { Prisma, Role } from '@prisma/client';
-import EventGroups from '../../../src/models/eventGroups';
+import EventGroups from '../../../src/models/eventGroup';
 import { HTTP404Error } from '../../../src/utils/errors/Errors';
 import prisma from '../../../src/prisma';
 import { createUser } from './users.test';

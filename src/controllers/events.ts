@@ -5,12 +5,12 @@ import { notifyChangedRecord } from '../routes/notify';
 import type { Event, Prisma } from '@prisma/client';
 import { EventState, Role } from '@prisma/client';
 import { IoRoom } from '../routes/socketEvents';
-import Events from '../models/events';
+import Events from '../models/event';
 import { HTTP403Error } from '../utils/errors/Errors';
 import { ImportType } from '../services/importEvents';
 import { notifyOnDelete, notifyOnUpdate } from '../services/notifications/notifyUsers';
 import { rmUndefined } from '../utils/filterHelpers';
-import Jobs from '../models/jobs';
+import Jobs from '../models/job';
 
 const NAME = RecordType.Event;
 

@@ -7,7 +7,7 @@ import stubs from './stubs/semesters.json';
 import _ from 'lodash';
 import { notify } from '../../src/middlewares/notify.nop';
 import { syncUntis2DB } from '../../src/services/syncUntis2DB';
-import { UntisSubject } from '../../src/models/untisLessons';
+import { UntisSubject } from '../../src/models/untisLesson';
 
 /** checkout ../../src/services/__mocks__/fetchUntis.stub.json
  * to see the stubs for the fetchUntis service

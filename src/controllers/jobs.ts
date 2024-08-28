@@ -1,7 +1,7 @@
 import { Event, EventState, type Job } from '@prisma/client';
 import { RequestHandler } from 'express';
 import { IoEvent, RecordType } from '../routes/socketEventTypes';
-import Jobs from '../models/jobs';
+import Jobs from '../models/job';
 import { HTTP404Error } from '../utils/errors/Errors';
 import { IoRoom } from '../routes/socketEvents';
 import { ApiEvent } from '../models/event.helpers';

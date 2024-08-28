@@ -1,5 +1,5 @@
 import { Prisma } from '@prisma/client';
-import UntisClasses from '../../../src/models/untisClasses';
+import UntisClasses from '../../../src/models/untisClass';
 import prisma from '../../../src/prisma';
 import { generateUntisClass } from '../../factories/untisClass';
 

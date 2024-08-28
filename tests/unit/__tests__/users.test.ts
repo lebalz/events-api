@@ -1,6 +1,6 @@
 import { Prisma, Role } from '@prisma/client';
 import _ from 'lodash';
-import Users from '../../../src/models/users';
+import Users from '../../../src/models/user';
 import { HTTP403Error, HTTP404Error } from '../../../src/utils/errors/Errors';
 import prisma from '../../../src/prisma';
 import { generateUser } from '../../factories/user';

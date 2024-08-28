@@ -2,7 +2,7 @@ import type { Department } from '@prisma/client';
 import { RequestHandler } from 'express';
 import prisma from '../prisma';
 import { IoEvent, RecordType } from '../routes/socketEventTypes';
-import Departments from '../models/departments';
+import Departments from '../models/department';
 import { createDataExtractor } from './helpers';
 import { IoRoom } from '../routes/socketEvents';
 

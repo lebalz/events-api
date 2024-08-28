@@ -9,27 +9,27 @@ import {
     destroy as deleteEvent,
     setState as setEventState,
     updateMeta
-} from '../controllers/event';
+} from '../controllers/events';
 import {
     find as findJob,
     all as allJobs,
     destroy as deleteJob,
     update as updateJob
-} from '../controllers/job';
+} from '../controllers/jobs';
 import {
     all as allDepartments,
     find as findDepartment,
     update as updateDepartment,
     create as createDepartment,
     destroy as deleteDepartment
-} from '../controllers/department';
+} from '../controllers/departments';
 import {
     find as findRegistrationPeriod,
     all as allRegistrationPeriods,
     update as updateRegistrationPeriod,
     destroy as deleteRegistrationPeriod,
     create as createRegistrationPeriod
-} from '../controllers/registrationPeriod';
+} from '../controllers/registrationPeriods';
 import {
     find as findEventGroup,
     allOfUser as usersEventGroup,
@@ -38,7 +38,7 @@ import {
     create as createEventGroup,
     events as eventsFromEventGroup,
     clone as cloneEventGroup
-} from '../controllers/eventGroup';
+} from '../controllers/eventGroups';
 import {
     find as findSemester,
     update as updateSemester,
@@ -46,7 +46,7 @@ import {
     create as createSemester,
     destroy as deleteSemester,
     sync
-} from '../controllers/semester';
+} from '../controllers/semesters';
 import { teachers, teacher, classes, subjects } from '../controllers/untis';
 import {
     user,
@@ -58,7 +58,7 @@ import {
     createIcs,
     setRole,
     affectedEventIds
-} from '../controllers/user';
+} from '../controllers/users';
 import multer from 'multer';
 
 const UPLOAD_DIR = process.env.UPLOAD_DIR

@@ -1,9 +1,9 @@
 import { JobType, Prisma, Role, User } from '@prisma/client';
-import Semesters from '../../../src/models/semesters';
+import Semesters from '../../../src/models/semester';
 import prisma from '../../../src/prisma';
 import { createUser } from './users.test';
 import { HTTP400Error, HTTP403Error, HTTP404Error } from '../../../src/utils/errors/Errors';
-import untisTeachers from '../../../src/models/untisTeachers';
+import untisTeachers from '../../../src/models/untisTeacher';
 import { createSemester } from './semesters.test';
 import { generateUntisLesson } from '../../factories/untisLesson';
 import { generateUntisTeacher } from '../../factories/untisTeacher';

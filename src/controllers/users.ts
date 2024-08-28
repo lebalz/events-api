@@ -2,8 +2,8 @@ import { Role, User } from '@prisma/client';
 import { RequestHandler } from 'express';
 import { IoEvent, RecordType } from '../routes/socketEventTypes';
 import { IoRoom } from '../routes/socketEvents';
-import Users from '../models/users';
-import Events from '../models/events';
+import Users from '../models/user';
+import Events from '../models/event';
 
 const NAME = RecordType.User;
 

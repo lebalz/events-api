@@ -15,7 +15,7 @@ import {
     TeachingAffected,
     User
 } from '@prisma/client';
-import Jobs from '../../src/models/jobs';
+import Jobs from '../../src/models/job';
 import { eventSequence, generateEvent } from '../factories/event';
 import { HttpStatusCode } from '../../src/utils/errors/BaseError';
 import { generateSemester } from '../factories/semester';
@@ -32,7 +32,7 @@ import { createRegistrationPeriod } from '../unit/__tests__/registrationPeriods.
 import { generateUntisClass } from '../factories/untisClass';
 import { createUser } from '../unit/__tests__/users.test';
 import { Departments } from '../../src/services/helpers/departmentNames';
-import * as eventModel from '../../src/models/events';
+import * as eventModel from '../../src/models/event';
 import { prepareEvent as originalPrepareEvent } from '../../src/models/event.helpers';
 
 jest.mock('../../src/middlewares/notify.nop');

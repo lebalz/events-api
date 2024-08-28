@@ -1,6 +1,6 @@
 import { parentPort } from 'worker_threads';
 import prisma from '../prisma';
-import Users from '../models/users';
+import Users from '../models/user';
 import { createIcsForClasses, createIcsForDepartments } from '../services/createIcs';
 import Logger from '../utils/logger';
 

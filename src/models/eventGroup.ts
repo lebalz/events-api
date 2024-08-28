@@ -3,7 +3,7 @@ import { clonedProps as clonedEventProps, prepareEvent } from './event.helpers';
 import prisma from '../prisma';
 import { HTTP403Error, HTTP404Error, HTTP500Error } from '../utils/errors/Errors';
 import { createDataExtractor } from '../controllers/helpers';
-import Events from './events';
+import Events from './event';
 import { prepareEventGroup, ApiEventGroup } from './eventGroup.helpers';
 
 const getData = createDataExtractor<Prisma.EventGroupUncheckedUpdateInput>(['name', 'description']);

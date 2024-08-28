@@ -1,7 +1,7 @@
 import type { EventGroup } from '@prisma/client';
 import { RequestHandler } from 'express';
 import { IoEvent, RecordType } from '../routes/socketEventTypes';
-import UserEventGroups from '../models/eventGroups';
+import UserEventGroups from '../models/eventGroup';
 import { ApiEventGroup } from '../models/eventGroup.helpers';
 
 const NAME = RecordType.EventGroup;

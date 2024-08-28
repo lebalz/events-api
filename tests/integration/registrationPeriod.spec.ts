@@ -7,7 +7,7 @@ import _ from 'lodash';
 import { notify } from '../../src/middlewares/notify.nop';
 import { IoEvent } from '../../src/routes/socketEventTypes';
 import { faker } from '@faker-js/faker';
-import { prepareRegistrationPeriod as apiPreparedRP } from '../../src/models/registrationPeriods';
+import { prepareRegistrationPeriod as apiPreparedRP } from '../../src/models/registrationPeriod';
 import { generateDepartment } from '../factories/department';
 import { generateRegistrationPeriod } from '../factories/registrationPeriod';
 import { prepareRecord } from '../helpers/prepareRecord';

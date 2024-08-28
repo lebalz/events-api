@@ -1,6 +1,6 @@
 import { EventState, Prisma, Role } from '@prisma/client';
 import { createDepartment } from './departments.test';
-import Events from '../../../src/models/events';
+import Events from '../../../src/models/event';
 import { prepareEvent } from '../../../src/models/event.helpers';
 import { HTTP400Error, HTTP403Error, HTTP404Error } from '../../../src/utils/errors/Errors';
 import prisma from '../../../src/prisma';
@@ -9,7 +9,7 @@ import { generateEvent } from '../../factories/event';
 import { setTimeout } from 'timers/promises';
 import _ from 'lodash';
 import { createEventGroup } from './eventGroups.test';
-import EventGroups from '../../../src/models/eventGroups';
+import EventGroups from '../../../src/models/eventGroup';
 import { createRegistrationPeriod } from './registrationPeriods.test';
 import { faker } from '@faker-js/faker';
 import { createSemester } from './semesters.test';

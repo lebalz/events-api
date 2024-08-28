@@ -3,7 +3,7 @@ import prisma from '../prisma';
 import { HTTP400Error, HTTP403Error, HTTP404Error } from '../utils/errors/Errors';
 import { createDataExtractor } from '../controllers/helpers';
 import Logger from '../utils/logger';
-import Jobs from './jobs';
+import Jobs from './job';
 import { syncUntis2DB } from '../services/syncUntis2DB';
 import { WEEK_2_MS } from '../services/helpers/time';
 

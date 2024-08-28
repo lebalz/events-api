@@ -2,7 +2,7 @@ import { Prisma, PrismaClient, Role, User } from '@prisma/client';
 import prisma from '../prisma';
 import { HTTP400Error, HTTP403Error, HTTP404Error } from '../utils/errors/Errors';
 import { createDataExtractor } from '../controllers/helpers';
-import { invalidLetterCombinations } from './departments.helpers';
+import { invalidLetterCombinations } from './department.helpers';
 
 const getData = createDataExtractor<Prisma.DepartmentUncheckedUpdateInput>([
     'name',

@@ -1,10 +1,10 @@
 import { JobType, Prisma, Role, User } from '@prisma/client';
-import Jobs from '../../../src/models/jobs';
+import Jobs from '../../../src/models/job';
 import prisma from '../../../src/prisma';
 import { createUser } from './users.test';
 import { HTTP403Error, HTTP404Error } from '../../../src/utils/errors/Errors';
 import { createEvent } from './events.test';
-import Events from '../../../src/models/events';
+import Events from '../../../src/models/event';
 import { prepareEvent } from '../../../src/models/event.helpers';
 import { generateJob } from '../../factories/job';
 import _ from 'lodash';

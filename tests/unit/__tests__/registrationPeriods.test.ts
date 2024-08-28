@@ -1,7 +1,7 @@
 import prisma from '../../../src/prisma';
 import { createUser } from './users.test';
 import { RPCreate, generateRegistrationPeriod } from '../../factories/registrationPeriod';
-import RegistrationPeriods, { prepareRegistrationPeriod } from '../../../src/models/registrationPeriods';
+import RegistrationPeriods, { prepareRegistrationPeriod } from '../../../src/models/registrationPeriod';
 import { faker } from '@faker-js/faker';
 import { MINUTE_2_MS } from '../../../src/services/createIcs';
 import { Department, RegistrationPeriod } from '@prisma/client';

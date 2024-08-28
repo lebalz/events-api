@@ -5,8 +5,8 @@ import { ApiEvent, clonedProps, clonedUpdateProps, prepareEvent } from './event.
 import { HTTP400Error, HTTP403Error, HTTP404Error } from '../utils/errors/Errors';
 import { importEvents as importService, ImportType, LogMessage } from '../services/importEvents';
 import Logger from '../utils/logger';
-import Semesters from './semesters';
-import RegistrationPeriods from './registrationPeriods';
+import Semesters from './semester';
+import RegistrationPeriods from './registrationPeriod';
 import _ from 'lodash';
 import { rmUndefined } from '../utils/filterHelpers';
 import { Meta } from '../services/importGBSL_xlsx';

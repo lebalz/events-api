@@ -8,7 +8,7 @@ import _ from 'lodash';
 import { notify } from '../../src/middlewares/notify.nop';
 import { IoEvent } from '../../src/routes/socketEventTypes';
 import { faker } from '@faker-js/faker';
-import Jobs from '../../src/models/jobs';
+import Jobs from '../../src/models/job';
 import { IoRoom } from '../../src/routes/socketEvents';
 import { prepareRecord } from '../helpers/prepareRecord';
 
