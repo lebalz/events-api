@@ -33,7 +33,7 @@
   },
   "dependencies": {
     "@azure/msal-node": "^2.13.0",
-    "@prisma/client": "^5.19.0",
+    "@prisma/client": "^5.20.0",
     "@socket.io/admin-ui": "^0.5.1",
     "bree": "^9.2.4",
     "compression": "^1.7.4",
