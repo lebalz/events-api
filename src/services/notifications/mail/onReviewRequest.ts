@@ -97,7 +97,7 @@ export const mailOnReviewRequest = async (config: Config) => {
         text: txt
     })
         .then((info) => {
-            console.log(info);
+            // console.log(info);
             return true;
         })
         .catch((err) => {
