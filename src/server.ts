@@ -18,7 +18,7 @@ const corsOrigin = process.env.WITH_DEPLOY_PREVIEW
     ? [
           process.env.EVENTS_APP_URL || true,
           'https://admin.socket.io',
-          /https:\/\/deploy-preview-\d+--events-app.netlify.app/
+          /https:\/\/deploy-preview-\d+--gbsl-events-app.netlify.app/
       ]
     : [process.env.EVENTS_APP_URL || true, 'https://admin.socket.io']; /* true = strict origin */
 

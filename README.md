@@ -15,7 +15,7 @@
 | `ICAL_DIR`            | Directory to export .ics files to                                                                                                                    | `./ical`    |
 | `EXPORT_DIR`          | Directory to export .xlsx files to                                                                                                                   | `./export`  |
 | `UPLOAD_DIR`          | Directory to upload excels for import                                                                                                                | `./uploads` |
-| `WITH_DEPLOY_PREVIEW` | When set to `true`, the app will allow requests from `https://deploy-preview-\d+--events-app.netlify.app` and use `sameSite=none` instead of strict. |             |
+| `WITH_DEPLOY_PREVIEW` | When set to `true`, the app will allow requests from `https://deploy-preview-\d+--gbsl-events-app.netlify.app` and use `sameSite=none` instead of strict. |             |
 
 for development only (for seeding the db):
 

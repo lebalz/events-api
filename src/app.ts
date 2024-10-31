@@ -63,7 +63,7 @@ app.use(
     cors({
         credentials: true,
         origin: process.env.WITH_DEPLOY_PREVIEW
-            ? [process.env.EVENTS_APP_URL || true, /https:\/\/deploy-preview-\d+--events-app.netlify.app/]
+            ? [process.env.EVENTS_APP_URL || true, /https:\/\/deploy-preview-\d+--gbsl-events-app.netlify.app/]
             : process.env.EVENTS_APP_URL || true /* true = strict origin */,
         methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'HEAD']
     })
