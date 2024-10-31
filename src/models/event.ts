@@ -390,8 +390,7 @@ function Events(db: PrismaClient['event']) {
                                     }),
                                     groups: {
                                         set: []
-                                    },
-                                    updatedAt: undefined
+                                    }
                                 }
                             }),
                             /** ensure that all pending reviews with this parent are refused... */
