@@ -13,9 +13,14 @@ import { ClientToServerEvents, ServerToClientEvents } from './routes/socketEvent
 const PORT = process.env.PORT || 3002;
 
 const server = http.createServer(app);
-const corsOrigin = process.env.EVENTS_APP_URL
-    ? [process.env.EVENTS_APP_URL, 'https://admin.socket.io']
-    : true;
+
+const corsOrigin = process.env.WITH_DEPLOY_PREVIEW
+    ? [
+          process.env.EVENTS_APP_URL || true,
+          'https://admin.socket.io',
+          /https:\/\/deploy-preview-\d+--events-app.netlify.app/
+      ]
+    : [process.env.EVENTS_APP_URL || true, 'https://admin.socket.io']; /* true = strict origin */
 
 const io = new Server<ClientToServerEvents, ServerToClientEvents>(server, {
     cors: {

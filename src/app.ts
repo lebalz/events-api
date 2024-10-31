@@ -62,7 +62,9 @@ if (!existsSync(`${STATIC_DIR}/fr`)) {
 app.use(
     cors({
         credentials: true,
-        origin: process.env.EVENTS_APP_URL || true /* true = strict origin */,
+        origin: process.env.WITH_DEPLOY_PREVIEW
+            ? [process.env.EVENTS_APP_URL || true, /https:\/\/deploy-preview-\d+--events-app.netlify.app/]
+            : process.env.EVENTS_APP_URL || true /* true = strict origin */,
         methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'HEAD']
     })
 );
@@ -94,7 +96,7 @@ export const sessionMiddleware = session({
     cookie: {
         secure: process.env.NODE_ENV === 'production',
         httpOnly: true,
-        sameSite: 'strict',
+        sameSite: process.env.WITH_DEPLOY_PREVIEW ? 'none' : 'strict',
         domain: domain.length > 0 ? domain : undefined,
         maxAge: SESSION_MAX_AGE // 30 days
     }
