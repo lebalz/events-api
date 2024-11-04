@@ -62,7 +62,7 @@
     "winston": "^3.13.0"
   },
   "devDependencies": {
-    "@faker-js/faker": "^8.0.2",
+    "@faker-js/faker": "^9.2.0",
     "@types/bree": "^7.1.0",
     "@types/compression": "^1.7.2",
     "@types/connect-pg-simple": "^7.0.2",
