@@ -75,9 +75,10 @@ function Users(db: PrismaClient['user']) {
                     }
                 }
                 return res;
-            } catch (err: unknown) {
-                const error = err as PrismaClientKnownRequestError;
-                if (error.name === 'PrismaClientKnownRequestError' && error.code === 'P2002') {
+            } catch (err) {
+                Logger.error(`Linking to untis failed for ${actor.email}: ${JSON.stringify(err, null, 2)}`);
+                const error = (err || {}) as PrismaClientKnownRequestError;
+                if (error?.name === 'PrismaClientKnownRequestError' && error?.code === 'P2002') {
                     throw new HTTP400Error('Untis ID already in use');
                 }
                 /* istanbul ignore next */
