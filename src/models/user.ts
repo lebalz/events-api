@@ -7,6 +7,7 @@ import { ApiEvent, prepareEvent } from './event.helpers';
 import { existsSync, rmSync } from 'fs';
 import { ICAL_DIR } from '../app';
 import { createDataExtractor } from '../controllers/helpers';
+import Logger from '../utils/logger';
 const getData = createDataExtractor<Prisma.UserUncheckedUpdateInput>([
     'notifyOnEventUpdate',
     'notifyAdminOnReviewRequest',
@@ -58,12 +59,10 @@ function Users(db: PrismaClient['user']) {
                     }
                 });
                 if (untisId) {
-                    try {
-                        await createIcsFile(userId);
-                    } catch (err) {
-                        console.error(`ICS-Sync after linking to untis failed for ${actor.email}`, err);
-                    }
-                } else {
+                    await createIcsFile(userId).catch((err) => {
+                        Logger.error(`ICS-Sync after linking to untis failed for ${actor.email}: ${err.message}`);
+                    });
+                } else if (icsLocator) {
                     try {
                         if (existsSync(`${ICAL_DIR}/de/${icsLocator}`)) {
                             rmSync(`${ICAL_DIR}/de/${icsLocator}`);
