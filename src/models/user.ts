@@ -54,8 +54,7 @@ function Users(db: PrismaClient['user']) {
                         id: userId
                     },
                     data: {
-                        untisId: untisId || null,
-                        icsLocator: untisId ? icsLocator || null : null
+                        untisId: untisId || null
                     }
                 });
                 if (untisId) {
@@ -64,6 +63,14 @@ function Users(db: PrismaClient['user']) {
                     });
                 } else if (icsLocator) {
                     try {
+                        await db.update({
+                            where: {
+                                id: userId
+                            },
+                            data: {
+                                icsLocator: null
+                            }
+                        });
                         if (existsSync(`${ICAL_DIR}/de/${icsLocator}`)) {
                             rmSync(`${ICAL_DIR}/de/${icsLocator}`);
                         }
