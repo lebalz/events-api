@@ -11,6 +11,7 @@ import type {
 import { IoRoom } from './socketEvents';
 import { ApiEvent } from '../models/event.helpers';
 import { ApiUser } from '../models/user.helpers';
+import { ApiSubscription } from '../models/subscription.helpers';
 
 export enum IoEvent {
     NEW_RECORD = 'NEW_RECORD',
@@ -25,7 +26,8 @@ export enum RecordType {
     Department = 'DEPARTMENT',
     Semester = 'SEMESTER',
     RegistrationPeriod = 'REGISTRATION_PERIOD',
-    EventGroup = 'EVENT_GROUP'
+    EventGroup = 'EVENT_GROUP',
+    Subscription = 'SUBSCRIPTION'
 }
 
 type TypeRecordMap = {
@@ -36,6 +38,7 @@ type TypeRecordMap = {
     [RecordType.Semester]: Semester;
     [RecordType.RegistrationPeriod]: RegistrationPeriod;
     [RecordType.EventGroup]: EventGroup;
+    [RecordType.Subscription]: ApiSubscription;
 };
 
 export interface NewRecord<T extends RecordType> {

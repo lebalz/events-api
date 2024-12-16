@@ -243,6 +243,15 @@ const authConfig: Config = {
                     roles: [Role.ADMIN]
                 }
             ]
+        },
+        subscription: {
+            path: '/subscriptions',
+            access: [
+                {
+                    methods: ['PUT'],
+                    roles: [Role.ADMIN, Role.USER]
+                }
+            ]
         }
     }
 };
