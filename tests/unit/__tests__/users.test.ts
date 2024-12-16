@@ -14,9 +14,7 @@ export const createUser = async (props: Partial<Prisma.UserUncheckedCreateInput>
 test('returns user', async () => {
     const user = await createUser({ id: '14d670d1-44fd-48d3-bb3d-02ea21c36019' });
 
-    await expect(Users.findModel('14d670d1-44fd-48d3-bb3d-02ea21c36019')).resolves.toEqual({
-        ...user
-    });
+    await expect(Users.findModel('14d670d1-44fd-48d3-bb3d-02ea21c36019')).resolves.toEqual(user);
 });
 
 test('returns users', async () => {

@@ -10,6 +10,7 @@ import type {
 } from '@prisma/client';
 import { IoRoom } from './socketEvents';
 import { ApiEvent } from '../models/event.helpers';
+import { ApiUser } from '../models/user.helpers';
 
 export enum IoEvent {
     NEW_RECORD = 'NEW_RECORD',
@@ -29,7 +30,7 @@ export enum RecordType {
 
 type TypeRecordMap = {
     [RecordType.Event]: ApiEvent;
-    [RecordType.User]: User;
+    [RecordType.User]: ApiUser | User;
     [RecordType.Job]: Job;
     [RecordType.Department]: Department;
     [RecordType.Semester]: Semester;

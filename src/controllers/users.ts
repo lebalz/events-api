@@ -4,6 +4,7 @@ import { IoEvent, RecordType } from '../routes/socketEventTypes';
 import { IoRoom } from '../routes/socketEvents';
 import Users from '../models/user';
 import Events from '../models/event';
+import { ApiUser } from '../models/user.helpers';
 
 const NAME = RecordType.User;
 

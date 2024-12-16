@@ -13,8 +13,8 @@ Table users {
   createdAt DateTime [default: `now()`, not null]
   updatedAt DateTime [default: `now()`, not null]
   events events [not null]
-  icsLocator String [unique]
   jobs jobs [not null]
+  subscription subscriptions
   eventGroups event_groups [not null]
   notifyOnEventUpdate Boolean [default: false]
   notifyAdminOnReviewRequest Boolean [default: false]
@@ -44,10 +44,24 @@ Table events {
   audience EventAudience [not null, default: 'STUDENTS']
   affectsDepartment2 Boolean [default: false]
   teachingAffected TeachingAffected [not null, default: 'YES']
+  subscriptions subscriptions [not null]
   createdAt DateTime [default: `now()`, not null]
   updatedAt DateTime [default: `now()`, not null]
   deletedAt DateTime
   meta Json
+}
+
+Table subscriptions {
+  id String [pk]
+  user users [not null]
+  userId String [unique, not null]
+  subscribeToAffected Boolean [not null, default: true]
+  icsLocator String [unique, not null]
+  departments departments [not null]
+  untisClasses untis_classes [not null]
+  ignoredEvents events [not null]
+  createdAt DateTime [default: `now()`, not null]
+  updatedAt DateTime [default: `now()`, not null]
 }
 
 Table event_groups {
@@ -76,6 +90,7 @@ Table departments {
   events events [not null]
   registrationPeriods registration_periods [not null]
   color String [not null, default: '#306cce']
+  subscriptions subscriptions [not null]
   createdAt DateTime [default: `now()`, not null]
   updatedAt DateTime [default: `now()`, not null]
 }
@@ -160,6 +175,7 @@ Table untis_classes {
   teachers untis_teachers [not null]
   department departments
   departmentId String
+  subscriptions subscriptions [not null]
 }
 
 Table session {
@@ -363,6 +379,21 @@ Table events_to_event_groups {
   eventsId String [ref: > events.id]
 }
 
+Table subscription_to_events {
+  subscriptionsId String [ref: > subscriptions.id]
+  ignoredeventsId String [ref: > events.id]
+}
+
+Table subscription_to_departments {
+  departmentsId String [ref: > departments.id]
+  subscriptionsId String [ref: > subscriptions.id]
+}
+
+Table subscription_to_classes {
+  untisclassesId Int [ref: > untis_classes.id]
+  subscriptionsId String [ref: > subscriptions.id]
+}
+
 Table registration_periods_to_departments {
   registrationperiodsId String [ref: > registration_periods.id]
   departmentsId String [ref: > departments.id]
@@ -428,6 +459,8 @@ Ref: events.authorId > users.id
 Ref: events.jobId > jobs.id [delete: Cascade]
 
 Ref: events.parentId - events.id [delete: Cascade]
+
+Ref: subscriptions.userId - users.id
 
 Ref: departments.department1_Id - departments.id
 

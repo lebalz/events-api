@@ -2,11 +2,13 @@ import prisma from '../prisma';
 import { v4 as uuidv4 } from 'uuid';
 import { createEvents, DateArray, EventAttributes } from 'ics';
 import { Event, EventAudience, EventState } from '@prisma/client';
-import { writeFileSync } from 'fs';
+import { writeFileSync, promises as fsPromises } from 'fs';
 import _ from 'lodash';
 import Logger from '../utils/logger';
 import { ICAL_DIR } from '../app';
 import { translate } from './helpers/i18n';
+import { ApiUser, prepareUser } from '../models/user.helpers';
+import { prepareSubscription } from '../models/subscription.helpers';
 
 export const SEC_2_MS = 1000;
 export const MINUTE_2_MS = 60 * SEC_2_MS;
@@ -140,84 +142,154 @@ const exportIcs = async (events: Event[], filename: string) => {
         eventsFr.push(prepareEvent(event, 'fr', classNameMap));
     });
     const fileCreatedDe = new Promise<boolean>((resolve, reject) => {
-        createEvents(eventsDe, (error, value) => {
+        createEvents(eventsDe, async (error, value) => {
             /* istanbul ignore if */
             if (error) {
                 Logger.error(error);
                 return resolve(false);
             }
             const icsString = withTimezoneHeader(value);
-            writeFileSync(`${ICAL_DIR}/de/${filename}`, icsString, { encoding: 'utf-8', flag: 'w' });
-            resolve(true);
+            try {
+                await fsPromises.writeFile(`${ICAL_DIR}/de/${filename}`, icsString, {
+                    encoding: 'utf-8',
+                    flag: 'w'
+                });
+                resolve(true);
+            } catch (writeError) {
+                Logger.error(writeError);
+                resolve(false);
+            }
         });
     });
     const fileCreatedFr = new Promise<boolean>((resolve, reject) => {
-        createEvents(eventsFr, (error, value) => {
+        createEvents(eventsFr, async (error, value) => {
             if (error) {
                 Logger.error(error);
                 return resolve(false);
             }
             const icsString = withTimezoneHeader(value);
-            writeFileSync(`${ICAL_DIR}/fr/${filename}`, icsString, { encoding: 'utf-8', flag: 'w' });
-            resolve(true);
+            try {
+                await fsPromises.writeFile(`${ICAL_DIR}/fr/${filename}`, icsString, {
+                    encoding: 'utf-8',
+                    flag: 'w'
+                });
+                resolve(true);
+            } catch (writeError) {
+                Logger.error(writeError);
+                resolve(false);
+            }
         });
     });
     const filesCreated = await Promise.all([fileCreatedDe, fileCreatedFr]);
     return filesCreated.every((res) => !!res);
 };
 
-export const createIcs = async (userId: string) => {
+export const createIcs = async (userId: string): Promise<ApiUser> => {
     const timeRange = getTimeRange();
-    const user = await prisma.user.findUniqueOrThrow({
-        where: { id: userId }
+    const locator = await prisma.$queryRaw<{ ics_locator: string }[]>`SELECT gen_random_uuid() ics_locator`;
+    const fileName = `${locator[0].ics_locator}.ics`;
+    const subscription = await prisma.subscription.upsert({
+        where: { userId: userId },
+        update: {},
+        create: {
+            userId: userId,
+            icsLocator: fileName
+        },
+        include: {
+            ignoredEvents: {
+                select: {
+                    id: true
+                }
+            },
+            departments: {
+                select: {
+                    id: true
+                }
+            },
+            untisClasses: {
+                select: {
+                    id: true
+                }
+            },
+            user: true
+        }
     });
-    if (!user) {
-        throw new Error(`User with id ${userId} not found`);
+
+    if (!subscription) {
+        throw new Error(`Subscription for user with id ${userId} not found`);
     }
-    let fileName = user.icsLocator;
-    if (!fileName) {
-        const locator = await prisma.$queryRaw<
-            { ics_locator: string }[]
-        >`SELECT gen_random_uuid() ics_locator`;
-        fileName = `${locator[0].ics_locator}.ics`;
-    }
+    const toIgnore = new Set(subscription.ignoredEvents.map((e) => e.id));
 
     const publicEventsRaw = await prisma.view_UsersAffectedByEvents.findMany({
         where: {
             userId: userId,
             parentId: null,
             state: EventState.PUBLISHED,
+            id: { notIn: [...toIgnore] },
             OR: [{ start: { lte: timeRange.to } }, { end: { gte: timeRange.from } }]
         }
     });
-    const fileCreated = await exportIcs(publicEventsRaw, fileName);
-    if (fileCreated) {
-        if (user.icsLocator === fileName) {
-            /**
-             * nothing to do since the ics file locator is already set
-             */
-            return user;
+
+    publicEventsRaw.forEach((event) => toIgnore.add(event.id));
+
+    const subscribedDepartmentEvents = await prisma.view_EventsClasses.findMany({
+        where: {
+            departmentId: { in: subscription.departments.map((d) => d.id) },
+            parentId: null,
+            state: EventState.PUBLISHED,
+            id: { notIn: [...toIgnore] },
+            OR: [{ start: { lte: timeRange.to } }, { end: { gte: timeRange.from } }]
         }
-        const updated = await prisma.user.update({
-            where: { id: userId },
-            data: {
-                icsLocator: fileName
-            }
-        });
-        return updated;
+    });
+    subscribedDepartmentEvents.forEach((event) => toIgnore.add(event.id));
+
+    const subscribedClassEvents = await prisma.view_EventsClasses.findMany({
+        where: {
+            classId: { in: subscription.untisClasses.map((c) => c.id) },
+            parentId: null,
+            state: EventState.PUBLISHED,
+            id: { notIn: [...toIgnore] },
+            OR: [{ start: { lte: timeRange.to } }, { end: { gte: timeRange.from } }]
+        }
+    });
+
+    const allEvents = _.orderBy(
+        [...publicEventsRaw, ...subscribedDepartmentEvents, ...subscribedClassEvents],
+        ['start'],
+        ['asc']
+    );
+    if (allEvents.length > 0) {
+        await exportIcs(allEvents, fileName);
     } else {
-        // no events found - delete the ics file, since empty ics files are not valid
-        if (user.icsLocator) {
-            const updated = await prisma.user.update({
-                where: { id: userId },
-                data: {
-                    icsLocator: null
+        Logger.info(`No events to export for users subscription with userId ${userId}`);
+        const deleteDe = fsPromises
+            .stat(`${ICAL_DIR}/de/${fileName}`)
+            .then((res) => {
+                if (res.isFile()) {
+                    return fsPromises.unlink(`${ICAL_DIR}/de/${fileName}`);
                 }
+                return Promise.resolve();
+            })
+            .catch((err) => {
+                Logger.error(err.message);
             });
-            return updated;
-        }
-        return user;
+        const deleteFr = fsPromises
+            .stat(`${ICAL_DIR}/fr/${fileName}`)
+            .then((res) => {
+                if (res.isFile()) {
+                    return fsPromises.unlink(`${ICAL_DIR}/fr/${fileName}`);
+                }
+                return Promise.resolve();
+            })
+            .catch((err) => {
+                Logger.error(err.message);
+            });
+        await Promise.all([deleteDe, deleteFr]);
     }
+    return prepareUser({
+        ...subscription.user,
+        subscription: subscription
+    });
 };
 
 export const createIcsForClasses = async () => {
