@@ -1,8 +1,11 @@
-import { Prisma, PrismaClient, Role, Subscription, User as Users } from '@prisma/client';
+import { Prisma, PrismaClient, Role, Subscription, User as UserModel, User as Users } from '@prisma/client';
 import prisma from '../prisma';
 import { HTTP403Error, HTTP404Error } from '../utils/errors/Errors';
 import { createDataExtractor } from '../controllers/helpers';
+import { createIcs as createIcsFile, createIcsFromSubscription } from '../services/createIcs';
 import { ApiSubscription, DEFAULT_INCLUDE, prepareSubscription } from './subscription.helpers';
+import User from './user';
+import Logger from '../utils/logger';
 const getData = createDataExtractor<Partial<ApiSubscription>>(['subscribeToAffected']);
 
 function Subscription(db: PrismaClient['subscription']) {
@@ -46,6 +49,31 @@ function Subscription(db: PrismaClient['subscription']) {
                 include: DEFAULT_INCLUDE
             });
             return prepareSubscription(res);
+        },
+
+        async getOrCreateModel(actor: { id: string }): Promise<ApiSubscription> {
+            const current = await User.findModel(actor.id);
+            if (!current) {
+                throw new HTTP404Error('User not found');
+            }
+            if (current.subscription) {
+                return { ...current.subscription, userId: current.id };
+            }
+            const locator = await prisma.$queryRaw<
+                { ics_locator: string }[]
+            >`SELECT gen_random_uuid() ics_locator`;
+            const fileName = `${locator[0].ics_locator}.ics`;
+
+            const model = await db.create({
+                data: {
+                    userId: actor.id,
+                    icsLocator: fileName
+                },
+                include: DEFAULT_INCLUDE
+            });
+            const subscription = prepareSubscription(model);
+            await createIcsFromSubscription(subscription);
+            return subscription;
         }
     });
 }

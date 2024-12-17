@@ -78,13 +78,9 @@ function Users(db: PrismaClient['user']) {
                         }
                     }
                 });
-                if (untisId) {
-                    await createIcsFile(userId).catch((err) => {
-                        Logger.error(
-                            `ICS-Sync after linking to untis failed for ${actor.email}: ${err.message}`
-                        );
-                    });
-                }
+                await createIcsFile(userId).catch((err) => {
+                    Logger.error(`ICS-Sync after linking to untis failed for ${actor.email}: ${err.message}`);
+                });
                 return prepareUser(res);
             } catch (err) {
                 Logger.error(`Linking to untis failed for ${actor.email}: ${JSON.stringify(err, null, 2)}`);
@@ -113,7 +109,11 @@ function Users(db: PrismaClient['user']) {
             if (actor.id !== userId) {
                 throw new HTTP403Error('Not authorized');
             }
-            return await createIcsFile(userId);
+            const subscription = await createIcsFile(userId);
+            return {
+                ...prepareUser({ ...actor, subscription: null }),
+                subscription: subscription
+            };
         },
         async affectedEvents(actor: Users, userId: string, semesterId?: string): Promise<ApiEvent[]> {
             if (actor.id !== userId && actor.role !== Role.ADMIN) {

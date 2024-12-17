@@ -248,7 +248,7 @@ const authConfig: Config = {
             path: '/subscriptions',
             access: [
                 {
-                    methods: ['PUT'],
+                    methods: ['PUT', 'POST'],
                     roles: [Role.ADMIN, Role.USER]
                 }
             ]

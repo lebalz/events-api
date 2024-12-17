@@ -59,7 +59,7 @@ import {
     setRole,
     affectedEventIds
 } from '../controllers/users';
-import { update as updateSubscription } from '../controllers/subscriptions';
+import { update as updateSubscription, create as createSubscription } from '../controllers/subscriptions';
 import multer from 'multer';
 
 const UPLOAD_DIR = process.env.UPLOAD_DIR
@@ -132,5 +132,6 @@ router.get('/event_groups/:id/events', eventsFromEventGroup);
 router.post('/event_groups/:id/clone', cloneEventGroup);
 
 router.put('/subscriptions/:id', updateSubscription);
+router.post('/subscriptions', createSubscription);
 
 export default router;

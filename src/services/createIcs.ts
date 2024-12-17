@@ -8,7 +8,8 @@ import Logger from '../utils/logger';
 import { ICAL_DIR } from '../app';
 import { translate } from './helpers/i18n';
 import { ApiUser, prepareUser } from '../models/user.helpers';
-import { prepareSubscription } from '../models/subscription.helpers';
+import { ApiSubscription, prepareSubscription } from '../models/subscription.helpers';
+import Subscription from '../models/subscription';
 
 export const SEC_2_MS = 1000;
 export const MINUTE_2_MS = 60 * SEC_2_MS;
@@ -184,41 +185,15 @@ const exportIcs = async (events: Event[], filename: string) => {
     return filesCreated.every((res) => !!res);
 };
 
-export const createIcs = async (userId: string): Promise<ApiUser> => {
-    const timeRange = getTimeRange();
-    const locator = await prisma.$queryRaw<{ ics_locator: string }[]>`SELECT gen_random_uuid() ics_locator`;
-    const fileName = `${locator[0].ics_locator}.ics`;
-    const subscription = await prisma.subscription.upsert({
-        where: { userId: userId },
-        update: {},
-        create: {
-            userId: userId,
-            icsLocator: fileName
-        },
-        include: {
-            ignoredEvents: {
-                select: {
-                    id: true
-                }
-            },
-            departments: {
-                select: {
-                    id: true
-                }
-            },
-            untisClasses: {
-                select: {
-                    id: true
-                }
-            },
-            user: true
-        }
-    });
+export const createIcs = async (userId: string): Promise<ApiSubscription> => {
+    const subscription = await Subscription.getOrCreateModel({ id: userId });
+    return createIcsFromSubscription(subscription);
+};
 
-    if (!subscription) {
-        throw new Error(`Subscription for user with id ${userId} not found`);
-    }
-    const toIgnore = new Set(subscription.ignoredEvents.map((e) => e.id));
+export const createIcsFromSubscription = async (subscription: ApiSubscription): Promise<ApiSubscription> => {
+    const timeRange = getTimeRange();
+    const toIgnore = new Set(subscription.ignoredEventIds);
+    const userId = subscription.userId;
 
     const publicEventsRaw = await prisma.view_UsersAffectedByEvents.findMany({
         where: {
@@ -234,7 +209,7 @@ export const createIcs = async (userId: string): Promise<ApiUser> => {
 
     const subscribedDepartmentEvents = await prisma.view_EventsClasses.findMany({
         where: {
-            departmentId: { in: subscription.departments.map((d) => d.id) },
+            departmentId: { in: subscription.departmentIds },
             parentId: null,
             state: EventState.PUBLISHED,
             id: { notIn: [...toIgnore] },
@@ -245,7 +220,7 @@ export const createIcs = async (userId: string): Promise<ApiUser> => {
 
     const subscribedClassEvents = await prisma.view_EventsClasses.findMany({
         where: {
-            classId: { in: subscription.untisClasses.map((c) => c.id) },
+            classId: { in: subscription.classIds },
             parentId: null,
             state: EventState.PUBLISHED,
             id: { notIn: [...toIgnore] },
@@ -259,14 +234,14 @@ export const createIcs = async (userId: string): Promise<ApiUser> => {
         ['asc']
     );
     if (allEvents.length > 0) {
-        await exportIcs(allEvents, fileName);
+        await exportIcs(allEvents, subscription.icsLocator);
     } else {
         Logger.info(`No events to export for users subscription with userId ${userId}`);
         const deleteDe = fsPromises
-            .stat(`${ICAL_DIR}/de/${fileName}`)
+            .stat(`${ICAL_DIR}/de/${subscription.icsLocator}`)
             .then((res) => {
                 if (res.isFile()) {
-                    return fsPromises.unlink(`${ICAL_DIR}/de/${fileName}`);
+                    return fsPromises.unlink(`${ICAL_DIR}/de/${subscription.icsLocator}`);
                 }
                 return Promise.resolve();
             })
@@ -274,10 +249,10 @@ export const createIcs = async (userId: string): Promise<ApiUser> => {
                 Logger.error(err.message);
             });
         const deleteFr = fsPromises
-            .stat(`${ICAL_DIR}/fr/${fileName}`)
+            .stat(`${ICAL_DIR}/fr/${subscription.icsLocator}`)
             .then((res) => {
                 if (res.isFile()) {
-                    return fsPromises.unlink(`${ICAL_DIR}/fr/${fileName}`);
+                    return fsPromises.unlink(`${ICAL_DIR}/fr/${subscription.icsLocator}`);
                 }
                 return Promise.resolve();
             })
@@ -286,10 +261,7 @@ export const createIcs = async (userId: string): Promise<ApiUser> => {
             });
         await Promise.all([deleteDe, deleteFr]);
     }
-    return prepareUser({
-        ...subscription.user,
-        subscription: subscription
-    });
+    return subscription;
 };
 
 export const createIcsForClasses = async () => {
