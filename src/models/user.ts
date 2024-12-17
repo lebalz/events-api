@@ -110,6 +110,7 @@ function Users(db: PrismaClient['user']) {
                 throw new HTTP403Error('Not authorized');
             }
             const subscription = await createIcsFile(userId);
+            delete (subscription as any).userId; // remove redundant userId
             return {
                 ...prepareUser({ ...actor, subscription: null }),
                 subscription: subscription
