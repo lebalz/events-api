@@ -18,7 +18,7 @@ function Subscription(db: PrismaClient['subscription']) {
             if (!record) {
                 throw new HTTP404Error('Subscription not found');
             }
-            if (!(record.id === actor.id || actor.role === Role.ADMIN)) {
+            if (!(record.userId === actor.id || actor.role === Role.ADMIN)) {
                 throw new HTTP403Error('Not authorized');
             }
             /** remove fields not updatable*/
@@ -52,13 +52,16 @@ function Subscription(db: PrismaClient['subscription']) {
             return subscription;
         },
 
-        async getOrCreateModel(actor: { id: string }): Promise<ApiSubscription> {
+        async getOrCreateModel(actor: { id: string }): Promise<{ created: boolean; model: ApiSubscription }> {
             const current = await User.findModel(actor.id);
             if (!current) {
                 throw new HTTP404Error('User not found');
             }
             if (current.subscription) {
-                return { ...current.subscription, userId: current.id };
+                return {
+                    created: false,
+                    model: { ...current.subscription, userId: current.id }
+                };
             }
             const locator = await prisma.$queryRaw<
                 { ics_locator: string }[]
@@ -74,7 +77,10 @@ function Subscription(db: PrismaClient['subscription']) {
             });
             const subscription = prepareSubscription(model);
             await createIcsFromSubscription(subscription);
-            return subscription;
+            return {
+                created: true,
+                model: subscription
+            };
         }
     });
 }

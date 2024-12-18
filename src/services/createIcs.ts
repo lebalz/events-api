@@ -186,7 +186,7 @@ const exportIcs = async (events: Event[], filename: string) => {
 };
 
 export const createIcs = async (userId: string): Promise<ApiSubscription> => {
-    const subscription = await Subscription.getOrCreateModel({ id: userId });
+    const { model: subscription } = await Subscription.getOrCreateModel({ id: userId });
     return createIcsFromSubscription(subscription);
 };
 
