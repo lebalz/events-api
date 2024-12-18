@@ -128,6 +128,10 @@ const i18n = {
         de: 'Termin',
         fr: 'Evénement'
     },
+    viewOnline: {
+        de: 'Online ansehen',
+        fr: 'Voir en ligne'
+    },
     field: {
         de: 'Feld',
         fr: 'Champ'
@@ -283,6 +287,10 @@ const i18n = {
     excludedClasses: {
         de: 'Ausgeschlossene Klassen',
         fr: 'Classes exclues'
+    },
+    unsubscribe: {
+        de: 'Abbestellen',
+        fr: 'Se désabonner'
     }
 } satisfies { [key: string]: i18nMessage };
 

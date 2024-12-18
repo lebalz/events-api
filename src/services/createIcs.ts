@@ -1,15 +1,14 @@
 import prisma from '../prisma';
-import { v4 as uuidv4 } from 'uuid';
 import { createEvents, DateArray, EventAttributes } from 'ics';
 import { Event, EventAudience, EventState } from '@prisma/client';
-import { writeFileSync, promises as fsPromises } from 'fs';
+import { promises as fsPromises } from 'fs';
 import _ from 'lodash';
 import Logger from '../utils/logger';
 import { ICAL_DIR } from '../app';
 import { translate } from './helpers/i18n';
-import { ApiUser, prepareUser } from '../models/user.helpers';
-import { ApiSubscription, prepareSubscription } from '../models/subscription.helpers';
+import { ApiSubscription } from '../models/subscription.helpers';
 import Subscription from '../models/subscription';
+import { getDateTime, getDay } from './helpers/time';
 
 export const SEC_2_MS = 1000;
 export const MINUTE_2_MS = 60 * SEC_2_MS;
@@ -70,32 +69,134 @@ export const prepareEvent = (
     }
     const createdAt = toDateArray(new Date(event.createdAt));
     const updatedAt = toDateArray(new Date(event.updatedAt));
+
     const description: string[] = [];
     if (event.descriptionLong) {
         description.push(event.descriptionLong);
     }
+    const audience = [];
     if (event.classes.length > 0 || event.classGroups.length > 0) {
-        description.push(
+        audience.push(
             `${translate('classes', lang)}: ${[...event.classes.map((cls) => legacyClassNames[cls] || cls), ...event.classGroups].join(', ')}`
         );
     }
     if (event.deletedAt) {
-        description.push(`${translate('deletedAt', lang)}: ${event.deletedAt}`);
+        audience.push(`${translate('deletedAt', lang)}: ${event.deletedAt}`);
     }
-    description.push(
-        `${translate('teachingAffected', lang)} ${translate(event.teachingAffected, lang)} ${TEACHING_AFFECTED[event.teachingAffected]}`
-    );
-    description.push(`👉 ${process.env.EVENTS_APP_URL}/${lang === 'fr' ? 'fr/' : ''}event?id=${event.id}`);
+    if (audience.length > 0) {
+        description.push(...audience);
+    }
+    const teachingAffected = `${translate('teachingAffected', lang)} ${translate(event.teachingAffected, lang)}`;
+    description.push(`${teachingAffected} ${TEACHING_AFFECTED[event.teachingAffected]}`);
+    const baseUrl = `${process.env.EVENTS_APP_URL}/${lang === 'fr' ? 'fr/' : ''}`;
+    description.push(`👉 ${translate('event', lang)} ${baseUrl}event?id=${event.id}`);
+    description.push(`\n🔕 ${translate('unsubscribe', lang)}: ${baseUrl}unsubscribe/${event.id}`);
 
     const title = event.deletedAt
         ? `❌ ${event.description} ${TEACHING_AFFECTED[event.teachingAffected]}`
         : `${event.description} ${TEACHING_AFFECTED[event.teachingAffected]}`;
 
+    const htmlContent = `
+<!DOCTYPE html>
+<html lang="${lang}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            padding: 20px;
+            background-color: #f7f9fc;
+        }
+        .event-container {
+            max-width: 600px;
+            margin: auto;
+            background-color: #fff;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+        }
+        .event-title {
+            font-size: 24px;
+            margin-bottom: 10px;
+            color: #232a40;
+        }
+        .event-description {
+            font-size: 16px;
+            margin-bottom: 15px;
+        }
+        .event-status {
+            font-size: 16px;
+            font-weight: bold;
+        }
+        .status-teaching-affected {
+            color: #ff4e42;
+        }
+        .status-partial {
+            color: #ffa500;
+        }
+        .status-none {
+            color: #28a745;
+        }
+        .event-date-time, .event-location, .event-audience {
+            margin-top: 10px;
+            font-size: 14px;
+            color: #666;
+        }
+        .event-links {
+            margin-top: 20px;
+        }
+        .event-link a {
+            color: #007bff;
+            text-decoration: none;
+        }
+        .event-link a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="event-container">
+        <div class="event-title">${title}</div>
+        <div class="event-description">
+            ${event.descriptionLong}
+        </div>
+        <div class="event-status status-teaching-affected">
+            ${teachingAffected}
+        </div>
+        <div class="event-location">
+            ${translate('location', lang)}: ${event.location}
+        </div>
+        <div class="event-date-time">
+            ${translate('start', lang)}: ${getDay(event.start, lang)}. ${getDateTime(event.start)}<br>
+            ${translate('end', lang)}: ${getDay(event.end, lang)}. ${getDateTime(event.end)}
+        </div>
+        <div class="event-audience">
+            ${audience.join('<br>')}
+        </div>
+        <div class="event-links">
+            <div class="event-link">
+                <a href="${baseUrl}event?id=${event.id}" target="_blank">👉 ${translate('event', lang)} ${translate('viewOnline', lang)}</a>
+            </div>
+            <div class="event-link">
+                <a href="${baseUrl}unsubscribe/${event.id}" target="_blank">🔕 ${translate('unsubscribe', lang)}</a>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
+    `;
+
     return {
         title: title,
         start: start,
         end: end,
+        url: `${baseUrl}event?id=${event.id}`,
         description: description.join('\n'),
+        htmlContent: htmlContent,
         location: event.location,
         uid: event.id,
         startInputType: 'utc',
