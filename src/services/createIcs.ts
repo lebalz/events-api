@@ -88,7 +88,7 @@ export const prepareEvent = (
     }
     const teachingAffected = `${translate('teachingAffected', lang)} ${translate(event.teachingAffected, lang)}`;
     description.push(`${teachingAffected} ${TEACHING_AFFECTED[event.teachingAffected]}`);
-    const baseUrl = `${process.env.EVENTS_APP_URL}/${lang === 'fr' ? 'fr/' : ''}`;
+    const baseUrl = `${process.env.EVENTS_APP_URL ?? 'https://events.com'}/${lang === 'fr' ? 'fr/' : ''}`;
     description.push(`👉 ${translate('event', lang)} ${baseUrl}event?id=${event.id}`);
     description.push(`\n🔕 ${translate('unsubscribe', lang)}: ${baseUrl}unsubscribe/${event.id}`);
 
