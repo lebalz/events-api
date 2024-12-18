@@ -3,7 +3,7 @@ import { Subscription } from '@prisma/client';
 export interface ApiSubscription extends Subscription {
     ignoredEventIds: string[];
     departmentIds: string[];
-    classIds: number[];
+    untisClassIds: number[];
 }
 
 export interface PrepareableSubscription extends Subscription {
@@ -23,7 +23,7 @@ export const prepareSubscription = (subscription: PrepareableSubscription): ApiS
         ...subscription,
         departmentIds: subscription.departments.map((d) => d.id) || [],
         ignoredEventIds: subscription.ignoredEvents.map((e) => e.id) || [],
-        classIds: subscription.untisClasses.map((c) => c.id) || []
+        untisClassIds: subscription.untisClasses.map((c) => c.id) || []
     };
     ['departments', 'ignoredEvents', 'untisClasses'].forEach((key) => {
         delete (prepared as any)[key];

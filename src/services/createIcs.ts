@@ -220,7 +220,7 @@ export const createIcsFromSubscription = async (subscription: ApiSubscription): 
 
     const subscribedClassEvents = await prisma.view_EventsClasses.findMany({
         where: {
-            classId: { in: subscription.classIds },
+            classId: { in: subscription.untisClassIds },
             parentId: null,
             state: EventState.PUBLISHED,
             id: { notIn: [...toIgnore] },

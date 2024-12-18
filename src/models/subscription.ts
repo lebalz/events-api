@@ -1,11 +1,10 @@
-import { Prisma, PrismaClient, Role, Subscription, User as UserModel, User as Users } from '@prisma/client';
+import { PrismaClient, Role, Subscription, User as Users } from '@prisma/client';
 import prisma from '../prisma';
 import { HTTP403Error, HTTP404Error } from '../utils/errors/Errors';
 import { createDataExtractor } from '../controllers/helpers';
-import { createIcs as createIcsFile, createIcsFromSubscription } from '../services/createIcs';
+import { createIcsFromSubscription } from '../services/createIcs';
 import { ApiSubscription, DEFAULT_INCLUDE, prepareSubscription } from './subscription.helpers';
 import User from './user';
-import Logger from '../utils/logger';
 const getData = createDataExtractor<Partial<ApiSubscription>>(['subscribeToAffected']);
 
 function Subscription(db: PrismaClient['subscription']) {
@@ -40,9 +39,9 @@ function Subscription(db: PrismaClient['subscription']) {
                               set: data.ignoredEventIds.map((id) => ({ id }))
                           }
                         : undefined,
-                    untisClasses: data.classIds
+                    untisClasses: data.untisClassIds
                         ? {
-                              set: data.classIds.map((id) => ({ id }))
+                              set: data.untisClassIds.map((id) => ({ id }))
                           }
                         : undefined
                 },
