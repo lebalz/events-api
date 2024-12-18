@@ -6,7 +6,6 @@
 - a teacher can be a klp of maximum one class (`view__UsersAffectedByEvent`)
 - klp teaches a lesson 'KS' or 'MC' in it's class
 
-
 ## ENV
 
 | Name                  | Description                                                                                                                                          | Default     |
