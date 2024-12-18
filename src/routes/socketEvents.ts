@@ -1,11 +1,10 @@
 /* istanbul ignore file */
 
-import type { Event, User } from '@prisma/client';
+import type { User } from '@prisma/client';
 import { Server } from 'socket.io';
 import { affectedLessons } from '../services/eventChecker';
 import { affectedLessons as checkUnpersisted } from '../services/eventCheckUnpersisted';
 import Logger from '../utils/logger';
-import { ApiEvent } from '../models/event.helpers';
 import { ClientToServerEvents, IoEvents, ServerToClientEvents } from './socketEventTypes';
 
 export enum IoRoom {

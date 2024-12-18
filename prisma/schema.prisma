@@ -1,36 +1,37 @@
 generator client {
-  provider        = "prisma-client-js"
-  previewFeatures = ["postgresqlExtensions", "views"]
+    provider        = "prisma-client-js"
+    previewFeatures = ["postgresqlExtensions", "views"]
 }
 
 generator docs {
-  provider = "node node_modules/prisma-docs-generator"
-  output   = "../docs/prisma"
+    provider = "node node_modules/prisma-docs-generator"
+    output   = "../docs/prisma"
 }
 
 generator dbml {
-  provider = "prisma-dbml-generator"
+    provider = "prisma-dbml-generator"
 }
 
 datasource db {
-  provider   = "postgresql"
-  url        = env("DATABASE_URL")
-  extensions = [pg_trgm, pgcrypto]
+    provider   = "postgresql"
+    url        = env("DATABASE_URL")
+    extensions = [pg_trgm, pgcrypto]
 }
 
 model User {
-    id         String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-    email      String        @unique
-    untis      UntisTeacher? @relation(fields: [untisId], references: [id])
-    untisId    Int?          @unique @map("untis_id")
-    firstName  String        @map("first_name")
-    lastName   String        @map("last_name")
-    role       Role          @default(USER)
-    createdAt  DateTime      @default(now()) @map("created_at")
-    updatedAt  DateTime      @default(now()) @updatedAt @map("updated_at")
-    events     Event[]       @relation("events")
-    icsLocator String?       @map("ics_locator") @unique
-    jobs       Job[]
+    id        String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+    email     String        @unique
+    untis     UntisTeacher? @relation(fields: [untisId], references: [id])
+    untisId   Int?          @unique @map("untis_id")
+    firstName String        @map("first_name")
+    lastName  String        @map("last_name")
+    role      Role          @default(USER)
+    createdAt DateTime      @default(now()) @map("created_at")
+    updatedAt DateTime      @default(now()) @updatedAt @map("updated_at")
+    events    Event[]       @relation("events")
+    jobs      Job[]
+
+    subscription Subscription?
 
     eventGroups EventGroup[] @relation("users_to_event_groups")
 
@@ -77,13 +78,34 @@ model Event {
 
     teachingAffected TeachingAffected @default(YES) @map("teaching_affected")
 
+    subscriptions Subscription[] @relation("subscription_to_events")
+
     createdAt DateTime  @default(now()) @map("created_at")
     updatedAt DateTime  @default(now()) @updatedAt @map("updated_at")
     deletedAt DateTime? @map("deleted_at")
 
-    meta      Json?
+    meta Json?
 
     @@map("events")
+}
+
+model Subscription {
+    id     String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+    user   User   @relation(fields: [userId], references: [id])
+    userId String @unique @map("user_id") @db.Uuid()
+
+    subscribeToAffected Boolean @default(true) @map("subscribe_to_affected")
+
+    icsLocator String @unique @map("ics_locator")
+
+    departments   Department[] @relation("subscription_to_departments")
+    untisClasses  UntisClass[] @relation("subscription_to_classes")
+    ignoredEvents Event[]      @relation("subscription_to_events")
+
+    createdAt DateTime @default(now()) @map("created_at")
+    updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
+
+    @@map("subscriptions")
 }
 
 model EventGroup {
@@ -120,6 +142,8 @@ model Department {
     registrationPeriods RegistrationPeriod[] @relation("registration_periods_to_departments")
     color               String               @default("#306cce")
 
+    subscriptions Subscription[] @relation("subscription_to_departments")
+
     createdAt DateTime @default(now()) @map("created_at")
     updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
 
@@ -143,12 +167,12 @@ model Semester {
 model RegistrationPeriod {
     id              String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
     name            String
-    description     String      @default("")
+    description     String       @default("")
     start           DateTime
     end             DateTime
     eventRangeStart DateTime     @map("event_range_start")
     eventRangeEnd   DateTime     @map("event_range_end")
-    isOpen          Boolean      @map("is_open") @default(false)
+    isOpen          Boolean      @default(false) @map("is_open")
     departments     Department[] @relation("registration_periods_to_departments")
     createdAt       DateTime     @default(now()) @map("created_at")
     updatedAt       DateTime     @default(now()) @updatedAt @map("updated_at")
@@ -216,15 +240,16 @@ model UntisLesson {
 }
 
 model UntisClass {
-    id           Int            @id @default(autoincrement())
-    name         String         @unique
-    legacyName   String?        @unique @map("legacy_name")
-    year         Int
-    sf           String
-    lessons      UntisLesson[]  @relation("classes_to_lessons")
-    teachers     UntisTeacher[] @relation("teachers_to_classes")
-    department   Department?    @relation(fields: [departmentId], references: [id])
-    departmentId String?        @map("department_id") @db.Uuid
+    id            Int            @id @default(autoincrement())
+    name          String         @unique
+    legacyName    String?        @unique @map("legacy_name")
+    year          Int
+    sf            String
+    lessons       UntisLesson[]  @relation("classes_to_lessons")
+    teachers      UntisTeacher[] @relation("teachers_to_classes")
+    department    Department?    @relation(fields: [departmentId], references: [id])
+    departmentId  String?        @map("department_id") @db.Uuid
+    subscriptions Subscription[] @relation("subscription_to_classes")
 
     @@map("untis_classes")
 }
@@ -239,211 +264,211 @@ model Session {
 }
 
 view view_KLPs {
-  userId      String @map("u_id") @db.Uuid
-  teacherId   Int    @map("t_id")
-  teacherName String @map("t_name")
-  classId     Int    @map("c_id")
-  className   String @map("c_name")
-  semesterId  String @map("s_id") @db.Uuid
+    userId      String @map("u_id") @db.Uuid
+    teacherId   Int    @map("t_id")
+    teacherName String @map("t_name")
+    classId     Int    @map("c_id")
+    className   String @map("c_name")
+    semesterId  String @map("s_id") @db.Uuid
 
-  @@unique([userId, teacherId, classId, semesterId])
-  @@map("view__klps")
+    @@unique([userId, teacherId, classId, semesterId])
+    @@map("view__klps")
 }
 
 view view_AffectedByEventsUnfiltered {
-  eventId              String        @map("e_id") @db.Uuid
-  userId               String        @map("u_id") @db.Uuid
-  semesterId           String        @map("s_id") @db.Uuid
-  untisTeacherId       Int?          @map("untis_teacher_id")
-  classId              Int           @map("c_id")
-  className            String        @map("c_name")
-  lessonId             Int           @map("l_id")
-  lessonSubject        String        @map("l_subject")
-  eventAudience        EventAudience @map("e_audience")
-  affectedDepartmentId String?       @map("affected_department_id") @db.Uuid
-  affectsDepartment    Boolean?      @map("affects_department")
-  affectsClassname     Boolean       @map("affects_classname")
-  affectsClassgroup    Boolean       @map("affects_classgroup")
-  affectsLesson        Boolean       @map("affects_lesson")
-  isKlp                Boolean?      @map("is_klp")
+    eventId              String        @map("e_id") @db.Uuid
+    userId               String        @map("u_id") @db.Uuid
+    semesterId           String        @map("s_id") @db.Uuid
+    untisTeacherId       Int?          @map("untis_teacher_id")
+    classId              Int           @map("c_id")
+    className            String        @map("c_name")
+    lessonId             Int           @map("l_id")
+    lessonSubject        String        @map("l_subject")
+    eventAudience        EventAudience @map("e_audience")
+    affectedDepartmentId String?       @map("affected_department_id") @db.Uuid
+    affectsDepartment    Boolean?      @map("affects_department")
+    affectsClassname     Boolean       @map("affects_classname")
+    affectsClassgroup    Boolean       @map("affects_classgroup")
+    affectsLesson        Boolean       @map("affects_lesson")
+    isKlp                Boolean?      @map("is_klp")
 
-  @@unique([userId, eventId, semesterId, classId, lessonId])
-  @@map("view__affected_by_events_unfiltered")
+    @@unique([userId, eventId, semesterId, classId, lessonId])
+    @@map("view__affected_by_events_unfiltered")
 }
 
 view view_AffectedByEvents {
-  eventId              String        @map("e_id") @db.Uuid
-  userId               String        @map("u_id") @db.Uuid
-  semesterId           String        @map("s_id") @db.Uuid
-  untisTeacherId       Int?          @map("untis_teacher_id")
-  classId              Int           @map("c_id")
-  className            String        @map("c_name")
-  lessonId             Int           @map("l_id")
-  lessonSubject        String        @map("l_subject")
-  eventAudience        EventAudience @map("e_audience")
-  affectedDepartmentId String?       @map("affected_department_id") @db.Uuid
-  affectsDepartment    Boolean?      @map("affects_department")
-  affectsClassname     Boolean       @map("affects_classname")
-  affectsClassgroup    Boolean       @map("affects_classgroup")
-  affectsLesson        Boolean       @map("affects_lesson")
-  isKlp                Boolean?      @map("is_klp")
+    eventId              String        @map("e_id") @db.Uuid
+    userId               String        @map("u_id") @db.Uuid
+    semesterId           String        @map("s_id") @db.Uuid
+    untisTeacherId       Int?          @map("untis_teacher_id")
+    classId              Int           @map("c_id")
+    className            String        @map("c_name")
+    lessonId             Int           @map("l_id")
+    lessonSubject        String        @map("l_subject")
+    eventAudience        EventAudience @map("e_audience")
+    affectedDepartmentId String?       @map("affected_department_id") @db.Uuid
+    affectsDepartment    Boolean?      @map("affects_department")
+    affectsClassname     Boolean       @map("affects_classname")
+    affectsClassgroup    Boolean       @map("affects_classgroup")
+    affectsLesson        Boolean       @map("affects_lesson")
+    isKlp                Boolean?      @map("is_klp")
 
-  @@unique([userId, eventId, semesterId, classId, lessonId])
-  @@map("view__affected_by_events")
+    @@unique([userId, eventId, semesterId, classId, lessonId])
+    @@map("view__affected_by_events")
 }
 
 view view_UsersAffectedByEvents {
-  userId             String           @map("u_id") @db.Uuid
-  semesterId         String           @map("s_id") @db.Uuid
-  id                 String           @id @db.Uuid
-  authorId           String           @map("author_id") @db.Uuid
-  start              DateTime
-  end                DateTime
-  location           String
-  description        String
-  descriptionLong    String           @map("description_long")
-  state              EventState
-  jobId              String?          @map("import_id") @db.Uuid
-  classes            String[]
-  classGroups        String[]         @map("class_groups")
-  createdAt          DateTime         @map("created_at")
-  updatedAt          DateTime         @updatedAt @map("updated_at")
-  deletedAt          DateTime?        @map("deleted_at")
-  teachingAffected   TeachingAffected @map("teaching_affected")
-  parentId           String?          @map("parent_id") @db.Uuid
-  cloned             Boolean
-  audience           EventAudience
-  affectsDepartment2 Boolean?         @map("affects_department2")
-  meta               Json?
+    userId             String           @map("u_id") @db.Uuid
+    semesterId         String           @map("s_id") @db.Uuid
+    id                 String           @id @db.Uuid
+    authorId           String           @map("author_id") @db.Uuid
+    start              DateTime
+    end                DateTime
+    location           String
+    description        String
+    descriptionLong    String           @map("description_long")
+    state              EventState
+    jobId              String?          @map("import_id") @db.Uuid
+    classes            String[]
+    classGroups        String[]         @map("class_groups")
+    createdAt          DateTime         @map("created_at")
+    updatedAt          DateTime         @updatedAt @map("updated_at")
+    deletedAt          DateTime?        @map("deleted_at")
+    teachingAffected   TeachingAffected @map("teaching_affected")
+    parentId           String?          @map("parent_id") @db.Uuid
+    cloned             Boolean
+    audience           EventAudience
+    affectsDepartment2 Boolean?         @map("affects_department2")
+    meta               Json?
 
-  @@unique([id, userId, semesterId])
-  @@map("view__users_affected_by_events")
+    @@unique([id, userId, semesterId])
+    @@map("view__users_affected_by_events")
 }
 
 view view_LessonsAffectedByEvents {
-  eventId     String  @map("e_id") @db.Uuid
-  sId         String  @map("s_id") @db.Uuid
-  id          Int     @id
-  room        String
-  subject     String
-  description String
-  semesterNr  Int     @map("semester_nr")
-  year        Int
-  weekDay     Int     @map("week_day")
-  startHHMM   Int     @map("start_hhmm")
-  endHHMM     Int     @map("end_hhmm")
-  semesterId  String? @map("semester_id") @db.Uuid
-  teacherIds  Int[]   @map("teacher_ids")
-  classIds    Int[]   @map("class_ids")
+    eventId     String  @map("e_id") @db.Uuid
+    sId         String  @map("s_id") @db.Uuid
+    id          Int     @id
+    room        String
+    subject     String
+    description String
+    semesterNr  Int     @map("semester_nr")
+    year        Int
+    weekDay     Int     @map("week_day")
+    startHHMM   Int     @map("start_hhmm")
+    endHHMM     Int     @map("end_hhmm")
+    semesterId  String? @map("semester_id") @db.Uuid
+    teacherIds  Int[]   @map("teacher_ids")
+    classIds    Int[]   @map("class_ids")
 
-  @@unique([id, eventId, sId])
-  @@map("view__lessons_affected_by_events")
+    @@unique([id, eventId, sId])
+    @@map("view__lessons_affected_by_events")
 }
 
 view view_EventsClasses {
-  id                 String           @id @db.Uuid
-  authorId           String           @map("author_id") @db.Uuid
-  start              DateTime
-  end                DateTime
-  location           String
-  description        String
-  descriptionLong    String           @map("description_long")
-  state              EventState
-  jobId              String?          @map("import_id") @db.Uuid
-  classes            String[]
-  classGroups        String[]         @map("class_groups")
-  createdAt          DateTime         @map("created_at")
-  updatedAt          DateTime         @updatedAt @map("updated_at")
-  deletedAt          DateTime?        @map("deleted_at")
-  teachingAffected   TeachingAffected @map("teaching_affected")
-  parentId           String?          @map("parent_id") @db.Uuid
-  cloned             Boolean
-  audience           EventAudience
-  affectsDepartment2 Boolean?         @map("affects_department2")
-  meta               Json?
-  classId            Int              @map("klass_id")
-  className          String           @map("klass_name")
-  departmentId       String           @map("department_id") @db.Uuid
+    id                 String           @id @db.Uuid
+    authorId           String           @map("author_id") @db.Uuid
+    start              DateTime
+    end                DateTime
+    location           String
+    description        String
+    descriptionLong    String           @map("description_long")
+    state              EventState
+    jobId              String?          @map("import_id") @db.Uuid
+    classes            String[]
+    classGroups        String[]         @map("class_groups")
+    createdAt          DateTime         @map("created_at")
+    updatedAt          DateTime         @updatedAt @map("updated_at")
+    deletedAt          DateTime?        @map("deleted_at")
+    teachingAffected   TeachingAffected @map("teaching_affected")
+    parentId           String?          @map("parent_id") @db.Uuid
+    cloned             Boolean
+    audience           EventAudience
+    affectsDepartment2 Boolean?         @map("affects_department2")
+    meta               Json?
+    classId            Int              @map("klass_id")
+    className          String           @map("klass_name")
+    departmentId       String           @map("department_id") @db.Uuid
 
-  @@unique([id, classId, departmentId])
-  @@map("view__events_classes")
+    @@unique([id, classId, departmentId])
+    @@map("view__events_classes")
 }
 
 view view_EventsDepartments {
-  id                 String           @id @db.Uuid
-  authorId           String           @map("author_id") @db.Uuid
-  start              DateTime
-  end                DateTime
-  location           String
-  description        String
-  descriptionLong    String           @map("description_long")
-  state              EventState
-  jobId              String?          @map("import_id") @db.Uuid
-  classes            String[]
-  classGroups        String[]         @map("class_groups")
-  createdAt          DateTime         @map("created_at")
-  updatedAt          DateTime         @updatedAt @map("updated_at")
-  deletedAt          DateTime?        @map("deleted_at")
-  teachingAffected   TeachingAffected @map("teaching_affected")
-  parentId           String?          @map("parent_id") @db.Uuid
-  cloned             Boolean
-  audience           EventAudience
-  affectsDepartment2 Boolean?         @map("affects_department2")
-  meta               Json?
-  departmentId       String           @map("d_id") @db.Uuid
+    id                 String           @id @db.Uuid
+    authorId           String           @map("author_id") @db.Uuid
+    start              DateTime
+    end                DateTime
+    location           String
+    description        String
+    descriptionLong    String           @map("description_long")
+    state              EventState
+    jobId              String?          @map("import_id") @db.Uuid
+    classes            String[]
+    classGroups        String[]         @map("class_groups")
+    createdAt          DateTime         @map("created_at")
+    updatedAt          DateTime         @updatedAt @map("updated_at")
+    deletedAt          DateTime?        @map("deleted_at")
+    teachingAffected   TeachingAffected @map("teaching_affected")
+    parentId           String?          @map("parent_id") @db.Uuid
+    cloned             Boolean
+    audience           EventAudience
+    affectsDepartment2 Boolean?         @map("affects_department2")
+    meta               Json?
+    departmentId       String           @map("d_id") @db.Uuid
 
-  @@unique([id, departmentId])
-  @@map("view__events_departments")
+    @@unique([id, departmentId])
+    @@map("view__events_departments")
 }
 
 view view_EventsRegistrationPeriods {
-  eventId           String   @map("e_id") @db.Uuid
-  rpId              String   @map("rp_id") @db.Uuid
-  rpName            String   @map("rp_name")
-  rpIsOpen          Boolean  @map("rp_is_open")
-  rpStart           DateTime @map("rp_start")
-  rpEnd             DateTime @map("rp_end")
-  rpEventRangeStart DateTime @map("rp_event_range_start")
-  rpEventRangeEnd   DateTime @map("rp_event_range_end")
+    eventId           String   @map("e_id") @db.Uuid
+    rpId              String   @map("rp_id") @db.Uuid
+    rpName            String   @map("rp_name")
+    rpIsOpen          Boolean  @map("rp_is_open")
+    rpStart           DateTime @map("rp_start")
+    rpEnd             DateTime @map("rp_end")
+    rpEventRangeStart DateTime @map("rp_event_range_start")
+    rpEventRangeEnd   DateTime @map("rp_event_range_end")
 
-  @@unique([eventId, rpId])
-  @@map("view__events_registration_periods")
+    @@unique([eventId, rpId])
+    @@map("view__events_registration_periods")
 }
 
 enum Role {
-  USER
-  ADMIN
+    USER
+    ADMIN
 }
 
 enum EventState {
-  DRAFT
-  REVIEW
-  PUBLISHED
-  REFUSED
+    DRAFT
+    REVIEW
+    PUBLISHED
+    REFUSED
 }
 
 enum TeachingAffected {
-  YES
-  PARTIAL
-  NO
+    YES
+    PARTIAL
+    NO
 }
 
 enum JobState {
-  PENDING
-  ERROR
-  DONE
-  REVERTED
+    PENDING
+    ERROR
+    DONE
+    REVERTED
 }
 
 enum JobType {
-  IMPORT
-  CLONE
-  SYNC_UNTIS
+    IMPORT
+    CLONE
+    SYNC_UNTIS
 }
 
 enum EventAudience {
-  LP
-  KLP
-  STUDENTS
-  ALL
+    LP
+    KLP
+    STUDENTS
+    ALL
 }

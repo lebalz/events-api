@@ -4,6 +4,7 @@ import { IoEvent, RecordType } from '../routes/socketEventTypes';
 import { IoRoom } from '../routes/socketEvents';
 import Users from '../models/user';
 import Events from '../models/event';
+import { ApiUser } from '../models/user.helpers';
 
 const NAME = RecordType.User;
 
@@ -39,7 +40,11 @@ export const update: RequestHandler<{ id: string }, any, { data: User }> = async
 
 export const all: RequestHandler = async (req, res, next) => {
     try {
-        const users = await Users.all();
+        const [users, currentUser] = await Promise.all([Users.all(), Users.findModel(req.user!.id)]);
+        if (currentUser) {
+            const userIdx = users.findIndex((u) => u.id === currentUser.id);
+            users.splice(userIdx, 1, currentUser);
+        }
         res.json(users);
     } catch (error) /* istanbul ignore next */ {
         next(error);

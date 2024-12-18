@@ -1,13 +1,13 @@
-import { Event, EventState, Prisma, PrismaClient, Role, User as Users } from '@prisma/client';
+import { EventState, Prisma, PrismaClient, Role, Subscription, User as Users } from '@prisma/client';
 import { createIcs as createIcsFile } from '../services/createIcs';
 import prisma from '../prisma';
 import { HTTP400Error, HTTP403Error, HTTP404Error } from '../utils/errors/Errors';
 import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
 import { ApiEvent, prepareEvent } from './event.helpers';
-import { existsSync, rmSync } from 'fs';
-import { ICAL_DIR } from '../app';
 import { createDataExtractor } from '../controllers/helpers';
 import Logger from '../utils/logger';
+import { DEFAULT_INCLUDE as SUBSCRIPTION_INCLUDE } from './subscription.helpers';
+import { ApiUser, prepareUser } from './user.helpers';
 const getData = createDataExtractor<Prisma.UserUncheckedUpdateInput>([
     'notifyOnEventUpdate',
     'notifyAdminOnReviewRequest',
@@ -20,10 +20,21 @@ function Users(db: PrismaClient['user']) {
          * Signup the first user and create a new team of one. Return the User with
          * a full name and without a password
          */
-        async findModel(id: string): Promise<Users | null> {
-            return await db.findUnique({ where: { id } });
+        async findModel(id: string): Promise<ApiUser | null> {
+            const user = await db.findUnique({
+                where: { id },
+                include: {
+                    subscription: {
+                        include: SUBSCRIPTION_INCLUDE
+                    }
+                }
+            });
+            if (!user) {
+                return null;
+            }
+            return prepareUser(user);
         },
-        async updateModel(actor: Users, id: string, data: Partial<Users>): Promise<Users> {
+        async updateModel(actor: Users, id: string, data: Partial<Users>): Promise<ApiUser> {
             const record = await db.findUnique({ where: { id: id } });
             if (!record) {
                 throw new HTTP404Error('User not found');
@@ -33,21 +44,26 @@ function Users(db: PrismaClient['user']) {
             }
             /** remove fields not updatable*/
             const sanitized = getData(data);
-            return await db.update({
+            const res = await db.update({
                 where: {
                     id: id
                 },
-                data: sanitized
+                data: sanitized,
+                include: {
+                    subscription: {
+                        include: SUBSCRIPTION_INCLUDE
+                    }
+                }
             });
+            return prepareUser(res);
         },
         async all(): Promise<Users[]> {
             return await db.findMany({});
         },
-        async linkToUntis(actor: Users, userId: string, untisId: number | null): Promise<Users> {
+        async linkToUntis(actor: Users, userId: string, untisId: number | null): Promise<ApiUser> {
             if (actor.role !== Role.ADMIN && actor.id !== userId) {
                 throw new HTTP403Error('Not authorized');
             }
-            const { icsLocator } = actor;
             try {
                 const res = await db.update({
                     where: {
@@ -55,35 +71,17 @@ function Users(db: PrismaClient['user']) {
                     },
                     data: {
                         untisId: untisId || null
+                    },
+                    include: {
+                        subscription: {
+                            include: SUBSCRIPTION_INCLUDE
+                        }
                     }
                 });
-                if (untisId) {
-                    await createIcsFile(userId).catch((err) => {
-                        Logger.error(
-                            `ICS-Sync after linking to untis failed for ${actor.email}: ${err.message}`
-                        );
-                    });
-                } else if (icsLocator) {
-                    try {
-                        await db.update({
-                            where: {
-                                id: userId
-                            },
-                            data: {
-                                icsLocator: null
-                            }
-                        });
-                        if (existsSync(`${ICAL_DIR}/de/${icsLocator}`)) {
-                            rmSync(`${ICAL_DIR}/de/${icsLocator}`);
-                        }
-                        if (existsSync(`${ICAL_DIR}/fr/${icsLocator}`)) {
-                            rmSync(`${ICAL_DIR}/fr/${icsLocator}`);
-                        }
-                    } catch (err) {
-                        console.error(`ICS-Sync after unlinking from untis failed for ${actor.email}`, err);
-                    }
-                }
-                return res;
+                await createIcsFile(userId).catch((err) => {
+                    Logger.error(`ICS-Sync after linking to untis failed for ${actor.email}: ${err.message}`);
+                });
+                return prepareUser(res);
             } catch (err) {
                 Logger.error(`Linking to untis failed for ${actor.email}: ${JSON.stringify(err, null, 2)}`);
                 const error = (err || {}) as PrismaClientKnownRequestError;
@@ -107,11 +105,16 @@ function Users(db: PrismaClient['user']) {
                 }
             });
         },
-        async createIcs(actor: Users, userId: string): Promise<Users> {
+        async createIcs(actor: Users, userId: string): Promise<ApiUser> {
             if (actor.id !== userId) {
                 throw new HTTP403Error('Not authorized');
             }
-            return await createIcsFile(userId);
+            const subscription = await createIcsFile(userId);
+            delete (subscription as any).userId; // remove redundant userId
+            return {
+                ...prepareUser({ ...actor, subscription: null }),
+                subscription: subscription
+            };
         },
         async affectedEvents(actor: Users, userId: string, semesterId?: string): Promise<ApiEvent[]> {
             if (actor.id !== userId && actor.role !== Role.ADMIN) {

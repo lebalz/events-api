@@ -1,6 +1,7 @@
 import request from 'supertest';
 import prisma from '../../src/prisma';
 import app, { API_URL } from '../../src/app';
+import { prepareUser as apiPrepareUser } from '../../src/models/user.helpers';
 import { generateUser, userSequence } from '../factories/user';
 import {
     Department,
@@ -33,6 +34,7 @@ import { UntisDataProps, generateUntisData } from '../factories/untisData';
 import _ from 'lodash';
 import { withoutDTSTAMP } from '../unit/__tests__/services.test';
 import { prepareRecord } from '../helpers/prepareRecord';
+import { DEFAULT_INCLUDE } from '../../src/models/subscription.helpers';
 
 jest.mock('../../src/services/fetchUntis');
 jest.mock('../../src/middlewares/notify.nop');
@@ -69,7 +71,6 @@ describe(`GET ${API_URL}/user authorized`, () => {
             lastName: expect.any(String),
             createdAt: expect.any(String),
             updatedAt: expect.any(String),
-            icsLocator: null,
             untisId: null
         });
         expect(mNotification).toHaveBeenCalledTimes(0);
@@ -325,7 +326,7 @@ describe(`PUT ${API_URL}/users/:id/link_to_untis`, () => {
         expect(mNotification).toHaveBeenCalledTimes(1);
         expect(mNotification.mock.calls[0][0]).toEqual({
             event: IoEvent.CHANGED_RECORD,
-            message: { type: 'USER', record: prepareRecord(result.body) },
+            message: { type: 'USER', record: prepareRecord({ ...result.body }) },
             to: IoRoom.ALL
         });
     });
@@ -410,18 +411,31 @@ describe(`POST ${API_URL}/users/:id/create_ics`, () => {
             .post(`${API_URL}/users/${user.id}/create_ics`)
             .set('authorization', JSON.stringify({ email: user.email }));
         expect(result.statusCode).toEqual(200);
+
+        const subscription = await prisma.subscription.findUnique({
+            where: { userId: user.id },
+            include: { ...DEFAULT_INCLUDE }
+        });
+        expect(subscription).not.toBeNull();
         expect(result.body).toEqual({
-            ...prepareUser(user),
-            icsLocator: expect.any(String),
+            ...prepareUser(apiPrepareUser({ ...user, subscription: subscription })),
             updatedAt: expect.any(String)
         });
-        expect(existsSync(`${__dirname}/../test-data/ical/de/${result.body.icsLocator}`)).toBeTruthy();
-        expect(existsSync(`${__dirname}/../test-data/ical/fr/${result.body.icsLocator}`)).toBeTruthy();
+        expect(
+            existsSync(`${__dirname}/../test-data/ical/de/${result.body.subscription.icsLocator}`)
+        ).toBeTruthy();
+        expect(
+            existsSync(`${__dirname}/../test-data/ical/fr/${result.body.subscription.icsLocator}`)
+        ).toBeTruthy();
         const icalDe = withoutDTSTAMP(
-            readFileSync(`${__dirname}/../test-data/ical/de/${result.body.icsLocator}`, { encoding: 'utf-8' })
+            readFileSync(`${__dirname}/../test-data/ical/de/${result.body.subscription.icsLocator}`, {
+                encoding: 'utf-8'
+            })
         );
         const icalFr = withoutDTSTAMP(
-            readFileSync(`${__dirname}/../test-data/ical/fr/${result.body.icsLocator}`, { encoding: 'utf-8' })
+            readFileSync(`${__dirname}/../test-data/ical/fr/${result.body.subscription.icsLocator}`, {
+                encoding: 'utf-8'
+            })
         );
         const icsDe = createEvents([prepareEvent(event, 'de', {}), prepareEvent(deletedEvent, 'de', {})])
             .value!.replace('END:VCALENDAR', '')
@@ -438,7 +452,13 @@ describe(`POST ${API_URL}/users/:id/create_ics`, () => {
         expect(mNotification).toHaveBeenCalledTimes(1);
         expect(mNotification.mock.calls[0][0]).toEqual({
             event: IoEvent.CHANGED_RECORD,
-            message: { type: 'USER', record: prepareRecord(result.body) },
+            message: {
+                type: 'USER',
+                record: prepareRecord({
+                    ...result.body,
+                    subscription: prepareRecord(result.body.subscription)
+                })
+            },
             to: user.id,
             toSelf: false
         });
