@@ -47,7 +47,9 @@ function Subscription(db: PrismaClient['subscription']) {
                 },
                 include: DEFAULT_INCLUDE
             });
-            return prepareSubscription(res);
+            const subscription = prepareSubscription(res);
+            await createIcsFromSubscription(subscription);
+            return subscription;
         },
 
         async getOrCreateModel(actor: { id: string }): Promise<ApiSubscription> {
