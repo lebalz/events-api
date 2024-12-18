@@ -153,6 +153,9 @@ export const prepareEvent = (
             color: #007bff;
             text-decoration: none;
         }
+        .event-link.unsubscribe a {
+            color: #ff0909;
+        }
         .event-link a:hover {
             text-decoration: underline;
         }
@@ -160,7 +163,7 @@ export const prepareEvent = (
 </head>
 <body>
     <div class="event-container">
-        <div class="event-title">${title}</div>
+        <div class="event-title">${event.description}</div>
         <div class="event-description">
             ${event.descriptionLong}
         </div>
@@ -179,10 +182,10 @@ export const prepareEvent = (
         </div>
         <div class="event-links">
             <div class="event-link">
-                <a href="${baseUrl}event?id=${event.id}" target="_blank">👉 ${translate('event', lang)} ${translate('viewOnline', lang)}</a>
+                <a href="${baseUrl}event?id=${event.id}" target="_blank">${translate('event', lang)} ${translate('viewOnline', lang)}</a>
             </div>
-            <div class="event-link">
-                <a href="${baseUrl}unsubscribe/${event.id}" target="_blank">🔕 ${translate('unsubscribe', lang)}</a>
+            <div class="event-link unsubscribe">
+                <a href="${baseUrl}unsubscribe/${event.id}" target="_blank">${translate('unsubscribe', lang)}</a>
             </div>
         </div>
     </div>
