@@ -248,6 +248,9 @@ dokku nginx:set events-api client-max-body-size 5mb
 # deploy the app
 
 dokku letsencrypt:enable events-api
+
+# scale the app and ensure the bree runnder is running (as a worker)
+dokku ps:scale events-api web=1 worker=1
 ```
 
 ```sh
