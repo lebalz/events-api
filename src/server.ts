@@ -87,8 +87,8 @@ if (process.env.NODE_ENV === 'production' || process.env.BREE) {
         jobs: [
             {
                 name: 'sync-ics',
-                timeout: '10 secondes',
-                interval: 'every 6 hours'
+                interval: 'every 6 hours',
+                date: new Date(Date.now() + 20 * 1000) // Current time plus 20 seconds
             }
         ],
         /**
