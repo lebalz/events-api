@@ -132,13 +132,13 @@ export const prepareEvent = (
             font-size: 16px;
             font-weight: bold;
         }
-        .status-teaching-affected {
+        .status-yes {
             color: #ff4e42;
         }
         .status-partial {
             color: #ffa500;
         }
-        .status-none {
+        .status-no {
             color: #28a745;
         }
         .event-date-time, .event-location, .event-audience {
@@ -167,7 +167,7 @@ export const prepareEvent = (
         <div class="event-description">
             ${event.descriptionLong}
         </div>
-        <div class="event-status status-teaching-affected">
+        <div class="event-status status-${event.teachingAffected.toLowerCase()}">
             ${teachingAffected}
         </div>
         <div class="event-location">
@@ -311,26 +311,30 @@ export const createIcsFromSubscription = async (subscription: ApiSubscription): 
 
     publicEventsRaw.forEach((event) => toIgnore.add(event.id));
 
-    const subscribedDepartmentEvents = await prisma.view_EventsClasses.findMany({
-        where: {
-            departmentId: { in: subscription.departmentIds },
-            parentId: null,
-            state: EventState.PUBLISHED,
-            id: { notIn: [...toIgnore] },
-            OR: [{ start: { lte: timeRange.to } }, { end: { gte: timeRange.from } }]
-        }
-    });
+    const subscribedDepartmentEvents = await (subscription.departmentIds.length > 0
+        ? prisma.view_EventsClasses.findMany({
+              where: {
+                  departmentId: { in: subscription.departmentIds },
+                  parentId: null,
+                  state: EventState.PUBLISHED,
+                  id: { notIn: [...toIgnore] },
+                  OR: [{ start: { lte: timeRange.to } }, { end: { gte: timeRange.from } }]
+              }
+          })
+        : Promise.resolve([]));
     subscribedDepartmentEvents.forEach((event) => toIgnore.add(event.id));
 
-    const subscribedClassEvents = await prisma.view_EventsClasses.findMany({
-        where: {
-            classId: { in: subscription.untisClassIds },
-            parentId: null,
-            state: EventState.PUBLISHED,
-            id: { notIn: [...toIgnore] },
-            OR: [{ start: { lte: timeRange.to } }, { end: { gte: timeRange.from } }]
-        }
-    });
+    const subscribedClassEvents = await (subscription.untisClassIds.length > 0
+        ? prisma.view_EventsClasses.findMany({
+              where: {
+                  classId: { in: subscription.untisClassIds },
+                  parentId: null,
+                  state: EventState.PUBLISHED,
+                  id: { notIn: [...toIgnore] },
+                  OR: [{ start: { lte: timeRange.to } }, { end: { gte: timeRange.from } }]
+              }
+          })
+        : Promise.resolve([]));
 
     const allEvents = _.orderBy(
         [...publicEventsRaw, ...subscribedDepartmentEvents, ...subscribedClassEvents],
