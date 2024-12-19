@@ -15,6 +15,10 @@ const level = () => {
     const isDevelopment = env === 'development';
     const isProd = env === 'production';
     if (isProd) {
+        const doLog = !!process.env.LOG;
+        if (doLog) {
+            return 'debug';
+        }
         return 'http';
     }
     return isDevelopment ? 'debug' : 'warn';

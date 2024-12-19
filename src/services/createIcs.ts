@@ -290,7 +290,7 @@ const exportIcs = async (events: Event[], filename: string) => {
 };
 
 export const createIcs = async (userId: string): Promise<ApiSubscription> => {
-    const { model: subscription } = await Subscription.getOrCreateModel({ id: userId });
+    const { model: subscription } = await Subscription.getOrCreateModel({ id: userId }, false);
     return createIcsFromSubscription(subscription);
 };
 
@@ -305,7 +305,10 @@ export const createIcsFromSubscription = async (subscription: ApiSubscription): 
             parentId: null,
             state: EventState.PUBLISHED,
             id: { notIn: [...toIgnore] },
-            OR: [{ start: { lte: timeRange.to } }, { end: { gte: timeRange.from } }]
+            OR: [
+                { start: { gte: timeRange.from, lte: timeRange.to } },
+                { end: { gte: timeRange.from, lte: timeRange.to } }
+            ]
         }
     });
 
@@ -318,7 +321,10 @@ export const createIcsFromSubscription = async (subscription: ApiSubscription): 
                   parentId: null,
                   state: EventState.PUBLISHED,
                   id: { notIn: [...toIgnore] },
-                  OR: [{ start: { lte: timeRange.to } }, { end: { gte: timeRange.from } }]
+                  OR: [
+                      { start: { gte: timeRange.from, lte: timeRange.to } },
+                      { end: { gte: timeRange.from, lte: timeRange.to } }
+                  ]
               }
           })
         : Promise.resolve([]));
@@ -331,7 +337,10 @@ export const createIcsFromSubscription = async (subscription: ApiSubscription): 
                   parentId: null,
                   state: EventState.PUBLISHED,
                   id: { notIn: [...toIgnore] },
-                  OR: [{ start: { lte: timeRange.to } }, { end: { gte: timeRange.from } }]
+                  OR: [
+                      { start: { gte: timeRange.from, lte: timeRange.to } },
+                      { end: { gte: timeRange.from, lte: timeRange.to } }
+                  ]
               }
           })
         : Promise.resolve([]));
@@ -387,7 +396,10 @@ export const createIcsForClasses = async () => {
                 parentId: null,
                 state: EventState.PUBLISHED,
                 audience: { in: [EventAudience.ALL, EventAudience.STUDENTS] },
-                OR: [{ start: { lte: timeRange.to } }, { end: { gte: timeRange.from } }]
+                OR: [
+                    { start: { gte: timeRange.from, lte: timeRange.to } },
+                    { end: { gte: timeRange.from, lte: timeRange.to } }
+                ]
             }
         });
         const fileCreated = await exportIcs(publicEvents, `${untisClass.name}.ics`);
@@ -407,7 +419,10 @@ export const createIcsForDepartments = async () => {
                 departmentId: department.id,
                 parentId: null,
                 state: EventState.PUBLISHED,
-                OR: [{ start: { lte: timeRange.to } }, { end: { gte: timeRange.from } }]
+                OR: [
+                    { start: { gte: timeRange.from, lte: timeRange.to } },
+                    { end: { gte: timeRange.from, lte: timeRange.to } }
+                ]
             }
         });
         const fileCreated = await exportIcs(publicEvents, `${department.name.replaceAll('/', '_')}.ics`);

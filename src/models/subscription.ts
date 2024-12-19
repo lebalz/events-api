@@ -53,7 +53,10 @@ function Subscription(db: PrismaClient['subscription']) {
             return subscription;
         },
 
-        async getOrCreateModel(actor: { id: string }): Promise<{ created: boolean; model: ApiSubscription }> {
+        async getOrCreateModel(
+            actor: { id: string },
+            createIcs: boolean = true
+        ): Promise<{ created: boolean; model: ApiSubscription }> {
             const current = await User.findModel(actor.id);
             if (!current) {
                 throw new HTTP404Error('User not found');
@@ -77,7 +80,9 @@ function Subscription(db: PrismaClient['subscription']) {
                 include: DEFAULT_INCLUDE
             });
             const subscription = prepareSubscription(model);
-            await createIcsFromSubscription(subscription);
+            if (createIcs) {
+                await createIcsFromSubscription(subscription);
+            }
             return {
                 created: true,
                 model: subscription

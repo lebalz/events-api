@@ -15,7 +15,11 @@ import Logger from '../utils/logger';
         });
         for (const user of users) {
             try {
+                const t0 = Date.now();
                 await Users.createIcs(user, user.id);
+                Logger.debug(
+                    `Created ics file for user ${user.id} --> ${user.email} in ${Date.now() - t0}ms`
+                );
             } catch (err) {
                 Logger.warning(`Error creating ics file for user ${user.id} --> ${user.email}: ${err}`);
             }
