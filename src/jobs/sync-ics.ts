@@ -3,7 +3,8 @@ import prisma from '../prisma';
 import Users from '../models/user';
 import { createIcsForClasses, createIcsForDepartments } from '../services/createIcs';
 import Logger from '../utils/logger';
-
+import { ApiUser } from '../models/user.helpers';
+const BATCH_SIZE = 10;
 (async () => {
     try {
         /** sync personal ics files  */
@@ -13,15 +14,32 @@ import Logger from '../utils/logger';
                 untisId: { not: null }
             }
         });
+        let processed = 0;
+        let successfull = 0;
+        const batches: Promise<number>[] = [];
+        const t0 = Date.now();
         for (const user of users) {
-            try {
-                const t0 = Date.now();
-                await Users.createIcs(user, user.id);
-                Logger.debug(
-                    `Created ics file for user ${user.id} --> ${user.email} in ${Date.now() - t0}ms`
+            batches.push(
+                Users.createIcs(user, user.id)
+                    .then((res) => {
+                        Logger.debug(`Created ics file for user ${user.id} --> ${user.email}`);
+                        return 1;
+                    })
+                    .catch((err) => {
+                        Logger.warning(
+                            `Error creating ics file for user ${user.id} --> ${user.email}: ${err}`
+                        );
+                        return 0;
+                    })
+            );
+            if (batches.length >= BATCH_SIZE || user.id === users[users.length - 1].id) {
+                const res = await Promise.all(batches);
+                processed += batches.length;
+                successfull += res.reduce((acc, curr) => acc + curr, 0);
+                batches.splice(0, BATCH_SIZE);
+                Logger.info(
+                    `sync-ics: ${processed}/${users.length} in ${(Date.now() - t0) / 1000}s [${successfull}/${processed} successful]`
                 );
-            } catch (err) {
-                Logger.warning(`Error creating ics file for user ${user.id} --> ${user.email}: ${err}`);
             }
         }
 
