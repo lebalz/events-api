@@ -48,7 +48,8 @@ function Subscription(db: PrismaClient['subscription']) {
                 include: DEFAULT_INCLUDE
             });
             const subscription = prepareSubscription(res);
-            await createIcsFromSubscription(subscription);
+            /** no need to await the ics creation */
+            createIcsFromSubscription(subscription);
             return subscription;
         },
 

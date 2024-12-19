@@ -78,7 +78,8 @@ function Users(db: PrismaClient['user']) {
                         }
                     }
                 });
-                await createIcsFile(userId).catch((err) => {
+                /* no need to await the result */
+                createIcsFile(userId).catch((err) => {
                     Logger.error(`ICS-Sync after linking to untis failed for ${actor.email}: ${err.message}`);
                 });
                 return prepareUser(res);
