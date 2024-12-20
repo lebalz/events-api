@@ -137,50 +137,9 @@ const UMAMI_HOSTNAME = new URL(process.env.UMAMI_URL || 'http://localhost').host
 app.use(
     '/ical',
     (req, res, next) => {
-        /**
-         * Umami Middleware
-         */
-        /* istanbul ignore next */
-        if (process.env.UMAMI_URL && process.env.UMAMI_ID) {
-            try {
-                const [_, lang, ical] = req.path.split('/');
-                const data = {
-                    payload: {
-                        hostname: HOSTNAME,
-                        language: lang === 'fr' ? 'fr-CH' : 'de-CH',
-                        referrer: '',
-                        screen: `1080x600`,
-                        title: 'ics file',
-                        url: `/ical/${lang}/${ical}`,
-                        website: process.env.UMAMI_ID || 'eventes-api',
-                        name: 'access-ical'
-                    },
-                    type: 'event'
-                };
-                const body = JSON.stringify(data);
-                const umamiReq = request({
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'user-agent':
-                            req.headers['user-agent'] && req.headers['user-agent'] !== 'undefined'
-                                ? req.headers['user-agent']
-                                : 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) Outlook/16.0.12345.67890',
-                        'content-length': body.length
-                    },
-                    hostname: UMAMI_HOSTNAME,
-                    path: '/api/send'
-                });
-                umamiReq.on('error', (e) => {
-                    console.error(e);
-                });
-                umamiReq.write(body);
-                umamiReq.end();
-            } catch (error) {
-                Logger.warn(error);
-            }
+        if (req.path.endsWith('.ics')) {
+            res.setHeader('Content-Type', 'text/calendar; charset=utf-8');
         }
-
         next();
     },
     express.static(ICAL_DIR)

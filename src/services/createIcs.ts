@@ -182,10 +182,10 @@ export const prepareEvent = (
         </div>
         <div class="event-links">
             <div class="event-link">
-                <a href="${baseUrl}event?id=${event.id}" target="_blank">${translate('event', lang)} ${translate('viewOnline', lang)}</a>
+                <a href="${baseUrl}event?id=${event.id}" target="_blank">👉 ${translate('event', lang)} ${translate('viewOnline', lang)}</a>
             </div>
             <div class="event-link unsubscribe">
-                <a href="${baseUrl}unsubscribe/${event.id}" target="_blank">${translate('unsubscribe', lang)}</a>
+                <a href="${baseUrl}unsubscribe/${event.id}" target="_blank">🔕 ${translate('unsubscribe', lang)}</a>
             </div>
         </div>
     </div>
