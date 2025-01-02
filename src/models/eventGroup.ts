@@ -9,7 +9,9 @@ import { prepareEventGroup, ApiEventGroup } from './eventGroup.helpers';
 const getData = createDataExtractor<Prisma.EventGroupUncheckedUpdateInput>(['name', 'description']);
 
 interface Meta {
-    from: string;
+    [id: string]: {
+        from: string;
+    };
 }
 
 function EventGroups(db: PrismaClient['eventGroup']) {
@@ -203,26 +205,28 @@ function EventGroups(db: PrismaClient['eventGroup']) {
                     }
                 }
             });
-            const clonedEvents = events.map((event) =>
-                clonedEventProps({ event: event, uid: actor.id, type: 'basic' })
+            const uuids = await prisma.$queryRaw<
+                { uuid: string }[]
+            >`SELECT gen_random_uuid() uuid FROM generate_series(1,${events.length})`;
+
+            const clonedEvents = events.map((event, idx) =>
+                clonedEventProps({ event: event, uid: actor.id, type: 'basic' }, uuids[idx].uuid)
             );
-            const meta: { [key: string]: Meta } = Object.fromEntries(
+            const meta: Meta = Object.fromEntries(
                 clonedEvents.map((e, idx) => [e.id, { from: events[idx].id }])
             );
             const newGroup = await db.create({
                 data: {
                     name: `${model.name} 📋`,
                     description: model.description,
-                    // meta: meta,
+                    meta: meta,
                     users: {
                         connect: {
                             id: actor.id
                         }
                     },
                     events: {
-                        create: events.map((event) =>
-                            clonedEventProps({ event: event, uid: actor.id, type: 'basic' })
-                        )
+                        create: clonedEvents
                     }
                 },
                 include: {
