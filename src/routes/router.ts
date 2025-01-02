@@ -90,7 +90,7 @@ router.put('/events/:id', updateEvent);
 router.put('/events/:id/meta', updateMeta);
 router.post('/events/:id/clone', cloneEvent);
 router.post('/events/change_state', setEventState);
-router.delete('/events/:id', deleteEvent);
+router.delete('/events', deleteEvent);
 router.post('/events', createEvent);
 
 const upload = multer({ dest: `${UPLOAD_DIR}/` });

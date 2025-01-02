@@ -11,6 +11,7 @@ import { ImportType } from '../services/importEvents';
 import { notifyOnDelete, notifyOnUpdate } from '../services/notifications/notifyUsers';
 import { rmUndefined } from '../utils/filterHelpers';
 import Jobs from '../models/job';
+import { ApiEvent } from '../models/event.helpers';
 
 const NAME = RecordType.Event;
 
@@ -140,28 +141,33 @@ export const setState: RequestHandler<
     }
 };
 
-export const destroy: RequestHandler = async (req, res, next) => {
+export const destroy: RequestHandler<any, any, any, { ids: string }> = async (req, res, next) => {
+    const deletedIds: string[] = [];
+    res.notifications = [];
     try {
-        const event = await Events.destroy(req.user!, req.params.id);
-        if (event.state === EventState.DRAFT) {
-            res.notifications = [
-                {
-                    message: { type: NAME, id: event.id },
-                    event: IoEvent.DELETED_RECORD,
-                    to: event.authorId
+        for (const id of req.query.ids) {
+            try {
+                const event = await Events.destroy(req.user!, id);
+                deletedIds.push(event.id);
+                if (event.state === EventState.DRAFT) {
+                    res.notifications.push({
+                        message: { type: NAME, id: event.id },
+                        event: IoEvent.DELETED_RECORD,
+                        to: event.authorId
+                    });
+                } else {
+                    notifyOnDelete(event, req.user!);
+                    res.notifications.push({
+                        message: { type: NAME, record: event },
+                        event: IoEvent.CHANGED_RECORD,
+                        to: IoRoom.ALL
+                    });
                 }
-            ];
-        } else {
-            notifyOnDelete(event, req.user!);
-            res.notifications = [
-                {
-                    message: { type: NAME, record: event },
-                    event: IoEvent.CHANGED_RECORD,
-                    to: IoRoom.ALL
-                }
-            ];
+                res.status(204).json();
+            } catch (error) {
+                // ignore errors
+            }
         }
-        res.status(204).send();
     } catch (error) /* istanbul ignore next */ {
         next(error);
     }

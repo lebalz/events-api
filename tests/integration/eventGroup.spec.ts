@@ -159,6 +159,7 @@ describe(`POST ${API_URL}/event_groups`, () => {
             id: expect.any(String),
             name: 'FOO',
             description: 'BAR',
+            meta: {},
             createdAt: expect.any(String),
             updatedAt: expect.any(String),
             eventIds: [],
@@ -271,7 +272,7 @@ describe(`POST ${API_URL}/event_groups/:id/clone`, () => {
             ...prepareEventGroup(ueGroup),
             id: expect.any(String),
             eventIds: expect.any(Array),
-            name: `📋 ${ueGroup.name}`,
+            name: `${ueGroup.name} 📋`,
             createdAt: expect.any(String),
             updatedAt: expect.any(String)
         });

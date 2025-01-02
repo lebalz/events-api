@@ -415,14 +415,14 @@ describe(`POST ${API_URL}/events`, () => {
     });
 });
 
-describe(`DELETE ${API_URL}/events/:id`, () => {
+describe(`DELETE ${API_URL}/events?ids[]=`, () => {
     it('Lets users delete their own draft events', async () => {
         const user = await prisma.user.create({
             data: generateUser({ email: 'foo@bar.ch' })
         });
         const event = await prisma.event.create({ data: generateEvent({ authorId: user.id }) });
         const result = await request(app)
-            .delete(`${API_URL}/events/${event.id}`)
+            .delete(`${API_URL}/events?ids[]=${event.id}`)
             .set('authorization', JSON.stringify({ email: user.email }));
         expect(result.statusCode).toEqual(204);
         const all = await prisma.event.findMany();
@@ -443,7 +443,7 @@ describe(`DELETE ${API_URL}/events/:id`, () => {
                 data: generateEvent({ authorId: user.id, state: state })
             });
             const result = await request(app)
-                .delete(`${API_URL}/events/${event.id}`)
+                .delete(`${API_URL}/events?ids[]=${event.id}`)
                 .set('authorization', JSON.stringify({ email: user.email }));
             expect(result.statusCode).toEqual(204);
             const all = await prisma.event.findMany();
