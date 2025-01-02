@@ -8,6 +8,7 @@ import {
     clone as cloneEvent,
     destroy as deleteEvent,
     setState as setEventState,
+    updateBatch as updateEventsBatch,
     updateMeta
 } from '../controllers/events';
 import {
@@ -84,6 +85,7 @@ router.get('/users/:id/affected-event-ids', affectedEventIds);
 
 router.get('/events', allEvents);
 router.get('/events/:id', findEvent);
+router.put('/events/update', updateEventsBatch);
 router.put('/events/:id', updateEvent);
 router.put('/events/:id/meta', updateMeta);
 router.post('/events/:id/clone', cloneEvent);

@@ -50,6 +50,29 @@ export const update: RequestHandler<
     }
 };
 
+export const updateBatch: RequestHandler<
+    any,
+    any,
+    { data: (Event & { departmentIds?: string[]; meta?: any })[] }
+> = async (req, res, next) => {
+    res.notifications = [];
+    const updated: ApiEvent[] = [];
+    for (const event of req.body.data) {
+        try {
+            const model = await Events.updateModel(req.user!, event.id, event);
+            updated.push(model);
+            res.notifications.push({
+                message: { type: NAME, record: model },
+                event: IoEvent.CHANGED_RECORD,
+                to: model.state === EventState.PUBLISHED ? IoRoom.ALL : req.user!.id
+            });
+        } catch (error) {
+            // ignore errors
+        }
+    }
+    res.status(200).json(updated);
+};
+
 export const updateMeta: RequestHandler<{ id: string }, any, { data: any }> = async (req, res, next) => {
     try {
         const model = await Events.updateMeta(req.user!, req.params.id, req.body.data);
