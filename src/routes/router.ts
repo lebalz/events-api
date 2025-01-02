@@ -7,6 +7,7 @@ import {
     importEvents,
     clone as cloneEvent,
     destroy as deleteEvent,
+    destroyMany as deleteManyEvents,
     setState as setEventState,
     updateBatch as updateEventsBatch,
     updateMeta
@@ -90,7 +91,8 @@ router.put('/events/:id', updateEvent);
 router.put('/events/:id/meta', updateMeta);
 router.post('/events/:id/clone', cloneEvent);
 router.post('/events/change_state', setEventState);
-router.delete('/events', deleteEvent);
+router.delete('/events/:id', deleteEvent);
+router.delete('/events', deleteManyEvents);
 router.post('/events', createEvent);
 
 const upload = multer({ dest: `${UPLOAD_DIR}/` });

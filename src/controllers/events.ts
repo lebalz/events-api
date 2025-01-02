@@ -141,7 +141,34 @@ export const setState: RequestHandler<
     }
 };
 
-export const destroy: RequestHandler<any, any, any, { ids: string }> = async (req, res, next) => {
+export const destroy: RequestHandler = async (req, res, next) => {
+    try {
+        const event = await Events.destroy(req.user!, req.params.id);
+        if (event.state === EventState.DRAFT) {
+            res.notifications = [
+                {
+                    message: { type: NAME, id: event.id },
+                    event: IoEvent.DELETED_RECORD,
+                    to: event.authorId
+                }
+            ];
+        } else {
+            notifyOnDelete(event, req.user!);
+            res.notifications = [
+                {
+                    message: { type: NAME, record: event },
+                    event: IoEvent.CHANGED_RECORD,
+                    to: IoRoom.ALL
+                }
+            ];
+        }
+        res.status(204).send();
+    } catch (error) /* istanbul ignore next */ {
+        next(error);
+    }
+};
+
+export const destroyMany: RequestHandler<any, any, any, { ids: string }> = async (req, res, next) => {
     const deletedIds: string[] = [];
     res.notifications = [];
     try {

@@ -415,6 +415,52 @@ describe(`POST ${API_URL}/events`, () => {
     });
 });
 
+describe(`DELETE ${API_URL}/events/:id`, () => {
+    it('Lets users delete their own draft events', async () => {
+        const user = await prisma.user.create({
+            data: generateUser({ email: 'foo@bar.ch' })
+        });
+        const event = await prisma.event.create({ data: generateEvent({ authorId: user.id }) });
+        const result = await request(app)
+            .delete(`${API_URL}/events/${event.id}`)
+            .set('authorization', JSON.stringify({ email: user.email }));
+        expect(result.statusCode).toEqual(204);
+        const all = await prisma.event.findMany();
+        expect(all.length).toEqual(0);
+        expect(mNotification).toHaveBeenCalledTimes(1);
+        expect(mNotification.mock.calls[0][0]).toEqual({
+            event: IoEvent.DELETED_RECORD,
+            message: { type: RecordType.Event, id: event.id },
+            to: user.id
+        });
+    });
+    [EventState.PUBLISHED, EventState.REVIEW, EventState.REFUSED].forEach((state) => {
+        it(`does a soft delete of an event with state ${state}`, async () => {
+            const user = await prisma.user.create({
+                data: generateUser({ email: 'foo@bar.ch' })
+            });
+            const event = await prisma.event.create({
+                data: generateEvent({ authorId: user.id, state: state })
+            });
+            const result = await request(app)
+                .delete(`${API_URL}/events/${event.id}`)
+                .set('authorization', JSON.stringify({ email: user.email }));
+            expect(result.statusCode).toEqual(204);
+            const all = await prisma.event.findMany();
+            expect(all.length).toEqual(1);
+
+            const deleted = await prisma.event.findUniqueOrThrow({ where: { id: event.id } });
+            expect(deleted?.deletedAt).not.toBeNull();
+            expect(mNotification).toHaveBeenCalledTimes(1);
+            expect(mNotification.mock.calls[0][0]).toEqual({
+                event: IoEvent.CHANGED_RECORD,
+                message: { type: RecordType.Event, record: prepareNotificationEvent(deleted) },
+                to: IoRoom.ALL
+            });
+        });
+    });
+});
+
 describe(`DELETE ${API_URL}/events?ids[]=`, () => {
     it('Lets users delete their own draft events', async () => {
         const user = await prisma.user.create({
