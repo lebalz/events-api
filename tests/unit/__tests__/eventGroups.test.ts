@@ -230,7 +230,7 @@ describe('clone group', () => {
         const clone = await EventGroups.cloneModel(alice, group.id);
         expect(clone).toEqual(
             expect.objectContaining({
-                name: `📋 ${group.name}`,
+                name: `${group.name} 📋`,
                 description: group.description,
                 userIds: [alice.id]
             })

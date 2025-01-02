@@ -112,6 +112,7 @@ model EventGroup {
     id          String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
     name        String @default("")
     description String @default("")
+    meta        Json   @default("{}") @db.Json
 
     events Event[] @relation("events_to_event_groups")
     users  User[]  @relation("users_to_event_groups")
