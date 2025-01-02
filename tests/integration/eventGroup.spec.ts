@@ -11,6 +11,7 @@ import { generateEventGroup } from '../factories/eventGroup';
 import { eventSequenceUnchecked } from '../factories/event';
 import { ApiEvent } from '../../src/models/event.helpers';
 import { prepareEventGroup as apiPrepareEventGroup } from '../../src/models/eventGroup.helpers';
+import { Meta as EventGroupMeta } from '../../src/models/eventGroup';
 import { prepareRecord } from '../helpers/prepareRecord';
 
 jest.mock('../../src/middlewares/notify.nop');
@@ -270,12 +271,23 @@ describe(`POST ${API_URL}/event_groups/:id/clone`, () => {
         expect(result.statusCode).toEqual(201);
         expect(result.body).toEqual({
             ...prepareEventGroup(ueGroup),
+            meta: expect.any(Object),
             id: expect.any(String),
             eventIds: expect.any(Array),
             name: `${ueGroup.name} 📋`,
             createdAt: expect.any(String),
             updatedAt: expect.any(String)
         });
+        expect(
+            Object.values(result.body.meta as EventGroupMeta)
+                .map((meta) => meta.from)
+                .sort()
+        ).toEqual(
+            events
+                .slice(0, 3)
+                .map((e) => e.id)
+                .sort()
+        );
         expect(result.body.eventIds).toHaveLength(3);
         expect(result.body.eventIds).not.toEqual(ueGroup.events.map((e) => e.id).sort());
         expect(mNotification).toHaveBeenCalledTimes(1);

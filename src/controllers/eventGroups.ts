@@ -1,7 +1,7 @@
 import type { EventGroup } from '@prisma/client';
 import { RequestHandler } from 'express';
 import { IoEvent, RecordType } from '../routes/socketEventTypes';
-import UserEventGroups from '../models/eventGroup';
+import UserEventGroups, { DestroyEventAction } from '../models/eventGroup';
 import { ApiEventGroup } from '../models/eventGroup.helpers';
 
 const NAME = RecordType.EventGroup;
@@ -67,16 +67,33 @@ export const update: RequestHandler<{ id: string }, any, { data: ApiEventGroup }
     }
 };
 
-export const destroy: RequestHandler<{ id: string }, any, any> = async (req, res, next) => {
+export const destroy: RequestHandler<{ id: string }, any, any, { eventAction?: DestroyEventAction }> = async (
+    req,
+    res,
+    next
+) => {
     try {
-        const model = await UserEventGroups.destroy(req.user!, req.params.id);
+        const { eventGroup, deletedEventIds } = await UserEventGroups.destroy(
+            req.user!,
+            req.params.id,
+            req.query.eventAction
+        );
         res.notifications = [
             {
-                message: { type: NAME, id: model.id },
+                message: { type: NAME, id: eventGroup.id },
                 event: IoEvent.DELETED_RECORD,
-                to: req.user!.id
+                to: eventGroup.userIds
             }
         ];
+        deletedEventIds.forEach((id) => {
+            res.notifications!.push({
+                message: { type: RecordType.Event, id: id },
+                event: IoEvent.DELETED_RECORD,
+                to: eventGroup.userIds,
+                toSelf: true
+            });
+        });
+
         res.status(204).send();
     } catch (error) /* istanbul ignore next */ {
         next(error);

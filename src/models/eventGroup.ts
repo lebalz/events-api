@@ -1,4 +1,4 @@
-import { Department, Event, Prisma, PrismaClient, User } from '@prisma/client';
+import { Department, Event, EventState, Prisma, PrismaClient, User } from '@prisma/client';
 import { clonedProps as clonedEventProps, prepareEvent } from './event.helpers';
 import prisma from '../prisma';
 import { HTTP403Error, HTTP404Error, HTTP500Error } from '../utils/errors/Errors';
@@ -8,10 +8,15 @@ import { prepareEventGroup, ApiEventGroup } from './eventGroup.helpers';
 
 const getData = createDataExtractor<Prisma.EventGroupUncheckedUpdateInput>(['name', 'description']);
 
-interface Meta {
+export interface Meta {
     [id: string]: {
         from: string;
     };
+}
+
+export enum DestroyEventAction {
+    Unlink = 'unlink',
+    DestroyDrafts = 'destroy_drafts'
 }
 
 function EventGroups(db: PrismaClient['eventGroup']) {
@@ -163,10 +168,25 @@ function EventGroups(db: PrismaClient['eventGroup']) {
             });
             return prepareEventGroup(model);
         },
-        async destroy(actor: User, id: string) {
+        async destroy(actor: User, id: string, eventAction: DestroyEventAction = DestroyEventAction.Unlink) {
             const model = await this._findRawModel(actor, id);
             if (model.events.length > 0) {
-                await Promise.all(model.events.map((e) => Events._unlinkFromEventGroup(e.id, id)));
+                const toDeleteIds = new Set(
+                    eventAction === DestroyEventAction.Unlink
+                        ? []
+                        : model.events.filter((e) => e.state === EventState.DRAFT).map((e) => e.id)
+                );
+                if (eventAction === DestroyEventAction.Unlink) {
+                    await Promise.all(model.events.map((e) => Events._unlinkFromEventGroup(e.id, id)));
+                } else {
+                    await Promise.all(
+                        model.events.map((e) =>
+                            toDeleteIds.has(e.id)
+                                ? Events._forceDestroy(e)
+                                : Events._unlinkFromEventGroup(e.id, id)
+                        )
+                    );
+                }
                 const cleanedUp = await this._findRawModel(actor, id);
 
                 /* istanbul ignore if */
@@ -178,14 +198,20 @@ function EventGroups(db: PrismaClient['eventGroup']) {
                         id: id
                     }
                 });
-                return prepareEventGroup(cleanedUp);
+                return {
+                    eventGroup: prepareEventGroup(cleanedUp),
+                    deletedEventIds: [...toDeleteIds]
+                };
             } else {
                 await db.delete({
                     where: {
                         id: id
                     }
                 });
-                return prepareEventGroup(model);
+                return {
+                    eventGroup: prepareEventGroup(model),
+                    deletedEventIds: []
+                };
             }
         },
         async cloneModel(actor: User, id: string) {

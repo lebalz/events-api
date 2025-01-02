@@ -57,7 +57,7 @@ export interface DeletedRecord {
 }
 
 interface NotificationBase {
-    to: IoRoom | string;
+    to: IoRoom | string | (string | IoRoom)[];
     toSelf?: true | boolean;
 }
 
