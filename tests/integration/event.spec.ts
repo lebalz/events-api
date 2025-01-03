@@ -466,17 +466,24 @@ describe(`DELETE ${API_URL}/events?ids[]=`, () => {
         const user = await prisma.user.create({
             data: generateUser({ email: 'foo@bar.ch' })
         });
-        const event = await prisma.event.create({ data: generateEvent({ authorId: user.id }) });
+        const event1 = await prisma.event.create({ data: generateEvent({ authorId: user.id }) });
+        const event2 = await prisma.event.create({ data: generateEvent({ authorId: user.id }) });
         const result = await request(app)
-            .delete(`${API_URL}/events?ids[]=${event.id}`)
+            .delete(`${API_URL}/events?ids[]=${event1.id}&ids[]=${event2.id}`)
             .set('authorization', JSON.stringify({ email: user.email }));
-        expect(result.statusCode).toEqual(204);
+        expect(result.statusCode).toEqual(200);
+        expect(result.body.sort()).toEqual([event1.id, event2.id].sort());
         const all = await prisma.event.findMany();
         expect(all.length).toEqual(0);
-        expect(mNotification).toHaveBeenCalledTimes(1);
+        expect(mNotification).toHaveBeenCalledTimes(2);
         expect(mNotification.mock.calls[0][0]).toEqual({
             event: IoEvent.DELETED_RECORD,
-            message: { type: RecordType.Event, id: event.id },
+            message: { type: RecordType.Event, id: event1.id },
+            to: user.id
+        });
+        expect(mNotification.mock.calls[1][0]).toEqual({
+            event: IoEvent.DELETED_RECORD,
+            message: { type: RecordType.Event, id: event2.id },
             to: user.id
         });
     });
@@ -491,7 +498,7 @@ describe(`DELETE ${API_URL}/events?ids[]=`, () => {
             const result = await request(app)
                 .delete(`${API_URL}/events?ids[]=${event.id}`)
                 .set('authorization', JSON.stringify({ email: user.email }));
-            expect(result.statusCode).toEqual(204);
+            expect(result.statusCode).toEqual(200);
             const all = await prisma.event.findMany();
             expect(all.length).toEqual(1);
 

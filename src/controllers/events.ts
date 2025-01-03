@@ -12,6 +12,7 @@ import { notifyOnDelete, notifyOnUpdate } from '../services/notifications/notify
 import { rmUndefined } from '../utils/filterHelpers';
 import Jobs from '../models/job';
 import { ApiEvent } from '../models/event.helpers';
+import Logger from '../utils/logger';
 
 const NAME = RecordType.Event;
 
@@ -190,11 +191,14 @@ export const destroyMany: RequestHandler<any, any, any, { ids: string }> = async
                         to: IoRoom.ALL
                     });
                 }
-                res.status(204).json();
-            } catch (error) {
+            } catch (err) {
+                Logger.warn(
+                    `Event "${id}" could not be deleted by ${req.user!.email}: ${JSON.stringify(err)}`
+                );
                 // ignore errors
             }
         }
+        return res.status(200).json(deletedIds);
     } catch (error) /* istanbul ignore next */ {
         next(error);
     }
