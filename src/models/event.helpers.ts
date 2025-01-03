@@ -74,7 +74,8 @@ export const clonedUpdateProps = (
 };
 
 export const clonedProps = (
-    config: CloneConfig | FullCloneConfig | AllPropsCloneConfig
+    config: CloneConfig | FullCloneConfig | AllPropsCloneConfig,
+    newId?: string
 ): Prisma.EventCreateInput => {
     const event = config.event;
     const props: Prisma.EventCreateInput = {
@@ -89,6 +90,9 @@ export const clonedProps = (
         state: EventState.DRAFT,
         author: { connect: { id: config.uid } }
     };
+    if (newId) {
+        props.id = newId;
+    }
     if (event.departments.length > 0) {
         props.departments = {
             connect: event.departments.map((d) => ({ id: d.id }))

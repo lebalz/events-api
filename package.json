@@ -34,7 +34,7 @@
   },
   "dependencies": {
     "@azure/msal-node": "^2.13.0",
-    "@prisma/client": "^5.19.0",
+    "@prisma/client": "^6.1",
     "@socket.io/admin-ui": "^0.5.1",
     "bree": "^9.2.4",
     "compression": "^1.7.4",
@@ -83,7 +83,7 @@
     "jest-mock-extended": "^3.0.7",
     "passport-mock-strategy": "^2.0.0",
     "prettier": "^3.3.2",
-    "prisma": "^5.15.1",
+    "prisma": "^6.1",
     "prisma-dbml-generator": "^0.12.0",
     "prisma-docs-generator": "^0.8.0",
     "supertest": "^7.0.0",
@@ -96,6 +96,6 @@
     "utf-8-validate": "^6.0.3"
   },
   "engines": {
-    "node": "18.x"
+    "node": ">=22.11"
   }
 }

@@ -248,6 +248,69 @@ describe(`PUT ${API_URL}/events/:id`, () => {
     /** TODO: check that only accepted attributes are updated */
 });
 
+describe(`PUT ${API_URL}/events`, () => {
+    it('Lets users update multiple events', async () => {
+        const user = await prisma.user.create({
+            data: generateUser({ email: 'foo@bar.ch' })
+        });
+        const event1 = await prisma.event.create({
+            data: generateEvent({ authorId: user.id, description: 'foo bar!' })
+        });
+        const event2 = await prisma.event.create({
+            data: generateEvent({ authorId: user.id, description: 'bar to the foo!' })
+        });
+        const result = await request(app)
+            .put(`${API_URL}/events`)
+            .set('authorization', JSON.stringify({ email: user.email }))
+            .send({
+                data: [
+                    {
+                        id: event1.id,
+                        description: 'Hoo Ray!'
+                    },
+                    {
+                        id: event2.id,
+                        descriptionLong: 'Japjapjap'
+                    }
+                ]
+            });
+        expect(result.statusCode).toEqual(200);
+        expect(result.body.length).toEqual(2);
+        expect(_.orderBy(result.body, 'id')).toEqual(
+            _.orderBy(
+                [
+                    {
+                        ...prepareEvent(event1),
+                        description: 'Hoo Ray!',
+                        updatedAt: expect.any(String)
+                    },
+                    {
+                        ...prepareEvent(event2),
+                        descriptionLong: 'Japjapjap',
+                        updatedAt: expect.any(String)
+                    }
+                ],
+                'id'
+            )
+        );
+        expect(mNotification).toHaveBeenCalledTimes(2);
+        const updated1 = await prisma.event.findUniqueOrThrow({ where: { id: event1.id } });
+        const updated2 = await prisma.event.findUniqueOrThrow({ where: { id: event2.id } });
+        expect(mNotification.mock.calls[0][0]).toEqual({
+            event: IoEvent.CHANGED_RECORD,
+            message: { type: RecordType.Event, record: prepareNotificationEvent(updated1) },
+            to: user.id
+        });
+        expect(mNotification.mock.calls[1][0]).toEqual({
+            event: IoEvent.CHANGED_RECORD,
+            message: { type: RecordType.Event, record: prepareNotificationEvent(updated2) },
+            to: user.id
+        });
+    });
+
+    /** TODO: check that only accepted attributes are updated */
+});
+
 describe(`PUT ${API_URL}/events/:id/meta`, () => {
     it('Lets users update the meta data of draft events', async () => {
         const user = await prisma.user.create({
@@ -446,6 +509,59 @@ describe(`DELETE ${API_URL}/events/:id`, () => {
                 .delete(`${API_URL}/events/${event.id}`)
                 .set('authorization', JSON.stringify({ email: user.email }));
             expect(result.statusCode).toEqual(204);
+            const all = await prisma.event.findMany();
+            expect(all.length).toEqual(1);
+
+            const deleted = await prisma.event.findUniqueOrThrow({ where: { id: event.id } });
+            expect(deleted?.deletedAt).not.toBeNull();
+            expect(mNotification).toHaveBeenCalledTimes(1);
+            expect(mNotification.mock.calls[0][0]).toEqual({
+                event: IoEvent.CHANGED_RECORD,
+                message: { type: RecordType.Event, record: prepareNotificationEvent(deleted) },
+                to: IoRoom.ALL
+            });
+        });
+    });
+});
+
+describe(`DELETE ${API_URL}/events?ids[]=`, () => {
+    it('Lets users delete their own draft events', async () => {
+        const user = await prisma.user.create({
+            data: generateUser({ email: 'foo@bar.ch' })
+        });
+        const event1 = await prisma.event.create({ data: generateEvent({ authorId: user.id }) });
+        const event2 = await prisma.event.create({ data: generateEvent({ authorId: user.id }) });
+        const result = await request(app)
+            .delete(`${API_URL}/events?ids[]=${event1.id}&ids[]=${event2.id}`)
+            .set('authorization', JSON.stringify({ email: user.email }));
+        expect(result.statusCode).toEqual(200);
+        expect(result.body.sort()).toEqual([event1.id, event2.id].sort());
+        const all = await prisma.event.findMany();
+        expect(all.length).toEqual(0);
+        expect(mNotification).toHaveBeenCalledTimes(2);
+        expect(mNotification.mock.calls[0][0]).toEqual({
+            event: IoEvent.DELETED_RECORD,
+            message: { type: RecordType.Event, id: event1.id },
+            to: user.id
+        });
+        expect(mNotification.mock.calls[1][0]).toEqual({
+            event: IoEvent.DELETED_RECORD,
+            message: { type: RecordType.Event, id: event2.id },
+            to: user.id
+        });
+    });
+    [EventState.PUBLISHED, EventState.REVIEW, EventState.REFUSED].forEach((state) => {
+        it(`does a soft delete of an event with state ${state}`, async () => {
+            const user = await prisma.user.create({
+                data: generateUser({ email: 'foo@bar.ch' })
+            });
+            const event = await prisma.event.create({
+                data: generateEvent({ authorId: user.id, state: state })
+            });
+            const result = await request(app)
+                .delete(`${API_URL}/events?ids[]=${event.id}`)
+                .set('authorization', JSON.stringify({ email: user.email }));
+            expect(result.statusCode).toEqual(200);
             const all = await prisma.event.findMany();
             expect(all.length).toEqual(1);
 

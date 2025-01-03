@@ -192,7 +192,10 @@ describe('destroy group', () => {
     test('user can destroy empty group', async () => {
         const alice = await createUser({});
         const group = await createEventGroup({ userIds: [alice.id], eventIds: [] });
-        await expect(EventGroups.destroy(alice, group.id)).resolves.toEqual(prepareEventGroup(group));
+        await expect(EventGroups.destroy(alice, group.id)).resolves.toEqual({
+            eventGroup: prepareEventGroup(group),
+            deletedEventIds: []
+        });
     });
     test('user can destroy group with events: according events get unlinked', async () => {
         const alice = await createUser({});
@@ -200,8 +203,11 @@ describe('destroy group', () => {
         const pubEvent = await createEvent({ authorId: alice.id, state: 'PUBLISHED' });
         const group = await createEventGroup({ userIds: [alice.id], eventIds: [event.id, pubEvent.id] });
         await expect(EventGroups.destroy(alice, group.id)).resolves.toEqual({
-            ...prepareEventGroup(group),
-            eventIds: []
+            eventGroup: {
+                ...prepareEventGroup(group),
+                eventIds: []
+            },
+            deletedEventIds: []
         });
     });
 });
@@ -230,7 +236,7 @@ describe('clone group', () => {
         const clone = await EventGroups.cloneModel(alice, group.id);
         expect(clone).toEqual(
             expect.objectContaining({
-                name: `📋 ${group.name}`,
+                name: `${group.name} 📋`,
                 description: group.description,
                 userIds: [alice.id]
             })

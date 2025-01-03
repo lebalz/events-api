@@ -68,6 +68,7 @@ Table event_groups {
   id String [pk]
   name String [not null, default: '']
   description String [not null, default: '']
+  meta Json [not null, default: '{}']
   events events [not null]
   users users [not null]
   createdAt DateTime [default: `now()`, not null]

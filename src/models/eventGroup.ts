@@ -1,4 +1,4 @@
-import { Department, Event, Prisma, PrismaClient, User } from '@prisma/client';
+import { Department, Event, EventState, Prisma, PrismaClient, User } from '@prisma/client';
 import { clonedProps as clonedEventProps, prepareEvent } from './event.helpers';
 import prisma from '../prisma';
 import { HTTP403Error, HTTP404Error, HTTP500Error } from '../utils/errors/Errors';
@@ -7,6 +7,17 @@ import Events from './event';
 import { prepareEventGroup, ApiEventGroup } from './eventGroup.helpers';
 
 const getData = createDataExtractor<Prisma.EventGroupUncheckedUpdateInput>(['name', 'description']);
+
+export interface Meta {
+    [id: string]: {
+        from: string;
+    };
+}
+
+export enum DestroyEventAction {
+    Unlink = 'unlink',
+    DestroyDrafts = 'destroy_drafts'
+}
 
 function EventGroups(db: PrismaClient['eventGroup']) {
     return Object.assign(db, {
@@ -127,7 +138,7 @@ function EventGroups(db: PrismaClient['eventGroup']) {
             await this.findModel(actor, id);
 
             /** update */
-            const sanitized = getData(data);
+            const sanitized = getData(data as Prisma.EventGroupUncheckedUpdateInput);
             if (data.eventIds) {
                 const allowedEvents = await Events.allByIds(actor, data.eventIds);
                 sanitized.events = {
@@ -157,10 +168,25 @@ function EventGroups(db: PrismaClient['eventGroup']) {
             });
             return prepareEventGroup(model);
         },
-        async destroy(actor: User, id: string) {
+        async destroy(actor: User, id: string, eventAction: DestroyEventAction = DestroyEventAction.Unlink) {
             const model = await this._findRawModel(actor, id);
             if (model.events.length > 0) {
-                await Promise.all(model.events.map((e) => Events._unlinkFromEventGroup(e.id, id)));
+                const toDeleteIds = new Set(
+                    eventAction === DestroyEventAction.Unlink
+                        ? []
+                        : model.events.filter((e) => e.state === EventState.DRAFT).map((e) => e.id)
+                );
+                if (eventAction === DestroyEventAction.Unlink) {
+                    await Promise.all(model.events.map((e) => Events._unlinkFromEventGroup(e.id, id)));
+                } else {
+                    await Promise.all(
+                        model.events.map((e) =>
+                            toDeleteIds.has(e.id)
+                                ? Events._forceDestroy(e)
+                                : Events._unlinkFromEventGroup(e.id, id)
+                        )
+                    );
+                }
                 const cleanedUp = await this._findRawModel(actor, id);
 
                 /* istanbul ignore if */
@@ -172,14 +198,20 @@ function EventGroups(db: PrismaClient['eventGroup']) {
                         id: id
                     }
                 });
-                return prepareEventGroup(cleanedUp);
+                return {
+                    eventGroup: prepareEventGroup(cleanedUp),
+                    deletedEventIds: [...toDeleteIds]
+                };
             } else {
                 await db.delete({
                     where: {
                         id: id
                     }
                 });
-                return prepareEventGroup(model);
+                return {
+                    eventGroup: prepareEventGroup(model),
+                    deletedEventIds: []
+                };
             }
         },
         async cloneModel(actor: User, id: string) {
@@ -199,19 +231,28 @@ function EventGroups(db: PrismaClient['eventGroup']) {
                     }
                 }
             });
+            const uuids = await prisma.$queryRaw<
+                { uuid: string }[]
+            >`SELECT gen_random_uuid() uuid FROM generate_series(1,${events.length})`;
+
+            const clonedEvents = events.map((event, idx) =>
+                clonedEventProps({ event: event, uid: actor.id, type: 'basic' }, uuids[idx].uuid)
+            );
+            const meta: Meta = Object.fromEntries(
+                clonedEvents.map((e, idx) => [e.id, { from: events[idx].id }])
+            );
             const newGroup = await db.create({
                 data: {
-                    name: `📋 ${model.name}`,
+                    name: `${model.name} 📋`,
                     description: model.description,
+                    meta: meta,
                     users: {
                         connect: {
                             id: actor.id
                         }
                     },
                     events: {
-                        create: events.map((event) =>
-                            clonedEventProps({ event: event, uid: actor.id, type: 'basic' })
-                        )
+                        create: clonedEvents
                     }
                 },
                 include: {
