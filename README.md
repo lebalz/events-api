@@ -245,6 +245,10 @@ dokku config:set hfr-events-api EXPORT_DIR="/app/ical"
 
 dokku nginx:set events-api client-max-body-size 5mb
 
+## eventually use the latest buildpack s.t. the latest node version is known and can be used
+# check the latest tag here: 👉 https://github.com/heroku/heroku-buildpack-nodejs/tags
+dokku config:set hfr-events-api BUILDPACK_URL=https://github.com/heroku/heroku-buildpack-nodejs.git#v275
+
 # deploy the app
 
 dokku letsencrypt:enable events-api
