@@ -248,6 +248,69 @@ describe(`PUT ${API_URL}/events/:id`, () => {
     /** TODO: check that only accepted attributes are updated */
 });
 
+describe(`PUT ${API_URL}/events`, () => {
+    it('Lets users update multiple events', async () => {
+        const user = await prisma.user.create({
+            data: generateUser({ email: 'foo@bar.ch' })
+        });
+        const event1 = await prisma.event.create({
+            data: generateEvent({ authorId: user.id, description: 'foo bar!' })
+        });
+        const event2 = await prisma.event.create({
+            data: generateEvent({ authorId: user.id, description: 'bar to the foo!' })
+        });
+        const result = await request(app)
+            .put(`${API_URL}/events`)
+            .set('authorization', JSON.stringify({ email: user.email }))
+            .send({
+                data: [
+                    {
+                        id: event1.id,
+                        description: 'Hoo Ray!'
+                    },
+                    {
+                        id: event2.id,
+                        descriptionLong: 'Japjapjap'
+                    }
+                ]
+            });
+        expect(result.statusCode).toEqual(200);
+        expect(result.body.length).toEqual(2);
+        expect(_.orderBy(result.body, 'id')).toEqual(
+            _.orderBy(
+                [
+                    {
+                        ...prepareEvent(event1),
+                        description: 'Hoo Ray!',
+                        updatedAt: expect.any(String)
+                    },
+                    {
+                        ...prepareEvent(event2),
+                        descriptionLong: 'Japjapjap',
+                        updatedAt: expect.any(String)
+                    }
+                ],
+                'id'
+            )
+        );
+        expect(mNotification).toHaveBeenCalledTimes(2);
+        const updated1 = await prisma.event.findUniqueOrThrow({ where: { id: event1.id } });
+        const updated2 = await prisma.event.findUniqueOrThrow({ where: { id: event2.id } });
+        expect(mNotification.mock.calls[0][0]).toEqual({
+            event: IoEvent.CHANGED_RECORD,
+            message: { type: RecordType.Event, record: prepareNotificationEvent(updated1) },
+            to: user.id
+        });
+        expect(mNotification.mock.calls[1][0]).toEqual({
+            event: IoEvent.CHANGED_RECORD,
+            message: { type: RecordType.Event, record: prepareNotificationEvent(updated2) },
+            to: user.id
+        });
+    });
+
+    /** TODO: check that only accepted attributes are updated */
+});
+
 describe(`PUT ${API_URL}/events/:id/meta`, () => {
     it('Lets users update the meta data of draft events', async () => {
         const user = await prisma.user.create({
