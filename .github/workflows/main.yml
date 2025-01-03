@@ -6,7 +6,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        node-version: [18.x]
+        node-version: ['>=22.11']
     services:
       # Label used to access the service container
       postgres:
@@ -47,7 +47,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        node-version: [18.x]
+        node-version: ['>=22.11']
     services:
       # Label used to access the service container
       postgres:
