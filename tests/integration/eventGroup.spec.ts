@@ -195,7 +195,7 @@ describe(`DELETE ${API_URL}/event_groups/:id`, () => {
         expect(mNotification.mock.calls[0][0]).toEqual({
             event: IoEvent.DELETED_RECORD,
             message: { type: 'EVENT_GROUP', id: ueGroup.id },
-            to: user.id
+            to: [user.id]
         });
     });
 });
