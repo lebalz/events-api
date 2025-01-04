@@ -129,7 +129,7 @@ function Events(db: PrismaClient['event']) {
             }
             /** remove fields not updatable*/
             const sanitized = getData(data);
-            const departmentIds = data.departmentIds || [];
+            const departmentIds = data.departmentIds || record.departments.map((d) => d.id);
 
             let model: Event & {
                 departments: { id: string }[];
