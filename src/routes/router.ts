@@ -86,8 +86,8 @@ router.get('/users/:id/affected-event-ids', affectedEventIds);
 
 router.get('/events', allEvents);
 router.get('/events/:id', findEvent);
-router.put('/events/:id', updateEvent);
 router.put('/events', updateEventsBatch);
+router.put('/events/:id', updateEvent);
 router.put('/events/:id/meta', updateMeta);
 router.post('/events/:id/clone', cloneEvent);
 router.post('/events/change_state', setEventState);

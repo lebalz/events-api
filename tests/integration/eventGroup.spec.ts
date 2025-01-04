@@ -13,6 +13,8 @@ import { ApiEvent } from '../../src/models/event.helpers';
 import { prepareEventGroup as apiPrepareEventGroup } from '../../src/models/eventGroup.helpers';
 import { Meta as EventGroupMeta } from '../../src/models/eventGroup';
 import { prepareRecord } from '../helpers/prepareRecord';
+import { createDepartment } from '../unit/__tests__/departments.test';
+import { createEvent } from '../unit/__tests__/events.test';
 
 jest.mock('../../src/middlewares/notify.nop');
 const mNotification = <jest.Mock<typeof notify>>notify;

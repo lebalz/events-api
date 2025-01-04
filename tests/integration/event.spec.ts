@@ -34,6 +34,8 @@ import { createUser } from '../unit/__tests__/users.test';
 import { Departments } from '../../src/services/helpers/departmentNames';
 import * as eventModel from '../../src/models/event';
 import { prepareEvent as originalPrepareEvent } from '../../src/models/event.helpers';
+import { createEvent } from '../unit/__tests__/events.test';
+import department from '../../src/models/department';
 
 jest.mock('../../src/middlewares/notify.nop');
 const mNotification = <jest.Mock<typeof notify>>notify;
@@ -54,7 +56,9 @@ const prepareEvent = (event: Event): any => {
     return prepared;
 };
 
-const prepareNotificationEvent = (event: Event & { publishedVersionIds?: string[] }): any => {
+const prepareNotificationEvent = (
+    event: Event & { departmentIds?: string[]; publishedVersionIds?: string[] }
+): any => {
     const prepared = {
         departmentIds: [],
         publishedVersionIds: [],
@@ -253,11 +257,14 @@ describe(`PUT ${API_URL}/events`, () => {
         const user = await prisma.user.create({
             data: generateUser({ email: 'foo@bar.ch' })
         });
+        const gymd = await createDepartment({ name: 'GYMD' });
         const event1 = await prisma.event.create({
             data: generateEvent({ authorId: user.id, description: 'foo bar!' })
         });
-        const event2 = await prisma.event.create({
-            data: generateEvent({ authorId: user.id, description: 'bar to the foo!' })
+        const event2 = await createEvent({
+            authorId: user.id,
+            descriptionLong: 'foo bar!',
+            departmentIds: [gymd.id]
         });
         const result = await request(app)
             .put(`${API_URL}/events`)
@@ -286,6 +293,7 @@ describe(`PUT ${API_URL}/events`, () => {
                     },
                     {
                         ...prepareEvent(event2),
+                        departmentIds: [gymd.id],
                         descriptionLong: 'Japjapjap',
                         updatedAt: expect.any(String)
                     }
@@ -303,7 +311,10 @@ describe(`PUT ${API_URL}/events`, () => {
         });
         expect(mNotification.mock.calls[1][0]).toEqual({
             event: IoEvent.CHANGED_RECORD,
-            message: { type: RecordType.Event, record: prepareNotificationEvent(updated2) },
+            message: {
+                type: RecordType.Event,
+                record: prepareNotificationEvent({ ...updated2, departmentIds: [gymd.id] })
+            },
             to: user.id
         });
     });
