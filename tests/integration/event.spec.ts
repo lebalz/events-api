@@ -245,7 +245,7 @@ describe(`PUT ${API_URL}/events/:id`, () => {
         expect(mNotification.mock.calls[0][0]).toEqual({
             event: IoEvent.CHANGED_RECORD,
             message: { type: RecordType.Event, record: prepareNotificationEvent(updated) },
-            to: user.id
+            to: [user.id]
         });
     });
 
