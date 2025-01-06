@@ -6,6 +6,7 @@ import type { Event, Prisma } from '@prisma/client';
 import { EventState, Role } from '@prisma/client';
 import { IoRoom } from '../routes/socketEvents';
 import Events from '../models/event';
+import EventGroups from '../models/eventGroup';
 import { HTTP403Error } from '../utils/errors/Errors';
 import { ImportType } from '../services/importEvents';
 import { notifyOnDelete, notifyOnUpdate } from '../services/notifications/notifyUsers';
@@ -32,11 +33,17 @@ export const update: RequestHandler<
 > = async (req, res, next) => {
     try {
         const model = await Events.updateModel(req.user!, req.params.id, req.body.data);
+        const groups = await (model.state === EventState.DRAFT
+            ? EventGroups.allOfEvent(model)
+            : Promise.resolve([]));
         res.notifications = [
             {
                 message: { type: NAME, record: model },
                 event: IoEvent.CHANGED_RECORD,
-                to: model.state === EventState.PUBLISHED ? IoRoom.ALL : req.user!.id
+                to:
+                    model.state === EventState.DRAFT
+                        ? [req.user!.id, ...groups.flatMap((g) => g.userIds)]
+                        : [IoRoom.ADMIN, req.user!.id]
             }
         ];
         res.status(200).json(model);
