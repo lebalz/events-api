@@ -407,6 +407,15 @@ function Events(db: PrismaClient['event']) {
                                 }
                             })
                         ]);
+                        /**
+                         * TODO: check if new version fixes it...
+                         */
+                        await db.update({
+                            where: { id: record.id },
+                            data: {
+                                updatedAt: parent.updatedAt
+                            }
+                        });
                         // refetch both of the published events to ensure updated child ids...
                         // oldCurrent: the previous published event, now accessible under the id of the former review candidate
                         const oldCurrent = await db.findUnique({
