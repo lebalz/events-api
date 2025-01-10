@@ -360,7 +360,8 @@ function Events(db: PrismaClient['event']) {
                         await prisma.$transaction([
                             /** update the parent (already published) to receive the new props */
                             db.update({
-                                /** <-- now the current version */ where: { id: parent.id },
+                                /** now the current version */
+                                where: { id: parent.id },
                                 data: {
                                     ...clonedUpdateProps({
                                         event: record,

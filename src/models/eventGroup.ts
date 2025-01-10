@@ -231,21 +231,14 @@ function EventGroups(db: PrismaClient['eventGroup']) {
                     }
                 }
             });
-            const uuids = await prisma.$queryRaw<
-                { uuid: string }[]
-            >`SELECT gen_random_uuid() uuid FROM generate_series(1,${events.length})`;
 
             const clonedEvents = events.map((event, idx) =>
-                clonedEventProps({ event: event, uid: actor.id, type: 'basic' }, uuids[idx].uuid)
-            );
-            const meta: Meta = Object.fromEntries(
-                clonedEvents.map((e, idx) => [e.id, { from: events[idx].id }])
+                clonedEventProps({ event: event, uid: actor.id, type: 'basic' })
             );
             const newGroup = await db.create({
                 data: {
                     name: `${model.name} 📋`,
                     description: model.description,
-                    meta: meta,
                     users: {
                         connect: {
                             id: actor.id

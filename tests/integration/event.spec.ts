@@ -11,7 +11,6 @@ import {
     JobState,
     RegistrationPeriod,
     Role,
-    Semester,
     TeachingAffected,
     User
 } from '@prisma/client';
@@ -607,6 +606,7 @@ describe(`POST ${API_URL}/events/:id/clone`, () => {
             id: expect.any(String),
             cloned: true,
             parentId: null,
+            clonedFromId: event.id,
             createdAt: expect.any(String),
             updatedAt: expect.any(String)
         });
@@ -642,6 +642,7 @@ describe(`POST ${API_URL}/events/:id/clone`, () => {
             authorId: user.id,
             cloned: true,
             parentId: null,
+            clonedFromId: event.id,
             createdAt: expect.any(String),
             updatedAt: expect.any(String)
         });
