@@ -891,6 +891,7 @@ describe(`POST ${API_URL}/events/change_state`, () => {
                     authorId: user.id,
                     parentId: event.id,
                     state: EventState.REVIEW,
+                    clonedFromId: event.id,
                     between: { from: start, to: ende }
                 })
             });
@@ -899,6 +900,7 @@ describe(`POST ${API_URL}/events/change_state`, () => {
                     authorId: user.id,
                     parentId: edit1.id,
                     state: EventState.DRAFT,
+                    clonedFromId: edit1.id,
                     between: { from: start, to: ende }
                 })
             });
@@ -907,6 +909,7 @@ describe(`POST ${API_URL}/events/change_state`, () => {
                     authorId: user.id,
                     parentId: event.id,
                     state: EventState.REVIEW,
+                    clonedFromId: event.id,
                     between: { from: start, to: ende }
                 })
             });
@@ -931,6 +934,7 @@ describe(`POST ${API_URL}/events/change_state`, () => {
                 state: EventState.PUBLISHED,
                 id: event.id,
                 parentId: null,
+                clonedFromId: edit3.id,
                 updatedAt: expect.any(Date)
             });
             expect(updatedEvent?.updatedAt).not.toEqual(edit3.updatedAt);
@@ -940,10 +944,10 @@ describe(`POST ${API_URL}/events/change_state`, () => {
                 ...event,
                 state: EventState.PUBLISHED,
                 id: edit3.id,
+                clonedFromId: null,
                 parentId: event.id,
-                updatedAt: expect.any(Date)
+                updatedAt: event.updatedAt
             });
-            expect(updatedEdit3?.updatedAt).toEqual(event.updatedAt);
 
             /** updatedEdit1 is now refused */
             expect(updatedEdit1).toEqual({

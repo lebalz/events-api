@@ -1,7 +1,7 @@
-import { Department, Event, EventState, Prisma, PrismaClient, User } from '@prisma/client';
+import { EventState, Prisma, PrismaClient, User } from '@prisma/client';
 import { clonedProps as clonedEventProps, prepareEvent } from './event.helpers';
 import prisma from '../prisma';
-import { HTTP403Error, HTTP404Error, HTTP500Error } from '../utils/errors/Errors';
+import { HTTP404Error, HTTP500Error } from '../utils/errors/Errors';
 import { createDataExtractor } from '../controllers/helpers';
 import Events from './event';
 import { prepareEventGroup, ApiEventGroup } from './eventGroup.helpers';

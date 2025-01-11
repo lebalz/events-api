@@ -370,6 +370,7 @@ function Events(db: PrismaClient['event']) {
                                         allProps: true,
                                         includeGroups: true
                                     }),
+                                    clonedFromId: record.id,
                                     groups: {
                                         set: groups.map((id) => ({ id }))
                                     },
@@ -405,17 +406,21 @@ function Events(db: PrismaClient['event']) {
                                 data: {
                                     state: EventState.REFUSED
                                 }
+                            }),
+                            /** cloned from should reference always the most recent (published) version */
+                            db.updateMany({
+                                where: {
+                                    clonedFromId: record.id,
+                                    id: {
+                                        not: parent.id
+                                    }
+                                },
+                                data: {
+                                    clonedFromId: parent.id
+                                }
                             })
                         ]);
-                        /**
-                         * TODO: check if new version fixes it...
-                         */
-                        await db.update({
-                            where: { id: record.id },
-                            data: {
-                                updatedAt: parent.updatedAt
-                            }
-                        });
+
                         // refetch both of the published events to ensure updated child ids...
                         // oldCurrent: the previous published event, now accessible under the id of the former review candidate
                         const oldCurrent = await db.findUnique({
