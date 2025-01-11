@@ -370,7 +370,8 @@ function Events(db: PrismaClient['event']) {
                                         allProps: true,
                                         includeGroups: true
                                     }),
-                                    clonedFromId: record.id,
+                                    clonedFromId:
+                                        record.clonedFromId === parent.id ? record.id : record.clonedFromId,
                                     groups: {
                                         set: groups.map((id) => ({ id }))
                                     },
