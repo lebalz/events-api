@@ -29,7 +29,7 @@ export const truncate = async (deleteFiles: boolean = true) => {
         prisma.untisTeacher.deleteMany(),
         prisma.event.deleteMany(),
         prisma.subscription.deleteMany(),
-        prisma.eventGroup.deleteMany()
+        prisma.eventGroup.deleteMany(),
+        prisma.user.deleteMany()
     ]);
-    await prisma.user.deleteMany();
 };
