@@ -64,6 +64,10 @@ model Event {
     parentId String? @map("parent_id") @db.Uuid()
     children Event[] @relation("event_history")
 
+    clonedFrom   Event?  @relation("clones", fields: [clonedFromId], references: [id], onDelete: SetNull)
+    clonedFromId String? @map("cloned_from_id") @db.Uuid()
+    clones       Event[] @relation("clones")
+
     // Filter Criterias
     classes     String[]     @default([])
     // wildcard class names
@@ -112,6 +116,7 @@ model EventGroup {
     id          String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
     name        String @default("")
     description String @default("")
+    collection  String @default("") @map("collection")
     meta        Json   @default("{}") @db.Json
 
     events Event[] @relation("events_to_event_groups")
@@ -337,6 +342,7 @@ view view_UsersAffectedByEvents {
     deletedAt          DateTime?        @map("deleted_at")
     teachingAffected   TeachingAffected @map("teaching_affected")
     parentId           String?          @map("parent_id") @db.Uuid
+    clonedFromId       String?          @map("cloned_from_id") @db.Uuid()
     cloned             Boolean
     audience           EventAudience
     affectsDepartment2 Boolean?         @map("affects_department2")
@@ -383,6 +389,7 @@ view view_EventsClasses {
     deletedAt          DateTime?        @map("deleted_at")
     teachingAffected   TeachingAffected @map("teaching_affected")
     parentId           String?          @map("parent_id") @db.Uuid
+    clonedFromId       String?          @map("cloned_from_id") @db.Uuid()
     cloned             Boolean
     audience           EventAudience
     affectsDepartment2 Boolean?         @map("affects_department2")
@@ -412,6 +419,7 @@ view view_EventsDepartments {
     deletedAt          DateTime?        @map("deleted_at")
     teachingAffected   TeachingAffected @map("teaching_affected")
     parentId           String?          @map("parent_id") @db.Uuid
+    clonedFromId       String?          @map("cloned_from_id") @db.Uuid()
     cloned             Boolean
     audience           EventAudience
     affectsDepartment2 Boolean?         @map("affects_department2")

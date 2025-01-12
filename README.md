@@ -195,6 +195,8 @@ psql -d postgres -h localhost -U events_api -d events_api
 select * from _prisma_migrations where migration_name ilike '%name%';
 # delete migration record from db
 delete from _prisma_migrations where migration_name ilike '%name%';
+# delete last migration
+DELETE FROM _prisma_migrations WHERE started_at = (SELECT MAX(started_at)FROM _prisma_migrations);
 
 # undo your migration, e.g. drop a view
 drop view view_name;

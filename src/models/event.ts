@@ -360,7 +360,8 @@ function Events(db: PrismaClient['event']) {
                         await prisma.$transaction([
                             /** update the parent (already published) to receive the new props */
                             db.update({
-                                /** <-- now the current version */ where: { id: parent.id },
+                                /** now the current version */
+                                where: { id: parent.id },
                                 data: {
                                     ...clonedUpdateProps({
                                         event: record,
@@ -369,6 +370,8 @@ function Events(db: PrismaClient['event']) {
                                         allProps: true,
                                         includeGroups: true
                                     }),
+                                    clonedFromId:
+                                        record.clonedFromId === parent.id ? record.id : record.clonedFromId,
                                     groups: {
                                         set: groups.map((id) => ({ id }))
                                     },
@@ -404,8 +407,21 @@ function Events(db: PrismaClient['event']) {
                                 data: {
                                     state: EventState.REFUSED
                                 }
+                            }),
+                            /** cloned from should reference always the most recent (published) version */
+                            db.updateMany({
+                                where: {
+                                    clonedFromId: record.id,
+                                    id: {
+                                        not: parent.id
+                                    }
+                                },
+                                data: {
+                                    clonedFromId: parent.id
+                                }
                             })
                         ]);
+
                         // refetch both of the published events to ensure updated child ids...
                         // oldCurrent: the previous published event, now accessible under the id of the former review candidate
                         const oldCurrent = await db.findUnique({

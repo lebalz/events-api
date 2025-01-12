@@ -37,6 +37,9 @@ Table events {
   parent events
   parentId String
   children events [not null]
+  clonedFrom events
+  clonedFromId String
+  clones events [not null]
   classes String[] [not null]
   classGroups String[] [not null]
   departments departments [not null]
@@ -68,6 +71,7 @@ Table event_groups {
   id String [pk]
   name String [not null, default: '']
   description String [not null, default: '']
+  collection String [not null, default: '']
   meta Json [not null, default: '{}']
   events events [not null]
   users users [not null]
@@ -261,6 +265,7 @@ Table view__users_affected_by_events {
   deletedAt DateTime
   teachingAffected TeachingAffected [not null]
   parentId String
+  clonedFromId String
   cloned Boolean [not null]
   audience EventAudience [not null]
   affectsDepartment2 Boolean
@@ -309,6 +314,7 @@ Table view__events_classes {
   deletedAt DateTime
   teachingAffected TeachingAffected [not null]
   parentId String
+  clonedFromId String
   cloned Boolean [not null]
   audience EventAudience [not null]
   affectsDepartment2 Boolean
@@ -339,6 +345,7 @@ Table view__events_departments {
   deletedAt DateTime
   teachingAffected TeachingAffected [not null]
   parentId String
+  clonedFromId String
   cloned Boolean [not null]
   audience EventAudience [not null]
   affectsDepartment2 Boolean
@@ -460,6 +467,8 @@ Ref: events.authorId > users.id
 Ref: events.jobId > jobs.id [delete: Cascade]
 
 Ref: events.parentId - events.id [delete: Cascade]
+
+Ref: events.clonedFromId - events.id [delete: Cascade]
 
 Ref: subscriptions.userId - users.id
 

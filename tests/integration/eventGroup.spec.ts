@@ -3,7 +3,7 @@ import app, { API_URL } from '../../src/app';
 import prisma from '../../src/prisma';
 import { generateUser } from '../factories/user';
 import { EventGroup, Role } from '@prisma/client';
-import _ from 'lodash';
+import _, { groupBy } from 'lodash';
 import { notify } from '../../src/middlewares/notify.nop';
 import { IoEvent } from '../../src/routes/socketEventTypes';
 import { faker } from '@faker-js/faker';
@@ -156,12 +156,13 @@ describe(`POST ${API_URL}/event_groups`, () => {
         const result = await request(app)
             .post(`${API_URL}/event_groups`)
             .set('authorization', JSON.stringify({ email: user.email }))
-            .send({ name: 'FOO', description: 'BAR', event_ids: [] });
+            .send({ name: 'FOO', description: 'BAR', collection: 'HS2025', event_ids: [] });
         expect(result.statusCode).toEqual(201);
         expect(result.body).toEqual({
             id: expect.any(String),
             name: 'FOO',
             description: 'BAR',
+            collection: 'HS2025',
             meta: {},
             createdAt: expect.any(String),
             updatedAt: expect.any(String),
@@ -200,7 +201,7 @@ describe(`DELETE ${API_URL}/event_groups/:id`, () => {
             to: [user.id]
         });
     });
-    it('delets a group but and deletes the draft events', async () => {
+    it('delets a group and deletes the draft events', async () => {
         const user = await prisma.user.create({ data: generateUser({}) });
         await prisma.event.createMany({
             data: [
@@ -226,13 +227,15 @@ describe(`DELETE ${API_URL}/event_groups/:id`, () => {
             message: { type: 'EVENT_GROUP', id: ueGroup.id },
             to: [user.id]
         });
-        expect(mNotification.mock.calls[1][0]).toEqual({
+        const eventNotifications = mNotification.mock.calls.slice(1).map((mc) => mc[0]);
+        expect(eventNotifications.map((e) => e.message.type)).toEqual(['EVENT', 'EVENT']);
+        expect(eventNotifications.find((n) => n.message.id === events[0].id)).toEqual({
             event: IoEvent.DELETED_RECORD,
             message: { type: 'EVENT', id: events[0].id },
             to: [user.id],
             toSelf: true
         });
-        expect(mNotification.mock.calls[2][0]).toEqual({
+        expect(eventNotifications.find((n) => n.message.id === events[1].id)).toEqual({
             event: IoEvent.DELETED_RECORD,
             message: { type: 'EVENT', id: events[1].id },
             to: [user.id],
@@ -316,19 +319,10 @@ describe(`POST ${API_URL}/event_groups/:id/clone`, () => {
             id: expect.any(String),
             eventIds: expect.any(Array),
             name: `${ueGroup.name} 📋`,
+            collection: '',
             createdAt: expect.any(String),
             updatedAt: expect.any(String)
         });
-        expect(
-            Object.values(result.body.meta as EventGroupMeta)
-                .map((meta) => meta.from)
-                .sort()
-        ).toEqual(
-            events
-                .slice(0, 3)
-                .map((e) => e.id)
-                .sort()
-        );
         expect(result.body.eventIds).toHaveLength(3);
         expect(result.body.eventIds).not.toEqual(ueGroup.events.map((e) => e.id).sort());
         expect(mNotification).toHaveBeenCalledTimes(1);

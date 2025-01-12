@@ -149,6 +149,7 @@ describe('updateEvent', () => {
                 createdAt: expect.any(Date),
                 updatedAt: expect.any(Date),
                 parentId: event.id,
+                clonedFromId: event.id,
                 description: 'hello'
             })
         );
@@ -172,6 +173,7 @@ describe('updateEvent', () => {
                 createdAt: expect.any(Date),
                 updatedAt: expect.any(Date),
                 parentId: event.id,
+                clonedFromId: event.id,
                 description: 'hello'
             })
         );
@@ -201,6 +203,7 @@ describe('updateEvent', () => {
                 createdAt: expect.any(Date),
                 updatedAt: expect.any(Date),
                 parentId: '7cf72375-4ee7-4a13-afeb-8d68883acdf4',
+                clonedFromId: '7cf72375-4ee7-4a13-afeb-8d68883acdf4',
                 description: 'hello',
                 departments: [department]
             })
@@ -667,6 +670,7 @@ describe('cloneEvent', () => {
                 authorId: reto.id,
                 state: EventState.DRAFT,
                 cloned: true,
+                clonedFromId: event.id,
                 createdAt: expect.any(Date),
                 updatedAt: expect.any(Date)
             })
@@ -693,6 +697,7 @@ describe('cloneEvent', () => {
             prepareEvent({
                 ...event,
                 id: expect.not.stringMatching(event.id),
+                clonedFromId: event.id,
                 authorId: reto.id,
                 state: EventState.DRAFT,
                 cloned: true,

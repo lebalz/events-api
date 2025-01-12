@@ -11,6 +11,7 @@ export const generateEventGroup = (
     return {
         name: faker.commerce.department(),
         description: faker.commerce.productDescription(),
+        collection: '',
         ...props,
         users: {
             connect: userIds.map((id) => ({ id }))

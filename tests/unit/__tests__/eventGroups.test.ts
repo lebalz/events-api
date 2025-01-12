@@ -255,6 +255,7 @@ describe('clone group', () => {
             id: expect.any(String),
             createdAt: expect.any(Date),
             updatedAt: expect.any(Date),
+            clonedFromId: event.id,
             authorId: alice.id,
             parentId: null
         });
@@ -264,6 +265,7 @@ describe('clone group', () => {
             id: expect.any(String),
             createdAt: expect.any(Date),
             updatedAt: expect.any(Date),
+            clonedFromId: pubEvent.id,
             authorId: alice.id,
             state: 'DRAFT',
             parentId: null
@@ -274,6 +276,7 @@ describe('clone group', () => {
             id: expect.any(String),
             createdAt: expect.any(Date),
             updatedAt: expect.any(Date),
+            clonedFromId: eventBob.id,
             authorId: alice.id,
             state: 'DRAFT',
             parentId: null

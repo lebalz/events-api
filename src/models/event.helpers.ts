@@ -1,7 +1,8 @@
 import { Event, EventState, Prisma } from '@prisma/client';
 import _ from 'lodash';
 
-export interface ApiEvent extends Omit<Event, 'job' | 'author' | 'departments' | 'children' | 'meta'> {
+export interface ApiEvent
+    extends Omit<Event, 'job' | 'author' | 'departments' | 'children' | 'clones' | 'meta'> {
     jobId: string | null;
     meta?: Prisma.JsonValue | null;
     authorId: string;
@@ -48,7 +49,7 @@ export const prepareEvent = (
             .sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime())
             .map((c) => c.id)
     };
-    ['author', 'departments', 'children', 'job'].forEach((key) => {
+    ['author', 'departments', 'children', 'clones', 'clonedFrom', 'job'].forEach((key) => {
         delete (prepared as any)[key];
     });
     if (!event.meta) {
@@ -59,8 +60,15 @@ export const prepareEvent = (
 
 export const clonedUpdateProps = (
     config: CloneConfig | FullCloneConfig | AllPropsCloneConfig
-): Prisma.EventUpdateInput => {
-    const cloned: Prisma.EventUpdateInput = clonedProps(config);
+): Prisma.EventUncheckedUpdateInput => {
+    const raw = clonedProps(config, true);
+    /**
+     * it **must** be a unchecked update.
+     * reason: when calling update({data: { author: { connect: { id: some-others-id }}}})
+     *         two queries are performed, and the one for the relation updates the `updatedAt` field... :(
+     *         --> with uncheckedInput, this doesn't happen, because only one query is executed...
+     */
+    const cloned: Prisma.EventUncheckedUpdateInput = { ...raw };
     if (cloned.departments) {
         cloned.departments = {
             set: cloned.departments.connect
@@ -70,14 +78,19 @@ export const clonedUpdateProps = (
             set: []
         };
     }
+    cloned.clonedFromId = raw.clonedFrom?.connect?.id || null;
+    cloned.authorId = raw.author.connect!.id;
+    delete (cloned as any).author;
+    delete (cloned as any).clonedFrom;
     return cloned;
 };
 
 export const clonedProps = (
     config: CloneConfig | FullCloneConfig | AllPropsCloneConfig,
-    newId?: string
+    cloneClonedFrom?: boolean
 ): Prisma.EventCreateInput => {
     const event = config.event;
+    const clonedFromId = cloneClonedFrom ? event.clonedFromId : event.id;
     const props: Prisma.EventCreateInput = {
         start: event.start,
         end: event.end,
@@ -87,12 +100,10 @@ export const clonedProps = (
         location: event.location,
         descriptionLong: event.descriptionLong,
         teachingAffected: event.teachingAffected,
+        clonedFrom: clonedFromId ? { connect: { id: clonedFromId } } : undefined,
         state: EventState.DRAFT,
         author: { connect: { id: config.uid } }
     };
-    if (newId) {
-        props.id = newId;
-    }
     if (event.departments.length > 0) {
         props.departments = {
             connect: event.departments.map((d) => ({ id: d.id }))

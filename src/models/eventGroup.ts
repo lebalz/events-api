@@ -1,12 +1,16 @@
-import { Department, Event, EventState, Prisma, PrismaClient, User } from '@prisma/client';
+import { EventState, Prisma, PrismaClient, User } from '@prisma/client';
 import { clonedProps as clonedEventProps, prepareEvent } from './event.helpers';
 import prisma from '../prisma';
-import { HTTP403Error, HTTP404Error, HTTP500Error } from '../utils/errors/Errors';
+import { HTTP404Error, HTTP500Error } from '../utils/errors/Errors';
 import { createDataExtractor } from '../controllers/helpers';
 import Events from './event';
 import { prepareEventGroup, ApiEventGroup } from './eventGroup.helpers';
 
-const getData = createDataExtractor<Prisma.EventGroupUncheckedUpdateInput>(['name', 'description']);
+const getData = createDataExtractor<Prisma.EventGroupUncheckedUpdateInput>([
+    'name',
+    'description',
+    'collection'
+]);
 
 export interface Meta {
     [id: string]: {
@@ -102,13 +106,17 @@ function EventGroups(db: PrismaClient['eventGroup']) {
             const model = await this._findRawModel(actor, id);
             return prepareEventGroup(model);
         },
-        async createModel(actor: User, data: { name: string; description: string; event_ids: string[] }) {
-            const { name, description, event_ids } = data;
+        async createModel(
+            actor: User,
+            data: { name: string; collection?: string; description: string; event_ids: string[] }
+        ) {
+            const { name, description, collection, event_ids } = data;
             const allowedEvents = await Events.allByIds(actor, event_ids);
             const model = await db.create({
                 data: {
-                    name,
-                    description,
+                    name: name,
+                    description: description,
+                    collection: collection,
                     users: {
                         connect: {
                             id: actor.id
@@ -231,21 +239,14 @@ function EventGroups(db: PrismaClient['eventGroup']) {
                     }
                 }
             });
-            const uuids = await prisma.$queryRaw<
-                { uuid: string }[]
-            >`SELECT gen_random_uuid() uuid FROM generate_series(1,${events.length})`;
 
             const clonedEvents = events.map((event, idx) =>
-                clonedEventProps({ event: event, uid: actor.id, type: 'basic' }, uuids[idx].uuid)
-            );
-            const meta: Meta = Object.fromEntries(
-                clonedEvents.map((e, idx) => [e.id, { from: events[idx].id }])
+                clonedEventProps({ event: event, uid: actor.id, type: 'basic' })
             );
             const newGroup = await db.create({
                 data: {
                     name: `${model.name} 📋`,
                     description: model.description,
-                    meta: meta,
                     users: {
                         connect: {
                             id: actor.id
