@@ -227,13 +227,15 @@ describe(`DELETE ${API_URL}/event_groups/:id`, () => {
             message: { type: 'EVENT_GROUP', id: ueGroup.id },
             to: [user.id]
         });
-        expect(mNotification.mock.calls[1][0]).toEqual({
+        const eventNotifications = mNotification.mock.calls.slice(1).map((mc) => mc[0]);
+        expect(eventNotifications.map((e) => e.message.type)).toEqual(['EVENT', 'EVENT']);
+        expect(eventNotifications.find((n) => n.message.id === events[0].id)).toEqual({
             event: IoEvent.DELETED_RECORD,
             message: { type: 'EVENT', id: events[0].id },
             to: [user.id],
             toSelf: true
         });
-        expect(mNotification.mock.calls[2][0]).toEqual({
+        expect(eventNotifications.find((n) => n.message.id === events[1].id)).toEqual({
             event: IoEvent.DELETED_RECORD,
             message: { type: 'EVENT', id: events[1].id },
             to: [user.id],

@@ -49,7 +49,7 @@ export const prepareEvent = (
             .sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime())
             .map((c) => c.id)
     };
-    ['author', 'departments', 'children', 'clones', 'job'].forEach((key) => {
+    ['author', 'departments', 'children', 'clones', 'clonedFrom', 'job'].forEach((key) => {
         delete (prepared as any)[key];
     });
     if (!event.meta) {

@@ -53,6 +53,9 @@ export const generateEvent = (
         clonedFrom: clonedFromId ? { connect: { id: clonedFromId } } : undefined,
         job: jobId ? { connect: { id: jobId } } : undefined
     };
+    if (event.updatedAt && event.clonedFrom) {
+        throw new Error("updatedAt and clonedFrom can't be used together");
+    }
     return event;
 };
 
