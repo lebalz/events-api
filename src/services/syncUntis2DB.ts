@@ -45,6 +45,7 @@ export const syncUntis2DB = async (
             id: true
         }
     });
+    const CurrentUntisTeachers = await prisma.untisTeacher.findMany({});
 
     /** UPSERT DEPARTMENTS */
     const upsertDepPromise: Prisma.PrismaPromise<Department>[] = [];
@@ -184,6 +185,41 @@ export const syncUntis2DB = async (
         dbTransactions.push(update);
     });
 
+    /** check user-id missmatches */
+    const missmatches = data.teachers
+        .filter((t) => CurrentUntisTeachers.find((ct) => ct.name === t.name && ct.id !== t.id))
+        .map((t) => ({
+            name: t.name,
+            currentId: CurrentUntisTeachers.find((ct) => ct.name === t.name)!.id,
+            newId: t.id,
+            userId: User2Teacher.find((u) => u.untisId === t.id)?.id
+        }));
+    if (missmatches.length > 0) {
+        Logger.info(
+            `Teacher Missmatches: Untis-ID's changed for ${missmatches.map((m) => `${m.name} (${m.currentId} -> ${m.newId})`)}`
+        );
+    }
+    const rmUntisTeacherLinks = prisma.user.updateMany({
+        data: {
+            untisId: null
+        },
+        where: {
+            id: {
+                in: missmatches.filter((m) => !!m.userId).map((m) => m.userId!)
+            }
+        }
+    });
+    dbTransactions.push(rmUntisTeacherLinks);
+    /** delete missmatched users */
+    const rmMissmatchedUsers = prisma.untisTeacher.deleteMany({
+        where: {
+            id: {
+                in: missmatches.map((m) => m.currentId!)
+            }
+        }
+    });
+    dbTransactions.push(rmMissmatchedUsers);
+
     /** UPSERT TEACHERS */
     data.teachers.forEach((t) => {
         const data = {
@@ -213,6 +249,17 @@ export const syncUntis2DB = async (
                 where: { id: user.id },
                 data: {
                     untisId: t.id
+                }
+            });
+            dbTransactions.push(update);
+        }
+    });
+    missmatches.forEach((m) => {
+        if (m.userId) {
+            const update = prisma.user.update({
+                where: { id: m.userId },
+                data: {
+                    untisId: m.newId
                 }
             });
             dbTransactions.push(update);
