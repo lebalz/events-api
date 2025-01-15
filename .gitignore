@@ -15,6 +15,7 @@ yarn-error.log
 .vscode
 /dist
 dokku.sh
+dokku-dev.sh
 uploads/
 !tests/test-data/uploads/
 ical/de/*.ics

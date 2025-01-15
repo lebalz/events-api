@@ -245,7 +245,7 @@ dokku storage:mount hfr-events-api /var/lib/dokku/data/storage/hfr-events-api/ic
 dokku config:set hfr-events-api EXPORT_DIR="/app/ical"
 
 
-dokku nginx:set events-api client-max-body-size 5mb
+dokku nginx:set events-api client-max-body-size 5m
 
 ## eventually use the latest buildpack s.t. the latest node version is known and can be used
 # check the latest tag here: 👉 https://github.com/heroku/heroku-buildpack-nodejs/tags
@@ -255,7 +255,7 @@ dokku config:set hfr-events-api BUILDPACK_URL=https://github.com/heroku/heroku-b
 
 dokku letsencrypt:enable events-api
 
-# scale the app and ensure the bree runnder is running (as a worker)
+# scale the app and ensure the bree runner is running (as a worker)
 dokku ps:scale events-api web=1 worker=1
 ```
 
