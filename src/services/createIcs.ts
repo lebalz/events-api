@@ -8,6 +8,7 @@ import { ICAL_DIR } from '../app';
 import { translate } from './helpers/i18n';
 import { ApiSubscription } from '../models/subscription.helpers';
 import Subscription from '../models/subscription';
+import { mkdir } from 'fs/promises';
 
 export const SEC_2_MS = 1000;
 export const MINUTE_2_MS = 60 * SEC_2_MS;
@@ -195,6 +196,8 @@ const exportIcs = async (events: Event[], filename: string) => {
 
 export const createIcs = async (userId: string): Promise<ApiSubscription> => {
     const { model: subscription } = await Subscription.getOrCreateModel({ id: userId }, false);
+    await mkdir(`${ICAL_DIR}/de`, { recursive: true });
+    await mkdir(`${ICAL_DIR}/fr`, { recursive: true });
     return createIcsFromSubscription(subscription);
 };
 
