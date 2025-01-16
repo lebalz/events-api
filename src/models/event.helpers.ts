@@ -60,7 +60,7 @@ export const prepareEvent = (
 
 export const clonedUpdateProps = (
     config: CloneConfig | FullCloneConfig | AllPropsCloneConfig
-): Prisma.EventUncheckedUpdateInput => {
+): Prisma.EventUpdateInput => {
     const raw = clonedProps(config, true);
     /**
      * it **must** be a unchecked update.
@@ -68,7 +68,7 @@ export const clonedUpdateProps = (
      *         two queries are performed, and the one for the relation updates the `updatedAt` field... :(
      *         --> with uncheckedInput, this doesn't happen, because only one query is executed...
      */
-    const cloned: Prisma.EventUncheckedUpdateInput = { ...raw };
+    const cloned: Prisma.EventUpdateInput = { ...raw };
     if (cloned.departments) {
         cloned.departments = {
             set: cloned.departments.connect
@@ -78,10 +78,13 @@ export const clonedUpdateProps = (
             set: []
         };
     }
-    cloned.clonedFromId = raw.clonedFrom?.connect?.id || null;
-    cloned.authorId = raw.author.connect!.id;
-    delete (cloned as any).author;
-    delete (cloned as any).clonedFrom;
+    if (!cloned.clonedFrom) {
+        cloned.clonedFrom = { disconnect: true };
+    }
+    // cloned.clonedFromId = raw.clonedFrom?.connect?.id || null;
+    // cloned.authorId = raw.author.connect!.id;
+    // delete (cloned as any).author;
+    // delete (cloned as any).clonedFrom;
     return cloned;
 };
 

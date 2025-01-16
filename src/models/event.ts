@@ -358,27 +358,6 @@ function Events(db: PrismaClient['event']) {
                             include: { children: true }
                         });
                         await prisma.$transaction([
-                            /** update the parent (already published) to receive the new props */
-                            db.update({
-                                /** now the current version */
-                                where: { id: parent.id },
-                                data: {
-                                    ...clonedUpdateProps({
-                                        event: record,
-                                        uid: record.authorId,
-                                        type: 'full',
-                                        allProps: true,
-                                        includeGroups: true
-                                    }),
-                                    clonedFromId:
-                                        record.clonedFromId === parent.id ? record.id : record.clonedFromId,
-                                    groups: {
-                                        set: groups.map((id) => ({ id }))
-                                    },
-                                    state: EventState.PUBLISHED,
-                                    updatedAt: undefined
-                                }
-                            }),
                             /** swap the child and the parent - ensures that the uuid for the ical stays the same  */
                             db.update({
                                 /** version --> the previous published event, now accessible under the id of the former review candidate */
@@ -394,6 +373,43 @@ function Events(db: PrismaClient['event']) {
                                     groups: {
                                         set: []
                                     }
+                                }
+                            }),
+                            db.update({
+                                where: { id: record.id },
+                                data: {
+                                    updatedAt: parent.updatedAt
+                                }
+                            }),
+                            /** update the parent (already published) to receive the new props */
+                            db.update({
+                                /** now the current version */
+                                where: { id: parent.id },
+                                data: {
+                                    ...clonedUpdateProps({
+                                        event: record,
+                                        uid: record.authorId,
+                                        type: 'full',
+                                        allProps: true,
+                                        includeGroups: true
+                                    }),
+                                    ...(record.clonedFromId
+                                        ? {
+                                              clonedFrom: {
+                                                  connect: {
+                                                      id:
+                                                          record.clonedFromId === parent.id
+                                                              ? record.id
+                                                              : record.clonedFromId
+                                                  }
+                                              }
+                                          }
+                                        : {}),
+                                    groups: {
+                                        set: groups.map((id) => ({ id }))
+                                    },
+                                    state: EventState.PUBLISHED,
+                                    updatedAt: undefined
                                 }
                             }),
                             /** ensure that all pending reviews with this parent are refused... */
