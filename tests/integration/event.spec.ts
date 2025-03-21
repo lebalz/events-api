@@ -35,6 +35,7 @@ import * as eventModel from '../../src/models/event';
 import { prepareEvent as originalPrepareEvent } from '../../src/models/event.helpers';
 import { createEvent } from '../unit/__tests__/events.test';
 import department from '../../src/models/department';
+import { generateEventGroup } from '../factories/eventGroup';
 
 jest.mock('../../src/middlewares/notify.nop');
 const mNotification = <jest.Mock<typeof notify>>notify;
@@ -558,6 +559,38 @@ describe(`DELETE ${API_URL}/events?ids[]=`, () => {
             event: IoEvent.DELETED_RECORD,
             message: { type: RecordType.Event, id: event2.id },
             to: user.id
+        });
+    });
+    it('Lets users of group delete draft events', async () => {
+        const user1 = await prisma.user.create({
+            data: generateUser({ email: 'foo@bar.ch' })
+        });
+        const user2 = await prisma.user.create({
+            data: generateUser({ email: 'foo2@bar.ch' })
+        });
+        const event1 = await prisma.event.create({ data: generateEvent({ authorId: user1.id }) });
+        const event2 = await prisma.event.create({ data: generateEvent({ authorId: user1.id }) });
+
+        const ueGroup = await prisma.eventGroup.create({
+            data: generateEventGroup({ userIds: [user1.id, user2.id], eventIds: [event1.id, event2.id] })
+        });
+        const result = await request(app)
+            .delete(`${API_URL}/events?ids[]=${event1.id}&ids[]=${event2.id}`)
+            .set('authorization', JSON.stringify({ email: user2.email }));
+        expect(result.statusCode).toEqual(200);
+        expect(result.body.sort()).toEqual([event1.id, event2.id].sort());
+        const all = await prisma.event.findMany();
+        expect(all.length).toEqual(0);
+        expect(mNotification).toHaveBeenCalledTimes(2);
+        expect(mNotification.mock.calls[0][0]).toEqual({
+            event: IoEvent.DELETED_RECORD,
+            message: { type: RecordType.Event, id: event1.id },
+            to: user1.id
+        });
+        expect(mNotification.mock.calls[1][0]).toEqual({
+            event: IoEvent.DELETED_RECORD,
+            message: { type: RecordType.Event, id: event2.id },
+            to: user1.id
         });
     });
     [EventState.PUBLISHED, EventState.REVIEW, EventState.REFUSED].forEach((state) => {

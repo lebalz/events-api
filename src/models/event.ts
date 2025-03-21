@@ -67,33 +67,7 @@ const childrenSql = (parentId: string) => {
 
 function Events(db: PrismaClient['event']) {
     return Object.assign(db, {
-        async findModel(actor: User | undefined, id: string): Promise<ApiEvent> {
-            const event = await db.findUnique({
-                where: { id: id },
-                include: { departments: true, children: true }
-            });
-            if (!event) {
-                throw new HTTP404Error('Event not found');
-            }
-            if (event.state === EventState.PUBLISHED) {
-                return prepareEvent(event);
-            }
-            if (actor?.id === event.authorId) {
-                return prepareEvent(event);
-            }
-            if (
-                actor?.role === Role.ADMIN &&
-                (event.state === EventState.REVIEW || event.state === EventState.REFUSED)
-            ) {
-                return prepareEvent(event);
-            }
-            throw new HTTP403Error('Not authorized');
-        },
-        async updateModel(
-            actor: User,
-            id: string,
-            data: Prisma.EventUncheckedUpdateInput & { departmentIds?: string[] }
-        ): Promise<ApiEvent> {
+        async _findRecord(actor: User | undefined, id: string, ensureRW = false) {
             const record = await db.findUnique({
                 where: { id: id },
                 include: {
@@ -117,16 +91,52 @@ function Events(db: PrismaClient['event']) {
             if (!record) {
                 throw new HTTP404Error('Event not found');
             }
+            if (!ensureRW && record.state === EventState.PUBLISHED) {
+                return record;
+            }
+            if (!actor) {
+                throw new HTTP403Error('Not authorized');
+            }
             if (
                 !(
                     record.authorId === actor.id ||
                     record.groups.some((g) => g.users.map((user) => user.id).includes(actor.id)) ||
-                    record.state === EventState.PUBLISHED ||
                     actor.role === Role.ADMIN
                 )
             ) {
                 throw new HTTP403Error('Not authorized');
             }
+            return record;
+        },
+        async findModel(actor: User | undefined, id: string): Promise<ApiEvent> {
+            const event = await db.findUnique({
+                where: { id: id },
+                include: { departments: true, children: true }
+            });
+
+            if (!event) {
+                throw new HTTP404Error('Event not found');
+            }
+            if (event.state === EventState.PUBLISHED) {
+                return prepareEvent(event);
+            }
+            if (actor?.id === event.authorId) {
+                return prepareEvent(event);
+            }
+            if (
+                actor?.role === Role.ADMIN &&
+                (event.state === EventState.REVIEW || event.state === EventState.REFUSED)
+            ) {
+                return prepareEvent(event);
+            }
+            throw new HTTP403Error('Not authorized');
+        },
+        async updateModel(
+            actor: User,
+            id: string,
+            data: Prisma.EventUncheckedUpdateInput & { departmentIds?: string[] }
+        ): Promise<ApiEvent> {
+            const record = await this._findRecord(actor, id);
             /** remove fields not updatable*/
             const sanitized = getData(data);
             const departmentIds = data.departmentIds || record.departments.map((d) => d.id);
@@ -175,40 +185,10 @@ function Events(db: PrismaClient['event']) {
             return prepareEvent(model);
         },
         async updateMeta(actor: User, id: string, metaData: Prisma.JsonObject | null): Promise<ApiEvent> {
-            const record = await db.findUnique({
-                where: { id: id },
-                include: {
-                    departments: {
-                        select: {
-                            id: true
-                        }
-                    },
-                    groups: {
-                        select: {
-                            id: true,
-                            users: {
-                                select: {
-                                    id: true
-                                }
-                            }
-                        }
-                    }
-                }
-            });
-            if (!record) {
-                throw new HTTP404Error('Event not found');
-            }
-            if (!(record.state === EventState.DRAFT || record.state === EventState.REVIEW)) {
+            const record = await this._findRecord(actor, id, true);
+            const allowedStates = new Set<EventState>([EventState.DRAFT, EventState.REVIEW]);
+            if (!allowedStates.has(record.state)) {
                 throw new HTTP404Error('Not allowed');
-            }
-            if (
-                !(
-                    record.authorId === actor.id ||
-                    record.groups.some((g) => g.users.map((user) => user.id).includes(actor.id)) ||
-                    actor.role === Role.ADMIN
-                )
-            ) {
-                throw new HTTP403Error('Not authorized');
             }
             const model = await db.update({
                 where: { id: id },
@@ -520,11 +500,8 @@ function Events(db: PrismaClient['event']) {
             });
         },
         async destroy(actor: User, id: string): Promise<ApiEvent> {
-            const record = await this.findModel(actor, id);
-            // /** check policy - only delete if user is author or admin */
-            if (record.authorId !== actor.id && actor.role !== Role.ADMIN) {
-                throw new HTTP403Error('Not authorized');
-            }
+            // /** only delete if user is author, part of the userGroup or is admin */
+            const record = await this._findRecord(actor, id, true);
             return this._forceDestroy(record);
         },
         async published(semesterId?: string): Promise<ApiEvent[]> {
