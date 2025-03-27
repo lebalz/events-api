@@ -610,27 +610,7 @@ function Events(db: PrismaClient['event']) {
             return prepareEvent(model);
         },
         async cloneModel(actor: User, id: string): Promise<ApiEvent> {
-            const record = await db.findUnique({
-                where: { id: id },
-                include: {
-                    departments: {
-                        select: {
-                            id: true
-                        }
-                    },
-                    groups: {
-                        select: {
-                            id: true
-                        }
-                    }
-                }
-            });
-            if (!record) {
-                throw new HTTP404Error('Event not found');
-            }
-            if (record.state !== EventState.PUBLISHED && record.authorId !== actor.id) {
-                throw new HTTP403Error('Forbidden');
-            }
+            const record = await this._findRecord(actor, id, false);
             const newEvent = await db.create({
                 data: { ...clonedProps({ type: 'basic', event: record, uid: actor.id }), cloned: true },
                 include: { departments: true, children: true }

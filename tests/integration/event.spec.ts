@@ -718,6 +718,46 @@ describe(`POST ${API_URL}/events/:id/clone`, () => {
         expect(result.statusCode).toEqual(404);
         expect(mNotification).toHaveBeenCalledTimes(0);
     });
+
+    it('Lets users of group clone draft events', async () => {
+        const user1 = await prisma.user.create({
+            data: generateUser({ email: 'foo@bar.ch' })
+        });
+        const user2 = await prisma.user.create({
+            data: generateUser({ email: 'foo2@bar.ch' })
+        });
+        const event = await prisma.event.create({
+            data: generateEvent({ authorId: user1.id, description: 'shared event from user 1' })
+        });
+
+        const ueGroup = await prisma.eventGroup.create({
+            data: generateEventGroup({ userIds: [user1.id, user2.id], eventIds: [event.id] })
+        });
+
+        const result = await request(app)
+            .post(`${API_URL}/events/${event.id}/clone`)
+            .set('authorization', JSON.stringify({ email: user2.email }));
+        expect(result.statusCode).toEqual(201);
+        const all = await prisma.event.findMany();
+        expect(all.length).toEqual(2);
+        expect(result.body).toEqual({
+            ...prepareEvent(event),
+            authorId: user2.id,
+            id: expect.any(String),
+            cloned: true,
+            parentId: null,
+            clonedFromId: event.id,
+            createdAt: expect.any(String),
+            updatedAt: expect.any(String)
+        });
+        expect(result.body.description).toEqual('shared event from user 1');
+        expect(mNotification).toHaveBeenCalledTimes(1);
+        expect(mNotification.mock.calls[0][0]).toEqual({
+            event: IoEvent.NEW_RECORD,
+            message: { type: RecordType.Event, record: prepareNotificationEvent(result.body) },
+            to: user2.id
+        });
+    });
 });
 
 describe(`POST ${API_URL}/events/change_state`, () => {
