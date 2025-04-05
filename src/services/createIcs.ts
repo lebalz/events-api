@@ -57,7 +57,7 @@ const TEACHING_AFFECTED = {
 export const prepareEvent = (
     event: Event,
     lang: 'de' | 'fr',
-    legacyClassNames: { [key: string]: string }
+    displayClassNames: { [key: string]: string }
 ): EventAttributes => {
     const start = toDateArray(new Date(event.start));
     const end = toDateArray(new Date(event.end));
@@ -75,10 +75,9 @@ export const prepareEvent = (
         description.push(event.descriptionLong);
     }
     const audience = [];
+    const classes = event.classes.map((cls) => displayClassNames[cls] || cls);
     if (event.classes.length > 0 || event.classGroups.length > 0) {
-        audience.push(
-            `${translate('classes', lang)}: ${[...event.classes.map((cls) => legacyClassNames[cls] || cls), ...event.classGroups].join(', ')}`
-        );
+        audience.push(`${translate('classes', lang)}: ${[...classes, ...event.classGroups].join(', ')}`);
     }
     if (event.deletedAt) {
         audience.push(`${translate('deletedAt', lang)}: ${event.deletedAt}`);
@@ -111,7 +110,7 @@ export const prepareEvent = (
         startOutputType: 'local',
         endInputType: 'utc',
         endOutputType: 'local',
-        categories: event.classes,
+        categories: classes,
         lastModified: updatedAt,
         created: createdAt
     };
@@ -128,19 +127,19 @@ const exportIcs = async (events: Event[], filename: string) => {
     if (events.length === 0 || !filename) {
         return Promise.resolve(false);
     }
-    const legacyClassNamesRaw = await prisma.untisClass.findMany({
+    const displayNameClassMapRaw = await prisma.untisClass.findMany({
         where: {
-            legacyName: { not: null }
+            displayName: { not: null }
         },
         select: {
             name: true,
-            legacyName: true
+            displayName: true
         }
     });
 
-    const classNameMap = legacyClassNamesRaw.reduce(
+    const classNameMap = displayNameClassMapRaw.reduce(
         (acc, curr) => {
-            return { ...acc, [curr.name]: curr.legacyName! };
+            return { ...acc, [curr.name]: curr.displayName! };
         },
         {} as { [key: string]: string }
     );

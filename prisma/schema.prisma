@@ -129,11 +129,12 @@ model EventGroup {
 }
 
 model Department {
-    id           String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-    name         String   @unique
-    description  String   @default("")
-    letter       String   @default("")
-    classLetters String[] @default([])
+    id            String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+    name          String   @unique
+    description   String   @default("")
+    letter        String   @default("")
+    displayLetter String?  @map("display_letter")
+    classLetters  String[] @default([]) @map("class_letters")
 
     department1_Id   String?     @unique @map("department1_id") @db.Uuid()
     department1      Department? @relation("Department1", fields: [department1_Id], references: [id])
@@ -248,7 +249,7 @@ model UntisLesson {
 model UntisClass {
     id            Int            @id @default(autoincrement())
     name          String         @unique
-    legacyName    String?        @unique @map("legacy_name")
+    displayName   String?        @unique @map("display_name")
     year          Int
     sf            String
     lessons       UntisLesson[]  @relation("classes_to_lessons")

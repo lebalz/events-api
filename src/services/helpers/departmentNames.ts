@@ -1,6 +1,7 @@
 /**
  * MUST BE IN SYNC WITH THE CLIENT SIDE
  */
+import { Department } from '@prisma/client';
 import { KlassName } from './klassNames';
 
 const GYMD = [
@@ -116,11 +117,50 @@ export enum DepartmentLetter {
     WMS = 'W',
     FMS = 'F',
     GYMD = 'G',
+    FMPaed = 'E', // E für Erziehung
     ECG = 's',
     PASSERELLE = 'p',
     ESC = 'c',
-    GYMF = 'm'
+    GYMF = 'm',
+    MSOP = 'e' // für éducation
 }
+
+const haveSameCase = (letterA: string, letterB: string): boolean => {
+    return (
+        (letterA === letterA.toUpperCase() && letterB === letterB.toUpperCase()) ||
+        (letterA === letterA.toLowerCase() && letterB === letterB.toLowerCase())
+    );
+};
+
+export const fromDisplayClassName = (isoUntisName: KlassName, departments: Department[]): KlassName => {
+    const displayNamedDepartments = departments.filter(
+        (d) => d.displayLetter && d.letter !== d.displayLetter
+    );
+    if (displayNamedDepartments.length === 0) {
+        return isoUntisName;
+    }
+    if (isoUntisName.length !== 4) {
+        throw new Error('Invalid class name');
+    }
+    const year = isoUntisName.slice(0, 2);
+    const dLetter = isoUntisName.charAt(2) as DepartmentLetter;
+    const cLetter = isoUntisName.charAt(3) as Letter;
+    const matchingDepartment = displayNamedDepartments.filter(
+        (d) => d.displayLetter === dLetter && d.classLetters.includes(cLetter)
+    );
+    if (matchingDepartment.length === 0) {
+        return isoUntisName;
+    }
+    if (matchingDepartment.length > 1) {
+        throw new Error('Multiple departments found');
+    }
+    if (!haveSameCase(dLetter, matchingDepartment[0].letter)) {
+        throw new Error('Department letter case mismatch');
+    }
+    const department = matchingDepartment[0];
+    return `${year}${department.letter}${cLetter}` as KlassName;
+};
+
 export const Departments = {
     WMS: 'WMS',
     ESC: 'ESC',
@@ -215,7 +255,7 @@ export const DepartmentLetterMap: { [key in keyof typeof Departments]: Departmen
 
     FMS: DepartmentLetter.FMS,
     FMSBilingual: DepartmentLetter.FMS,
-    FMPaed: DepartmentLetter.FMS,
+    FMPaed: DepartmentLetter.FMPaed,
 
     WMS: DepartmentLetter.WMS,
 
@@ -226,7 +266,7 @@ export const DepartmentLetterMap: { [key in keyof typeof Departments]: Departmen
     /** FMS */
     ECG: DepartmentLetter.ECG,
     ECGBilingual: DepartmentLetter.ECG,
-    MSOP: DepartmentLetter.ECG, // FMPäd
+    MSOP: DepartmentLetter.MSOP, // FMPäd
 
     /** WMS */
     ESC: DepartmentLetter.ESC,

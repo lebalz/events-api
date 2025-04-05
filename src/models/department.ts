@@ -9,6 +9,7 @@ const getData = createDataExtractor<Prisma.DepartmentUncheckedUpdateInput>([
     'description',
     'color',
     'letter',
+    'displayLetter',
     'classLetters',
     'department1_Id',
     'department2_Id'

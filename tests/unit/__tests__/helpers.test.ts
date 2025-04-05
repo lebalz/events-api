@@ -1,6 +1,10 @@
 import { findUser } from '../../../src/helpers/authInfo';
 import { getNameFromEmail } from '../../../src/helpers/email';
-import { Departments, toDepartmentName } from '../../../src/services/helpers/departmentNames';
+import {
+    Departments,
+    fromDisplayClassName,
+    toDepartmentName
+} from '../../../src/services/helpers/departmentNames';
 import { KlassName } from '../../../src/services/helpers/klassNames';
 import { chunks } from '../../../src/services/helpers/splitInChunks';
 import prisma from '../../../src/prisma';
@@ -9,6 +13,7 @@ import { stringify } from '../../../src/utils/logger';
 import { HTTP401Error, HTTP500Error } from '../../../src/utils/errors/Errors';
 import { getDate, getDateLong, getDateTime, getDay, getTime } from '../../../src/services/helpers/time';
 import { translate } from '../../../src/services/helpers/i18n';
+import type { Department } from '@prisma/client';
 
 describe('Split In Chunks', () => {
     test('fn chunks', async () => {
@@ -242,6 +247,51 @@ describe('Department Names', () => {
         });
         'abcdefghijklmnopqrstuvwxyzEFGHIJKLMNOPQRSTUVWXYZ'.split('').forEach((letter) => {
             expect(toDepartmentName(`27c${letter}` as KlassName)).not.toEqual(Departments.ESC);
+        });
+    });
+});
+
+describe('Department Letters: Display Letters', () => {
+    test('fromDisplayClassName', () => {
+        const departments: Department[] = [
+            {
+                name: Departments.FMPaed,
+                classLetters: ['p', 'q', 'r', 's'],
+                displayLetter: 'F',
+                letter: 'E',
+                color: '#FF0000',
+                createdAt: new Date(),
+                updatedAt: new Date(),
+                id: '1',
+                department1_Id: null,
+                department2_Id: null,
+                description: 'Fachmittelschule Pädagogik'
+            },
+            {
+                name: Departments.MSOP,
+                classLetters: ['P', 'Q', 'R', 'S'],
+                displayLetter: 's',
+                letter: 'e',
+                color: '#FF0000',
+                createdAt: new Date(),
+                updatedAt: new Date(),
+                id: '2',
+                department1_Id: null,
+                department2_Id: null,
+                description: 'MSOP'
+            }
+        ];
+        'pqrs'.split('').forEach((letter) => {
+            expect(fromDisplayClassName(`28F${letter}` as KlassName, departments)).toEqual(`28E${letter}`);
+        });
+        'PQRS'.split('').forEach((letter) => {
+            expect(fromDisplayClassName(`28s${letter}` as KlassName, departments)).toEqual(`28e${letter}`);
+        });
+        'abcdefghijklmnotuvwxyz'.split('').forEach((letter) => {
+            expect(fromDisplayClassName(`27F${letter}` as KlassName, departments)).toEqual(`27F${letter}`);
+        });
+        'ABCDEFGHIJKLMNOTUVWXYZ'.split('').forEach((letter) => {
+            expect(fromDisplayClassName(`27s${letter}` as KlassName, departments)).toEqual(`27s${letter}`);
         });
     });
 });

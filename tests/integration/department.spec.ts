@@ -9,6 +9,7 @@ import { notify } from '../../src/middlewares/notify.nop';
 import { IoEvent } from '../../src/routes/socketEventTypes';
 import { faker } from '@faker-js/faker';
 import { prepareRecord } from '../helpers/prepareRecord';
+import { toDisplayLetter } from '../../src/services/syncUntis2DB';
 
 jest.mock('../../src/middlewares/notify.nop');
 const mNotification = <jest.Mock<typeof notify>>notify;
@@ -27,6 +28,7 @@ beforeEach(async () => {
             description: e.description,
             color: e.color,
             letter: e.letter,
+            displayLetter: toDisplayLetter(e.letter),
             classLetters: e.classLetters
         }))
     });
@@ -143,6 +145,27 @@ describe(`PUT ${API_URL}/departments/:id`, () => {
             .put(`${API_URL}/departments/${bili!.id}`)
             .set('authorization', JSON.stringify({ email: admin.email }))
             .send({ data: { classLetters: ['a', ...bili!.classLetters] } });
+        expect(result.statusCode).toEqual(400);
+        expect(mNotification).toHaveBeenCalledTimes(0);
+    });
+    it('can not update department with common displayLetter/letter to have overlapping classLetters', async () => {
+        /**
+         * GHIJ -> Letter G, classLetters[a-s]
+         * GHIJ/GFED -> Letter G, classLetters[wxy]  --> can not be updated to [awxy], because of overlapping classLetters
+         */
+        const admin = await prisma.user.create({ data: generateUser({ role: Role.ADMIN }) });
+        const fmp = await prisma.department.findUnique({ where: { name: 'FGDabc' } });
+        const fms = await prisma.department.findUnique({ where: { name: 'FGH' } });
+        expect(fmp?.displayLetter).toEqual(fms!.letter);
+        expect(fmp?.letter).not.toEqual(fms!.letter);
+        expect(fms?.displayLetter).toBeFalsy();
+        expect(_.intersection(fmp!.classLetters, fms!.classLetters)).toHaveLength(0);
+        expect(fms?.classLetters).toEqual(expect.arrayContaining(['a']));
+
+        const result = await request(app)
+            .put(`${API_URL}/departments/${fmp!.id}`)
+            .set('authorization', JSON.stringify({ email: admin.email }))
+            .send({ data: { classLetters: ['a', ...fmp!.classLetters] } });
         expect(result.statusCode).toEqual(400);
         expect(mNotification).toHaveBeenCalledTimes(0);
     });

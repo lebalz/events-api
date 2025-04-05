@@ -20,6 +20,7 @@ import stubs from '../../integration/stubs/semesters.json';
 import { syncUntis2DB } from '../../../src/services/syncUntis2DB';
 import { generateUser } from '../../factories/user';
 import { affectedLessons, affectedTeachers } from '../../../src/services/eventCheckUnpersisted';
+import { DepartmentLetter, Departments } from '../../../src/services/helpers/departmentNames';
 
 jest.mock('../../../src/services/fetchUntis');
 
@@ -236,6 +237,97 @@ describe('createIcs', () => {
                 .map((e, idx) => `BEGIN:VEVENT${e}`.trim());
             icsDeGbsl.forEach((e, idx) => expect(icalDeGbsl).toContain(e));
         });
+    });
+});
+
+describe('sync untis', () => {
+    let semester: Semester;
+    beforeEach(async () => {
+        await prisma.semester.create({
+            data: {
+                name: 'HS2023',
+                start: new Date('2023-08-01T00:00:00.000Z'),
+                end: new Date('2024-01-31T23:59:59.999Z'),
+                untisSyncDate: new Date('2023-10-10T10:00:00.000Z')
+            }
+        });
+        semester = await prisma.semester.findFirstOrThrow({ where: { name: 'HS2023' } });
+        await syncUntis2DB(semester!.id);
+        const teachers = await prisma.untisTeacher.findMany();
+        for (const teacher of teachers) {
+            await prisma.user.create({ data: generateUser({ untisId: teacher.id }) });
+        }
+    });
+    it('creates departments', async () => {
+        const departments = await prisma.department.findMany();
+        expect(departments).toHaveLength(13);
+        expect(departments.map((d) => d.name).sort()).toEqual(
+            [
+                'WMS',
+                'ESC',
+                'FMPäd',
+                'MSOP',
+                'FMS',
+                'FMS/ECG',
+                'ECG',
+                'ECG/FMS',
+                'GYMF',
+                'GYMF/GYMD',
+                'GYMD',
+                'GYMD/GYMF',
+                'Passerelle'
+            ].sort()
+        );
+        expect(departments.filter((d) => !!d.displayLetter).length).toEqual(2);
+        const fmpaed = departments.find((d) => d.name === Departments.FMPaed)!;
+        const msop = departments.find((d) => d.name === Departments.MSOP)!;
+        expect(fmpaed.displayLetter).toEqual(DepartmentLetter.FMS);
+        expect(fmpaed.letter).toEqual(DepartmentLetter.FMPaed);
+        expect(msop.displayLetter).toEqual(DepartmentLetter.ECG);
+        expect(msop.letter).toEqual(DepartmentLetter.MSOP);
+    });
+    it('creates classes and connects them to departments', async () => {
+        const klasses = await prisma.untisClass.findMany({ include: { department: true, teachers: true } });
+        console.log(JSON.stringify(klasses, null, 2));
+        expect(klasses).toHaveLength(5);
+        expect(klasses.map((d) => d.displayName ?? d.name).sort()).toEqual(
+            ['25h', '24i', '27Gj', '27Fp', '27sS'].sort()
+        );
+        expect(klasses.map((d) => d.name).sort()).toEqual(['25Gh', '24Gi', '27Gj', '27Ep', '27eS'].sort());
+    });
+    it('creates lessons and connects classes and teachers', async () => {
+        const lessons = await prisma.untisLesson.findMany({ include: { classes: true, teachers: true } });
+        expect(lessons).toHaveLength(6);
+        // @see fetchUntis.stub.json
+        const M_25h = lessons.find((l) => l.id === 999)!;
+        const IN_25h = lessons.find((l) => l.id === 1001)!;
+        const M_24i = lessons.find((l) => l.id === 1003)!;
+        const KS_27Gj = lessons.find((l) => l.id === 1004)!;
+        const KS_27Fp = lessons.find((l) => l.id === 1005)!;
+        const MC_27sS = lessons.find((l) => l.id === 1006)!;
+        expect(M_25h.subject).toEqual('M');
+        expect(M_25h.classes.map((c) => c.name)).toEqual(['25Gh']);
+        expect(M_25h.teachers.map((t) => t.name)).toEqual(['abc']);
+
+        expect(IN_25h.subject).toEqual('IN');
+        expect(IN_25h.classes.map((c) => c.name)).toEqual(['25Gh']);
+        expect(IN_25h.teachers.map((t) => t.name)).toEqual(['abc']);
+
+        expect(M_24i.subject).toEqual('M');
+        expect(M_24i.classes.map((c) => c.name)).toEqual(['24Gi']);
+        expect(M_24i.teachers.map((t) => t.name)).toEqual(['xyz']);
+
+        expect(KS_27Gj.subject).toEqual('KS');
+        expect(KS_27Gj.classes.map((c) => c.name)).toEqual(['27Gj']);
+        expect(KS_27Gj.teachers.map((t) => t.name)).toEqual(['cdf']);
+
+        expect(KS_27Fp.subject).toEqual('KS');
+        expect(KS_27Fp.classes.map((c) => c.name)).toEqual(['27Ep']);
+        expect(KS_27Fp.teachers.map((t) => t.name)).toEqual(['efg']);
+
+        expect(MC_27sS.subject).toEqual('MC');
+        expect(MC_27sS.classes.map((c) => c.name)).toEqual(['27eS']);
+        expect(MC_27sS.teachers.map((t) => t.name)).toEqual(['FGH']);
     });
 });
 

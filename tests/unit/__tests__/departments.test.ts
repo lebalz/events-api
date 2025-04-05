@@ -101,6 +101,7 @@ describe('Departments', () => {
                 name: 'new name',
                 classLetters: [],
                 letter: '',
+                displayLetter: null,
                 department1_Id: null,
                 department2_Id: null,
                 updatedAt: expect.any(Date),
