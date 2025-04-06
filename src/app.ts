@@ -15,8 +15,6 @@ import { notify } from './middlewares/notify.nop';
 import { HTTP401Error } from './utils/errors/Errors';
 import connectPgSimple from 'connect-pg-simple';
 import { existsSync, mkdirSync } from 'fs';
-import { request } from 'https';
-import Logger from './utils/logger';
 
 const AccessRules = createAccessRules(authConfig.accessMatrix);
 
