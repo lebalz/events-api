@@ -9,16 +9,25 @@
     "target": "ES2022",
     "esModuleInterop": true,
     "resolveJsonModule": true,
+
     "typeRoots": [
       "./src/types",
       "./node_modules/@types/",
       "./src/@types/"
     ],
+
     "types": [
       "node",
       "jest",
       "express"
-    ]                           
+    ],
+
+    "inlineSources": true,
+
+    // Set `sourceRoot` to  "/" to strip the build path prefix
+    // from generated source code references.
+    // This improves issue grouping in Sentry.
+    "sourceRoot": "/"
   },
   "exclude": ["bin"],
 }

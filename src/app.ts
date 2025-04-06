@@ -151,6 +151,10 @@ app.get(`${API_URL}`, (req, res) => {
     return res.status(200).send('Welcome to the EVENTES-API V1.0');
 });
 
+app.get('/debug-sentry', function mainHandler(req, res) {
+    throw new Error('My first Sentry error!');
+});
+
 const SessionOauthStrategy = (req: Request, res: Response, next: NextFunction) => {
     /* istanbul ignore next */
     if (req.isAuthenticated()) {

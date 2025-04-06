@@ -27,3 +27,5 @@ docs/prisma/**/*
 /dist
 /logs
 *.data.json
+# Sentry Config File
+.sentryclirc
