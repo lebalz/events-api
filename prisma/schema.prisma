@@ -133,6 +133,7 @@ model Department {
     name          String   @unique
     description   String   @default("")
     letter        String   @default("")
+    schoolYears   Int      @default(4) @map("school_years")
     displayLetter String?  @map("display_letter")
     classLetters  String[] @default([]) @map("class_letters")
 

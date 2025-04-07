@@ -98,6 +98,7 @@ describe('Departments', () => {
                 id: expect.any(String),
                 color: '#306cce',
                 description: '',
+                schoolYears: 4,
                 name: 'new name',
                 classLetters: [],
                 letter: '',

@@ -288,7 +288,6 @@ describe('sync untis', () => {
     });
     it('creates classes and connects them to departments', async () => {
         const klasses = await prisma.untisClass.findMany({ include: { department: true, teachers: true } });
-        console.log(JSON.stringify(klasses, null, 2));
         expect(klasses).toHaveLength(5);
         expect(klasses.map((d) => d.displayName ?? d.name).sort()).toEqual(
             ['25h', '24i', '27Gj', '27Fp', '27sS'].sort()

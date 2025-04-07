@@ -287,3 +287,23 @@ dokku nginx:set hfr-events-api x-forwarded-port-value '$http_x_forwarded_port'
     "jestrunner.jestCommand": "TZ=UTC yarn jest"
 }
 ```
+
+## Dump from production
+
+```bash
+# on the dokku server
+dokku postgres:export events-api > backup.dump
+# to plaintext               <container-name>
+docker cp ./backup.dump dokku.postgres.events-api:/backup.dump
+dokku postgres:enter events-api pg_restore backup.dump -f plain.sql
+# to local
+docker cp dokku.postgres.events-api:/plain.sql ./plain.sql
+```
+copy the file to your local machine and import it into your local db:
+
+```bash
+scp root@<your-ip>:/plain.sql ./plain.sql
+psql -d postgres -h localhost -U events_api -c "DROP DATABASE events_api;"
+psql -d postgres -h localhost -U events_api -c "CREATE DATABASE events_api;"
+psql -d postgres -h localhost -U events_api -f plain.sql
+```
