@@ -193,7 +193,7 @@ function Events(db: PrismaClient['event']) {
                         parent: { connect: { id: record.id } },
                         state: EventState.DRAFT,
                         departments: {
-                            connect: departmentIds.map((id) => ({ id }))
+                            connect: audience.departmentIds.map((id) => ({ id }))
                         }
                     },
                     include: {
