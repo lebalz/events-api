@@ -166,10 +166,9 @@ export const normalizeAudience = (
             try {
                 const year = Number.parseInt(g.slice(0, 2), 10);
                 const schoolYears = Math.max(...assignedDeps.map((d) => d.schoolYears));
-                // for e.g. the WMS there is an event one year after graduation, because they have to do scholarship.
                 if (
                     Number.isNaN(year) ||
-                    year < gradeYear - 1 ||
+                    year < gradeYear ||
                     year > gradeYear + schoolYears - 1 + yearsShift
                 ) {
                     return groups.delete(g);
@@ -201,7 +200,7 @@ export const normalizeAudience = (
             const year = Number.parseInt(k.slice(0, 2), 10);
             if (
                 Number.isNaN(year) ||
-                year < gradeYear - 1 || // for e.g. the WMS there is an event one year after graduation, because they have to do scholarship.
+                year < gradeYear ||
                 year > gradeYear + assignedDep.schoolYears - 1 + yearsShift
             ) {
                 return klasses.delete(k);

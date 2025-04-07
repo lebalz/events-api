@@ -833,7 +833,7 @@ describe('normalize audience', () => {
         });
         expect(normalized.departmentIds).toHaveLength(0);
         expect(normalized.classGroups).toHaveLength(0);
-        expect(normalized.classes.sort()).toEqual(['23Ga', '24Ga', '25Ga', '26Ga', '27Ga'].sort());
+        expect(normalized.classes.sort()).toEqual(['24Ga', '25Ga', '26Ga', '27Ga'].sort());
     });
     test('removes classGroups which did already graduate more than a year ago or are not at the school', async () => {
         const deps = await setup();
@@ -845,7 +845,7 @@ describe('normalize audience', () => {
             end: new Date('2024-04-08')
         });
         expect(normalized.departmentIds).toHaveLength(0);
-        expect(normalized.classGroups.sort()).toEqual(['23G', '24G', '25G', '26G', '27G'].sort());
+        expect(normalized.classGroups.sort()).toEqual(['24G', '25G', '26G', '27G'].sort());
         expect(normalized.classes).toHaveLength(0);
     });
 });
