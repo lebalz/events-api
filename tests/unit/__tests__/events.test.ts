@@ -721,7 +721,7 @@ describe('normalize audience', () => {
     test('respacts distinct classes and departments', async () => {
         const deps = await setup();
         const normalized = normalizeAudience(deps, {
-            departments: [{ id: deps[1].id }],
+            departmentIds: [deps[1].id],
             classGroups: [],
             classes: ['28Ga'],
             start: new Date('2025-04-07'),
@@ -734,7 +734,7 @@ describe('normalize audience', () => {
     test('removes classes not being part of the semester', async () => {
         const deps = await setup();
         const normalized = normalizeAudience(deps, {
-            departments: [],
+            departmentIds: [],
             classGroups: [],
             classes: ['28Ga', '29Ga'],
             start: new Date('2025-04-07'),
@@ -747,7 +747,7 @@ describe('normalize audience', () => {
     test('removes classes already active by departments', async () => {
         const deps = await setup();
         const normalized = normalizeAudience(deps, {
-            departments: [{ id: deps[0].id }],
+            departmentIds: [deps[0].id],
             classGroups: [],
             classes: ['28Ga', '25Ga', '25Fa'],
             start: new Date('2025-04-07'),
@@ -760,7 +760,7 @@ describe('normalize audience', () => {
     test('removes classes already active by classGroups', async () => {
         const deps = await setup();
         const normalized = normalizeAudience(deps, {
-            departments: [],
+            departmentIds: [],
             classGroups: ['28G'],
             classes: ['28Ga', '25Ga', '25Fa'],
             start: new Date('2025-04-07'),
@@ -773,7 +773,7 @@ describe('normalize audience', () => {
     test('removes invalid classGroups', async () => {
         const deps = await setup();
         const normalized = normalizeAudience(deps, {
-            departments: [],
+            departmentIds: [],
             classGroups: ['28'],
             classes: ['28Ga', '25Ga', '25Fa'],
             start: new Date('2025-04-07'),
@@ -786,7 +786,7 @@ describe('normalize audience', () => {
     test('removes invalid classes', async () => {
         const deps = await setup();
         const normalized = normalizeAudience(deps, {
-            departments: [],
+            departmentIds: [],
             classGroups: [],
             classes: ['28Gf', '', 'ABGa', 'asdfasdf', '27Fa'],
             start: new Date('2025-04-07'),
@@ -799,7 +799,7 @@ describe('normalize audience', () => {
     test('removes classGroups already active by departments', async () => {
         const deps = await setup();
         const normalized = normalizeAudience(deps, {
-            departments: [{ id: deps[0].id }, { id: deps[1].id }],
+            departmentIds: [deps[0].id, deps[1].id],
             classGroups: ['28G'],
             classes: ['28Ga', '25Ga', '25Fa'],
             start: new Date('2025-04-07'),
@@ -812,7 +812,7 @@ describe('normalize audience', () => {
     test('keeps classGroups when not all depLetters are covered departments', async () => {
         const deps = await setup();
         const normalized = normalizeAudience(deps, {
-            departments: [{ id: deps[0].id }],
+            departmentIds: [deps[0].id],
             classGroups: ['28G'],
             classes: ['28Ga', '25Ga', '25Fa'],
             start: new Date('2025-04-07'),
@@ -825,7 +825,7 @@ describe('normalize audience', () => {
     test('removes classes which did already graduate more than a year ago or are not at the school', async () => {
         const deps = await setup();
         const normalized = normalizeAudience(deps, {
-            departments: [],
+            departmentIds: [],
             classGroups: [],
             classes: ['22Ga', '23Ga', '24Ga', '25Ga', '26Ga', '27Ga', '28Ga'],
             start: new Date('2024-04-07'),
@@ -838,7 +838,7 @@ describe('normalize audience', () => {
     test('removes classGroups which did already graduate more than a year ago or are not at the school', async () => {
         const deps = await setup();
         const normalized = normalizeAudience(deps, {
-            departments: [],
+            departmentIds: [],
             classGroups: ['22G', '23G', '24G', '25G', '26G', '27G', '28G'],
             classes: [],
             start: new Date('2024-04-07'),

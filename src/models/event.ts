@@ -1,7 +1,7 @@
 import { Event, EventState, Job, JobState, JobType, Prisma, PrismaClient, Role, User } from '@prisma/client';
 import prisma from '../prisma';
 import { createDataExtractor } from '../controllers/helpers';
-import { ApiEvent, clonedProps, clonedUpdateProps, prepareEvent } from './event.helpers';
+import { ApiEvent, clonedProps, clonedUpdateProps, normalizeAudience, prepareEvent } from './event.helpers';
 import { HTTP400Error, HTTP403Error, HTTP404Error } from '../utils/errors/Errors';
 import { importEvents as importService, ImportType, LogMessage } from '../services/importEvents';
 import Logger from '../utils/logger';
@@ -10,7 +10,19 @@ import RegistrationPeriods from './registrationPeriod';
 import _ from 'lodash';
 import { rmUndefined } from '../utils/filterHelpers';
 import { Meta } from '../services/importGBSL_xlsx';
-const getData = createDataExtractor<Prisma.EventUncheckedUpdateInput>([
+
+type ApiEventUpdateInput = Omit<
+    Prisma.EventUncheckedUpdateInput,
+    'classes' | 'classGroups' | 'start' | 'end'
+> & {
+    start?: Date | string;
+    end?: Date | string;
+    classes?: string[];
+    classGroups?: string[];
+    departmentIds?: string[];
+};
+
+const getData = createDataExtractor<ApiEventUpdateInput>([
     'audience',
     'classes',
     'description',
@@ -131,15 +143,19 @@ function Events(db: PrismaClient['event']) {
             }
             throw new HTTP403Error('Not authorized');
         },
-        async updateModel(
-            actor: User,
-            id: string,
-            data: Prisma.EventUncheckedUpdateInput & { departmentIds?: string[] }
-        ): Promise<ApiEvent> {
+        async updateModel(actor: User, id: string, data: ApiEventUpdateInput): Promise<ApiEvent> {
             const record = await this._findRecord(actor, id);
+            const departments = await prisma.department.findMany();
             /** remove fields not updatable*/
             const sanitized = getData(data);
             const departmentIds = data.departmentIds || record.departments.map((d) => d.id);
+            const audience = normalizeAudience(departments, {
+                classes: data.classes ?? record.classes,
+                classGroups: data.classGroups ?? record.classGroups,
+                departmentIds: departmentIds,
+                start: sanitized.start ? new Date(sanitized.start) : record.start,
+                end: sanitized.end ? new Date(sanitized.end) : record.end
+            });
 
             let model: Event & {
                 departments: { id: string }[];
@@ -152,9 +168,11 @@ function Events(db: PrismaClient['event']) {
                     where: { id: id },
                     data: {
                         ...sanitized,
+                        classes: audience.classes,
+                        classGroups: audience.classGroups,
                         cloned: false,
                         departments: {
-                            set: departmentIds.map((id) => ({ id }))
+                            set: audience.departmentIds.map((id) => ({ id }))
                         }
                     },
                     include: { departments: true, children: true }
@@ -170,6 +188,8 @@ function Events(db: PrismaClient['event']) {
                     data: {
                         ...cProps,
                         ...(getData(data, true) as Prisma.EventCreateInput),
+                        classes: audience.classes,
+                        classGroups: audience.classGroups,
                         parent: { connect: { id: record.id } },
                         state: EventState.DRAFT,
                         departments: {

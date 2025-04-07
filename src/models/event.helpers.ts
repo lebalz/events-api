@@ -145,9 +145,9 @@ const currentGradeYear = (refDate = new Date()) => {
 
 export const normalizeAudience = (
     allDepartments: Department[],
-    event: { departments: { id: string }[]; classGroups: string[]; classes: string[]; start: Date; end: Date }
+    event: { departmentIds: string[]; classGroups: string[]; classes: string[]; start: Date; end: Date }
 ) => {
-    const departmentIds = event.departments.map((d) => d.id);
+    const departmentIds = event.departmentIds;
     const gradeYear = currentGradeYear(event.start) % 100;
     const yearsShift = gradeYear === currentGradeYear(event.end) % 100 ? 0 : 1;
     const groups = new Set<string>(event.classGroups);
