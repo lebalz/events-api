@@ -139,13 +139,20 @@ export const clonedProps = (
     return props;
 };
 
-const currentGradeYear = (refDate = new Date()) => {
+const currentGradeYear = (year: Date | string = new Date()) => {
+    const refDate = new Date(year);
     return refDate.getFullYear() + (refDate.getMonth() < 7 ? 0 : 1);
 };
 
 export const normalizeAudience = (
     allDepartments: Department[],
-    event: { departmentIds: string[]; classGroups: string[]; classes: string[]; start: Date; end: Date }
+    event: {
+        departmentIds: string[];
+        classGroups: string[];
+        classes: string[];
+        start: Date | string;
+        end: Date | string;
+    }
 ) => {
     const departmentIds = event.departmentIds;
     const gradeYear = currentGradeYear(event.start) % 100;
@@ -210,7 +217,6 @@ export const normalizeAudience = (
         }
     });
     return {
-        departmentIds: departmentIds,
         classGroups: [...groups],
         classes: [...klasses]
     };

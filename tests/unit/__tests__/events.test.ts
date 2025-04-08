@@ -727,7 +727,6 @@ describe('normalize audience', () => {
             start: new Date('2025-04-07'),
             end: new Date('2025-04-08')
         });
-        expect(normalized.departmentIds).toEqual([deps[1].id]);
         expect(normalized.classGroups).toHaveLength(0);
         expect(normalized.classes).toEqual(['28Ga']);
     });
@@ -740,7 +739,6 @@ describe('normalize audience', () => {
             start: new Date('2025-04-07'),
             end: new Date('2025-04-08')
         });
-        expect(normalized.departmentIds).toHaveLength(0);
         expect(normalized.classGroups).toHaveLength(0);
         expect(normalized.classes).toEqual(['28Ga']);
     });
@@ -753,7 +751,6 @@ describe('normalize audience', () => {
             start: new Date('2025-04-07'),
             end: new Date('2025-04-08')
         });
-        expect(normalized.departmentIds).toEqual([deps[0].id]);
         expect(normalized.classGroups).toHaveLength(0);
         expect(normalized.classes).toEqual(['25Fa']);
     });
@@ -766,7 +763,6 @@ describe('normalize audience', () => {
             start: new Date('2025-04-07'),
             end: new Date('2025-04-08')
         });
-        expect(normalized.departmentIds).toEqual([]);
         expect(normalized.classGroups).toEqual(['28G']);
         expect(normalized.classes.sort()).toEqual(['25Ga', '25Fa'].sort());
     });
@@ -779,7 +775,6 @@ describe('normalize audience', () => {
             start: new Date('2025-04-07'),
             end: new Date('2025-04-08')
         });
-        expect(normalized.departmentIds).toEqual([]);
         expect(normalized.classGroups).toHaveLength(0);
         expect(normalized.classes.sort()).toEqual(['28Ga', '25Ga', '25Fa'].sort());
     });
@@ -792,7 +787,6 @@ describe('normalize audience', () => {
             start: new Date('2025-04-07'),
             end: new Date('2025-04-08')
         });
-        expect(normalized.departmentIds).toHaveLength(0);
         expect(normalized.classGroups).toHaveLength(0);
         expect(normalized.classes.sort()).toEqual(['27Fa'].sort());
     });
@@ -805,7 +799,6 @@ describe('normalize audience', () => {
             start: new Date('2025-04-07'),
             end: new Date('2025-04-08')
         });
-        expect(normalized.departmentIds.sort()).toEqual([deps[0].id, deps[1].id].sort());
         expect(normalized.classGroups).toHaveLength(0);
         expect(normalized.classes).toEqual(['25Fa']);
     });
@@ -818,7 +811,6 @@ describe('normalize audience', () => {
             start: new Date('2025-04-07'),
             end: new Date('2025-04-08')
         });
-        expect(normalized.departmentIds).toEqual([deps[0].id]);
         expect(normalized.classGroups).toEqual(['28G']);
         expect(normalized.classes).toEqual(['25Fa']);
     });
@@ -831,7 +823,6 @@ describe('normalize audience', () => {
             start: new Date('2024-04-07'),
             end: new Date('2024-04-08')
         });
-        expect(normalized.departmentIds).toHaveLength(0);
         expect(normalized.classGroups).toHaveLength(0);
         expect(normalized.classes.sort()).toEqual(['24Ga', '25Ga', '26Ga', '27Ga'].sort());
     });
@@ -844,7 +835,6 @@ describe('normalize audience', () => {
             start: new Date('2024-04-07'),
             end: new Date('2024-04-08')
         });
-        expect(normalized.departmentIds).toHaveLength(0);
         expect(normalized.classGroups.sort()).toEqual(['24G', '25G', '26G', '27G'].sort());
         expect(normalized.classes).toHaveLength(0);
     });
