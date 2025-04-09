@@ -2,9 +2,9 @@ import { Department, Event, EventAudience, TeachingAffected } from '@prisma/clie
 import readXlsxFile, { Row } from 'read-excel-file/node';
 import prisma from '../prisma';
 import { i18nKey, translate } from './helpers/i18n';
-import { Departments } from './helpers/departmentNames';
+import { Departments, fromDisplayClassName } from './helpers/departmentNames';
 import { Cell } from 'read-excel-file/types';
-import { mapLegacyClassName } from './helpers/klassNames';
+import { KlassName, mapLegacyClassName } from './helpers/klassNames';
 
 const CLASS_NAME_MATCHER = /(\d\d)([a-z][A-Z]|[A-Z][a-z])/g;
 const LEGACY_CLASS_NAME_MATCHER = /(2[456][a-zA-Z])(?=[^a-zA-Z\*]|$)/g;
@@ -194,7 +194,11 @@ export const importExcel = async (file: string) => {
                     ende = new Date(start.getTime() + 15 * 60 * 1000);
                 }
                 const classesRaw = (e[COLUMNS.classes] as string) || '';
-                const classes = mapClassNames(classesRaw);
+                const classes = new Set(
+                    [...mapClassNames(classesRaw)].map((c) =>
+                        fromDisplayClassName(c as KlassName, departments)
+                    )
+                );
                 const classGroups = new Set(
                     classesRaw.match(/(\d\d)(\*|[a-z]\*|[A-Z]\*)/g)?.map((c) => c.replace(/\*/g, '')) || []
                 );
@@ -206,7 +210,9 @@ export const importExcel = async (file: string) => {
                     }
                 }
                 const excludedClassesRaw = (e[COLUMNS.excludedClasses] as string) || '';
-                const excludedClasses = [...mapClassNames(excludedClassesRaw)];
+                const excludedClasses = [...mapClassNames(excludedClassesRaw)].map((c) =>
+                    fromDisplayClassName(c as KlassName, departments)
+                );
                 if (excludedClasses.length > 0 && (classGroups.size > 0 || classes.size > 0)) {
                     for (const excludedClass of excludedClasses) {
                         for (const cg of classGroups) {
@@ -217,7 +223,7 @@ export const importExcel = async (file: string) => {
                                     },
                                     select: { name: true }
                                 });
-                                allFromGroup.forEach((c) => classes.add(c.name));
+                                allFromGroup.forEach((c) => classes.add(c.name as KlassName));
                                 classGroups.delete(cg);
                             }
                             classes.delete(excludedClass);

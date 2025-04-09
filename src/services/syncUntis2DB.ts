@@ -100,9 +100,7 @@ export const syncUntis2DB = async (
         upsertDepPromise.push(
             prisma.department.upsert({
                 where: { name: school.main },
-                update: {
-                    displayLetter: displayLetter
-                },
+                update: {},
                 create: {
                     name: school.main,
                     color: color,
