@@ -53,6 +53,7 @@ const prepareEvent = (event: Event): any => {
     if (!event.meta) {
         delete (prepared as any).meta;
     }
+    delete (prepared as any).departments;
     return prepared;
 };
 
@@ -71,6 +72,7 @@ const prepareNotificationEvent = (
     if (!event.meta) {
         delete (prepared as any).meta;
     }
+    delete (prepared as any).departments;
     return prepared;
 };
 
@@ -486,6 +488,80 @@ describe(`POST ${API_URL}/events`, () => {
                 to: user.id
             });
         });
+    });
+});
+describe(`POST ${API_URL}/events/:id/normalize_audience`, () => {
+    it('Lets users normalize the event audience', async () => {
+        expect(mNotification).toHaveBeenCalledTimes(0);
+        const user = await prisma.user.create({
+            data: generateUser({ email: 'foo@bar.ch' })
+        });
+        const gymd = await createDepartment({
+            name: 'GYMD',
+            letter: 'G',
+            classLetters: ['a', 'b', 'c'],
+            schoolYears: 4
+        });
+        const wms = await createDepartment({
+            name: 'WMS',
+            letter: 'W',
+            classLetters: ['d', 'e', 'f'],
+            schoolYears: 4
+        });
+        const fms = await createDepartment({
+            name: 'FMS',
+            letter: 'F',
+            classLetters: ['a', 'b', 'c'],
+            schoolYears: 3
+        });
+        const event = await prisma.event.create({
+            data: generateEvent({
+                authorId: user.id,
+                start: new Date('2025-04-08'),
+                end: new Date('2025-04-08'),
+                classes: ['28Ga', '28Gd', '29Ga', '28Fa', '27Fb', '26Fb', '28Wd', '26Wd', '25Wd'],
+                classGroups: ['27F', '28W'],
+                departmentIds: [wms.id]
+            }),
+            include: {
+                departments: { select: { id: true } }
+            }
+        });
+
+        const result = await request(app)
+            .post(`${API_URL}/events/${event.id}/normalize_audience`)
+            .set('authorization', JSON.stringify({ email: user.email }));
+        expect(result.statusCode).toEqual(201);
+        expect(result.body).toEqual({
+            ...prepareEvent(event),
+            updatedAt: expect.any(String),
+            departmentIds: [wms.id],
+            classes: ['28Ga', '26Fb'],
+            classGroups: ['27F']
+        });
+
+        expect(mNotification).toHaveBeenCalledTimes(1);
+        expect(mNotification.mock.calls[0][0]).toEqual({
+            event: IoEvent.CHANGED_RECORD,
+            message: { type: RecordType.Event, record: prepareNotificationEvent(result.body) },
+            to: [user.id]
+        });
+    });
+    it('can not normalize non-draft events', async () => {
+        const user = await prisma.user.create({
+            data: generateUser({ email: 'foo@bar.ch' })
+        });
+        const event = await prisma.event.create({
+            data: generateEvent({
+                authorId: user.id,
+                state: EventState.PUBLISHED
+            })
+        });
+
+        const result = await request(app)
+            .post(`${API_URL}/events/${event.id}/normalize_audience`)
+            .set('authorization', JSON.stringify({ email: user.email }));
+        expect(result.statusCode).toEqual(400);
     });
 });
 

@@ -349,7 +349,20 @@ describe(`POST ${API_URL}/users/:id/create_ics`, () => {
         const teacher = await prisma.untisTeacher.create({ data: generateUntisTeacher() });
         const klass = await prisma.untisClass.create({
             data: {
-                ...generateUntisClass({ departmentId: department.id, name: '25Gh' }),
+                ...generateUntisClass({ departmentId: department.id, name: '25Gh', displayName: '25h' }),
+                teachers: {
+                    connect: {
+                        id: teacher.id
+                    }
+                }
+            }
+        });
+        const departmentFMP = await prisma.department.create({
+            data: generateDepartment({ classLetters: ['p'], letter: 'E', displayLetter: 'F' })
+        });
+        const klassFMP = await prisma.untisClass.create({
+            data: {
+                ...generateUntisClass({ departmentId: departmentFMP.id, name: '27Ep', displayName: '27Fp' }),
                 teachers: {
                     connect: {
                         id: teacher.id
@@ -382,7 +395,7 @@ describe(`POST ${API_URL}/users/:id/create_ics`, () => {
                     }
                 },
                 audience: EventAudience.ALL,
-                classes: ['25Gh'],
+                classes: ['25Gh', '27Fp'],
                 teachingAffected: TeachingAffected.YES,
                 start: new Date(semStart.getTime() + 1000),
                 end: new Date(semStart.getTime() + 1000 * 60 * 60)
@@ -432,17 +445,20 @@ describe(`POST ${API_URL}/users/:id/create_ics`, () => {
                 encoding: 'utf-8'
             })
         );
+        expect(icalDe).toContain('27Fp');
+        expect(icalDe).toContain('25h');
         const icalFr = withoutDTSTAMP(
             readFileSync(`${__dirname}/../test-data/ical/fr/${result.body.subscription.icsLocator}`, {
                 encoding: 'utf-8'
             })
         );
-        const icsDe = createEvents([prepareEvent(event, 'de', {}), prepareEvent(deletedEvent, 'de', {})])
+        const cMap = { ['26Ep']: '26Fp', ['25Gh']: '25h' };
+        const icsDe = createEvents([prepareEvent(event, 'de', cMap), prepareEvent(deletedEvent, 'de', cMap)])
             .value!.replace('END:VCALENDAR', '')
             .split('BEGIN:VEVENT')
             .slice(1)
             .map((e, idx) => `BEGIN:VEVENT${e}`.trim());
-        const icsFr = createEvents([prepareEvent(event, 'fr', {}), prepareEvent(deletedEvent, 'fr', {})])
+        const icsFr = createEvents([prepareEvent(event, 'fr', cMap), prepareEvent(deletedEvent, 'fr', cMap)])
             .value!.replace('END:VCALENDAR', '')
             .split('BEGIN:VEVENT')
             .slice(1)

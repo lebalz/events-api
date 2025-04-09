@@ -19,6 +19,7 @@ import {
     PASSERELLE_Letter,
     WMS_Letter
 } from './departmentNames';
+import { getCurrentGraduationYear } from './untisKlasse';
 
 export type Digit = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9;
 
@@ -51,11 +52,9 @@ export type KlassName =
     | MSOP
     | Passerelle
     | ESC;
-const today = new Date();
+
 const currentGraduationYear =
-    (today.getFullYear() % 100) + today.getMonth() > 6
-        ? 1
-        : 0; /** getMonth() returns zero-based month, e.g. january->0, february->1,... */
+    getCurrentGraduationYear(); /** getMonth() returns zero-based month, e.g. january->0, february->1,... */
 export const mapLegacyClassName: (name: string) => `${number}${DepartmentLetter}${string}` = (
     name: string
 ) => {

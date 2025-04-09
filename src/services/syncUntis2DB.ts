@@ -4,14 +4,24 @@ import prisma from '../prisma';
 import {
     ClassLetterMap,
     Colors,
+    DepartmentLetter,
     DepartmentLetterMap,
     Departments,
+    fromDisplayClassName,
     SchoolDepartments
 } from './helpers/departmentNames';
 import { KlassName, mapLegacyClassName } from './helpers/klassNames';
 import Logger from '../utils/logger';
 import { UntisData, fetchUntis as defaultFetchUntis } from './fetchUntis';
 import { getClassYear } from './helpers/untisKlasse';
+
+export const toDisplayLetter = (letter: DepartmentLetter) => {
+    return letter === DepartmentLetter.FMPaed
+        ? DepartmentLetter.FMS
+        : letter === DepartmentLetter.MSOP
+          ? DepartmentLetter.ECG
+          : undefined;
+};
 
 export const syncUntis2DB = async (
     semesterId: string,
@@ -53,6 +63,7 @@ export const syncUntis2DB = async (
         const school = SchoolDepartments[d];
         const color = Colors[d];
         const letter = DepartmentLetterMap[d];
+        const displayLetter = toDisplayLetter(letter);
         const clsLetters = ClassLetterMap[d];
         if (school.dep_1 || school.dep_2) {
             return;
@@ -65,6 +76,7 @@ export const syncUntis2DB = async (
                     name: school.main,
                     color: color,
                     letter: letter,
+                    displayLetter: displayLetter,
                     classLetters: [...clsLetters]
                 }
             })
@@ -78,6 +90,7 @@ export const syncUntis2DB = async (
         const school = SchoolDepartments[d];
         const color = Colors[d];
         const letter = DepartmentLetterMap[d];
+        const displayLetter = toDisplayLetter(letter);
         const clsLetters = ClassLetterMap[d];
         if (!school.dep_1 && !school.dep_2) {
             return;
@@ -92,6 +105,7 @@ export const syncUntis2DB = async (
                     name: school.main,
                     color: color,
                     letter: letter,
+                    displayLetter: displayLetter,
                     classLetters: [...clsLetters],
                     department1: dep1 ? { connect: { id: dep1.id } } : undefined,
                     department2: dep2 ? { connect: { id: dep2.id } } : undefined
@@ -114,7 +128,8 @@ export const syncUntis2DB = async (
     const currentClasses = await prisma.untisClass.findMany({});
     const classIdMap = new Map<number, number>();
     data.classes.forEach((c) => {
-        const isoName = mapLegacyClassName(c.name) as KlassName;
+        const isoUntisName = mapLegacyClassName(c.name) as KlassName;
+        const isoName = fromDisplayClassName(isoUntisName, departments);
         const currentClass = currentClasses.find((cc) => cc.name === isoName && cc.id !== c.id);
         if (currentClass) {
             classIdMap.set(c.id, currentClass.id);
@@ -122,15 +137,17 @@ export const syncUntis2DB = async (
                 prisma.untisClass.update({
                     where: { name: isoName },
                     data: {
-                        sf: c.longName
+                        sf: c.longName,
+                        displayName: c.name === isoName ? null : c.name
                     }
                 })
             );
             return;
         }
+
         const data = {
             name: isoName,
-            legacyName: c.name === isoName ? null : c.name,
+            displayName: c.name === isoName ? null : c.name,
             year: getClassYear(c),
             sf: c.longName
         };
@@ -153,7 +170,8 @@ export const syncUntis2DB = async (
 
     /** CONNECT CLASSES TO DEPARTMENTS */
     data.classes.forEach((c) => {
-        const isoName = mapLegacyClassName(c.name) as KlassName;
+        const isoUntisName = mapLegacyClassName(c.name) as KlassName;
+        const isoName = fromDisplayClassName(isoUntisName, departments);
         const dLetter = isoName.slice(2, 3); /** third letter, e.g. 26gA --> g */
         const cLetter = isoName.slice(3, 4); /** fourth letter, e.g. 26gA --> A */
         const department = departments.find((d) => d.letter === dLetter && d.classLetters.includes(cLetter));

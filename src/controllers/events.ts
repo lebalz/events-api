@@ -59,6 +59,30 @@ export const update: RequestHandler<
     }
 };
 
+export const normalizeAudience: RequestHandler<{ id: string }> = async (req, res, next) => {
+    try {
+        const model = await Events.normalizeAudience(req.user!, req.params.id);
+        const groups = await EventGroups.allOfEvent(model);
+        res.notifications = [
+            {
+                message: { type: NAME, record: model },
+                event: IoEvent.CHANGED_RECORD,
+                to: [req.user!.id, ...groups.flatMap((g) => g.userIds)]
+            }
+        ];
+        res.status(201).json(model);
+    } catch (error) /* istanbul ignore next */ {
+        const err = error as Error;
+        if (
+            err.name === 'PrismaClientUnknownRequestError' &&
+            err.message.includes('violates check constraint \\"events_start_end_check\\"')
+        ) {
+            return res.status(400).json({ message: 'Start date must be before end date' });
+        }
+        next(error);
+    }
+};
+
 export const updateBatch: RequestHandler<
     any,
     any,

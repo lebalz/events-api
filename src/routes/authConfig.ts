@@ -134,6 +134,15 @@ const authConfig: Config = {
                 }
             ]
         },
+        normalizeAudience: {
+            path: '/users/:id/normalize_audience',
+            access: [
+                {
+                    methods: ['POST'],
+                    roles: [Role.ADMIN, Role.USER]
+                }
+            ]
+        },
         event: {
             path: '/events',
             access: [

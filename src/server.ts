@@ -7,6 +7,7 @@ import passport from 'passport';
 import EventRouter from './routes/socketEvents';
 import { NextFunction, Request, Response } from 'express';
 import { ClientToServerEvents, ServerToClientEvents } from './routes/socketEventTypes';
+import * as Sentry from '@sentry/node';
 
 const PORT = process.env.PORT || 3002;
 
@@ -43,6 +44,10 @@ instrument(io, {
         : false
 });
 
+Sentry.init({
+    dsn: 'https://e1c510d1731b0ce0da1a24cdf95c521e@o4509104861544448.ingest.de.sentry.io/4509104863772752'
+});
+
 // convert a connect middleware to a Socket.IO middleware
 io.use((socket, next) => {
     sessionMiddleware(socket.request as Request, {} as Response, next as NextFunction);
@@ -72,7 +77,9 @@ app.use((req: Request, res, next) => {
 });
 
 configure(app);
-
+if (process.env.NODE_ENV === 'production') {
+    Sentry.setupExpressErrorHandler(app);
+}
 server.listen(PORT || 3002, () => {
     Logger.info(`application is running at: http://localhost:${PORT}`);
     Logger.info('Press Ctrl+C to quit.');

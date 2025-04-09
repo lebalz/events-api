@@ -1,4 +1,4 @@
-import { Event, EventState, Prisma } from '@prisma/client';
+import { Department, Event, EventState, Prisma } from '@prisma/client';
 import _ from 'lodash';
 
 export interface ApiEvent
@@ -137,4 +137,87 @@ export const clonedProps = (
         }
     }
     return props;
+};
+
+const currentGradeYear = (year: Date | string = new Date()) => {
+    const refDate = new Date(year);
+    return refDate.getFullYear() + (refDate.getMonth() < 7 ? 0 : 1);
+};
+
+export const normalizeAudience = (
+    allDepartments: Department[],
+    event: {
+        departmentIds: string[];
+        classGroups: string[];
+        classes: string[];
+        start: Date | string;
+        end: Date | string;
+    }
+) => {
+    const departmentIds = event.departmentIds;
+    const gradeYear = currentGradeYear(event.start) % 100;
+    const yearsShift = gradeYear === currentGradeYear(event.end) % 100 ? 0 : 1;
+    const groups = new Set<string>(event.classGroups);
+    const klasses = new Set<string>(event.classes);
+    [...groups].forEach((g) => {
+        // remove overlappings of already selected items
+        if (g.length !== 3) {
+            return groups.delete(g);
+        }
+        const letter = g.slice(2);
+        const assignedDeps = allDepartments.filter((d) => d.letter === letter);
+        if (assignedDeps.every((d) => departmentIds.includes(d.id))) {
+            return groups.delete(g);
+        }
+        if (assignedDeps.length > 0) {
+            try {
+                const year = Number.parseInt(g.slice(0, 2), 10);
+                const schoolYears = Math.max(...assignedDeps.map((d) => d.schoolYears));
+                if (
+                    Number.isNaN(year) ||
+                    year < gradeYear ||
+                    year > gradeYear + schoolYears - 1 + yearsShift
+                ) {
+                    return groups.delete(g);
+                }
+            } catch (e) {
+                groups.delete(g);
+            }
+        }
+    });
+    [...klasses].forEach((k) => {
+        if (k.length !== 4) {
+            return klasses.delete(k);
+        }
+        const depLetter = k.slice(2, 3);
+        const letter = k.slice(3);
+        const assignedDep = allDepartments.find(
+            (d) => d.letter === depLetter && d.classLetters.includes(letter)
+        );
+        if (!assignedDep) {
+            return klasses.delete(k);
+        }
+        if (departmentIds.includes(assignedDep.id)) {
+            return klasses.delete(k);
+        }
+        if (groups.has(k.slice(0, 3))) {
+            return klasses.delete(k);
+        }
+        try {
+            const year = Number.parseInt(k.slice(0, 2), 10);
+            if (
+                Number.isNaN(year) ||
+                year < gradeYear ||
+                year > gradeYear + assignedDep.schoolYears - 1 + yearsShift
+            ) {
+                return klasses.delete(k);
+            }
+        } catch (e) {
+            return klasses.delete(k);
+        }
+    });
+    return {
+        classGroups: [...groups],
+        classes: [...klasses]
+    };
 };

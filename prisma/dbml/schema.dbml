@@ -84,6 +84,8 @@ Table departments {
   name String [unique, not null]
   description String [not null, default: '']
   letter String [not null, default: '']
+  schoolYears Int [not null, default: 4]
+  displayLetter String
   classLetters String[] [not null]
   department1_Id String [unique]
   department1 departments
@@ -173,7 +175,7 @@ Table untis_lessons {
 Table untis_classes {
   id Int [pk, increment]
   name String [unique, not null]
-  legacyName String [unique]
+  displayName String [unique]
   year Int [not null]
   sf String [not null]
   lessons untis_lessons [not null]

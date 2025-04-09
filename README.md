@@ -8,23 +8,24 @@
 
 ## ENV
 
-| Name                  | Description                                                                                                                                          | Default     |
-|-----------------------|------------------------------------------------------------------------------------------------------------------------------------------------------|-------------|
-| `PORT`                | Port to listen on                                                                                                                                    | `3000`      |
-| `ICAL_DIR`            | Directory to export .ics files to                                                                                                                    | `./ical`    |
-| `EXPORT_DIR`          | Directory to export .xlsx files to                                                                                                                   | `./export`  |
-| `UPLOAD_DIR`          | Directory to upload excels for import                                                                                                                | `./uploads` |
+| Name                  | Description                                                                                                                                               | Default     |
+|-----------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------|-------------|
+| `PORT`                | Port to listen on                                                                                                                                         | `3000`      |
+| `ICAL_DIR`            | Directory to export .ics files to                                                                                                                         | `./ical`    |
+| `EXPORT_DIR`          | Directory to export .xlsx files to                                                                                                                        | `./export`  |
+| `UPLOAD_DIR`          | Directory to upload excels for import                                                                                                                     | `./uploads` |
 | `WITH_DEPLOY_PREVIEW` | When set to `true`, the app will allow requests from `https://deploy-preview-\d+--gbsl-events-app.netlify.app` and use `sameSite=none` instead of strict. |             |
+| `SENTRY_AUTH_TOKEN`   | Auth token for uploading sourcemaps to sentry. Get it by configuring your app with `npx @sentry/wizard@latest -i sourcemaps`.                             |             |
 
 for development only (for seeding the db):
 
-| Name          | Description                               | Example                                |
-|:--------------|:------------------------------------------|:---------------------------------------|
-| `TEST_USER_ID`| the user used for an unauthorized backend | `97786ad4-9a6c-4fa7-83b6-a07df1f8a8db` |
-| `USER_ID`     | id of the test user (no admin privileges) | `97786ad4-9a6c-4fa7-83b6-a07df1f8a8db` |
-| `USER_EMAIL`  | email of the test user                    | `foo.bar@bazz.ch`                      |
-| `ADMIN_ID`    | id of the test admin                      | `9fe3404a-f21c-4327-9f5a-c2818308fed4` |
-| `ADMIN_EMAIL` | email of the test admin                   | `admin.bar@bazz.ch`                    |
+| Name           | Description                               | Example                                |
+|:---------------|:------------------------------------------|:---------------------------------------|
+| `TEST_USER_ID` | the user used for an unauthorized backend | `97786ad4-9a6c-4fa7-83b6-a07df1f8a8db` |
+| `USER_ID`      | id of the test user (no admin privileges) | `97786ad4-9a6c-4fa7-83b6-a07df1f8a8db` |
+| `USER_EMAIL`   | email of the test user                    | `foo.bar@bazz.ch`                      |
+| `ADMIN_ID`     | id of the test admin                      | `9fe3404a-f21c-4327-9f5a-c2818308fed4` |
+| `ADMIN_EMAIL`  | email of the test admin                   | `admin.bar@bazz.ch`                    |
 
 Make sure, that the User/Admin props are in sync with the frontend `events-app`.
 
@@ -238,6 +239,7 @@ dokku config:set hfr-events-api UNTIS_USER="xyz"
 dokku config:set hfr-events-api UNTIS_SECRET="XYZXZXYZ"
 dokku config:set hfr-events-api UNTIS_BASE_URL="xyz.webuntis.com"
 dokku config:set hfr-events-api EVENTS_APP_URL="https://domain.ch"
+dokku config:set events-api SENTRY_AUTH_TOKEN="..."
 
 dokku storage:ensure-directory hfr-events-api
 dokku storage:mount hfr-events-api /var/lib/dokku/data/storage/hfr-events-api/ical:/app/ical
@@ -284,4 +286,24 @@ dokku nginx:set hfr-events-api x-forwarded-port-value '$http_x_forwarded_port'
 {
     "jestrunner.jestCommand": "TZ=UTC yarn jest"
 }
+```
+
+## Dump from production
+
+```bash
+# on the dokku server
+dokku postgres:export events-api > backup.dump
+# to plaintext               <container-name>
+docker cp ./backup.dump dokku.postgres.events-api:/backup.dump
+dokku postgres:enter events-api pg_restore backup.dump -f plain.sql
+# to local
+docker cp dokku.postgres.events-api:/plain.sql ./plain.sql
+```
+copy the file to your local machine and import it into your local db:
+
+```bash
+scp root@<your-ip>:/plain.sql ./plain.sql
+psql -d postgres -h localhost -U events_api -c "DROP DATABASE events_api;"
+psql -d postgres -h localhost -U events_api -c "CREATE DATABASE events_api;"
+psql -d postgres -h localhost -U events_api -f plain.sql
 ```

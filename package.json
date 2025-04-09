@@ -7,7 +7,7 @@
   "license": "MIT",
   "scripts": {
     "clean": "rm -rf dist",
-    "build": "npx prisma generate && tsc --build ./tsconfig.build.json && yarn copy-files",
+    "build": "npx prisma generate && tsc --build ./tsconfig.build.json && yarn copy-files && yarn sentry:sourcemaps",
     "copy-files": "cp -r docs dist/docs",
     "start": "node -r dotenv/config ./dist/src/server.js",
     "dev": "TS_NODE=true NODE_OPTIONS=\"-r ts-node/register -r dotenv/config\" node ./src/server.ts",
@@ -27,7 +27,8 @@
     "untis:sync": "ts-node -r dotenv/config ./bin/sync-untis-2-db.ts",
     "dummy:run": "ts-node -r dotenv/config ./bin/dummy.ts",
     "format": "prettier --write .",
-    "format:check": "prettier --check ."
+    "format:check": "prettier --check .",
+    "sentry:sourcemaps": "sentry-cli sourcemaps inject --org balthasar-hofer --project node-express ./dist && sentry-cli sourcemaps upload --org balthasar-hofer --project node-express ./dist"
   },
   "prisma": {
     "seed": "ts-node -r dotenv/config prisma/seed.ts"
@@ -35,6 +36,8 @@
   "dependencies": {
     "@azure/msal-node": "^2.13.0",
     "@prisma/client": "^6.2.1",
+    "@sentry/cli": "^2.43.0",
+    "@sentry/node": "^9.11.0",
     "@socket.io/admin-ui": "^0.5.1",
     "bree": "^9.2.4",
     "compression": "^1.7.4",

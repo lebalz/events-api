@@ -10,7 +10,8 @@ import {
     destroyMany as deleteManyEvents,
     setState as setEventState,
     updateBatch as updateEventsBatch,
-    updateMeta
+    updateMeta,
+    normalizeAudience
 } from '../controllers/events';
 import {
     find as findJob,
@@ -89,6 +90,7 @@ router.get('/events/:id', findEvent);
 router.put('/events', updateEventsBatch);
 router.put('/events/:id', updateEvent);
 router.put('/events/:id/meta', updateMeta);
+router.post('/events/:id/normalize_audience', normalizeAudience);
 router.post('/events/:id/clone', cloneEvent);
 router.post('/events/change_state', setEventState);
 router.delete('/events/:id', deleteEvent);

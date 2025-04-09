@@ -23,6 +23,24 @@
       "active": true,
       "foreColor": "ff00ff",
       "backColor": "ff00ff"
+    },
+    {
+      "id": 3,
+      "name": "KS",
+      "longName": "Klassenstunde",
+      "alternateName": "",
+      "active": true,
+      "foreColor": "ff0aff",
+      "backColor": "ffa0ff"
+    },
+    {
+      "id": 4,
+      "name": "MC",
+      "longName": "Maître de Classe",
+      "alternateName": "",
+      "active": true,
+      "foreColor": "ff0a00",
+      "backColor": "ffa000"
     }
   ],
   "teachers": [
@@ -43,6 +61,33 @@
       "title": "F",
       "active": true,
       "dids": []
+    },
+    {
+      "id": 3,
+      "name": "cdf",
+      "foreName": "",
+      "longName": "Coo Doo",
+      "title": "F",
+      "active": true,
+      "dids": []
+    },
+    {
+      "id": 4,
+      "name": "efg",
+      "foreName": "",
+      "longName": "Eoo Foo",
+      "title": "M",
+      "active": true,
+      "dids": []
+    },
+    {
+      "id": 5,
+      "name": "FGH",
+      "foreName": "",
+      "longName": "Foo Goo",
+      "title": "M",
+      "active": true,
+      "dids": []
     }
   ],
   "classes": [
@@ -61,6 +106,30 @@
       "active": true,
       "did": 66,
       "teacher1": 2
+    },
+    {
+      "id": 3,
+      "name": "27Gj",
+      "longName": "PPP",
+      "active": true,
+      "did": 66,
+      "teacher1": 3
+    },
+    {
+      "id": 4,
+      "name": "27Fp",
+      "longName": "FMPäd",
+      "active": true,
+      "did": 66,
+      "teacher1": 4
+    },
+    {
+      "id": 5,
+      "name": "27sS",
+      "longName": "MSOP",
+      "active": true,
+      "did": 66,
+      "teacher1": 5
     }
   ],
   "timetable": [
@@ -356,6 +425,324 @@
             "alternatename": "",
             "foreColor": "#ffffff",
             "backColor": "#0000ff",
+            "canViewTimetable": true,
+            "roomCapacity": 0
+          }
+        }
+      ],
+      "rooms": [
+        {
+          "type": 4,
+          "id": 2,
+          "orgId": 0,
+          "missing": false,
+          "state": "REGULAR",
+          "element": {
+            "type": 4,
+            "id": 2,
+            "name": "D204",
+            "longName": "Mathematik Unterricht",
+            "displayname": "D204",
+            "alternatename": "",
+            "canViewTimetable": true,
+            "roomCapacity": 25
+          }
+        }
+      ],
+      "students": []
+    },
+    {
+      "id": 1004,
+      "lessonId": 4,
+      "lessonNumber": 3,
+      "lessonCode": "LESSON",
+      "lessonText": "",
+      "periodText": "",
+      "hasPeriodText": false,
+      "periodInfo": "",
+      "periodAttachments": [],
+      "staffText": "",
+      "staffAttachments": [],
+      "substText": "",
+      "date": 20231011,
+      "startTime": 1455,
+      "endTime": 1540,
+      "elements": [],
+      "studentGroup": "M_27Gj",
+      "hasInfo": false,
+      "code": 0,
+      "cellState": "STANDARD",
+      "priority": 5,
+      "is": {
+        "standard": true,
+        "event": false
+      },
+      "roomCapacity": 0,
+      "studentCount": 0,
+      "classes": [
+        {
+          "type": 1,
+          "id": 3,
+          "orgId": 0,
+          "missing": false,
+          "state": "REGULAR",
+          "element": {
+            "type": 1,
+            "id": 3,
+            "name": "27Gj",
+            "longName": "PPP",
+            "displayname": "27Gj",
+            "alternatename": "",
+            "canViewTimetable": true,
+            "roomCapacity": 0
+          }
+        }
+      ],
+      "teachers": [
+        {
+          "type": 2,
+          "id": 3,
+          "orgId": 0,
+          "missing": false,
+          "state": "REGULAR",
+          "element": {
+            "type": 2,
+            "id": 3,
+            "name": "cdf",
+            "canViewTimetable": true,
+            "externKey": "",
+            "roomCapacity": 0
+          }
+        }
+      ],
+      "subjects": [
+        {
+          "type": 3,
+          "id": 3,
+          "orgId": 0,
+          "missing": false,
+          "state": "REGULAR",
+          "element": {
+            "type": 3,
+            "id": 3,
+            "name": "KS",
+            "longName": "Klassenstunde",
+            "displayname": "KS",
+            "alternatename": "",
+            "foreColor": "ff0aff",
+            "backColor": "ffa0ff",
+            "canViewTimetable": true,
+            "roomCapacity": 0
+          }
+        }
+      ],
+      "rooms": [
+        {
+          "type": 4,
+          "id": 2,
+          "orgId": 0,
+          "missing": false,
+          "state": "REGULAR",
+          "element": {
+            "type": 4,
+            "id": 2,
+            "name": "D204",
+            "longName": "Mathematik Unterricht",
+            "displayname": "D204",
+            "alternatename": "",
+            "canViewTimetable": true,
+            "roomCapacity": 25
+          }
+        }
+      ],
+      "students": []
+    },
+    {
+      "id": 1005,
+      "lessonId": 5,
+      "lessonNumber": 3,
+      "lessonCode": "LESSON",
+      "lessonText": "",
+      "periodText": "",
+      "hasPeriodText": false,
+      "periodInfo": "",
+      "periodAttachments": [],
+      "staffText": "",
+      "staffAttachments": [],
+      "substText": "",
+      "date": 20231012,
+      "startTime": 1455,
+      "endTime": 1540,
+      "elements": [],
+      "studentGroup": "M_27Fp",
+      "hasInfo": false,
+      "code": 0,
+      "cellState": "STANDARD",
+      "priority": 5,
+      "is": {
+        "standard": true,
+        "event": false
+      },
+      "roomCapacity": 0,
+      "studentCount": 0,
+      "classes": [
+        {
+          "type": 1,
+          "id": 4,
+          "orgId": 0,
+          "missing": false,
+          "state": "REGULAR",
+          "element": {
+            "type": 1,
+            "id": 4,
+            "name": "27Fp",
+            "longName": "FMPäd",
+            "displayname": "27Fp",
+            "alternatename": "",
+            "canViewTimetable": true,
+            "roomCapacity": 0
+          }
+        }
+      ],
+      "teachers": [
+        {
+          "type": 2,
+          "id": 4,
+          "orgId": 0,
+          "missing": false,
+          "state": "REGULAR",
+          "element": {
+            "type": 2,
+            "id": 4,
+            "name": "efg",
+            "canViewTimetable": true,
+            "externKey": "",
+            "roomCapacity": 0
+          }
+        }
+      ],
+      "subjects": [
+        {
+          "type": 3,
+          "id": 3,
+          "orgId": 0,
+          "missing": false,
+          "state": "REGULAR",
+          "element": {
+            "type": 3,
+            "id": 3,
+            "name": "KS",
+            "longName": "Klassenstunde",
+            "displayname": "KS",
+            "alternatename": "",
+            "foreColor": "ff0aff",
+            "backColor": "ffa0ff",
+            "canViewTimetable": true,
+            "roomCapacity": 0
+          }
+        }
+      ],
+      "rooms": [
+        {
+          "type": 4,
+          "id": 2,
+          "orgId": 0,
+          "missing": false,
+          "state": "REGULAR",
+          "element": {
+            "type": 4,
+            "id": 2,
+            "name": "D204",
+            "longName": "Mathematik Unterricht",
+            "displayname": "D204",
+            "alternatename": "",
+            "canViewTimetable": true,
+            "roomCapacity": 25
+          }
+        }
+      ],
+      "students": []
+    },
+    {
+      "id": 1006,
+      "lessonId": 6,
+      "lessonNumber": 3,
+      "lessonCode": "LESSON",
+      "lessonText": "",
+      "periodText": "",
+      "hasPeriodText": false,
+      "periodInfo": "",
+      "periodAttachments": [],
+      "staffText": "",
+      "staffAttachments": [],
+      "substText": "",
+      "date": 20231013,
+      "startTime": 1455,
+      "endTime": 1540,
+      "elements": [],
+      "studentGroup": "M_27sS",
+      "hasInfo": false,
+      "code": 0,
+      "cellState": "STANDARD",
+      "priority": 5,
+      "is": {
+        "standard": true,
+        "event": false
+      },
+      "roomCapacity": 0,
+      "studentCount": 0,
+      "classes": [
+        {
+          "type": 1,
+          "id": 5,
+          "orgId": 0,
+          "missing": false,
+          "state": "REGULAR",
+          "element": {
+            "type": 1,
+            "id": 4,
+            "name": "28FsS",
+            "longName": "MSOP",
+            "displayname": "27sS",
+            "alternatename": "",
+            "canViewTimetable": true,
+            "roomCapacity": 0
+          }
+        }
+      ],
+      "teachers": [
+        {
+          "type": 2,
+          "id": 5,
+          "orgId": 0,
+          "missing": false,
+          "state": "REGULAR",
+          "element": {
+            "type": 2,
+            "id": 5,
+            "name": "FGH",
+            "canViewTimetable": true,
+            "externKey": "",
+            "roomCapacity": 0
+          }
+        }
+      ],
+      "subjects": [
+        {
+          "type": 3,
+          "id": 4,
+          "orgId": 0,
+          "missing": false,
+          "state": "REGULAR",
+          "element": {
+            "type": 3,
+            "id": 4,
+            "name": "MC",
+            "longName": "Maître de Classe",
+            "displayname": "MC",
+            "alternatename": "",
+            "foreColor": "ff0a00",
+            "backColor": "ffa000",
             "canViewTimetable": true,
             "roomCapacity": 0
           }

@@ -1,7 +1,7 @@
 import { EventState, Prisma, Role } from '@prisma/client';
 import { createDepartment } from './departments.test';
 import Events from '../../../src/models/event';
-import { prepareEvent } from '../../../src/models/event.helpers';
+import { normalizeAudience, prepareEvent } from '../../../src/models/event.helpers';
 import { HTTP400Error, HTTP403Error, HTTP404Error } from '../../../src/utils/errors/Errors';
 import prisma from '../../../src/prisma';
 import { createUser } from './users.test';
@@ -706,5 +706,136 @@ describe('cloneEvent', () => {
                 updatedAt: expect.any(Date)
             })
         );
+    });
+});
+
+describe('normalize audience', () => {
+    const setup = async () => {
+        const departments = await Promise.all([
+            createDepartment({ letter: 'G', classLetters: ['a', 'b', 'c'], schoolYears: 4 }),
+            createDepartment({ letter: 'G', classLetters: ['x', 'y'], schoolYears: 4 }),
+            createDepartment({ letter: 'F', classLetters: ['a', 'b'], schoolYears: 3 })
+        ]);
+        return departments;
+    };
+    test('respacts distinct classes and departments', async () => {
+        const deps = await setup();
+        const normalized = normalizeAudience(deps, {
+            departmentIds: [deps[1].id],
+            classGroups: [],
+            classes: ['28Ga'],
+            start: new Date('2025-04-07'),
+            end: new Date('2025-04-08')
+        });
+        expect(normalized.classGroups).toHaveLength(0);
+        expect(normalized.classes).toEqual(['28Ga']);
+    });
+    test('removes classes not being part of the semester', async () => {
+        const deps = await setup();
+        const normalized = normalizeAudience(deps, {
+            departmentIds: [],
+            classGroups: [],
+            classes: ['28Ga', '29Ga'],
+            start: new Date('2025-04-07'),
+            end: new Date('2025-04-08')
+        });
+        expect(normalized.classGroups).toHaveLength(0);
+        expect(normalized.classes).toEqual(['28Ga']);
+    });
+    test('removes classes already active by departments', async () => {
+        const deps = await setup();
+        const normalized = normalizeAudience(deps, {
+            departmentIds: [deps[0].id],
+            classGroups: [],
+            classes: ['28Ga', '25Ga', '25Fa'],
+            start: new Date('2025-04-07'),
+            end: new Date('2025-04-08')
+        });
+        expect(normalized.classGroups).toHaveLength(0);
+        expect(normalized.classes).toEqual(['25Fa']);
+    });
+    test('removes classes already active by classGroups', async () => {
+        const deps = await setup();
+        const normalized = normalizeAudience(deps, {
+            departmentIds: [],
+            classGroups: ['28G'],
+            classes: ['28Ga', '25Ga', '25Fa'],
+            start: new Date('2025-04-07'),
+            end: new Date('2025-04-08')
+        });
+        expect(normalized.classGroups).toEqual(['28G']);
+        expect(normalized.classes.sort()).toEqual(['25Ga', '25Fa'].sort());
+    });
+    test('removes invalid classGroups', async () => {
+        const deps = await setup();
+        const normalized = normalizeAudience(deps, {
+            departmentIds: [],
+            classGroups: ['28'],
+            classes: ['28Ga', '25Ga', '25Fa'],
+            start: new Date('2025-04-07'),
+            end: new Date('2025-04-08')
+        });
+        expect(normalized.classGroups).toHaveLength(0);
+        expect(normalized.classes.sort()).toEqual(['28Ga', '25Ga', '25Fa'].sort());
+    });
+    test('removes invalid classes', async () => {
+        const deps = await setup();
+        const normalized = normalizeAudience(deps, {
+            departmentIds: [],
+            classGroups: [],
+            classes: ['28Gf', '', 'ABGa', 'asdfasdf', '27Fa'],
+            start: new Date('2025-04-07'),
+            end: new Date('2025-04-08')
+        });
+        expect(normalized.classGroups).toHaveLength(0);
+        expect(normalized.classes.sort()).toEqual(['27Fa'].sort());
+    });
+    test('removes classGroups already active by departments', async () => {
+        const deps = await setup();
+        const normalized = normalizeAudience(deps, {
+            departmentIds: [deps[0].id, deps[1].id],
+            classGroups: ['28G'],
+            classes: ['28Ga', '25Ga', '25Fa'],
+            start: new Date('2025-04-07'),
+            end: new Date('2025-04-08')
+        });
+        expect(normalized.classGroups).toHaveLength(0);
+        expect(normalized.classes).toEqual(['25Fa']);
+    });
+    test('keeps classGroups when not all depLetters are covered departments', async () => {
+        const deps = await setup();
+        const normalized = normalizeAudience(deps, {
+            departmentIds: [deps[0].id],
+            classGroups: ['28G'],
+            classes: ['28Ga', '25Ga', '25Fa'],
+            start: new Date('2025-04-07'),
+            end: new Date('2025-04-08')
+        });
+        expect(normalized.classGroups).toEqual(['28G']);
+        expect(normalized.classes).toEqual(['25Fa']);
+    });
+    test('removes classes which did already graduate more than a year ago or are not at the school', async () => {
+        const deps = await setup();
+        const normalized = normalizeAudience(deps, {
+            departmentIds: [],
+            classGroups: [],
+            classes: ['22Ga', '23Ga', '24Ga', '25Ga', '26Ga', '27Ga', '28Ga'],
+            start: new Date('2024-04-07'),
+            end: new Date('2024-04-08')
+        });
+        expect(normalized.classGroups).toHaveLength(0);
+        expect(normalized.classes.sort()).toEqual(['24Ga', '25Ga', '26Ga', '27Ga'].sort());
+    });
+    test('removes classGroups which did already graduate more than a year ago or are not at the school', async () => {
+        const deps = await setup();
+        const normalized = normalizeAudience(deps, {
+            departmentIds: [],
+            classGroups: ['22G', '23G', '24G', '25G', '26G', '27G', '28G'],
+            classes: [],
+            start: new Date('2024-04-07'),
+            end: new Date('2024-04-08')
+        });
+        expect(normalized.classGroups.sort()).toEqual(['24G', '25G', '26G', '27G'].sort());
+        expect(normalized.classes).toHaveLength(0);
     });
 });

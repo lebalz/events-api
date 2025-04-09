@@ -310,9 +310,9 @@ describe(`POST ${API_URL}/semesters/:id/sync_untis`, () => {
         expect(job.log).toEqual(
             expect.stringContaining(`"syncedWeek":"${semester?.untisSyncDate?.toISOString().slice(0, 10)}`)
         );
-        expect(job.log).toEqual(expect.stringContaining(`"#subjects":2`));
-        expect(job.log).toEqual(expect.stringContaining(`"#teachers":2`));
-        expect(job.log).toEqual(expect.stringContaining(`"#classes":2`));
-        expect(job.log).toEqual(expect.stringContaining(`"#lessons":3`));
+        expect(job.log).toEqual(expect.stringContaining(`"#subjects":4`));
+        expect(job.log).toEqual(expect.stringContaining(`"#teachers":5`));
+        expect(job.log).toEqual(expect.stringContaining(`"#classes":5`));
+        expect(job.log).toEqual(expect.stringContaining(`"#lessons":6`));
     });
 });

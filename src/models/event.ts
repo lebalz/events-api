@@ -1,7 +1,7 @@
 import { Event, EventState, Job, JobState, JobType, Prisma, PrismaClient, Role, User } from '@prisma/client';
 import prisma from '../prisma';
 import { createDataExtractor } from '../controllers/helpers';
-import { ApiEvent, clonedProps, clonedUpdateProps, prepareEvent } from './event.helpers';
+import { ApiEvent, clonedProps, clonedUpdateProps, normalizeAudience, prepareEvent } from './event.helpers';
 import { HTTP400Error, HTTP403Error, HTTP404Error } from '../utils/errors/Errors';
 import { importEvents as importService, ImportType, LogMessage } from '../services/importEvents';
 import Logger from '../utils/logger';
@@ -10,7 +10,19 @@ import RegistrationPeriods from './registrationPeriod';
 import _ from 'lodash';
 import { rmUndefined } from '../utils/filterHelpers';
 import { Meta } from '../services/importGBSL_xlsx';
-const getData = createDataExtractor<Prisma.EventUncheckedUpdateInput>([
+
+type ApiEventUpdateInput = Omit<
+    Prisma.EventUncheckedUpdateInput,
+    'classes' | 'classGroups' | 'start' | 'end'
+> & {
+    start?: Date | string;
+    end?: Date | string;
+    classes?: string[];
+    classGroups?: string[];
+    departmentIds?: string[];
+};
+
+const getData = createDataExtractor<ApiEventUpdateInput>([
     'audience',
     'classes',
     'description',
@@ -131,16 +143,11 @@ function Events(db: PrismaClient['event']) {
             }
             throw new HTTP403Error('Not authorized');
         },
-        async updateModel(
-            actor: User,
-            id: string,
-            data: Prisma.EventUncheckedUpdateInput & { departmentIds?: string[] }
-        ): Promise<ApiEvent> {
+        async updateModel(actor: User, id: string, data: ApiEventUpdateInput): Promise<ApiEvent> {
             const record = await this._findRecord(actor, id);
             /** remove fields not updatable*/
             const sanitized = getData(data);
             const departmentIds = data.departmentIds || record.departments.map((d) => d.id);
-
             let model: Event & {
                 departments: { id: string }[];
                 children: { id: string; state: EventState; createdAt: Date }[];
@@ -182,6 +189,31 @@ function Events(db: PrismaClient['event']) {
                     }
                 });
             }
+            return prepareEvent(model);
+        },
+        async _normalizedAudience(record: Event & { departments: { id: string }[] }) {
+            const departments = await prisma.department.findMany();
+            /** remove fields not updatable*/
+            const departmentIds = record.departments.map((d) => d.id);
+            return normalizeAudience(departments, {
+                ...record,
+                departmentIds: departmentIds
+            });
+        },
+        async normalizeAudience(actor: User, id: string): Promise<ApiEvent> {
+            const record = await this._findRecord(actor, id, true);
+            if (record.state !== EventState.DRAFT) {
+                throw new HTTP400Error('Not allowed: Only draft events can be normalized.');
+            }
+            const audience = await this._normalizedAudience(record);
+            const model = await db.update({
+                where: { id: record.id },
+                data: audience,
+                include: {
+                    departments: { select: { id: true } },
+                    children: { select: { id: true, state: true, createdAt: true } }
+                }
+            });
             return prepareEvent(model);
         },
         async updateMeta(actor: User, id: string, metaData: Prisma.JsonObject | null): Promise<ApiEvent> {
@@ -236,13 +268,17 @@ function Events(db: PrismaClient['event']) {
                 throw new HTTP403Error('Not authorized');
             }
 
-            const updater = async () =>
+            const updater = async (data: Prisma.EventUpdateInput | Prisma.EventUncheckedUpdateInput = {}) =>
                 await db.update({
                     where: { id: id },
                     data: {
+                        ...data,
                         state: requested
                     },
-                    include: { departments: true, children: true }
+                    include: {
+                        departments: { select: { id: true } },
+                        children: { select: { id: true, createdAt: true, state: true } }
+                    }
                 });
 
             switch (record.state) {
@@ -257,16 +293,10 @@ function Events(db: PrismaClient['event']) {
                             if (publishedParent.length < 1) {
                                 throw new HTTP404Error('Parent not found');
                             }
-                            const model = await db.update({
-                                where: { id: record.id },
-                                data: {
-                                    state: requested,
-                                    parentId: publishedParent[0].id
-                                },
-                                include: {
-                                    departments: { select: { id: true } },
-                                    children: { select: { id: true, createdAt: true, state: true } }
-                                }
+                            const audience = await this._normalizedAudience(record);
+                            const model = await updater({
+                                parentId: publishedParent[0].id,
+                                ...audience
                             });
                             const parent = await this.findModel(actor, publishedParent[0].id);
                             return { event: prepareEvent(model), parent: parent, refused: [] };
@@ -291,7 +321,8 @@ function Events(db: PrismaClient['event']) {
                             if (!openRegistrationPeriod && !isAdmin) {
                                 throw new HTTP400Error('No open registration period found.');
                             }
-                            const model = await updater();
+                            const audience = await this._normalizedAudience(record);
+                            const model = await updater(audience);
                             return { event: prepareEvent(model), refused: [] };
                         }
                     }

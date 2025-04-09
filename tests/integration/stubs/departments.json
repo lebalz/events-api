@@ -1,106 +1,240 @@
 [
-    {
-      "id": "6f80a24c-8955-4db2-97ba-8d327a999741",
-      "name": "WXY",
-      "description": "Wirtschaft",
-      "letter": "W",
-      "classLetters": ["a","b","c"],
-      "color": "#31a555"
-    },
-    {
-      "id": "0e38b03f-732b-485b-934d-471aa6128f0a",
-      "name": "FGDabc",
-      "description": "Pädagogik",
-      "letter": "F",
-      "classLetters": ["p","q","r","s"],
-      "color": "#805cdd"
-    },
-    {
-      "id": "7e2d0e9c-e05f-49ba-8531-95fcd58d0ab8",
-      "name": "GFED/GHIJ",
-      "description": "Franz/Deutsch",
-      "letter": "m",
-      "classLetters": ["T","U","V"],
-      "color": "#5989d9"
-    },
-    {
-      "id": "c04c3aad-50c3-4f1b-a3ae-0c4abbb20758",
-      "name": "FGH/EDC",
-      "description": "Fach Deutsch/Franz",
-      "letter": "F",
-      "classLetters": ["w","x","y"],
-      "color": "#86b033"
-    },
-    {
-      "id": "08059a5c-3c31-4324-b390-f564b11383fe",
-      "name": "GFED",
-      "description": "Deutsch",
-      "letter": "m",
-      "classLetters": ["A","B","C","D","E","F","G","H","I","J","K","L","M","N","O","P","Q","R","S"],
-      "color": "#0dbf19"
-    },
-    {
-      "id": "b1efa165-2326-447a-a2e0-caeffe7a1a09",
-      "name": "MNOP",
-      "description": "",
-      "letter": "s",
-      "classLetters": ["P","Q","R","S"],
-      "color": "#d0cb4c"
-    },
-    {
-      "id": "7a51b081-5ce8-41d0-bc58-1437a43f7744",
-      "name": "EDC/FGH",
-      "description": "Franz/Deutsch",
-      "letter": "s",
-      "classLetters": ["T","U","V"],
-      "color": "#86b033"
-    },
-    {
-      "id": "d8192e67-e927-4af3-aa40-632293c0d980",
-      "name": "EDC",
-      "description": "Pedagogic",
-      "letter": "s",
-      "classLetters": ["A","B","C","D","E","F","G","H","I","J","K","L","M","N","O"],
-      "color": "#b3a62d"
-    },
-    {
-      "id": "e130e85d-272b-4906-aab8-1fa5e664e404",
-      "name": "Passerelle",
-      "description": "",
-      "letter": "p",
-      "classLetters": ["A","B","C","D","E","F","G","H","I","J","K","L","M","N","O","P","Q","R","S", "T", "U", "V", "W", "X", "Y", "Z"],
-      "color": "#c968b5"
-    },
-    {
-      "id": "faf89e91-061c-4665-92f7-2a63a9cbe25b",
-      "name": "FGH",
-      "description": "Fach",
-      "letter": "F",
-      "classLetters": ["a","b","c","d","e","f","g","h","i","j","k","l","m","n","o"],
-      "color": "#5f34f3"
-    },
-    {
-      "id": "852295a9-43e1-4834-8f9c-4a152a742066",
-      "name": "GHIJ",
-      "description": "Deutsch",
-      "letter": "G",
-      "classLetters": ["a","b","c","d","e","f","g","h","i","j","k","l","m","n","o","p","q","r","s"],
-      "color": "#41b9bc"
-    },
-    {
-      "id": "90f6d172-8f5b-4b7d-9c50-7f524716d831",
-      "name": "GHIJ/GFED",
-      "description": "Deutsch/Franz",
-      "letter": "G",
-      "classLetters": ["w","x","y"],
-      "color": "#5cd5d9"
-    },
-    {
-      "id": "918c5979-d06c-45f2-91ba-4eaa6abdac18",
-      "name": "EFG",
-      "description": "Eco",
-      "letter": "c",
-      "classLetters": ["A","B","C","D"],
-      "color": "#3ac22c"
-    }
-  ]
+  {
+    "id": "6f80a24c-8955-4db2-97ba-8d327a999741",
+    "name": "WXY",
+    "description": "Wirtschaft",
+    "letter": "W",
+    "classLetters": [
+      "a",
+      "b",
+      "c"
+    ],
+    "color": "#31a555"
+  },
+  {
+    "id": "0e38b03f-732b-485b-934d-471aa6128f0a",
+    "name": "FGDabc",
+    "description": "Pädagogik",
+    "letter": "E",
+    "classLetters": [
+      "p",
+      "q",
+      "r",
+      "s"
+    ],
+    "color": "#805cdd"
+  },
+  {
+    "id": "7e2d0e9c-e05f-49ba-8531-95fcd58d0ab8",
+    "name": "GFED/GHIJ",
+    "description": "Franz/Deutsch",
+    "letter": "m",
+    "classLetters": [
+      "T",
+      "U",
+      "V"
+    ],
+    "color": "#5989d9"
+  },
+  {
+    "id": "c04c3aad-50c3-4f1b-a3ae-0c4abbb20758",
+    "name": "FGH/EDC",
+    "description": "Fach Deutsch/Franz",
+    "letter": "F",
+    "classLetters": [
+      "w",
+      "x",
+      "y"
+    ],
+    "color": "#86b033"
+  },
+  {
+    "id": "08059a5c-3c31-4324-b390-f564b11383fe",
+    "name": "GFED",
+    "description": "Deutsch",
+    "letter": "m",
+    "classLetters": [
+      "A",
+      "B",
+      "C",
+      "D",
+      "E",
+      "F",
+      "G",
+      "H",
+      "I",
+      "J",
+      "K",
+      "L",
+      "M",
+      "N",
+      "O",
+      "P",
+      "Q",
+      "R",
+      "S"
+    ],
+    "color": "#0dbf19"
+  },
+  {
+    "id": "b1efa165-2326-447a-a2e0-caeffe7a1a09",
+    "name": "MNOP",
+    "description": "",
+    "letter": "e",
+    "classLetters": [
+      "P",
+      "Q",
+      "R",
+      "S"
+    ],
+    "color": "#d0cb4c"
+  },
+  {
+    "id": "7a51b081-5ce8-41d0-bc58-1437a43f7744",
+    "name": "EDC/FGH",
+    "description": "Franz/Deutsch",
+    "letter": "s",
+    "classLetters": [
+      "T",
+      "U",
+      "V"
+    ],
+    "color": "#86b033"
+  },
+  {
+    "id": "d8192e67-e927-4af3-aa40-632293c0d980",
+    "name": "EDC",
+    "description": "Pedagogic",
+    "letter": "s",
+    "classLetters": [
+      "A",
+      "B",
+      "C",
+      "D",
+      "E",
+      "F",
+      "G",
+      "H",
+      "I",
+      "J",
+      "K",
+      "L",
+      "M",
+      "N",
+      "O"
+    ],
+    "color": "#b3a62d"
+  },
+  {
+    "id": "e130e85d-272b-4906-aab8-1fa5e664e404",
+    "name": "Passerelle",
+    "description": "",
+    "letter": "p",
+    "classLetters": [
+      "A",
+      "B",
+      "C",
+      "D",
+      "E",
+      "F",
+      "G",
+      "H",
+      "I",
+      "J",
+      "K",
+      "L",
+      "M",
+      "N",
+      "O",
+      "P",
+      "Q",
+      "R",
+      "S",
+      "T",
+      "U",
+      "V",
+      "W",
+      "X",
+      "Y",
+      "Z"
+    ],
+    "color": "#c968b5"
+  },
+  {
+    "id": "faf89e91-061c-4665-92f7-2a63a9cbe25b",
+    "name": "FGH",
+    "description": "Fach",
+    "letter": "F",
+    "classLetters": [
+      "a",
+      "b",
+      "c",
+      "d",
+      "e",
+      "f",
+      "g",
+      "h",
+      "i",
+      "j",
+      "k",
+      "l",
+      "m",
+      "n",
+      "o"
+    ],
+    "color": "#5f34f3"
+  },
+  {
+    "id": "852295a9-43e1-4834-8f9c-4a152a742066",
+    "name": "GHIJ",
+    "description": "Deutsch",
+    "letter": "G",
+    "classLetters": [
+      "a",
+      "b",
+      "c",
+      "d",
+      "e",
+      "f",
+      "g",
+      "h",
+      "i",
+      "j",
+      "k",
+      "l",
+      "m",
+      "n",
+      "o",
+      "p",
+      "q",
+      "r",
+      "s"
+    ],
+    "color": "#41b9bc"
+  },
+  {
+    "id": "90f6d172-8f5b-4b7d-9c50-7f524716d831",
+    "name": "GHIJ/GFED",
+    "description": "Deutsch/Franz",
+    "letter": "G",
+    "classLetters": [
+      "w",
+      "x",
+      "y"
+    ],
+    "color": "#5cd5d9"
+  },
+  {
+    "id": "918c5979-d06c-45f2-91ba-4eaa6abdac18",
+    "name": "EFG",
+    "description": "Eco",
+    "letter": "c",
+    "classLetters": [
+      "A",
+      "B",
+      "C",
+      "D"
+    ],
+    "color": "#3ac22c"
+  }
+]

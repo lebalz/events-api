@@ -15,8 +15,6 @@ import { notify } from './middlewares/notify.nop';
 import { HTTP401Error } from './utils/errors/Errors';
 import connectPgSimple from 'connect-pg-simple';
 import { existsSync, mkdirSync } from 'fs';
-import { request } from 'https';
-import Logger from './utils/logger';
 
 const AccessRules = createAccessRules(authConfig.accessMatrix);
 
@@ -151,6 +149,10 @@ app.use(express.static(path.join(__dirname, '..', 'docs')));
 // Public Endpoints
 app.get(`${API_URL}`, (req, res) => {
     return res.status(200).send('Welcome to the EVENTES-API V1.0');
+});
+
+app.get('/debug-sentry', function mainHandler(req, res) {
+    throw new Error('My first Sentry error!');
 });
 
 const SessionOauthStrategy = (req: Request, res: Response, next: NextFunction) => {
