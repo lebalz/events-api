@@ -7,7 +7,7 @@
   "license": "MIT",
   "scripts": {
     "clean": "rm -rf dist",
-    "build": "npx prisma generate && tsc --build ./tsconfig.build.json && yarn copy-files && yarn sentry:sourcemaps",
+    "build": "npx prisma generate && tsc --build ./tsconfig.build.json && yarn copy-files && (yarn sentry:sourcemaps || true)",
     "copy-files": "cp -r docs dist/docs",
     "start": "node -r dotenv/config ./dist/src/server.js",
     "dev": "TS_NODE=true NODE_OPTIONS=\"-r ts-node/register -r dotenv/config\" node ./src/server.ts",
@@ -28,7 +28,7 @@
     "dummy:run": "ts-node -r dotenv/config ./bin/dummy.ts",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "sentry:sourcemaps": "sentry-cli sourcemaps inject --org balthasar-hofer --project node-express ./dist && sentry-cli sourcemaps upload --org balthasar-hofer --project node-express ./dist"
+    "sentry:sourcemaps": "sentry-cli sourcemaps inject --org balthasar-hofer --project node-express ./dist && sentry-cli sourcemaps upload --org $SENTRY_ORG --project $SENTRY_PROJECT ./dist"
   },
   "prisma": {
     "seed": "ts-node -r dotenv/config prisma/seed.ts"

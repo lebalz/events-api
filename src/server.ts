@@ -44,9 +44,13 @@ instrument(io, {
         : false
 });
 
-Sentry.init({
-    dsn: 'https://e1c510d1731b0ce0da1a24cdf95c521e@o4509104861544448.ingest.de.sentry.io/4509104863772752'
-});
+if (process.env.NODE_ENV === 'production' && process.env.SENTRY_DSN) {
+    Sentry.init({
+        dsn: process.env.SENTRY_DSN,
+        tracesSampleRate: 0.1,
+        integrations: [Sentry.prismaIntegration()]
+    });
+}
 
 // convert a connect middleware to a Socket.IO middleware
 io.use((socket, next) => {
