@@ -2,6 +2,20 @@
 
 [![Node CI](https://github.com/lebalz/events-api/actions/workflows/main.yml/badge.svg)](https://github.com/lebalz/events-api/actions/workflows/main.yml) [![codecov](https://codecov.io/gh/lebalz/events-api/graph/badge.svg?token=O9E8JNGEHN)](https://codecov.io/gh/lebalz/events-api)
 
+
+## Development in VS Code Dev Container
+
+1. Install Docker
+2. Open the project in VS Code and select "Reopen in Container" from the Command Palette (`ctrl+shift+p`).
+3. Wait for the container to build and start.
+
+Get the latest dump of the production db:
+
+```bash
+dokku postgres:export events-api > backup.sql
+pg_restore -c -d events_api -U postgres -h localhost backup.sql
+```
+
 ## Assumptions
 - a teacher can be a klp of maximum one class (`view__UsersAffectedByEvent`)
 - klp teaches a lesson 'KS' or 'MC' in it's class
