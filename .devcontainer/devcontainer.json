@@ -25,6 +25,7 @@
 			"extensions": [
 				"Prisma.prisma",
 				"mhutchie.git-graph",
+				"qufiwefefwoyn.inline-sql-syntax",
 				"dbaeumer.vscode-eslint",
 				"motivesoft.vscode-uuid-generator",
 		        "dbaeumer.vscode-eslint",
