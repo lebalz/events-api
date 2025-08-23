@@ -233,7 +233,7 @@ export const createIcsFromSubscription = async (subscription: ApiSubscription): 
                       { end: { gte: timeRange.from, lte: timeRange.to } }
                   ]
               },
-            distinct: ['id']
+              distinct: ['id']
           })
         : Promise.resolve([]));
     subscribedDepartmentEvents.forEach((event) => toIgnore.add(event.id));
@@ -250,7 +250,7 @@ export const createIcsFromSubscription = async (subscription: ApiSubscription): 
                       { end: { gte: timeRange.from, lte: timeRange.to } }
                   ]
               },
-                distinct: ['id']
+              distinct: ['id']
           })
         : Promise.resolve([]));
 
