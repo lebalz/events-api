@@ -146,7 +146,7 @@ const exportIcs = async (events: Event[], filename: string) => {
 
     const eventsDe: EventAttributes[] = [];
     const eventsFr: EventAttributes[] = [];
-    events.forEach((event) => {
+    _.uniqBy(events, 'id').forEach((event) => {
         eventsDe.push(prepareEvent(event, 'de', classNameMap));
         eventsFr.push(prepareEvent(event, 'fr', classNameMap));
     });
@@ -215,7 +215,8 @@ export const createIcsFromSubscription = async (subscription: ApiSubscription): 
                 { start: { gte: timeRange.from, lte: timeRange.to } },
                 { end: { gte: timeRange.from, lte: timeRange.to } }
             ]
-        }
+        },
+        distinct: ['id']
     });
 
     publicEventsRaw.forEach((event) => toIgnore.add(event.id));
@@ -231,7 +232,8 @@ export const createIcsFromSubscription = async (subscription: ApiSubscription): 
                       { start: { gte: timeRange.from, lte: timeRange.to } },
                       { end: { gte: timeRange.from, lte: timeRange.to } }
                   ]
-              }
+              },
+            distinct: ['id']
           })
         : Promise.resolve([]));
     subscribedDepartmentEvents.forEach((event) => toIgnore.add(event.id));
@@ -247,7 +249,8 @@ export const createIcsFromSubscription = async (subscription: ApiSubscription): 
                       { start: { gte: timeRange.from, lte: timeRange.to } },
                       { end: { gte: timeRange.from, lte: timeRange.to } }
                   ]
-              }
+              },
+                distinct: ['id']
           })
         : Promise.resolve([]));
 
@@ -306,7 +309,8 @@ export const createIcsForClasses = async () => {
                     { start: { gte: timeRange.from, lte: timeRange.to } },
                     { end: { gte: timeRange.from, lte: timeRange.to } }
                 ]
-            }
+            },
+            distinct: ['id']
         });
         const fileCreated = await exportIcs(publicEvents, `${untisClass.name}.ics`);
         if (!fileCreated) {
@@ -329,7 +333,8 @@ export const createIcsForDepartments = async () => {
                     { start: { gte: timeRange.from, lte: timeRange.to } },
                     { end: { gte: timeRange.from, lte: timeRange.to } }
                 ]
-            }
+            },
+            distinct: ['id']
         });
         const fileCreated = await exportIcs(publicEvents, `${department.name.replaceAll('/', '_')}.ics`);
         if (!fileCreated) {
