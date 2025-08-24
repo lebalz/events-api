@@ -328,7 +328,7 @@ view view_AffectedByEvents {
 view view_UsersAffectedByEvents {
     userId             String           @map("u_id") @db.Uuid
     semesterId         String           @map("s_id") @db.Uuid
-    id                 String           @id @db.Uuid
+    id                 String           @db.Uuid
     authorId           String           @map("author_id") @db.Uuid
     start              DateTime
     end                DateTime
@@ -357,7 +357,7 @@ view view_UsersAffectedByEvents {
 view view_LessonsAffectedByEvents {
     eventId     String  @map("e_id") @db.Uuid
     sId         String  @map("s_id") @db.Uuid
-    id          Int     @id
+    id          Int     
     room        String
     subject     String
     description String
@@ -375,7 +375,7 @@ view view_LessonsAffectedByEvents {
 }
 
 view view_EventsClasses {
-    id                 String           @id @db.Uuid
+    id                 String           @db.Uuid
     authorId           String           @map("author_id") @db.Uuid
     start              DateTime
     end                DateTime
@@ -405,7 +405,7 @@ view view_EventsClasses {
 }
 
 view view_EventsDepartments {
-    id                 String           @id @db.Uuid
+    id                 String           @db.Uuid
     authorId           String           @map("author_id") @db.Uuid
     start              DateTime
     end                DateTime

@@ -251,7 +251,7 @@ Table view__affected_by_events {
 Table view__users_affected_by_events {
   userId String [not null]
   semesterId String [not null]
-  id String [pk]
+  id String [not null]
   authorId String [not null]
   start DateTime [not null]
   end DateTime [not null]
@@ -281,7 +281,7 @@ Table view__users_affected_by_events {
 Table view__lessons_affected_by_events {
   eventId String [not null]
   sId String [not null]
-  id Int [pk]
+  id Int [not null]
   room String [not null]
   subject String [not null]
   description String [not null]
@@ -300,7 +300,7 @@ Table view__lessons_affected_by_events {
 }
 
 Table view__events_classes {
-  id String [pk]
+  id String [not null]
   authorId String [not null]
   start DateTime [not null]
   end DateTime [not null]
@@ -331,7 +331,7 @@ Table view__events_classes {
 }
 
 Table view__events_departments {
-  id String [pk]
+  id String [not null]
   authorId String [not null]
   start DateTime [not null]
   end DateTime [not null]
