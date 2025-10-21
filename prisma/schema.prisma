@@ -300,6 +300,7 @@ view view_AffectedByEventsUnfiltered {
     affectsClassname     Boolean       @map("affects_classname")
     affectsClassgroup    Boolean       @map("affects_classgroup")
     affectsLesson        Boolean       @map("affects_lesson")
+    affectsUser          Boolean?      @map("affects_user")
     isKlp                Boolean?      @map("is_klp")
 
     @@unique([userId, eventId, semesterId, classId, lessonId])

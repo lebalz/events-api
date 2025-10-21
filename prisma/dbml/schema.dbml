@@ -221,6 +221,7 @@ Table view__affected_by_events_unfiltered {
   affectsClassname Boolean [not null]
   affectsClassgroup Boolean [not null]
   affectsLesson Boolean [not null]
+  affectsUser Boolean
   isKlp Boolean
 
   indexes {
