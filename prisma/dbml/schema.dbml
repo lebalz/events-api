@@ -13,6 +13,7 @@ Table users {
   createdAt DateTime [default: `now()`, not null]
   updatedAt DateTime [default: `now()`, not null]
   events events [not null]
+  linkedEvenents events [not null]
   jobs jobs [not null]
   subscription subscriptions
   eventGroups event_groups [not null]
@@ -43,6 +44,7 @@ Table events {
   classes String[] [not null]
   classGroups String[] [not null]
   departments departments [not null]
+  linkedUsers users [not null]
   groups event_groups [not null]
   audience EventAudience [not null, default: 'STUDENTS']
   affectsDepartment2 Boolean [default: false]
@@ -372,6 +374,11 @@ Table view__events_registration_periods {
   indexes {
     (eventId, rpId) [unique]
   }
+}
+
+Table events_to_users {
+  linkedevenentsId String [ref: > events.id]
+  linkedusersId String [ref: > users.id]
 }
 
 Table users_to_event_groups {

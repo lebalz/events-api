@@ -19,17 +19,18 @@ datasource db {
 }
 
 model User {
-    id        String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-    email     String        @unique
-    untis     UntisTeacher? @relation(fields: [untisId], references: [id])
-    untisId   Int?          @unique @map("untis_id")
-    firstName String        @map("first_name")
-    lastName  String        @map("last_name")
-    role      Role          @default(USER)
-    createdAt DateTime      @default(now()) @map("created_at")
-    updatedAt DateTime      @default(now()) @updatedAt @map("updated_at")
-    events    Event[]       @relation("events")
-    jobs      Job[]
+    id             String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+    email          String        @unique
+    untis          UntisTeacher? @relation(fields: [untisId], references: [id])
+    untisId        Int?          @unique @map("untis_id")
+    firstName      String        @map("first_name")
+    lastName       String        @map("last_name")
+    role           Role          @default(USER)
+    createdAt      DateTime      @default(now()) @map("created_at")
+    updatedAt      DateTime      @default(now()) @updatedAt @map("updated_at")
+    events         Event[]       @relation("events")
+    linkedEvenents Event[]       @relation("events_to_users")
+    jobs           Job[]
 
     subscription Subscription?
 
@@ -73,6 +74,7 @@ model Event {
     // wildcard class names
     classGroups String[]     @default([]) @map("class_groups")
     departments Department[] @relation("events_to_departments")
+    linkedUsers User[]       @relation("events_to_users")
 
     groups EventGroup[] @relation("events_to_event_groups")
 
@@ -357,7 +359,7 @@ view view_UsersAffectedByEvents {
 view view_LessonsAffectedByEvents {
     eventId     String  @map("e_id") @db.Uuid
     sId         String  @map("s_id") @db.Uuid
-    id          Int     
+    id          Int
     room        String
     subject     String
     description String
