@@ -367,7 +367,7 @@ describe('setState transitions', () => {
     test('REVIEW -> PUBLISHED', async () => {
         const admin = await createUser({ role: Role.ADMIN });
         const user = await createUser({});
-        const event = await createEvent({ authorId: user.id, state: EventState.REVIEW });
+        const event = await createEvent({ authorId: user.id, state: EventState.REVIEW, userIds: [user.id] });
 
         /** expect the prepared event to be returned
          * @see event.helpers.ts#prepareEvent
@@ -375,6 +375,7 @@ describe('setState transitions', () => {
         await expect(Events.setState(admin, event.id, EventState.PUBLISHED)).resolves.toEqual({
             event: {
                 ...prepareEvent(event),
+                linkedUserIds: [user.id],
                 state: EventState.PUBLISHED,
                 departmentIds: [],
                 publishedVersionIds: [],
@@ -435,6 +436,7 @@ describe('setState transitions', () => {
             id: '0c9a59a4-0be9-40a8-80bc-b5a9c228166d',
             authorId: user.id,
             description: 'fancy hello',
+            userIds: [user.id],
             state: EventState.REVIEW,
             parentId: current.id
         });
@@ -448,6 +450,7 @@ describe('setState transitions', () => {
             state: EventState.PUBLISHED,
             departments: undefined,
             departmentIds: [],
+            linkedUserIds: [user.id],
             children: undefined,
             parentId: null,
             publishedVersionIds: [nextCurrent.id]
@@ -458,6 +461,7 @@ describe('setState transitions', () => {
             id: nextCurrent.id,
             updatedAt: expect.any(Date),
             departmentIds: [],
+            linkedUserIds: [],
             parentId: current.id,
             publishedVersionIds: []
         };

@@ -81,6 +81,15 @@ export const clonedUpdateProps = (
             set: []
         };
     }
+    if (cloned.linkedUsers) {
+        cloned.linkedUsers = {
+            set: cloned.linkedUsers.connect
+        };
+    } else {
+        cloned.linkedUsers = {
+            set: []
+        };
+    }
     if (!cloned.clonedFrom) {
         cloned.clonedFrom = { disconnect: true };
     }

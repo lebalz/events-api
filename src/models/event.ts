@@ -245,9 +245,9 @@ function Events(db: PrismaClient['event']) {
                         metaData === null
                             ? Prisma.DbNull
                             : ({
-                                  ...((record.meta as Prisma.JsonObject) || {}),
-                                  ...metaData
-                              } as Prisma.JsonObject)
+                                ...((record.meta as Prisma.JsonObject) || {}),
+                                ...metaData
+                            } as Prisma.JsonObject)
                 },
                 include: {
                     departments: { select: { id: true } },
@@ -434,15 +434,15 @@ function Events(db: PrismaClient['event']) {
                                     }),
                                     ...(record.clonedFromId
                                         ? {
-                                              clonedFrom: {
-                                                  connect: {
-                                                      id:
-                                                          record.clonedFromId === parent.id
-                                                              ? record.id
-                                                              : record.clonedFromId
-                                                  }
-                                              }
-                                          }
+                                            clonedFrom: {
+                                                connect: {
+                                                    id:
+                                                        record.clonedFromId === parent.id
+                                                            ? record.id
+                                                            : record.clonedFromId
+                                                }
+                                            }
+                                        }
                                         : {}),
                                     groups: {
                                         set: groups.map((id) => ({ id }))
@@ -633,36 +633,36 @@ function Events(db: PrismaClient['event']) {
                         { id: { in: ids } },
                         actor
                             ? {
-                                  OR: [
-                                      {
-                                          state: {
-                                              in:
-                                                  actor.role === 'ADMIN'
-                                                      ? [
-                                                            EventState.PUBLISHED,
-                                                            EventState.REFUSED,
-                                                            EventState.REVIEW
-                                                        ]
-                                                      : [EventState.PUBLISHED]
-                                          }
-                                      },
-                                      { authorId: actor.id },
-                                      {
-                                          groups: {
-                                              some: {
-                                                  users: {
-                                                      some: {
-                                                          id: actor?.id
-                                                      }
-                                                  }
-                                              }
-                                          }
-                                      }
-                                  ]
-                              }
+                                OR: [
+                                    {
+                                        state: {
+                                            in:
+                                                actor.role === 'ADMIN'
+                                                    ? [
+                                                        EventState.PUBLISHED,
+                                                        EventState.REFUSED,
+                                                        EventState.REVIEW
+                                                    ]
+                                                    : [EventState.PUBLISHED]
+                                        }
+                                    },
+                                    { authorId: actor.id },
+                                    {
+                                        groups: {
+                                            some: {
+                                                users: {
+                                                    some: {
+                                                        id: actor?.id
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                ]
+                            }
                             : {
-                                  state: EventState.PUBLISHED
-                              }
+                                state: EventState.PUBLISHED
+                            }
                     ])
                 },
                 orderBy: { start: 'asc' }
