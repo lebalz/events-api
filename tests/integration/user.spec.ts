@@ -1920,6 +1920,17 @@ describe(`GET ${API_URL}/users/:id/affected-event-ids`, () => {
                         teachingAffected: TeachingAffected.YES
                     })
                 });
+                const ancientEvent = await prisma.event.create({
+                    data: generateEvent({
+                        authorId: author.id,
+                        start: new Date('2022-10-18T08:00'),
+                        end: new Date('2022-10-18T12:00'),
+                        state: EventState.PUBLISHED,
+                        classes: ['24Ga'],
+                        userIds: [xyz.id, abc.id],
+                        teachingAffected: TeachingAffected.YES
+                    })
+                });
             });
             describe('linked user is affected', () => {
                 beforeAll(() => {
@@ -1927,10 +1938,12 @@ describe(`GET ${API_URL}/users/:id/affected-event-ids`, () => {
                 });
                 it('includes events for linked users', async () => {
                     /**
-                     * 2 events, one affects the lesson of abc, but not the lesson of xyz
+                     * 3 events, one affects the lesson of abc, but not the lesson of xyz,
+                     *  the other is linked to both abc and xyz
+                     *  the third is in the past and should not be included, even though linked
                      *
-                     * abc -> one affected event
-                     * xyz -> zero affected events
+                     * abc -> two affected event
+                     * xyz -> one affected events
                      */
                     const resultAbc = await request(app)
                         .get(`${API_URL}/users/${abc.id}/affected-event-ids?semesterId=${semester.id}`)
