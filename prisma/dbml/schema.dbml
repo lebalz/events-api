@@ -211,10 +211,10 @@ Table view__affected_by_events_unfiltered {
   userId String [not null]
   semesterId String [not null]
   untisTeacherId Int
-  classId Int [not null]
-  className String [not null]
-  lessonId Int [not null]
-  lessonSubject String [not null]
+  classId Int
+  className String
+  lessonId Int
+  lessonSubject String
   eventAudience EventAudience [not null]
   affectedDepartmentId String
   affectsDepartment Boolean
@@ -225,7 +225,7 @@ Table view__affected_by_events_unfiltered {
   isKlp Boolean
 
   indexes {
-    (userId, eventId, semesterId, classId, lessonId) [unique]
+    (userId, eventId, semesterId) [unique]
   }
 }
 
@@ -234,10 +234,10 @@ Table view__affected_by_events {
   userId String [not null]
   semesterId String [not null]
   untisTeacherId Int
-  classId Int [not null]
-  className String [not null]
-  lessonId Int [not null]
-  lessonSubject String [not null]
+  classId Int
+  className String
+  lessonId Int
+  lessonSubject String
   eventAudience EventAudience [not null]
   affectedDepartmentId String
   affectsDepartment Boolean
@@ -247,7 +247,7 @@ Table view__affected_by_events {
   isKlp Boolean
 
   indexes {
-    (userId, eventId, semesterId, classId, lessonId) [unique]
+    (userId, eventId, semesterId) [unique]
   }
 }
 

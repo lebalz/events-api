@@ -290,10 +290,10 @@ view view_AffectedByEventsUnfiltered {
     userId               String        @map("u_id") @db.Uuid
     semesterId           String        @map("s_id") @db.Uuid
     untisTeacherId       Int?          @map("untis_teacher_id")
-    classId              Int           @map("c_id")
-    className            String        @map("c_name")
-    lessonId             Int           @map("l_id")
-    lessonSubject        String        @map("l_subject")
+    classId              Int?          @map("c_id")
+    className            String?       @map("c_name")
+    lessonId             Int?          @map("l_id")
+    lessonSubject        String?       @map("l_subject")
     eventAudience        EventAudience @map("e_audience")
     affectedDepartmentId String?       @map("affected_department_id") @db.Uuid
     affectsDepartment    Boolean?      @map("affects_department")
@@ -303,7 +303,7 @@ view view_AffectedByEventsUnfiltered {
     affectsUser          Boolean?      @map("affects_user")
     isKlp                Boolean?      @map("is_klp")
 
-    @@unique([userId, eventId, semesterId, classId, lessonId])
+    @@unique([userId, eventId, semesterId])
     @@map("view__affected_by_events_unfiltered")
 }
 
@@ -312,10 +312,10 @@ view view_AffectedByEvents {
     userId               String        @map("u_id") @db.Uuid
     semesterId           String        @map("s_id") @db.Uuid
     untisTeacherId       Int?          @map("untis_teacher_id")
-    classId              Int           @map("c_id")
-    className            String        @map("c_name")
-    lessonId             Int           @map("l_id")
-    lessonSubject        String        @map("l_subject")
+    classId              Int?          @map("c_id")
+    className            String?       @map("c_name")
+    lessonId             Int?          @map("l_id")
+    lessonSubject        String?       @map("l_subject")
     eventAudience        EventAudience @map("e_audience")
     affectedDepartmentId String?       @map("affected_department_id") @db.Uuid
     affectsDepartment    Boolean?      @map("affects_department")
@@ -324,7 +324,7 @@ view view_AffectedByEvents {
     affectsLesson        Boolean       @map("affects_lesson")
     isKlp                Boolean?      @map("is_klp")
 
-    @@unique([userId, eventId, semesterId, classId, lessonId])
+    @@unique([userId, eventId, semesterId])
     @@map("view__affected_by_events")
 }
 
