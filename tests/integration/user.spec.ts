@@ -1958,7 +1958,6 @@ describe(`GET ${API_URL}/users/:id/affected-event-ids`, () => {
                     expect(resultXyz.statusCode).toEqual(200);
                     expect(resultXyz.body).toHaveLength(1);
                     expect(resultXyz.body).toEqual([linkedEvent.id]);
-
                 });
             });
         });

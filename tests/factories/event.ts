@@ -12,13 +12,13 @@ export const generateEvent = (
     const start = props.start
         ? new Date(props.start)
         : props.between
-            ? faker.date.between(props.between)
-            : faker.date.between({ from: new Date(), to: new Date(Date.now() + 1000 * 60 * 60 * 24 * 7 * 12) });
+          ? faker.date.between(props.between)
+          : faker.date.between({ from: new Date(), to: new Date(Date.now() + 1000 * 60 * 60 * 24 * 7 * 12) });
     const end = props.end
         ? new Date(props.end)
         : props.between
-            ? faker.date.between({ from: start, to: props.between.to })
-            : faker.date.between({ from: start, to: new Date(start.getTime() + 1000 * 60 * 60 * 24 * 7 * 12) });
+          ? faker.date.between({ from: start, to: props.between.to })
+          : faker.date.between({ from: start, to: new Date(start.getTime() + 1000 * 60 * 60 * 24 * 7 * 12) });
     const { authorId, parentId, jobId, departmentIds, clonedFromId, userIds } = props;
 
     if (authorId) {
@@ -54,7 +54,8 @@ export const generateEvent = (
             props.departments ??
             (departmentIds ? { connect: departmentIds.map((did) => ({ id: did })) } : undefined),
         parent: parentId ? { connect: { id: parentId } } : undefined,
-        linkedUsers: props.linkedUsers ?? (userIds ? { connect: userIds.map((uid) => ({ id: uid })) } : undefined),
+        linkedUsers:
+            props.linkedUsers ?? (userIds ? { connect: userIds.map((uid) => ({ id: uid })) } : undefined),
         clonedFrom: clonedFromId ? { connect: { id: clonedFromId } } : undefined,
         job: jobId ? { connect: { id: jobId } } : undefined
     };
