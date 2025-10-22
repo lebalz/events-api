@@ -78,9 +78,10 @@ describe('updateEvent', () => {
         const user = await createUser({});
         const event = await createEvent({ authorId: user.id, state: EventState.DRAFT });
 
-        await expect(Events.updateModel(user, event.id, { description: 'hello' })).resolves.toEqual(
+        await expect(Events.updateModel(user, event.id, { description: 'hello', linkedUserIds: [user.id] })).resolves.toEqual(
             prepareEvent({
                 ...event,
+                linkedUsers: [{ id: user.id }],
                 description: 'hello',
                 updatedAt: expect.any(Date)
             })
@@ -146,9 +147,10 @@ describe('updateEvent', () => {
             description: 'published'
         });
 
-        await expect(Events.updateModel(user, event.id, { description: 'hello' })).resolves.toEqual(
+        await expect(Events.updateModel(user, event.id, { description: 'hello', linkedUserIds: [user.id] })).resolves.toEqual(
             prepareEvent({
                 ...event,
+                linkedUsers: [{ id: user.id }],
                 id: expect.any(String),
                 state: EventState.DRAFT,
                 createdAt: expect.any(Date),
@@ -169,9 +171,10 @@ describe('updateEvent', () => {
             description: 'published'
         });
 
-        await expect(Events.updateModel(other, event.id, { description: 'hello' })).resolves.toEqual(
+        await expect(Events.updateModel(other, event.id, { description: 'hello', linkedUserIds: [user.id] })).resolves.toEqual(
             prepareEvent({
                 ...event,
+                linkedUsers: [{ id: user.id }],
                 authorId: other.id,
                 id: expect.any(String),
                 state: EventState.DRAFT,
