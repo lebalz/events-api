@@ -11,7 +11,7 @@ export interface ApiEvent
     publishedVersionIds: string[];
 }
 
-type CloneableEvent = Event & { departments: { id: string }[], linkedUsers: { id: string }[] };
+type CloneableEvent = Event & { departments: { id: string }[]; linkedUsers: { id: string }[] };
 type FullClonedEvent = CloneableEvent & { groups: { id: string }[] };
 interface CloneConfig {
     event: CloneableEvent;

@@ -15,7 +15,11 @@ import { faker } from '@faker-js/faker';
 import { createSemester } from './semesters.test';
 
 export const createEvent = async (
-    props: Partial<Prisma.EventUncheckedCreateInput> & { authorId: string; departmentIds?: string[], userIds?: string[] }
+    props: Partial<Prisma.EventUncheckedCreateInput> & {
+        authorId: string;
+        departmentIds?: string[];
+        userIds?: string[];
+    }
 ) => {
     return await prisma.event.create({
         data: generateEvent(props),
@@ -78,7 +82,9 @@ describe('updateEvent', () => {
         const user = await createUser({});
         const event = await createEvent({ authorId: user.id, state: EventState.DRAFT });
 
-        await expect(Events.updateModel(user, event.id, { description: 'hello', linkedUserIds: [user.id] })).resolves.toEqual(
+        await expect(
+            Events.updateModel(user, event.id, { description: 'hello', linkedUserIds: [user.id] })
+        ).resolves.toEqual(
             prepareEvent({
                 ...event,
                 linkedUsers: [{ id: user.id }],
@@ -147,7 +153,9 @@ describe('updateEvent', () => {
             description: 'published'
         });
 
-        await expect(Events.updateModel(user, event.id, { description: 'hello', linkedUserIds: [user.id] })).resolves.toEqual(
+        await expect(
+            Events.updateModel(user, event.id, { description: 'hello', linkedUserIds: [user.id] })
+        ).resolves.toEqual(
             prepareEvent({
                 ...event,
                 linkedUsers: [{ id: user.id }],
@@ -171,7 +179,9 @@ describe('updateEvent', () => {
             description: 'published'
         });
 
-        await expect(Events.updateModel(other, event.id, { description: 'hello', linkedUserIds: [user.id] })).resolves.toEqual(
+        await expect(
+            Events.updateModel(other, event.id, { description: 'hello', linkedUserIds: [user.id] })
+        ).resolves.toEqual(
             prepareEvent({
                 ...event,
                 linkedUsers: [{ id: user.id }],

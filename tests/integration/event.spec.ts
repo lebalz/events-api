@@ -61,7 +61,7 @@ const prepareEvent = (event: Event): any => {
 };
 
 const prepareNotificationEvent = (
-    event: Event & { departmentIds?: string[]; publishedVersionIds?: string[], linkedUserIds?: string[] }
+    event: Event & { departmentIds?: string[]; publishedVersionIds?: string[]; linkedUserIds?: string[] }
 ): any => {
     const prepared = {
         departmentIds: [],
