@@ -246,6 +246,11 @@ describe('clone group', () => {
                 id: {
                     in: clone.eventIds
                 }
+            },
+            include: {
+                linkedUsers: { select: { id: true } },
+                departments: { select: { id: true } },
+                children: { select: { id: true, state: true, createdAt: true } }
             }
         });
         expect(events).toHaveLength(3);

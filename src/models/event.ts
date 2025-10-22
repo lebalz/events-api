@@ -13,13 +13,14 @@ import { Meta } from '../services/importGBSL_xlsx';
 
 type ApiEventUpdateInput = Omit<
     Prisma.EventUncheckedUpdateInput,
-    'classes' | 'classGroups' | 'start' | 'end'
+    'classes' | 'classGroups' | 'start' | 'end' | 'departments' | 'linkedUsers'
 > & {
     start?: Date | string;
     end?: Date | string;
     classes?: string[];
     classGroups?: string[];
     departmentIds?: string[];
+    linkedUserIds?: string[];
 };
 
 const getData = createDataExtractor<ApiEventUpdateInput>([
@@ -97,6 +98,11 @@ function Events(db: PrismaClient['event']) {
                                 }
                             }
                         }
+                    },
+                    linkedUsers: {
+                        select: {
+                            id: true
+                        }
                     }
                 }
             });
@@ -123,7 +129,7 @@ function Events(db: PrismaClient['event']) {
         async findModel(actor: User | undefined, id: string): Promise<ApiEvent> {
             const event = await db.findUnique({
                 where: { id: id },
-                include: { departments: true, children: true }
+                include: { departments: true, children: true, linkedUsers: { select: { id: true } } }
             });
 
             if (!event) {
@@ -148,9 +154,11 @@ function Events(db: PrismaClient['event']) {
             /** remove fields not updatable*/
             const sanitized = getData(data);
             const departmentIds = data.departmentIds || record.departments.map((d) => d.id);
+            const linkedUserIds = data.linkedUserIds || record.linkedUsers.map((u) => u.id);
             let model: Event & {
                 departments: { id: string }[];
                 children: { id: string; state: EventState; createdAt: Date }[];
+                linkedUsers: { id: string }[];
             };
             /* DRAFT     --> update the fields */
             /* OTHERWIES --> create a linked clone and update the props there */
@@ -162,9 +170,12 @@ function Events(db: PrismaClient['event']) {
                         cloned: false,
                         departments: {
                             set: departmentIds.map((id) => ({ id }))
+                        },
+                        linkedUsers: {
+                            set: linkedUserIds.map((id) => ({ id }))
                         }
                     },
-                    include: { departments: true, children: true }
+                    include: { departments: true, children: true, linkedUsers: { select: { id: true } } }
                 });
             } else {
                 const cProps = clonedProps({
@@ -181,11 +192,15 @@ function Events(db: PrismaClient['event']) {
                         state: EventState.DRAFT,
                         departments: {
                             connect: departmentIds.map((id) => ({ id }))
+                        },
+                        linkedUsers: {
+                            connect: linkedUserIds.map((id) => ({ id }))
                         }
                     },
                     include: {
                         departments: { select: { id: true } },
-                        children: { select: { id: true, createdAt: true, state: true } }
+                        children: { select: { id: true, createdAt: true, state: true } },
+                        linkedUsers: { select: { id: true } }
                     }
                 });
             }
@@ -211,7 +226,8 @@ function Events(db: PrismaClient['event']) {
                 data: audience,
                 include: {
                     departments: { select: { id: true } },
-                    children: { select: { id: true, state: true, createdAt: true } }
+                    children: { select: { id: true, state: true, createdAt: true } },
+                    linkedUsers: { select: { id: true } }
                 }
             });
             return prepareEvent(model);
@@ -229,13 +245,14 @@ function Events(db: PrismaClient['event']) {
                         metaData === null
                             ? Prisma.DbNull
                             : ({
-                                  ...((record.meta as Prisma.JsonObject) || {}),
-                                  ...metaData
-                              } as Prisma.JsonObject)
+                                ...((record.meta as Prisma.JsonObject) || {}),
+                                ...metaData
+                            } as Prisma.JsonObject)
                 },
                 include: {
                     departments: { select: { id: true } },
-                    children: { select: { id: true, state: true, createdAt: true } }
+                    children: { select: { id: true, state: true, createdAt: true } },
+                    linkedUsers: { select: { id: true } }
                 }
             });
             return prepareEvent(model);
@@ -258,6 +275,11 @@ function Events(db: PrismaClient['event']) {
                         select: {
                             id: true
                         }
+                    },
+                    linkedUsers: {
+                        select: {
+                            id: true
+                        }
                     }
                 }
             });
@@ -277,7 +299,8 @@ function Events(db: PrismaClient['event']) {
                     },
                     include: {
                         departments: { select: { id: true } },
-                        children: { select: { id: true, createdAt: true, state: true } }
+                        children: { select: { id: true, createdAt: true, state: true } },
+                        linkedUsers: { select: { id: true } }
                     }
                 });
 
@@ -344,6 +367,11 @@ function Events(db: PrismaClient['event']) {
                                     select: {
                                         id: true
                                     }
+                                },
+                                linkedUsers: {
+                                    select: {
+                                        id: true
+                                    }
                                 }
                             }
                         });
@@ -406,15 +434,15 @@ function Events(db: PrismaClient['event']) {
                                     }),
                                     ...(record.clonedFromId
                                         ? {
-                                              clonedFrom: {
-                                                  connect: {
-                                                      id:
-                                                          record.clonedFromId === parent.id
-                                                              ? record.id
-                                                              : record.clonedFromId
-                                                  }
-                                              }
-                                          }
+                                            clonedFrom: {
+                                                connect: {
+                                                    id:
+                                                        record.clonedFromId === parent.id
+                                                            ? record.id
+                                                            : record.clonedFromId
+                                                }
+                                            }
+                                        }
                                         : {}),
                                     groups: {
                                         set: groups.map((id) => ({ id }))
@@ -453,18 +481,18 @@ function Events(db: PrismaClient['event']) {
                         // oldCurrent: the previous published event, now accessible under the id of the former review candidate
                         const oldCurrent = await db.findUnique({
                             where: { id: record.id },
-                            include: { departments: true, children: true }
+                            include: { departments: true, children: true, linkedUsers: { select: { id: true } } }
                         });
                         // updatedCurrent: the current version
                         const updatedCurrent = await db.findUnique({
                             where: { id: parent.id },
-                            include: { departments: true, children: true }
+                            include: { departments: true, children: true, linkedUsers: { select: { id: true } } }
                         });
                         const refused = await db.findMany({
                             where: {
                                 id: { in: siblings.map((s) => s.id) }
                             },
-                            include: { departments: true, children: true }
+                            include: { departments: true, children: true, linkedUsers: { select: { id: true } } }
                         });
                         return {
                             event: prepareEvent(updatedCurrent!),
@@ -502,7 +530,7 @@ function Events(db: PrismaClient['event']) {
                     where: {
                         id: record.id
                     },
-                    include: { departments: true, children: true }
+                    include: { departments: true, children: true, linkedUsers: { select: { id: true } } }
                 });
                 return prepareEvent(model);
             }
@@ -514,7 +542,7 @@ function Events(db: PrismaClient['event']) {
                     deletedAt: new Date(),
                     jobId: options.unlinkFromJob ? null : undefined
                 },
-                include: { departments: true, children: true }
+                include: { departments: true, children: true, linkedUsers: { select: { id: true } } }
             });
             return prepareEvent(model);
         },
@@ -554,7 +582,7 @@ function Events(db: PrismaClient['event']) {
         async forUser(user: User): Promise<ApiEvent[]> {
             const isAdmin = user.role === Role.ADMIN;
             const events = await db.findMany({
-                include: { departments: true, children: true },
+                include: { departments: true, children: true, linkedUsers: { select: { id: true } } },
                 where: {
                     AND: [
                         {
@@ -585,43 +613,44 @@ function Events(db: PrismaClient['event']) {
             const events = await db.findMany({
                 include: {
                     departments: { select: { id: true } },
-                    children: { select: { id: true, state: true, createdAt: true } }
+                    children: { select: { id: true, state: true, createdAt: true } },
+                    linkedUsers: { select: { id: true } }
                 },
                 where: {
                     AND: rmUndefined([
                         { id: { in: ids } },
                         actor
                             ? {
-                                  OR: [
-                                      {
-                                          state: {
-                                              in:
-                                                  actor.role === 'ADMIN'
-                                                      ? [
-                                                            EventState.PUBLISHED,
-                                                            EventState.REFUSED,
-                                                            EventState.REVIEW
-                                                        ]
-                                                      : [EventState.PUBLISHED]
-                                          }
-                                      },
-                                      { authorId: actor.id },
-                                      {
-                                          groups: {
-                                              some: {
-                                                  users: {
-                                                      some: {
-                                                          id: actor?.id
-                                                      }
-                                                  }
-                                              }
-                                          }
-                                      }
-                                  ]
-                              }
+                                OR: [
+                                    {
+                                        state: {
+                                            in:
+                                                actor.role === 'ADMIN'
+                                                    ? [
+                                                        EventState.PUBLISHED,
+                                                        EventState.REFUSED,
+                                                        EventState.REVIEW
+                                                    ]
+                                                    : [EventState.PUBLISHED]
+                                        }
+                                    },
+                                    { authorId: actor.id },
+                                    {
+                                        groups: {
+                                            some: {
+                                                users: {
+                                                    some: {
+                                                        id: actor?.id
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                ]
+                            }
                             : {
-                                  state: EventState.PUBLISHED
-                              }
+                                state: EventState.PUBLISHED
+                            }
                     ])
                 },
                 orderBy: { start: 'asc' }
@@ -636,7 +665,7 @@ function Events(db: PrismaClient['event']) {
                     state: EventState.DRAFT,
                     authorId: actor.id
                 },
-                include: { children: true }
+                include: { children: true, linkedUsers: { select: { id: true } } }
             });
             return prepareEvent(model);
         },
@@ -644,7 +673,7 @@ function Events(db: PrismaClient['event']) {
             const record = await this._findRecord(actor, id, false);
             const newEvent = await db.create({
                 data: { ...clonedProps({ type: 'basic', event: record, uid: actor.id }), cloned: true },
-                include: { departments: true, children: true }
+                include: { departments: true, children: true, linkedUsers: { select: { id: true } } }
             });
             return prepareEvent(newEvent);
         },

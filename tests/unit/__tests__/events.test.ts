@@ -15,10 +15,15 @@ import { faker } from '@faker-js/faker';
 import { createSemester } from './semesters.test';
 
 export const createEvent = async (
-    props: Partial<Prisma.EventUncheckedCreateInput> & { authorId: string; departmentIds?: string[] }
+    props: Partial<Prisma.EventUncheckedCreateInput> & { authorId: string; departmentIds?: string[], userIds?: string[] }
 ) => {
     return await prisma.event.create({
-        data: generateEvent(props)
+        data: generateEvent(props),
+        include: {
+            linkedUsers: { select: { id: true } },
+            departments: { select: { id: true } },
+            children: { select: { id: true, state: true, createdAt: true } }
+        }
     });
 };
 
@@ -100,7 +105,7 @@ describe('updateEvent', () => {
             authorId: user.id,
             state: EventState.DRAFT,
             departments: {
-                connect: [{ id: dep1.id }]
+                connect: []
             }
         });
         expect(prepareEvent(event).departmentIds).toEqual([]);
@@ -655,9 +660,11 @@ describe('cloneEvent', () => {
             id: '7cf72375-4ee7-4a13-afeb-8d68883acdf4',
             authorId: maria.id,
             state: EventState.PUBLISHED,
+            userIds: [maria.id, reto.id].sort(),
             createdAt: new Date(2021, 1, 1),
             updatedAt: new Date(2021, 1, 2)
         });
+        expect(prepareEvent(event).linkedUserIds.sort()).toEqual([maria.id, reto.id].sort());
 
         const clone = await Events.cloneModel(reto, event.id);
         expect(clone).toHaveProperty('id', expect.any(String));

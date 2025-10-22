@@ -15,8 +15,8 @@ const withTmpEvent = async <T>(
 ) => {
     const tempId = uuidv4();
     try {
-        const { departmentIds } = data;
-        ['departmentIds', 'publishedVersionIds', 'authorId', 'jobId', 'parentId'].forEach((key) => {
+        const { departmentIds, linkedUserIds } = data;
+        ['departmentIds', 'publishedVersionIds', 'linkedUserIds', 'authorId', 'jobId', 'parentId'].forEach((key) => {
             delete (data as any)[key];
         });
 
@@ -28,6 +28,10 @@ const withTmpEvent = async <T>(
                 departments:
                     (departmentIds || []).length > 0
                         ? { connect: departmentIds!.map((id) => ({ id })) }
+                        : undefined,
+                linkedUsers:
+                    (linkedUserIds || []).length > 0
+                        ? { connect: linkedUserIds!.map((id) => ({ id })) }
                         : undefined,
                 groups: undefined,
                 id: tempId

@@ -148,7 +148,7 @@ describe('notifications > helpers > getEventProps', () => {
                     { name: translate('deletedAt', 'de'), value: '-' },
                     { name: translate('state', 'de'), value: translate('DRAFT', 'de') },
                     { name: translate('teachingAffected', 'de'), value: translate('YES', 'de') },
-                    { name: translate('audience', 'de'), value: translate('STUDENTS', 'de') }
+                    { name: translate('audience', 'de'), value: translate('STUDENTS', 'de') },
                 ],
                 ['name']
             )

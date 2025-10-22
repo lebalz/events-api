@@ -128,10 +128,10 @@ function Users(db: PrismaClient['user']) {
             const semester = semesterId
                 ? await prisma.semester.findUnique({ where: { id: semesterId } })
                 : await prisma.semester.findFirst({
-                      where: {
-                          AND: [{ start: { lte: new Date() } }, { end: { gte: new Date() } }]
-                      }
-                  });
+                    where: {
+                        AND: [{ start: { lte: new Date() } }, { end: { gte: new Date() } }]
+                    }
+                });
             if (!semester) {
                 throw new HTTP404Error('Semester not found');
             }

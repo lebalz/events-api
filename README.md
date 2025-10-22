@@ -13,6 +13,8 @@ Get the latest dump of the production db:
 
 ```bash
 dokku postgres:export events-api > backup.sql
+psql -U postgres -h localhost -c 'drop database if exists events_api;'
+psql -U postgres -h localhost -c 'create database events_api;'
 pg_restore -c -d events_api -U postgres -h localhost backup.sql
 ```
 

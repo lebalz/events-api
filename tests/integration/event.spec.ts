@@ -44,6 +44,7 @@ const prepareEvent = (event: Event): any => {
     const prepared = {
         departmentIds: [],
         publishedVersionIds: [],
+        linkedUserIds: [],
         ...event,
         start: event.start.toISOString(),
         end: event.end.toISOString(),
@@ -54,15 +55,18 @@ const prepareEvent = (event: Event): any => {
         delete (prepared as any).meta;
     }
     delete (prepared as any).departments;
+    delete (prepared as any).linkedUsers;
+    delete (prepared as any).children;
     return prepared;
 };
 
 const prepareNotificationEvent = (
-    event: Event & { departmentIds?: string[]; publishedVersionIds?: string[] }
+    event: Event & { departmentIds?: string[]; publishedVersionIds?: string[], linkedUserIds?: string[] }
 ): any => {
     const prepared = {
         departmentIds: [],
         publishedVersionIds: [],
+        linkedUserIds: [],
         ...event,
         start: new Date(event.start),
         end: new Date(event.end),
