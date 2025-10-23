@@ -466,7 +466,6 @@ describe('setState transitions', () => {
             publishedVersionIds: []
         };
         const result = await Events.setState(admin, nextCurrent.id, EventState.PUBLISHED);
-        console.log(JSON.stringify(result, null, 2));
         await expect(result).toEqual({
             event: newCurrent,
             previous: oldCurrent,

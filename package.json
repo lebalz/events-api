@@ -15,7 +15,7 @@
     "test:db:create": "npx prisma migrate dev",
     "test": "TZ=UTC jest -c jest.config.unit.js -- && TZ=UTC NODE_ENV=test jest -c jest.config.integration.js --",
     "unit": "TZ=UTC NODE_ENV=test jest -c jest.config.unit.js --",
-    "integration": "TZ=UTC NODE_ENV=test jest -c jest.config.integration.js --",
+    "integration": "TZ=UTC NODE_ENV=test jest -c jest.config.integration.js",
     "cov": "TZ=UTC jest --collectCoverage -c jest.config.unit.js -- && TZ=UTC jest --collectCoverage -c jest.config.integration.js --",
     "cov:unit": "TZ=UTC jest --collectCoverage -c jest.config.unit.js --",
     "cov:integration": "TZ=UTC jest --collectCoverage -c jest.config.integration.js --",

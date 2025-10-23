@@ -1468,6 +1468,31 @@ describe(`POST ${API_URL}/events/change_state`, () => {
                     });
                 });
             });
+            describe('allows transition of an event having only linked users as audience', () => {
+                beforeEach(() => {
+                    jest.spyOn(eventModel, 'getCurrentDate').mockReturnValue(
+                        new Date('2024-03-08T08:00:00.000Z')
+                    );
+                });
+                it(`lets user request review`, async () => {
+                    const event = await prisma.event.create({
+                        data: generateEvent({
+                            start: '2024-04-15T00:00:00.000Z',
+                            end: '2024-04-30T12:00:00.000Z',
+                            state: EventState.DRAFT,
+                            authorId: user.id,
+                            userIds: [user.id, admin.id]
+                        })
+                    });
+                    const result = await request(app)
+                        .post(`${API_URL}/events/change_state`)
+                        .set('authorization', JSON.stringify({ email: user.email }))
+                        .send({ data: { ids: [event.id], state: EventState.REVIEW } });
+                    expect(result.statusCode).toEqual(201);
+                    expect(result.body.length).toEqual(1);
+                    expect(result.body[0].state).toEqual(EventState.REVIEW);
+                });
+            });
             describe('forbidden transitions during open registration period', () => {
                 const FORBIDDEN_TRANSITIONS = [
                     {
@@ -1550,6 +1575,32 @@ describe(`POST ${API_URL}/events/change_state`, () => {
                             });
                         });
                     });
+                });
+            });
+            describe('forbids transition of an event having only linked users as audience outside of registration period', () => {
+                beforeEach(() => {
+                    jest.spyOn(eventModel, 'getCurrentDate').mockReturnValue(
+                        new Date('2024-04-30T00:00:01.000Z')
+                    );
+                });
+                it(`prevents user request review`, async () => {
+                    const event = await prisma.event.create({
+                        data: generateEvent({
+                            start: '2024-04-15T00:00:00.000Z',
+                            end: '2024-04-30T12:00:00.000Z',
+                            state: EventState.DRAFT,
+                            authorId: user.id,
+                            userIds: [user.id, admin.id]
+                        })
+                    });
+                    const result = await request(app)
+                        .post(`${API_URL}/events/change_state`)
+                        .set('authorization', JSON.stringify({ email: user.email }))
+                        .send({ data: { ids: [event.id], state: EventState.REVIEW } });
+                    expect(result.statusCode).toEqual(400);
+                    await expect(prisma.event.findUnique({ where: { id: event.id } })).resolves.toMatchObject(
+                        { state: EventState.DRAFT }
+                    );
                 });
             });
         });

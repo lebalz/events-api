@@ -324,23 +324,43 @@ function Events(db: PrismaClient['event']) {
                             const parent = await this.findModel(actor, publishedParent[0].id);
                             return { event: prepareEvent(model), parent: parent, refused: [] };
                         } else {
-                            const openRegistrationPeriod =
-                                await prisma.view_EventsRegistrationPeriods.findFirst({
-                                    where: {
-                                        eventId: record.id,
-                                        OR: [
-                                            { rpIsOpen: true },
-                                            {
-                                                AND: [
-                                                    { rpStart: { lte: getCurrentDate() } },
-                                                    { rpEnd: { gte: getCurrentDate() } },
-                                                    { rpEventRangeStart: { lte: record.start } },
-                                                    { rpEventRangeEnd: { gte: record.start } }
-                                                ]
-                                            }
-                                        ]
-                                    }
-                                });
+                            const hasOnlyLinkedUsers =
+                                record.linkedUsers.length > 0 &&
+                                record.departments.length === 0 &&
+                                record.classes.length === 0 &&
+                                record.classGroups.length === 0;
+                            const openRegistrationPeriod = hasOnlyLinkedUsers
+                                ? await prisma.registrationPeriod.findFirst({
+                                      where: {
+                                          eventRangeStart: { lte: record.start },
+                                          eventRangeEnd: { gte: record.start },
+                                          OR: [
+                                              { isOpen: true },
+                                              {
+                                                  AND: [
+                                                      { start: { lte: getCurrentDate() } },
+                                                      { end: { gte: getCurrentDate() } }
+                                                  ]
+                                              }
+                                          ]
+                                      }
+                                  })
+                                : await prisma.view_EventsRegistrationPeriods.findFirst({
+                                      where: {
+                                          eventId: record.id,
+                                          OR: [
+                                              { rpIsOpen: true },
+                                              {
+                                                  AND: [
+                                                      { rpStart: { lte: getCurrentDate() } },
+                                                      { rpEnd: { gte: getCurrentDate() } },
+                                                      { rpEventRangeStart: { lte: record.start } },
+                                                      { rpEventRangeEnd: { gte: record.start } }
+                                                  ]
+                                              }
+                                          ]
+                                      }
+                                  });
                             if (!openRegistrationPeriod && !isAdmin) {
                                 throw new HTTP400Error('No open registration period found.');
                             }
