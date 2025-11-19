@@ -125,18 +125,19 @@ describe(`PUT ${API_URL}/registration_periods/:id`, () => {
             .set('authorization', JSON.stringify({ email: admin.email }))
             .send({ data: { departmentIds: [gbsl.id, gbjb.id] } });
         expect(result.statusCode).toEqual(200);
-        expect(result.body).toEqual({
+        expect({ ...result.body, departmentIds: result.body.departmentIds.sort() }).toEqual({
             ...prepareRegistrationPeriod(regPeriod!),
-            departmentIds: [gbsl.id, gbjb.id],
+            departmentIds: [gbsl.id, gbjb.id].sort(),
             updatedAt: expect.any(String)
         });
         expect(mNotification).toHaveBeenCalledTimes(1);
-        expect(mNotification.mock.calls[0][0]).toEqual({
+        expect(prepareRecord(mNotification.mock.calls[0][0], { sortedArrayFields: ['message.record.departmentIds'] })).toEqual({
             event: IoEvent.CHANGED_RECORD,
             message: {
                 type: 'REGISTRATION_PERIOD',
                 record: prepareRecord(result.body, {
-                    dateFields: ['end', 'start', 'eventRangeEnd', 'eventRangeStart', 'createdAt', 'updatedAt']
+                    dateFields: ['end', 'start', 'eventRangeEnd', 'eventRangeStart', 'createdAt', 'updatedAt'],
+                    sortedArrayFields: ['departmentIds']
                 })
             },
             to: 'all'
