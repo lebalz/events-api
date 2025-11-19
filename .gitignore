@@ -29,4 +29,4 @@ docs/prisma/**/*
 *.data.json
 # Sentry Config File
 .sentryclirc
-backup.sql
+backup.dump

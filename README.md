@@ -308,6 +308,19 @@ dokku nginx:set hfr-events-api x-forwarded-port-value '$http_x_forwarded_port'
 ## Dump from production
 
 ```bash
+# inside shell of VSCode DevContainer (with configured dokku git remote)
+dokku postgres:export events-api > backup.dump
+psql -U postgres -h localhost -c 'drop database if exists events_api;'
+psql -U postgres -h localhost -c 'create database events_api;'
+pg_restore -h localhost --verbose --clean --no-owner --no-privileges -U postgres -d events_api < backup.dump
+yarn run prisma migrate dev
+
+# when ai-pr was once merged/deployed to the db, run `delete from _prisma_migrations where migration_name ilike '%_ai_%';`
+```
+
+or the old fashioned way:
+
+```bash
 # on the dokku server
 dokku postgres:export events-api > backup.dump
 # to plaintext               <container-name>
