@@ -53,7 +53,8 @@ async function createViewMigration(viewNames: string[]) {
         if (idx >= 0) {
             return;
         }
-        for (const dep of viewConfig.depends_on) {
+        const dependents = config.filter((dep) => dep.depends_on.includes(viewName)).map(d => d.name);
+        for (const dep of dependents) {
             gatherDependencies(dep);
         }
         migrationsFor.push(viewName);
@@ -65,7 +66,7 @@ async function createViewMigration(viewNames: string[]) {
     migrationsFor.forEach((viewName) => {
         commands.push(`DROP VIEW IF EXISTS ${viewName};`);
     });
-    for (const viewName of migrationsFor) {
+    for (const viewName of migrationsFor.toReversed()) {
         const viewSqlPath = path.resolve(currentDir, 'views', `${viewName}.sql`);
         const viewSql = await fs.promises.readFile(viewSqlPath, 'utf8');
         commands.push(`
