@@ -1,3 +1,4 @@
+-- view__events_classes
 SELECT events.*, untis_classes.id AS klass_id, untis_classes.name AS klass_name, departments.id AS department_id
     FROM events 
         JOIN _events_to_departments e2d ON e2d."B"=events.id

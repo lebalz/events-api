@@ -357,23 +357,32 @@ view view_UsersAffectedByEvents {
     @@map("view__users_affected_by_events")
 }
 
+view view_LessonsAffectedByEventsUnfiltered {
+    eventId    String   @map("e_id") @db.Uuid
+    eventStart DateTime @map("e_start")
+    eventEnd   DateTime @map("e_end")
+    lessonId   Int      @map("lesson_id")
+
+    @@unique([lessonId, eventId])
+    @@map("view__lessons_affected_by_events_unfiltered")
+}
+
 view view_LessonsAffectedByEvents {
-    eventId     String  @map("e_id") @db.Uuid
-    sId         String  @map("s_id") @db.Uuid
+    eventId     String @map("e_id") @db.Uuid
     id          Int
     room        String
     subject     String
     description String
-    semesterNr  Int     @map("semester_nr")
+    semesterId  String @map("semester_id") @db.Uuid
+    semesterNr  Int    @map("semester_nr")
     year        Int
-    weekDay     Int     @map("week_day")
-    startHHMM   Int     @map("start_hhmm")
-    endHHMM     Int     @map("end_hhmm")
-    semesterId  String? @map("semester_id") @db.Uuid
-    teacherIds  Int[]   @map("teacher_ids")
-    classIds    Int[]   @map("class_ids")
+    weekDay     Int    @map("week_day")
+    startHHMM   Int    @map("start_hhmm")
+    endHHMM     Int    @map("end_hhmm")
+    teacherIds  Int[]  @map("teacher_ids")
+    classIds    Int[]  @map("class_ids")
 
-    @@unique([id, eventId, sId])
+    @@unique([id, eventId, semesterId])
     @@map("view__lessons_affected_by_events")
 }
 

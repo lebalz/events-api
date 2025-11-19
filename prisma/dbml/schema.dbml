@@ -281,24 +281,34 @@ Table view__users_affected_by_events {
   }
 }
 
+Table view__lessons_affected_by_events_unfiltered {
+  eventId String [not null]
+  eventStart DateTime [not null]
+  eventEnd DateTime [not null]
+  lessonId Int [not null]
+
+  indexes {
+    (lessonId, eventId) [unique]
+  }
+}
+
 Table view__lessons_affected_by_events {
   eventId String [not null]
-  sId String [not null]
   id Int [not null]
   room String [not null]
   subject String [not null]
   description String [not null]
+  semesterId String [not null]
   semesterNr Int [not null]
   year Int [not null]
   weekDay Int [not null]
   startHHMM Int [not null]
   endHHMM Int [not null]
-  semesterId String
   teacherIds Int[] [not null]
   classIds Int[] [not null]
 
   indexes {
-    (id, eventId, sId) [unique]
+    (id, eventId, semesterId) [unique]
   }
 }
 
