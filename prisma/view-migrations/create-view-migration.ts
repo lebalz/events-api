@@ -57,9 +57,15 @@ async function createViewMigration(viewNames: string[]) {
         for (const dep of dependents) {
             gatherDependencies(dep);
         }
-        migrationsFor.push(viewName);
+        if (!migrationsFor.includes(viewName)) {
+            migrationsFor.push(viewName);
+        }
+        for (const dependency of viewConfig.depends_on) {
+            gatherDependencies(dependency);
+        }
     };
     viewNames.forEach(gatherDependencies);
+    console.log(migrationsFor.join(' -> '));
 
     const commands: string[] = [];
     commands.push(`-- NEVER MODIFY THIS FILE MANUALLY! IT IS AUTO-GENERATED USING prisma/view-migrations/create-view-migration.ts`);
@@ -71,7 +77,7 @@ async function createViewMigration(viewNames: string[]) {
         const viewSql = await fs.promises.readFile(viewSqlPath, 'utf8');
         commands.push(`
 CREATE VIEW ${viewName} AS
-${viewSql.replace(/;+$/, '').trim()}
+${viewSql.replace(/;+\s*$/, '').trim()}
 ;
 `);
     };
