@@ -20,7 +20,7 @@ jobs:
           node-version: '>=22.11'
 
       - name: Install dependencies
-        run: yarn install
+        run: yarn install --ignore-engines
 
       - name: Run Prettier check
         run: yarn run format:check
