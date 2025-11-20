@@ -50,7 +50,7 @@ import {
     destroy as deleteSemester,
     sync
 } from '../controllers/semesters';
-import { teachers, teacher, classes, subjects } from '../controllers/untis';
+import { teachers, teacher, classes, subjects, teachersSubjects } from '../controllers/untis';
 import {
     user,
     events as usersEvents,
@@ -68,8 +68,8 @@ import multer from 'multer';
 const UPLOAD_DIR = process.env.UPLOAD_DIR
     ? process.env.UPLOAD_DIR
     : process.env.NODE_ENV === 'test'
-      ? 'tests/test-data/uploads'
-      : 'uploads';
+        ? 'tests/test-data/uploads'
+        : 'uploads';
 
 // initialize router
 const router = express.Router();
@@ -109,6 +109,7 @@ router.get('/untis/teachers', teachers);
 router.get('/untis/teachers/:id', teacher);
 router.get('/untis/classes', classes);
 router.get('/untis/subjects', subjects);
+router.get('/untis/teachers_subjects', teachersSubjects);
 
 router.get('/departments', allDepartments);
 router.get('/departments/:id', findDepartment);

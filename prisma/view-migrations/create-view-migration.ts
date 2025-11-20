@@ -2,7 +2,6 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as yaml from 'js-yaml';
 import { default as parseArgs } from 'minimist';
-import { fileURLToPath } from 'url';
 import { exit } from 'process';
 
 const currentDir = __dirname;
@@ -13,7 +12,10 @@ interface Config {
 }
 const config = yaml.load(fs.readFileSync(path.resolve(currentDir, CONFIG_FILENAME), 'utf8')) as Config[];
 const HELP_TEXT = `
-yarn run db:migrate-view [view-name]
+yarn run db:migrate-view [view-name [view-name ...]]
+
+Example:
+  yarn run db:migrate-view view__events view__klps
 
 available views (configured in ${CONFIG_FILENAME}):
 ${config.map((c) => ` - ${c.name}`).join('\n')}
