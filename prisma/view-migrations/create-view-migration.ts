@@ -37,7 +37,10 @@ if (viewNames.length === 0) {
 if (viewNames.some((viewName) => !config.find((c) => c.name === viewName))) {
     console.error(
         'Error: Invalid view name provided. Unknown views:\n',
-        viewNames.filter((viewName) => !config.find((c) => c.name === viewName)).map(n => `- ${n}`).join(`\n`),
+        viewNames
+            .filter((viewName) => !config.find((c) => c.name === viewName))
+            .map((n) => `- ${n}`)
+            .join(`\n`),
         `\nCheck ${CONFIG_FILENAME} to configure additional views.`
     );
     console.log(HELP_TEXT);
@@ -55,7 +58,7 @@ async function createViewMigration(viewNames: string[]) {
         if (idx >= 0) {
             return;
         }
-        const dependents = config.filter((dep) => dep.depends_on.includes(viewName)).map(d => d.name);
+        const dependents = config.filter((dep) => dep.depends_on.includes(viewName)).map((d) => d.name);
         for (const dep of dependents) {
             gatherDependencies(dep);
         }
@@ -70,7 +73,9 @@ async function createViewMigration(viewNames: string[]) {
     console.log(migrationsFor.join(' -> '));
 
     const commands: string[] = [];
-    commands.push(`-- NEVER MODIFY THIS FILE MANUALLY! IT IS AUTO-GENERATED USING prisma/view-migrations/create-view-migration.ts`);
+    commands.push(
+        `-- NEVER MODIFY THIS FILE MANUALLY! IT IS AUTO-GENERATED USING prisma/view-migrations/create-view-migration.ts`
+    );
     migrationsFor.forEach((viewName) => {
         commands.push(`DROP VIEW IF EXISTS ${viewName};`);
     });
@@ -82,10 +87,13 @@ CREATE VIEW ${viewName} AS
 ${viewSql.replace(/;+\s*$/, '').trim()}
 ;
 `);
-    };
+    }
     const migrationContent = commands.join('\n\n');
-    const timestamp = new Date().toISOString().replace(/[-:TZ.]/g, '').slice(0, 14);
-    const migrationFilename = `${timestamp}_create_views__${viewNames.map(name => name.replace(/^view__/, '')).join('__')}`;
+    const timestamp = new Date()
+        .toISOString()
+        .replace(/[-:TZ.]/g, '')
+        .slice(0, 14);
+    const migrationFilename = `${timestamp}_create_views__${viewNames.map((name) => name.replace(/^view__/, '')).join('__')}`;
     const migrationsDir = path.resolve(currentDir, '..', 'migrations', migrationFilename);
     await fs.promises.mkdir(migrationsDir, { recursive: true });
     const migrationFilePath = path.resolve(migrationsDir, 'migration.sql');

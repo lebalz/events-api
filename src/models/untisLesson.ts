@@ -12,7 +12,7 @@ export interface UntisTeacherSubject {
     shortName: string;
     lang: string;
     semesterId: string;
-    subjects: { name: string, description: string }[];
+    subjects: { name: string; description: string }[];
 }
 
 function UntisLessons(db: PrismaClient['untisLesson']) {

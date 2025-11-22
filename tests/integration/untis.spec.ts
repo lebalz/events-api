@@ -154,8 +154,6 @@ describe(`GET ${API_URL}/untis/subjects`, () => {
     });
 });
 
-
-
 describe(`GET ${API_URL}/untis/teachers_subjects`, () => {
     it('prevents public user to fetch teachers subjects', async () => {
         const result = await request(app).get(`${API_URL}/untis/teachers_subjects`);
@@ -181,9 +179,10 @@ describe(`GET ${API_URL}/untis/teachers_subjects`, () => {
         expect(subjects.lang).toEqual('de');
         expect(subjects.semesterId).toEqual(semester!.id);
         expect(subjects.subjects.length).toEqual(2);
-        expect(_.sortBy(subjects.subjects, 'name')).toEqual(
-            [{ name: 'IN', description: 'Informatik' }, { name: 'M', description: 'Mathematik' }]
-        );
+        expect(_.sortBy(subjects.subjects, 'name')).toEqual([
+            { name: 'IN', description: 'Informatik' },
+            { name: 'M', description: 'Mathematik' }
+        ]);
         expect(mNotification).toHaveBeenCalledTimes(0);
     });
 });

@@ -131,12 +131,23 @@ describe(`PUT ${API_URL}/registration_periods/:id`, () => {
             updatedAt: expect.any(String)
         });
         expect(mNotification).toHaveBeenCalledTimes(1);
-        expect(prepareRecord(mNotification.mock.calls[0][0], { sortedArrayFields: ['message.record.departmentIds'] })).toEqual({
+        expect(
+            prepareRecord(mNotification.mock.calls[0][0], {
+                sortedArrayFields: ['message.record.departmentIds']
+            })
+        ).toEqual({
             event: IoEvent.CHANGED_RECORD,
             message: {
                 type: 'REGISTRATION_PERIOD',
                 record: prepareRecord(result.body, {
-                    dateFields: ['end', 'start', 'eventRangeEnd', 'eventRangeStart', 'createdAt', 'updatedAt'],
+                    dateFields: [
+                        'end',
+                        'start',
+                        'eventRangeEnd',
+                        'eventRangeStart',
+                        'createdAt',
+                        'updatedAt'
+                    ],
                     sortedArrayFields: ['departmentIds']
                 })
             },
