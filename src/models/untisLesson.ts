@@ -31,6 +31,7 @@ function UntisLessons(db: PrismaClient['untisLesson']) {
             return result;
         },
         async teachersSubjects(semesterId: string) {
+            console.log('Fetching teachers subjects for semesterId:', semesterId);
             const result = await prisma.$queryRaw<UntisTeacherSubject[]>(
                 Prisma.sql`SELECT
                                 users.id as "userId",
