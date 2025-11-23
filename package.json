@@ -27,6 +27,7 @@
     "untis:fetch": "ts-node -r dotenv/config ./bin/fetch-untis.ts",
     "untis:sync": "ts-node -r dotenv/config ./bin/sync-untis-2-db.ts",
     "dummy:run": "ts-node -r dotenv/config ./bin/dummy.ts",
+    "msft:fetch-users": "ts-node -r dotenv/config ./src/services/fetchUsers.ts",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "sentry:sourcemaps": "sentry-cli sourcemaps inject --org balthasar-hofer --project node-express ./dist && sentry-cli sourcemaps upload --org $SENTRY_ORG --project $SENTRY_PROJECT ./dist"
@@ -36,6 +37,7 @@
   },
   "dependencies": {
     "@azure/msal-node": "^2.13.0",
+    "@microsoft/microsoft-graph-client": "^3.0.7",
     "@prisma/client": "^6.2.1",
     "@sentry/cli": "^2.43.0",
     "@sentry/node": "^9.11.0",
