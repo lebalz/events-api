@@ -383,11 +383,11 @@ describe('event > check > unpersisted', () => {
             semester.id
         );
         expect(res).toHaveLength(1);
-        expect(res[0].subject).toEqual('M');
-        expect(res[0].startHHMM).toEqual(1455);
-        expect(res[0].endHHMM).toEqual(1540);
-        expect(res[0].teacherIds).toHaveLength(1);
-        expect(res[0].teacherIds[0]).toEqual(1);
+        expect(res![0].subject).toEqual('M');
+        expect(res![0].startHHMM).toEqual(1455);
+        expect(res![0].endHHMM).toEqual(1540);
+        expect(res![0].teacherIds).toHaveLength(1);
+        expect(res![0].teacherIds[0]).toEqual(1);
         expect(prisma.event.count()).resolves.toBe(0);
     });
     it('returns affected teachers', async () => {
@@ -405,7 +405,7 @@ describe('event > check > unpersisted', () => {
             semester.id
         );
         expect(res).toHaveLength(1);
-        expect(res[0]).toEqual(expectedUser.id);
+        expect(res![0]).toEqual(expectedUser.id);
         expect(prisma.event.count()).resolves.toBe(0);
     });
 });
