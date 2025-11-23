@@ -16,7 +16,7 @@ const withTmpEvent = async <T>(
     const tempId = uuidv4();
     try {
         const { departmentIds, linkedUserIds } = data;
-        ['departmentIds', 'publishedVersionIds', 'linkedUserIds', 'authorId', 'jobId', 'parentId'].forEach(
+        ['departmentIds', 'publishedVersionIds', 'clonedFromId', 'linkedUserIds', 'authorId', 'jobId', 'parentId'].forEach(
             (key) => {
                 delete (data as any)[key];
             }
@@ -40,6 +40,8 @@ const withTmpEvent = async <T>(
             }
         });
         return await callback(tempEvent);
+    } catch (error) {
+        Logger.error('Error creating temporary event', error);
     } finally {
         // This block executes whether an exception is thrown or not
         try {
@@ -49,7 +51,7 @@ const withTmpEvent = async <T>(
                 }
             });
         } catch (error) {
-            Logger.error('Error deleting temporary event', tempId, error);
+            Logger.error('Error deleting temporary event', error);
         }
     }
 };

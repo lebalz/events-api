@@ -41,7 +41,7 @@ const EventRouter = (io: Server<ClientToServerEvents, ServerToClientEvents>) => 
         socket.on(IoEvents.AffectedLessonsTmp, async (event, semesterId, callback) => {
             try {
                 const result = await checkUnpersisted(user.id, event, semesterId);
-                callback({ state: 'success', lessons: result });
+                callback({ state: 'success', lessons: result ?? [] });
             } catch (error) /* istanbul ignore next */ {
                 Logger.error(error);
                 callback({ state: 'error', message: (error as Error).message });

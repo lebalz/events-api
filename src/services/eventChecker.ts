@@ -1,4 +1,3 @@
-import type { Event } from '@prisma/client';
 import prisma from '../prisma';
 
 export const affectedLessons = async (eventId: string, semesterId: string) => {
