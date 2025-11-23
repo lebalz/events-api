@@ -16,11 +16,17 @@ const withTmpEvent = async <T>(
     const tempId = uuidv4();
     try {
         const { departmentIds, linkedUserIds } = data;
-        ['departmentIds', 'publishedVersionIds', 'clonedFromId', 'linkedUserIds', 'authorId', 'jobId', 'parentId'].forEach(
-            (key) => {
-                delete (data as any)[key];
-            }
-        );
+        [
+            'departmentIds',
+            'publishedVersionIds',
+            'clonedFromId',
+            'linkedUserIds',
+            'authorId',
+            'jobId',
+            'parentId'
+        ].forEach((key) => {
+            delete (data as any)[key];
+        });
 
         const tempEvent = await prisma.event.create({
             data: {
