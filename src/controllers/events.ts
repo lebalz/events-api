@@ -129,6 +129,7 @@ export const setState: RequestHandler<
 > = async (req, res, next) => {
     try {
         const { ids, state, message } = req.body.data;
+        console.log(`Setting state "${state}" for events: ${ids.join(', ')}`);
         const events = await Promise.all(
             ids.map((id) => {
                 return Events.setState(req.user!, id, state);

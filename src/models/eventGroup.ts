@@ -236,6 +236,11 @@ function EventGroups(db: PrismaClient['eventGroup']) {
                         select: {
                             id: true
                         }
+                    },
+                    linkedUsers: {
+                        select: {
+                            id: true
+                        }
                     }
                 }
             });
@@ -292,7 +297,8 @@ function EventGroups(db: PrismaClient['eventGroup']) {
                             createdAt: true,
                             state: true
                         }
-                    }
+                    },
+                    linkedUsers: { select: { id: true } }
                 }
             });
             return events.map((e) => prepareEvent(e));

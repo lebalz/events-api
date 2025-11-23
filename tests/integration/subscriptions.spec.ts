@@ -1,42 +1,12 @@
 import request from 'supertest';
 import prisma from '../../src/prisma';
 import app, { API_URL } from '../../src/app';
-import { prepareUser as apiPrepareUser } from '../../src/models/user.helpers';
-import { generateUser, userSequence } from '../factories/user';
-import {
-    Department,
-    Event,
-    EventAudience,
-    EventState,
-    Role,
-    Semester,
-    TeachingAffected,
-    UntisTeacher,
-    User
-} from '@prisma/client';
-import { generateUntisTeacher } from '../factories/untisTeacher';
-import { eventSequence, generateEvent } from '../factories/event';
-import { generateSemester } from '../factories/semester';
-import { generateDepartment } from '../factories/department';
-import { generateUntisClass } from '../factories/untisClass';
-import { generateUntisLesson } from '../factories/untisLesson';
-import { existsSync, readFileSync } from 'fs';
-import { createEvents } from 'ics';
-import stubs from './stubs/semesters.json';
-import { prepareEvent } from '../../src/services/createIcs';
+import { generateUser } from '../factories/user';
 import { notify } from '../../src/middlewares/notify.nop';
 import { IoEvent } from '../../src/routes/socketEventTypes';
-import { IoRoom } from '../../src/routes/socketEvents';
-import { faker } from '@faker-js/faker';
-import { syncUntis2DB } from '../../src/services/syncUntis2DB';
-import { fetchUntis } from '../../src/services/__mocks__/fetchUntis';
-import { UntisDataProps, generateUntisData } from '../factories/untisData';
 import _ from 'lodash';
-import { withoutDTSTAMP } from '../unit/__tests__/services.test';
-import { prepareRecord } from '../helpers/prepareRecord';
-import { ApiSubscription, DEFAULT_INCLUDE, prepareSubscription } from '../../src/models/subscription.helpers';
+import { ApiSubscription, prepareSubscription } from '../../src/models/subscription.helpers';
 import { generateSubscription } from '../factories/subscription';
-import exp from 'constants';
 
 jest.mock('../../src/middlewares/notify.nop');
 const mNotification = <jest.Mock<typeof notify>>notify;

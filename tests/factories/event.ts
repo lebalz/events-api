@@ -6,6 +6,7 @@ export const generateEvent = (
         authorId: string;
         between?: { from: Date; to: Date };
         departmentIds?: string[];
+        userIds?: string[];
     }
 ): Prisma.EventCreateInput => {
     const start = props.start
@@ -18,7 +19,7 @@ export const generateEvent = (
         : props.between
           ? faker.date.between({ from: start, to: props.between.to })
           : faker.date.between({ from: start, to: new Date(start.getTime() + 1000 * 60 * 60 * 24 * 7 * 12) });
-    const { authorId, parentId, jobId, departmentIds, clonedFromId } = props;
+    const { authorId, parentId, jobId, departmentIds, clonedFromId, userIds } = props;
 
     if (authorId) {
         delete (props as any).authorId;
@@ -35,6 +36,9 @@ export const generateEvent = (
     if (props.jobId) {
         delete (props as any).jobId;
     }
+    if (props.userIds) {
+        delete (props as any).userIds;
+    }
     if (props.departmentIds) {
         delete (props as any).departmentIds;
     }
@@ -50,6 +54,8 @@ export const generateEvent = (
             props.departments ??
             (departmentIds ? { connect: departmentIds.map((did) => ({ id: did })) } : undefined),
         parent: parentId ? { connect: { id: parentId } } : undefined,
+        linkedUsers:
+            props.linkedUsers ?? (userIds ? { connect: userIds.map((uid) => ({ id: uid })) } : undefined),
         clonedFrom: clonedFromId ? { connect: { id: clonedFromId } } : undefined,
         job: jobId ? { connect: { id: jobId } } : undefined
     };

@@ -19,17 +19,18 @@ datasource db {
 }
 
 model User {
-    id        String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-    email     String        @unique
-    untis     UntisTeacher? @relation(fields: [untisId], references: [id])
-    untisId   Int?          @unique @map("untis_id")
-    firstName String        @map("first_name")
-    lastName  String        @map("last_name")
-    role      Role          @default(USER)
-    createdAt DateTime      @default(now()) @map("created_at")
-    updatedAt DateTime      @default(now()) @updatedAt @map("updated_at")
-    events    Event[]       @relation("events")
-    jobs      Job[]
+    id             String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+    email          String        @unique
+    untis          UntisTeacher? @relation(fields: [untisId], references: [id])
+    untisId        Int?          @unique @map("untis_id")
+    firstName      String        @map("first_name")
+    lastName       String        @map("last_name")
+    role           Role          @default(USER)
+    createdAt      DateTime      @default(now()) @map("created_at")
+    updatedAt      DateTime      @default(now()) @updatedAt @map("updated_at")
+    events         Event[]       @relation("events")
+    linkedEvenents Event[]       @relation("events_to_users")
+    jobs           Job[]
 
     subscription Subscription?
 
@@ -73,6 +74,7 @@ model Event {
     // wildcard class names
     classGroups String[]     @default([]) @map("class_groups")
     departments Department[] @relation("events_to_departments")
+    linkedUsers User[]       @relation("events_to_users")
 
     groups EventGroup[] @relation("events_to_event_groups")
 
@@ -288,19 +290,20 @@ view view_AffectedByEventsUnfiltered {
     userId               String        @map("u_id") @db.Uuid
     semesterId           String        @map("s_id") @db.Uuid
     untisTeacherId       Int?          @map("untis_teacher_id")
-    classId              Int           @map("c_id")
-    className            String        @map("c_name")
-    lessonId             Int           @map("l_id")
-    lessonSubject        String        @map("l_subject")
+    classId              Int?          @map("c_id")
+    className            String?       @map("c_name")
+    lessonId             Int?          @map("l_id")
+    lessonSubject        String?       @map("l_subject")
     eventAudience        EventAudience @map("e_audience")
     affectedDepartmentId String?       @map("affected_department_id") @db.Uuid
     affectsDepartment    Boolean?      @map("affects_department")
     affectsClassname     Boolean       @map("affects_classname")
     affectsClassgroup    Boolean       @map("affects_classgroup")
     affectsLesson        Boolean       @map("affects_lesson")
+    affectsUser          Boolean?      @map("affects_user")
     isKlp                Boolean?      @map("is_klp")
 
-    @@unique([userId, eventId, semesterId, classId, lessonId])
+    @@unique([userId, eventId, semesterId])
     @@map("view__affected_by_events_unfiltered")
 }
 
@@ -309,10 +312,10 @@ view view_AffectedByEvents {
     userId               String        @map("u_id") @db.Uuid
     semesterId           String        @map("s_id") @db.Uuid
     untisTeacherId       Int?          @map("untis_teacher_id")
-    classId              Int           @map("c_id")
-    className            String        @map("c_name")
-    lessonId             Int           @map("l_id")
-    lessonSubject        String        @map("l_subject")
+    classId              Int?          @map("c_id")
+    className            String?       @map("c_name")
+    lessonId             Int?          @map("l_id")
+    lessonSubject        String?       @map("l_subject")
     eventAudience        EventAudience @map("e_audience")
     affectedDepartmentId String?       @map("affected_department_id") @db.Uuid
     affectsDepartment    Boolean?      @map("affects_department")
@@ -321,7 +324,7 @@ view view_AffectedByEvents {
     affectsLesson        Boolean       @map("affects_lesson")
     isKlp                Boolean?      @map("is_klp")
 
-    @@unique([userId, eventId, semesterId, classId, lessonId])
+    @@unique([userId, eventId, semesterId])
     @@map("view__affected_by_events")
 }
 
@@ -354,23 +357,32 @@ view view_UsersAffectedByEvents {
     @@map("view__users_affected_by_events")
 }
 
+view view_LessonsAffectedByEventsUnfiltered {
+    eventId    String   @map("e_id") @db.Uuid
+    eventStart DateTime @map("e_start")
+    eventEnd   DateTime @map("e_end")
+    lessonId   Int      @map("lesson_id")
+
+    @@unique([lessonId, eventId])
+    @@map("view__lessons_affected_by_events_unfiltered")
+}
+
 view view_LessonsAffectedByEvents {
-    eventId     String  @map("e_id") @db.Uuid
-    sId         String  @map("s_id") @db.Uuid
-    id          Int     
+    eventId     String @map("e_id") @db.Uuid
+    id          Int
     room        String
     subject     String
     description String
-    semesterNr  Int     @map("semester_nr")
+    semesterId  String @map("semester_id") @db.Uuid
+    semesterNr  Int    @map("semester_nr")
     year        Int
-    weekDay     Int     @map("week_day")
-    startHHMM   Int     @map("start_hhmm")
-    endHHMM     Int     @map("end_hhmm")
-    semesterId  String? @map("semester_id") @db.Uuid
-    teacherIds  Int[]   @map("teacher_ids")
-    classIds    Int[]   @map("class_ids")
+    weekDay     Int    @map("week_day")
+    startHHMM   Int    @map("start_hhmm")
+    endHHMM     Int    @map("end_hhmm")
+    teacherIds  Int[]  @map("teacher_ids")
+    classIds    Int[]  @map("class_ids")
 
-    @@unique([id, eventId, sId])
+    @@unique([id, eventId, semesterId])
     @@map("view__lessons_affected_by_events")
 }
 

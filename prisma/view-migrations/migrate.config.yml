@@ -1,0 +1,23 @@
+- name: view__affected_by_events_unfiltered
+  depends_on: []
+- name: view__affected_by_events
+  depends_on:
+      - view__affected_by_events_unfiltered
+- name: view__users_affected_by_events
+  depends_on:
+      - view__affected_by_events
+- name: view__events_classes
+  depends_on: []
+- name: view__lessons_affected_by_events_unfiltered
+  depends_on:
+      - view__events_classes
+- name: view__lessons_affected_by_events
+  depends_on:
+      - view__lessons_affected_by_events_unfiltered
+- name: view__users_teaching
+  depends_on: []
+- name: view__users_teaching_agg
+  depends_on:
+      - view__users_teaching
+- name: view__klps
+  depends_on: []

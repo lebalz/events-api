@@ -13,6 +13,7 @@ Table users {
   createdAt DateTime [default: `now()`, not null]
   updatedAt DateTime [default: `now()`, not null]
   events events [not null]
+  linkedEvenents events [not null]
   jobs jobs [not null]
   subscription subscriptions
   eventGroups event_groups [not null]
@@ -43,6 +44,7 @@ Table events {
   classes String[] [not null]
   classGroups String[] [not null]
   departments departments [not null]
+  linkedUsers users [not null]
   groups event_groups [not null]
   audience EventAudience [not null, default: 'STUDENTS']
   affectsDepartment2 Boolean [default: false]
@@ -209,20 +211,21 @@ Table view__affected_by_events_unfiltered {
   userId String [not null]
   semesterId String [not null]
   untisTeacherId Int
-  classId Int [not null]
-  className String [not null]
-  lessonId Int [not null]
-  lessonSubject String [not null]
+  classId Int
+  className String
+  lessonId Int
+  lessonSubject String
   eventAudience EventAudience [not null]
   affectedDepartmentId String
   affectsDepartment Boolean
   affectsClassname Boolean [not null]
   affectsClassgroup Boolean [not null]
   affectsLesson Boolean [not null]
+  affectsUser Boolean
   isKlp Boolean
 
   indexes {
-    (userId, eventId, semesterId, classId, lessonId) [unique]
+    (userId, eventId, semesterId) [unique]
   }
 }
 
@@ -231,10 +234,10 @@ Table view__affected_by_events {
   userId String [not null]
   semesterId String [not null]
   untisTeacherId Int
-  classId Int [not null]
-  className String [not null]
-  lessonId Int [not null]
-  lessonSubject String [not null]
+  classId Int
+  className String
+  lessonId Int
+  lessonSubject String
   eventAudience EventAudience [not null]
   affectedDepartmentId String
   affectsDepartment Boolean
@@ -244,7 +247,7 @@ Table view__affected_by_events {
   isKlp Boolean
 
   indexes {
-    (userId, eventId, semesterId, classId, lessonId) [unique]
+    (userId, eventId, semesterId) [unique]
   }
 }
 
@@ -278,24 +281,34 @@ Table view__users_affected_by_events {
   }
 }
 
+Table view__lessons_affected_by_events_unfiltered {
+  eventId String [not null]
+  eventStart DateTime [not null]
+  eventEnd DateTime [not null]
+  lessonId Int [not null]
+
+  indexes {
+    (lessonId, eventId) [unique]
+  }
+}
+
 Table view__lessons_affected_by_events {
   eventId String [not null]
-  sId String [not null]
   id Int [not null]
   room String [not null]
   subject String [not null]
   description String [not null]
+  semesterId String [not null]
   semesterNr Int [not null]
   year Int [not null]
   weekDay Int [not null]
   startHHMM Int [not null]
   endHHMM Int [not null]
-  semesterId String
   teacherIds Int[] [not null]
   classIds Int[] [not null]
 
   indexes {
-    (id, eventId, sId) [unique]
+    (id, eventId, semesterId) [unique]
   }
 }
 
@@ -372,6 +385,11 @@ Table view__events_registration_periods {
   indexes {
     (eventId, rpId) [unique]
   }
+}
+
+Table events_to_users {
+  linkedevenentsId String [ref: > events.id]
+  linkedusersId String [ref: > users.id]
 }
 
 Table users_to_event_groups {

@@ -7,10 +7,11 @@ export interface ApiEvent
     meta?: Prisma.JsonValue | null;
     authorId: string;
     departmentIds: string[];
+    linkedUserIds: string[];
     publishedVersionIds: string[];
 }
 
-type CloneableEvent = Event & { departments: { id: string }[] };
+type CloneableEvent = Event & { departments: { id: string }[]; linkedUsers: { id: string }[] };
 type FullClonedEvent = CloneableEvent & { groups: { id: string }[] };
 interface CloneConfig {
     event: CloneableEvent;
@@ -37,6 +38,7 @@ export const prepareEvent = (
     event: Event & {
         children?: { id: string; state: EventState; createdAt: Date }[];
         departments?: { id: string }[];
+        linkedUsers?: { id: string }[];
     }
 ): ApiEvent => {
     const children = event?.children || [];
@@ -47,9 +49,10 @@ export const prepareEvent = (
         publishedVersionIds: children
             .filter((e) => e.state === EventState.PUBLISHED)
             .sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime())
-            .map((c) => c.id)
+            .map((c) => c.id),
+        linkedUserIds: event?.linkedUsers?.map((u) => u.id) || []
     };
-    ['author', 'departments', 'children', 'clones', 'clonedFrom', 'job'].forEach((key) => {
+    ['author', 'departments', 'linkedUsers', 'children', 'clones', 'clonedFrom', 'job'].forEach((key) => {
         delete (prepared as any)[key];
     });
     if (!event.meta) {
@@ -75,6 +78,15 @@ export const clonedUpdateProps = (
         };
     } else {
         cloned.departments = {
+            set: []
+        };
+    }
+    if (cloned.linkedUsers) {
+        cloned.linkedUsers = {
+            set: cloned.linkedUsers.connect
+        };
+    } else {
+        cloned.linkedUsers = {
             set: []
         };
     }
@@ -105,6 +117,7 @@ export const clonedProps = (
         teachingAffected: event.teachingAffected,
         clonedFrom: clonedFromId ? { connect: { id: clonedFromId } } : undefined,
         state: EventState.DRAFT,
+        linkedUsers: { connect: event.linkedUsers.map((u) => ({ id: u.id })) || [] },
         author: { connect: { id: config.uid } }
     };
     if (event.departments.length > 0) {

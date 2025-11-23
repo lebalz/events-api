@@ -20,7 +20,8 @@ function Jobs(db: PrismaClient['job']) {
                     events: {
                         include: {
                             departments: true,
-                            children: true
+                            children: true,
+                            linkedUsers: { select: { id: true } }
                         }
                     }
                 }

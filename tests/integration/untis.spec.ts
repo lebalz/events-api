@@ -153,3 +153,36 @@ describe(`GET ${API_URL}/untis/subjects`, () => {
         expect(mNotification).toHaveBeenCalledTimes(0);
     });
 });
+
+describe(`GET ${API_URL}/untis/teachers_subjects`, () => {
+    it('prevents public user to fetch teachers subjects', async () => {
+        const result = await request(app).get(`${API_URL}/untis/teachers_subjects`);
+        expect(result.statusCode).toEqual(401);
+    });
+    it('returns all teachers subjects for a given semester', async () => {
+        const user = await prisma.user.create({ data: generateUser({}) });
+        const abc = await prisma.untisTeacher.findFirstOrThrow({ where: { name: 'abc' } });
+        const ambrosio = await prisma.user.create({ data: generateUser({ untisId: abc.id }) });
+        const lessons = await prisma.untisLesson.findMany({ include: { classes: true, teachers: true } });
+        const semester = await prisma.semester.findFirst({ where: { name: 'HS2023' } });
+
+        expect(lessons.length).toEqual(6);
+        expect(lessons.filter((l) => l.teachers.some((t) => t.id === abc.id)).length).toEqual(2);
+        const result = await request(app)
+            .get(`${API_URL}/untis/teachers_subjects?semesterId=${semester!.id}`)
+            .set('authorization', JSON.stringify({ email: user.email }));
+        expect(result.statusCode).toEqual(200);
+        expect(result.body.length).toEqual(1);
+        const subjects = result.body[0];
+        expect(subjects.userId).toEqual(ambrosio.id);
+        expect(subjects.shortName).toEqual(abc.name);
+        expect(subjects.lang).toEqual('de');
+        expect(subjects.semesterId).toEqual(semester!.id);
+        expect(subjects.subjects.length).toEqual(2);
+        expect(_.sortBy(subjects.subjects, 'name')).toEqual([
+            { name: 'IN', description: 'Informatik' },
+            { name: 'M', description: 'Mathematik' }
+        ]);
+        expect(mNotification).toHaveBeenCalledTimes(0);
+    });
+});

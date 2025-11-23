@@ -15,10 +15,19 @@ import { faker } from '@faker-js/faker';
 import { createSemester } from './semesters.test';
 
 export const createEvent = async (
-    props: Partial<Prisma.EventUncheckedCreateInput> & { authorId: string; departmentIds?: string[] }
+    props: Partial<Prisma.EventUncheckedCreateInput> & {
+        authorId: string;
+        departmentIds?: string[];
+        userIds?: string[];
+    }
 ) => {
     return await prisma.event.create({
-        data: generateEvent(props)
+        data: generateEvent(props),
+        include: {
+            linkedUsers: { select: { id: true } },
+            departments: { select: { id: true } },
+            children: { select: { id: true, state: true, createdAt: true } }
+        }
     });
 };
 
@@ -73,9 +82,12 @@ describe('updateEvent', () => {
         const user = await createUser({});
         const event = await createEvent({ authorId: user.id, state: EventState.DRAFT });
 
-        await expect(Events.updateModel(user, event.id, { description: 'hello' })).resolves.toEqual(
+        await expect(
+            Events.updateModel(user, event.id, { description: 'hello', linkedUserIds: [user.id] })
+        ).resolves.toEqual(
             prepareEvent({
                 ...event,
+                linkedUsers: [{ id: user.id }],
                 description: 'hello',
                 updatedAt: expect.any(Date)
             })
@@ -100,7 +112,7 @@ describe('updateEvent', () => {
             authorId: user.id,
             state: EventState.DRAFT,
             departments: {
-                connect: [{ id: dep1.id }]
+                connect: []
             }
         });
         expect(prepareEvent(event).departmentIds).toEqual([]);
@@ -141,9 +153,12 @@ describe('updateEvent', () => {
             description: 'published'
         });
 
-        await expect(Events.updateModel(user, event.id, { description: 'hello' })).resolves.toEqual(
+        await expect(
+            Events.updateModel(user, event.id, { description: 'hello', linkedUserIds: [user.id] })
+        ).resolves.toEqual(
             prepareEvent({
                 ...event,
+                linkedUsers: [{ id: user.id }],
                 id: expect.any(String),
                 state: EventState.DRAFT,
                 createdAt: expect.any(Date),
@@ -164,9 +179,12 @@ describe('updateEvent', () => {
             description: 'published'
         });
 
-        await expect(Events.updateModel(other, event.id, { description: 'hello' })).resolves.toEqual(
+        await expect(
+            Events.updateModel(other, event.id, { description: 'hello', linkedUserIds: [user.id] })
+        ).resolves.toEqual(
             prepareEvent({
                 ...event,
+                linkedUsers: [{ id: user.id }],
                 authorId: other.id,
                 id: expect.any(String),
                 state: EventState.DRAFT,
@@ -349,7 +367,7 @@ describe('setState transitions', () => {
     test('REVIEW -> PUBLISHED', async () => {
         const admin = await createUser({ role: Role.ADMIN });
         const user = await createUser({});
-        const event = await createEvent({ authorId: user.id, state: EventState.REVIEW });
+        const event = await createEvent({ authorId: user.id, state: EventState.REVIEW, userIds: [user.id] });
 
         /** expect the prepared event to be returned
          * @see event.helpers.ts#prepareEvent
@@ -357,6 +375,7 @@ describe('setState transitions', () => {
         await expect(Events.setState(admin, event.id, EventState.PUBLISHED)).resolves.toEqual({
             event: {
                 ...prepareEvent(event),
+                linkedUserIds: [user.id],
                 state: EventState.PUBLISHED,
                 departmentIds: [],
                 publishedVersionIds: [],
@@ -417,6 +436,7 @@ describe('setState transitions', () => {
             id: '0c9a59a4-0be9-40a8-80bc-b5a9c228166d',
             authorId: user.id,
             description: 'fancy hello',
+            userIds: [user.id],
             state: EventState.REVIEW,
             parentId: current.id
         });
@@ -430,6 +450,7 @@ describe('setState transitions', () => {
             state: EventState.PUBLISHED,
             departments: undefined,
             departmentIds: [],
+            linkedUserIds: [user.id],
             children: undefined,
             parentId: null,
             publishedVersionIds: [nextCurrent.id]
@@ -440,6 +461,7 @@ describe('setState transitions', () => {
             id: nextCurrent.id,
             updatedAt: expect.any(Date),
             departmentIds: [],
+            linkedUserIds: [],
             parentId: current.id,
             publishedVersionIds: []
         };
@@ -655,9 +677,11 @@ describe('cloneEvent', () => {
             id: '7cf72375-4ee7-4a13-afeb-8d68883acdf4',
             authorId: maria.id,
             state: EventState.PUBLISHED,
+            userIds: [maria.id, reto.id].sort(),
             createdAt: new Date(2021, 1, 1),
             updatedAt: new Date(2021, 1, 2)
         });
+        expect(prepareEvent(event).linkedUserIds.sort()).toEqual([maria.id, reto.id].sort());
 
         const clone = await Events.cloneModel(reto, event.id);
         expect(clone).toHaveProperty('id', expect.any(String));

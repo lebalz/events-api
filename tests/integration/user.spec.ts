@@ -1878,6 +1878,89 @@ describe(`GET ${API_URL}/users/:id/affected-event-ids`, () => {
                 expect(resultXyz.body).toEqual([affected.id]);
             });
         });
+        describe('selected by linked users', () => {
+            let teachingAffected: TeachingAffected = TeachingAffected.YES;
+            let author: User;
+            let abc: User;
+            let xyz: User;
+            let affectingEvent: Event;
+            let linkedEvent: Event;
+            beforeEach(async () => {
+                author = await prisma.user.create({ data: generateUser() });
+                abc = await prisma.user.create({
+                    data: generateUser({
+                        firstName: 'abc',
+                        untisId: untisTeachers.find((t) => t.name === 'abc')!.id
+                    })
+                });
+                affectingEvent = await prisma.event.create({
+                    data: generateEvent({
+                        authorId: author.id,
+                        start: new Date('2023-10-18T08:00') /* 18.10.2023 is a Mittwoch */,
+                        end: new Date('2023-10-18T12:00'),
+                        state: EventState.PUBLISHED,
+                        classes: ['26Ge'],
+                        teachingAffected: teachingAffected
+                    })
+                });
+                xyz = await prisma.user.create({
+                    data: generateUser({
+                        firstName: 'xyz',
+                        untisId: untisTeachers.find((t) => t.name === 'xyz')!.id
+                    })
+                });
+                linkedEvent = await prisma.event.create({
+                    data: generateEvent({
+                        authorId: author.id,
+                        start: new Date('2023-10-18T08:00') /* 18.10.2023 is a Mittwoch */,
+                        end: new Date('2023-10-18T12:00'),
+                        state: EventState.PUBLISHED,
+                        classes: ['24Ga'],
+                        userIds: [xyz.id, abc.id],
+                        teachingAffected: TeachingAffected.YES
+                    })
+                });
+                const ancientEvent = await prisma.event.create({
+                    data: generateEvent({
+                        authorId: author.id,
+                        start: new Date('2022-10-18T08:00'),
+                        end: new Date('2022-10-18T12:00'),
+                        state: EventState.PUBLISHED,
+                        classes: ['24Ga'],
+                        userIds: [xyz.id, abc.id],
+                        teachingAffected: TeachingAffected.YES
+                    })
+                });
+            });
+            describe('linked user is affected', () => {
+                beforeAll(() => {
+                    teachingAffected = TeachingAffected.YES;
+                });
+                it('includes events for linked users', async () => {
+                    /**
+                     * 3 events, one affects the lesson of abc, but not the lesson of xyz,
+                     *  the other is linked to both abc and xyz
+                     *  the third is in the past and should not be included, even though linked
+                     *
+                     * abc -> two affected event
+                     * xyz -> one affected events
+                     */
+                    const resultAbc = await request(app)
+                        .get(`${API_URL}/users/${abc.id}/affected-event-ids?semesterId=${semester.id}`)
+                        .set('authorization', JSON.stringify({ email: abc.email }));
+                    expect(resultAbc.statusCode).toEqual(200);
+                    expect(resultAbc.body).toHaveLength(2);
+                    expect(resultAbc.body.sort()).toEqual([affectingEvent.id, linkedEvent.id].sort());
+
+                    const resultXyz = await request(app)
+                        .get(`${API_URL}/users/${xyz.id}/affected-event-ids?semesterId=${semester.id}`)
+                        .set('authorization', JSON.stringify({ email: xyz.email }));
+                    expect(resultXyz.statusCode).toEqual(200);
+                    expect(resultXyz.body).toHaveLength(1);
+                    expect(resultXyz.body).toEqual([linkedEvent.id]);
+                });
+            });
+        });
 
         describe('selected by class group', () => {
             let classGroups: string[] = ['26G'];

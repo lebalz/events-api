@@ -38,3 +38,12 @@ export const subjects: RequestHandler = async (req, res, next) => {
         next(error);
     }
 };
+
+export const teachersSubjects: RequestHandler = async (req, res, next) => {
+    try {
+        const result = await UntisLessons.teachersSubjects(req.query.semesterId as string);
+        res.json(result);
+    } catch (error) /* istanbul ignore next */ {
+        next(error);
+    }
+};

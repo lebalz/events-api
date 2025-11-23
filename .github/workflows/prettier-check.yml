@@ -17,10 +17,10 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '>=22.11'
+          node-version: 22
 
       - name: Install dependencies
-        run: yarn install
+        run: yarn install --ignore-engines
 
       - name: Run Prettier check
         run: yarn run format:check
