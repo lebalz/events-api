@@ -731,6 +731,35 @@ describe('cloneEvent', () => {
             })
         );
     });
+    test('clone Event with linked users', async () => {
+        const reto = await await createUser({ id: '3535b2ee-806f-425c-a4f5-394d8b16f6f9' });
+        const maria = await await createUser({ id: 'b48d8aa1-e83b-4e02-b01b-7f06cc188c99' });
+        const event = await createEvent({
+            id: '7cf72375-4ee7-4a13-afeb-8d68883acdf4',
+            authorId: maria.id,
+            state: EventState.PUBLISHED,
+            createdAt: new Date(2021, 1, 1),
+            updatedAt: new Date(2021, 1, 2),
+            linkedUsers: {
+                connect: [{ id: reto.id }, { id: maria.id }]
+            }
+        });
+
+        const clone = await Events.cloneModel(reto, event.id);
+        expect(clone).toEqual(
+            prepareEvent({
+                ...event,
+                id: expect.not.stringMatching(event.id),
+                clonedFromId: event.id,
+                authorId: reto.id,
+                state: EventState.DRAFT,
+                cloned: true,
+                linkedUsers: [reto, maria],
+                createdAt: expect.any(Date),
+                updatedAt: expect.any(Date)
+            })
+        );
+    });
 });
 
 describe('normalize audience', () => {
