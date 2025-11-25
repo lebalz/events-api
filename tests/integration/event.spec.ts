@@ -1394,6 +1394,15 @@ describe(`POST ${API_URL}/events/change_state`, () => {
                         event: { start: '2024-04-15T00:00:00.000Z', end: '2024-04-30T12:00:00.000Z' }
                     },
                     {
+                        descr: 'Admin can transition drafts before period',
+                        from: EventState.DRAFT,
+                        to: EventState.REVIEW,
+                        for: [Role.ADMIN],
+                        requestDate: new Date('2024-03-01T08:00:00.000Z'),
+                        departments: [Departments.FMS],
+                        event: { start: '2024-04-15T00:00:00.000Z', end: '2024-04-30T12:00:00.000Z' }
+                    },
+                    {
                         descr: 'Admin can transition drafts after period',
                         from: EventState.DRAFT,
                         to: EventState.REVIEW,
@@ -1410,6 +1419,16 @@ describe(`POST ${API_URL}/events/change_state`, () => {
                         author: Role.USER,
                         requestDate: new Date('2024-03-15T08:00:00.000Z'),
                         departments: [Departments.GYMD],
+                        event: { start: '2024-04-15T00:00:00.000Z', end: '2024-04-30T12:00:00.000Z' }
+                    },
+                    {
+                        descr: 'admin can publish before period',
+                        from: EventState.REVIEW,
+                        to: EventState.PUBLISHED,
+                        for: [Role.ADMIN],
+                        author: Role.USER,
+                        requestDate: new Date('2024-03-01T08:00:00.000Z'),
+                        departments: [Departments.FMS],
                         event: { start: '2024-04-15T00:00:00.000Z', end: '2024-04-30T12:00:00.000Z' }
                     },
                     {
