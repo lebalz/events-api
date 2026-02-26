@@ -4,7 +4,6 @@ import { authenticator as Authenticator } from 'otplib';
 import { Base, Klasse, SchoolYear, Subject, Teacher, WebAPITimetable, WebUntisSecretAuth } from 'webuntis';
 import Logger from '../utils/logger';
 import { Semester } from '@prisma/client';
-import { chunks } from './helpers/splitInChunks';
 import { getClassYear } from './helpers/untisKlasse';
 
 const OPTIONAL_COURSE_REGEX = /FA[KC]/;
