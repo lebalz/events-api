@@ -314,8 +314,6 @@ psql -U postgres -h localhost -c 'drop database if exists events_api;'
 psql -U postgres -h localhost -c 'create database events_api;'
 pg_restore -h localhost --verbose --clean --no-owner --no-privileges -U postgres -d events_api < backup.dump
 yarn run prisma migrate dev
-
-# when ai-pr was once merged/deployed to the db, run `delete from _prisma_migrations where migration_name ilike '%_ai_%';`
 ```
 
 or the old fashioned way:
@@ -336,4 +334,14 @@ scp root@<your-ip>:/plain.sql ./plain.sql
 psql -d postgres -h localhost -U events_api -c "DROP DATABASE events_api;"
 psql -d postgres -h localhost -U events_api -c "CREATE DATABASE events_api;"
 psql -d postgres -h localhost -U events_api -f plain.sql
+```
+
+## Troubleshooting
+
+WSL - Port already in use
+
+```bash
+sudo netstat -tulpn
+# ...
+sudo kill $(sudo lsof -t -i:3002)
 ```

@@ -25,7 +25,6 @@
 			"extensions": [
 				"Prisma.prisma",
 				"mhutchie.git-graph",
-				"qufiwefefwoyn.inline-sql-syntax",
 				"dbaeumer.vscode-eslint",
 				"motivesoft.vscode-uuid-generator",
 		        "dbaeumer.vscode-eslint",
@@ -38,14 +37,14 @@
 				"pgsql.serverGroups": [
 					{
 						"name": "Servers",
-						"id": "9B1DBC9B-951B-4E3D-AC65-7D4CDE1773A0",
+						"id": "D60C6DE5-7C4A-462E-A4F0-35A44AEE3E2E",
 						"isDefault": true
 					}
 				],
 				"pgsql.connections": [
 					{
-						"id": "30A5E0E0-9901-4311-913B-98F78549DD64",
-						"groupId": "9B1DBC9B-951B-4E3D-AC65-7D4CDE1773A0",
+						"id": "719C8906-7793-4278-97DE-012DFA16150C",
+						"groupId": "D60C6DE5-7C4A-462E-A4F0-35A44AEE3E2E",
 						"authenticationType": "SqlLogin",
 						"connectTimeout": 15,
 						"applicationName": "vscode-pgsql",
@@ -57,7 +56,7 @@
 						"database": "events_api",
 						"password": "postgres",
 						"savePassword": true,
-						"profileName": "TeachingAPI",
+						"profileName": "EventsAPI",
 						"copilotAccessMode": "ro",
 						"expiresOn": 0
 					}

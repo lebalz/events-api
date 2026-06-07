@@ -61,13 +61,13 @@ export const events: RequestHandler = async (req, res, next) => {
     }
 };
 
-export const linkToUntis: RequestHandler<{ id: string }, any, { data: { untisId: number } }> = async (
+export const linkToUntis: RequestHandler<{ id: string }, any, { data: { untisId: number | null } }> = async (
     req,
     res,
     next
 ) => {
     try {
-        const user = await Users.linkToUntis(req.user!, req.params.id, req.body.data.untisId || null);
+        const user = await Users.linkToUntis(req.user!, req.params.id, req.body.data.untisId ?? null);
 
         res.notifications = [
             {
