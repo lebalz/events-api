@@ -32,7 +32,7 @@ describe('Departments', () => {
             );
         });
         test('admin can update department', async () => {
-            const admin = await createUser({ role: Role.ADMIN });
+            const admin = await createUser({ role: 'admin' });
             const department = await createDepartment({});
             await expect(
                 Departments.updateModel(admin, department.id, { name: 'new name', classLetters: ['B', 'A'] })
@@ -45,7 +45,7 @@ describe('Departments', () => {
         });
 
         test('admin can update belonging departments', async () => {
-            const admin = await createUser({ role: Role.ADMIN });
+            const admin = await createUser({ role: 'admin' });
             const department = await createDepartment({});
             const parent1 = await createDepartment({});
             const parent2 = await createDepartment({});
@@ -63,7 +63,7 @@ describe('Departments', () => {
         });
 
         test('department can not belong two times to the same department', async () => {
-            const admin = await createUser({ role: Role.ADMIN });
+            const admin = await createUser({ role: 'admin' });
             const department = await createDepartment({});
             const parent1 = await createDepartment({});
             await expect(
@@ -75,7 +75,7 @@ describe('Departments', () => {
         });
 
         test('detects invalid letter combinations', async () => {
-            const admin = await createUser({ role: Role.ADMIN });
+            const admin = await createUser({ role: 'admin' });
             const depAB = await createDepartment({ name: 'depAB-', classLetters: ['A', 'B'] });
             const depCD = await createDepartment({ name: 'depCD-', classLetters: ['C', 'D'] });
             await expect(
@@ -93,7 +93,7 @@ describe('Departments', () => {
             );
         });
         test('admin can create department', async () => {
-            const admin = await createUser({ role: Role.ADMIN });
+            const admin = await createUser({ role: 'admin' });
             await expect(Departments.createModel(admin, { name: 'new name' })).resolves.toEqual({
                 id: expect.any(String),
                 color: '#306cce',
@@ -120,14 +120,14 @@ describe('Departments', () => {
             );
         });
         test('admin can destroy unassigned department', async () => {
-            const admin = await createUser({ role: Role.ADMIN });
+            const admin = await createUser({ role: 'admin' });
             const department = await createDepartment({});
             await expect(Departments.destroy(admin, department.id)).resolves.toEqual({
                 ...department
             });
         });
         test('admin can not destroy assigned department', async () => {
-            const admin = await createUser({ role: Role.ADMIN });
+            const admin = await createUser({ role: 'admin' });
             const department = await createDepartment({
                 classes: { create: { name: '25h', sf: 'E', year: 2025 } }
             });

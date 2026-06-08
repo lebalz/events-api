@@ -33,7 +33,7 @@ describe('find eventGroup', () => {
     test('only members can get group', async () => {
         const alice = await createUser({});
         const bob = await createUser({});
-        const admin = await createUser({ role: Role.ADMIN });
+        const admin = await createUser({ role: 'admin' });
         const group = await createEventGroup({ userIds: [alice.id, bob.id], eventIds: [] });
         await expect(EventGroups.findModel(admin, group.id)).rejects.toEqual(new HTTP404Error('Not found'));
         await expect(EventGroups.findModel(alice, group.id)).resolves.toEqual({
@@ -94,7 +94,7 @@ describe('internal: find raw event group model', () => {
     test('can raw record if allowed', async () => {
         const alice = await createUser({});
         const bob = await createUser({});
-        const admin = await createUser({ role: Role.ADMIN });
+        const admin = await createUser({ role: 'admin' });
         const group = await createEventGroup({ userIds: [alice.id], eventIds: [] });
         await expect(EventGroups._findRawModel(admin, group.id)).rejects.toEqual(
             new HTTP404Error('Not found')

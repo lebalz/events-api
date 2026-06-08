@@ -2,7 +2,7 @@ import { RequestHandler } from 'express';
 import { IoEvent, RecordType } from '../routes/socketEventTypes.js';
 import { notifyChangedRecord } from '../routes/notify.js';
 import type { Event } from 'prisma/generated/client.js';
-import { EventState, Role } from 'prisma/generated/client.js';
+import { EventState } from 'prisma/generated/client.js';
 import { IoRoom } from '../routes/socketEvents.js';
 import Events from '../models/event.js';
 import EventGroups from '../models/eventGroup.js';
@@ -16,7 +16,7 @@ import Logger from '../utils/logger.js';
 
 const NAME = RecordType.Event;
 
-export const find: RequestHandler = async (req, res, next) => {
+export const find: RequestHandler<{ id: string }> = async (req, res, next) => {
     try {
         const event = await Events.findModel(req.user, req.params.id);
         res.status(200).json(event);
@@ -173,7 +173,7 @@ export const setState: RequestHandler<
     }
 };
 
-export const destroy: RequestHandler = async (req, res, next) => {
+export const destroy: RequestHandler<{ id: string }> = async (req, res, next) => {
     try {
         const event = await Events.destroy(req.user!, req.params.id);
         if (event.state === EventState.DRAFT) {
@@ -291,7 +291,7 @@ export const clone: RequestHandler<{ id: string }, any, any> = async (req, res, 
 export const importEvents: RequestHandler<any, any, any, { type: ImportType }> = async (req, res, next) => {
     try {
         if (
-            req.user!.role !== Role.ADMIN &&
+            req.user!.role !== 'admin' &&
             [ImportType.GBSL_XLSX, ImportType.GBJB_CSV].includes(req.query.type)
         ) {
             throw new HTTP403Error('Not authorized to import legacy format');

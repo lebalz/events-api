@@ -15,7 +15,7 @@
     "strict": true,
     "isolatedModules": true,
     "esModuleInterop": true,
-    "types": ["node". "jest"],
+    "types": ["node", "jest"],
     "skipLibCheck": true,
     "typeRoots": [
       "./src/types",

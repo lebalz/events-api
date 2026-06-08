@@ -48,27 +48,27 @@ describe('linkToUntis', () => {
 
 describe('setRole', () => {
     test('admin can give admin roles', async () => {
-        const admin = await createUser({ id: '9bb4cfe2-623d-4004-8e4f-1728e5029876', role: Role.ADMIN });
+        const admin = await createUser({ id: '9bb4cfe2-623d-4004-8e4f-1728e5029876', role: 'admin' });
         const user = await createUser({ id: 'f30fd8f1-ed9e-44f3-bf3d-c5c385de15cd' });
-        await expect(Users.setRole(admin, user.id, Role.ADMIN)).resolves.toEqual({
+        await expect(Users.setRole(admin, user.id, 'admin')).resolves.toEqual({
             ...user,
-            role: Role.ADMIN,
+            role: 'admin',
             updatedAt: expect.any(Date)
         });
     });
     test('admin can revoke admin roles', async () => {
-        const admin = await createUser({ id: '9bb4cfe2-623d-4004-8e4f-1728e5029876', role: Role.ADMIN });
-        const user = await createUser({ id: 'f30fd8f1-ed9e-44f3-bf3d-c5c385de15cd', role: Role.ADMIN });
-        await expect(Users.setRole(admin, user.id, Role.USER)).resolves.toEqual({
+        const admin = await createUser({ id: '9bb4cfe2-623d-4004-8e4f-1728e5029876', role: 'admin' });
+        const user = await createUser({ id: 'f30fd8f1-ed9e-44f3-bf3d-c5c385de15cd', role: 'admin' });
+        await expect(Users.setRole(admin, user.id, 'user')).resolves.toEqual({
             ...user,
-            role: Role.USER,
+            role: 'user',
             updatedAt: expect.any(Date)
         });
     });
     test('user can not give admin roles', async () => {
         const malory = await createUser({ id: 'ffeeb94d-6cab-4ea3-bcb1-c0f803240cb8' });
         const maria = await createUser({ id: '37b72318-8daa-4f90-9d8e-46bc6bc03b3b' });
-        await expect(Users.setRole(malory, maria.id, Role.ADMIN)).rejects.toEqual(
+        await expect(Users.setRole(malory, maria.id, 'admin')).rejects.toEqual(
             new HTTP403Error('Not authorized')
         );
     });
@@ -91,7 +91,7 @@ describe('affectedEvents', () => {
         );
     });
     test('admin can not get affected events of unknown user', async () => {
-        const maria = await createUser({ id: '37b72318-8daa-4f90-9d8e-46bc6bc03b3b', role: Role.ADMIN });
+        const maria = await createUser({ id: '37b72318-8daa-4f90-9d8e-46bc6bc03b3b', role: 'admin' });
         await expect(Users.affectedEvents(maria, 'cc28810e-4b91-41f0-b6ab-20ac71cd2152')).rejects.toEqual(
             new HTTP404Error('User not found')
         );

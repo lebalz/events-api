@@ -1,4 +1,4 @@
-import { EventState, Prisma, PrismaClient, Role, User as UserModel } from 'prisma/generated/client.js';
+import { EventState, Prisma, PrismaClient, User as UserModel } from 'prisma/generated/client.js';
 import { createIcs as createIcsFile } from '../services/createIcs.js';
 import prisma from 'src/prisma.js';
 import { HTTP400Error, HTTP403Error, HTTP404Error } from '../utils/errors/Errors.js';
@@ -13,6 +13,20 @@ const getData = createDataExtractor<Prisma.UserUncheckedUpdateInput>([
     'notifyAdminOnReviewRequest',
     'notifyAdminOnReviewDecision'
 ]);
+
+export enum Role {
+    USER = 'user',
+    ADMIN = 'admin'
+}
+
+const RoleAccessLevel: { [key in Role]: number } = { [Role.USER]: 0, [Role.ADMIN]: 1 };
+
+export const getAccessLevel = (role?: Role | null) => {
+    if (!role) {
+        return 0;
+    }
+    return RoleAccessLevel[role] || 0;
+};
 
 function Users(db: PrismaClient['user']) {
     return Object.assign(db, {
@@ -39,7 +53,7 @@ function Users(db: PrismaClient['user']) {
             if (!record) {
                 throw new HTTP404Error('User not found');
             }
-            if (!(record.id === actor.id || actor.role === Role.ADMIN)) {
+            if (!(record.id === actor.id || actor.role === 'admin')) {
                 throw new HTTP403Error('Not authorized');
             }
             /** remove fields not updatable*/
@@ -61,7 +75,7 @@ function Users(db: PrismaClient['user']) {
             return await db.findMany({});
         },
         async linkToUntis(actor: UserModel, userId: string, untisId: number | null): Promise<ApiUser> {
-            if (actor.role !== Role.ADMIN && actor.id !== userId) {
+            if (actor.role !== 'admin' && actor.id !== userId) {
                 throw new HTTP403Error('Not authorized');
             }
             try {
@@ -94,7 +108,7 @@ function Users(db: PrismaClient['user']) {
             }
         },
         async setRole(actor: UserModel, userId: string, role: Role): Promise<UserModel> {
-            if (actor.role !== Role.ADMIN) {
+            if (actor.role !== 'admin') {
                 throw new HTTP403Error('Not authorized');
             }
             return await db.update({
@@ -118,7 +132,7 @@ function Users(db: PrismaClient['user']) {
             };
         },
         async affectedEvents(actor: UserModel, userId: string, semesterId?: string): Promise<ApiEvent[]> {
-            if (actor.id !== userId && actor.role !== Role.ADMIN) {
+            if (actor.id !== userId && actor.role !== 'admin') {
                 throw new HTTP403Error('Not authorized');
             }
             const user = await this.findModel(userId);

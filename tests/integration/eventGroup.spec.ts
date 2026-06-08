@@ -130,7 +130,7 @@ describe(`PUT ${API_URL}/event_groups/:id`, () => {
     });
     it('prevents admins to modify others Registration Period', async () => {
         const user = await prisma.user.create({ data: generateUser({}) });
-        const admin = await prisma.user.create({ data: generateUser({ role: Role.ADMIN }) });
+        const admin = await prisma.user.create({ data: generateUser({ role: 'admin' }) });
         const ueGroup = await prisma.eventGroup.create({
             data: generateEventGroup({ userIds: [user!.id], eventIds: [] })
         });

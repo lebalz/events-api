@@ -1,4 +1,4 @@
-import { Prisma, PrismaClient, Role, User } from 'prisma/generated/client.js';
+import { Prisma, PrismaClient, User } from 'prisma/generated/client.js';
 import prisma from 'src/prisma.js';
 import { HTTP400Error, HTTP403Error, HTTP404Error } from '../utils/errors/Errors.js';
 import { createDataExtractor } from '../controllers/helpers.js';
@@ -33,7 +33,7 @@ function Departments(db: PrismaClient['department']) {
             return model;
         },
         async updateModel(actor: User, id: string, data: Prisma.DepartmentUncheckedUpdateInput) {
-            if (actor.role !== Role.ADMIN) {
+            if (actor.role !== 'admin') {
                 throw new HTTP403Error('Not authorized');
             }
             const sanitized = getData(data);
@@ -79,7 +79,7 @@ function Departments(db: PrismaClient['department']) {
             return model;
         },
         async createModel(actor: User, data: { name: string; description?: string }) {
-            if (actor.role !== Role.ADMIN) {
+            if (actor.role !== 'admin') {
                 throw new HTTP403Error('Not authorized');
             }
             const { name, description } = data;
@@ -92,7 +92,7 @@ function Departments(db: PrismaClient['department']) {
             return model;
         },
         async destroy(actor: User, id: string) {
-            if (actor.role !== Role.ADMIN) {
+            if (actor.role !== 'admin') {
                 throw new HTTP403Error('Not authorized');
             }
             const toDestroy = await db.findUnique({

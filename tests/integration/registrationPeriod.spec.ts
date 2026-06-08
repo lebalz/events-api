@@ -91,7 +91,7 @@ describe(`PUT ${API_URL}/registration_periods/:id`, () => {
         expect(mNotification).toHaveBeenCalledTimes(0);
     });
     it('lets admins update Registration Period', async () => {
-        const admin = await prisma.user.create({ data: generateUser({ role: Role.ADMIN }) });
+        const admin = await prisma.user.create({ data: generateUser({ role: 'admin' }) });
         const regPeriod = await prisma.registrationPeriod.findFirst();
         const result = await request(app)
             .put(`${API_URL}/registration_periods/${regPeriod!.id}`)
@@ -118,7 +118,7 @@ describe(`PUT ${API_URL}/registration_periods/:id`, () => {
     it('can modify departments', async () => {
         const gbsl = await prisma.department.create({ data: generateDepartment({ name: 'GYMD' }) });
         const gbjb = await prisma.department.create({ data: generateDepartment({ name: 'GYMF' }) });
-        const admin = await prisma.user.create({ data: generateUser({ role: Role.ADMIN }) });
+        const admin = await prisma.user.create({ data: generateUser({ role: 'admin' }) });
         const regPeriod = await prisma.registrationPeriod.findFirst();
         const result = await request(app)
             .put(`${API_URL}/registration_periods/${regPeriod!.id}`)
@@ -156,7 +156,7 @@ describe(`PUT ${API_URL}/registration_periods/:id`, () => {
     });
     it('can not update start Date to be later than the end date', async () => {
         const regPeriod = await prisma.registrationPeriod.findFirst();
-        const admin = await prisma.user.create({ data: generateUser({ role: Role.ADMIN }) });
+        const admin = await prisma.user.create({ data: generateUser({ role: 'admin' }) });
 
         const result = await request(app)
             .put(`${API_URL}/registration_periods/${regPeriod!.id}`)
@@ -167,7 +167,7 @@ describe(`PUT ${API_URL}/registration_periods/:id`, () => {
     });
     it('can not update end Date to be earlier than the start date', async () => {
         const regPeriod = await prisma.registrationPeriod.findFirst();
-        const admin = await prisma.user.create({ data: generateUser({ role: Role.ADMIN }) });
+        const admin = await prisma.user.create({ data: generateUser({ role: 'admin' }) });
 
         const result = await request(app)
             .put(`${API_URL}/registration_periods/${regPeriod!.id}`)
@@ -189,7 +189,7 @@ describe(`POST ${API_URL}/registration_periods`, () => {
         expect(mNotification).toHaveBeenCalledTimes(0);
     });
     it('admin can create a new Regitration Period', async () => {
-        const admin = await prisma.user.create({ data: generateUser({ role: Role.ADMIN }) });
+        const admin = await prisma.user.create({ data: generateUser({ role: 'admin' }) });
         const start = faker.date.soon();
         const end = faker.date.future({ refDate: start });
         const result = await request(app)
@@ -226,7 +226,7 @@ describe(`DELETE ${API_URL}/registration_periods/:id`, () => {
         expect(mNotification).toHaveBeenCalledTimes(0);
     });
     it('admin can delete a Regitration Period', async () => {
-        const admin = await prisma.user.create({ data: generateUser({ role: Role.ADMIN }) });
+        const admin = await prisma.user.create({ data: generateUser({ role: 'admin' }) });
         const regPeriods = await prisma.registrationPeriod.findMany();
         expect(regPeriods).toHaveLength(2);
         const regPeriod = regPeriods[0];

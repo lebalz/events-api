@@ -15,7 +15,8 @@ import { ApiSubscription } from '../models/subscription.helpers.js';
 export enum IoEvent {
     NEW_RECORD = 'NEW_RECORD',
     CHANGED_RECORD = 'CHANGED_RECORD',
-    DELETED_RECORD = 'DELETED_RECORD'
+    DELETED_RECORD = 'DELETED_RECORD',
+    ACTION = 'ACTION'
 }
 
 export enum RecordType {
@@ -84,10 +85,17 @@ export enum IoEvents {
     AffectedTeachersTmp = 'affectedTeachers:tmp'
 }
 
+export interface Action<T = {}> {
+    action: T;
+    roomIds: string[];
+    userIds: string[];
+}
+
 export type ServerToClientEvents = {
     [IoEvent.NEW_RECORD]: (message: NewRecord<RecordType>) => void;
     [IoEvent.CHANGED_RECORD]: (message: ChangedRecord<RecordType>) => void;
     [IoEvent.DELETED_RECORD]: (message: DeletedRecord) => void;
+    [IoEvent.ACTION]: (message: Action['action']) => void;
 };
 
 export interface ClientToServerEvents {

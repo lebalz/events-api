@@ -1,4 +1,4 @@
-import { Job, JobState, Prisma, PrismaClient, Role, Semester, User } from 'prisma/generated/client.js';
+import { Job, JobState, Prisma, PrismaClient, Semester, User } from 'prisma/generated/client.js';
 import prisma from 'src/prisma.js';
 import { HTTP400Error, HTTP403Error, HTTP404Error } from '../utils/errors/Errors.js';
 import { createDataExtractor } from '../controllers/helpers.js';
@@ -52,7 +52,7 @@ function Semesters(db: PrismaClient['semester']) {
             return model;
         },
         async createModel(actor: User, data: { name: string; start: Date | string; end: Date | string }) {
-            if (actor.role !== Role.ADMIN) {
+            if (actor.role !== 'admin') {
                 throw new HTTP403Error('Not authorized');
             }
             const { name } = data;
@@ -73,7 +73,7 @@ function Semesters(db: PrismaClient['semester']) {
             return model;
         },
         async updateModel(actor: User, id: string, data: Prisma.SemesterUncheckedUpdateInput) {
-            if (actor.role !== Role.ADMIN) {
+            if (actor.role !== 'admin') {
                 throw new HTTP403Error('Not authorized');
             }
             const semester = await this.findModel(id);
@@ -99,7 +99,7 @@ function Semesters(db: PrismaClient['semester']) {
             return model;
         },
         async destroy(actor: User, id: string) {
-            if (actor.role !== Role.ADMIN) {
+            if (actor.role !== 'admin') {
                 throw new HTTP403Error('Not authorized');
             }
             return await db.delete({

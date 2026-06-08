@@ -1,4 +1,4 @@
-import { findUser } from '../../../src/helpers/authInfo';
+import { findUser } from '../../../src/helpers/authInfo.js';
 import { getNameFromEmail } from '../../../src/helpers/email';
 import {
     Departments,
@@ -14,6 +14,7 @@ import { HTTP401Error, HTTP500Error } from '../../../src/utils/errors/Errors';
 import { getDate, getDateLong, getDateTime, getDay, getTime } from '../../../src/services/helpers/time';
 import { translate } from '../../../src/services/helpers/i18n';
 import type { Department } from 'prisma/generated/client.js';
+import { Role } from 'src/models/user.js';
 
 describe('Split In Chunks', () => {
     test('fn chunks', async () => {
@@ -75,7 +76,7 @@ describe('findUser from auth info', () => {
                 notifyOnEventUpdate: false,
                 notifyAdminOnReviewRequest: false,
                 notifyAdminOnReviewDecision: false,
-                role: 'USER',
+                role: Role.USER,
                 untisId: null,
                 createdAt: expect.any(Date),
                 updatedAt: expect.any(Date)
@@ -98,7 +99,7 @@ describe('findUser from auth info', () => {
                 notifyOnEventUpdate: false,
                 notifyAdminOnReviewRequest: false,
                 notifyAdminOnReviewDecision: false,
-                role: 'USER',
+                role: Role.USER,
                 untisId: null,
                 createdAt: expect.any(Date),
                 updatedAt: expect.any(Date)
@@ -132,7 +133,7 @@ describe('findUser from auth info', () => {
                 notifyOnEventUpdate: false,
                 notifyAdminOnReviewRequest: false,
                 notifyAdminOnReviewDecision: false,
-                role: 'USER',
+                role: Role.USER,
                 untisId: null,
                 createdAt: expect.any(Date),
                 updatedAt: expect.any(Date)

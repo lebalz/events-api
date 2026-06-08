@@ -10,6 +10,7 @@ import { notify } from '../../src/middlewares/notify.nop.js';
 import { IoEvent } from '../../src/routes/socketEventTypes.js';
 import { IoRoom } from '../../src/routes/socketEvents.js';
 import { prepareRecord } from '../helpers/prepareRecord.js';
+import { Role } from 'src/models/user.js';
 
 jest.mock('../../src/middlewares/notify.nop');
 const mNotification = <jest.Mock<typeof notify>>notify;
@@ -110,7 +111,7 @@ describe(`GET ${API_URL}/jobs/:id`, () => {
     });
 
     it('admin can get others jobs', async () => {
-        const admin = await prisma.user.create({ data: generateUser({ role: 'ADMIN' }) });
+        const admin = await prisma.user.create({ data: generateUser({ role: Role.ADMIN }) });
         const other = await prisma.user.create({ data: generateUser() });
         const job = await prisma.job.create({ data: generateImportJob({ userId: other.id }) });
         const result = await request(app)
@@ -162,7 +163,7 @@ describe(`PUT ${API_URL}/jobs/:id`, () => {
     });
 
     it('allows admins to update description and state', async () => {
-        const admin = await prisma.user.create({ data: generateUser({ role: 'ADMIN' }) });
+        const admin = await prisma.user.create({ data: generateUser({ role: Role.ADMIN }) });
         const job = await prisma.job.create({
             data: generateImportJob({ userId: admin.id, description: 'Bar', state: 'PENDING' })
         });
@@ -330,7 +331,7 @@ describe(`PUT ${API_URL}/jobs/:id`, () => {
         const other = await prisma.user.create({ data: generateUser() });
         const semester = await prisma.semester.create({ data: generateSemester() });
 
-        const admin = await prisma.user.create({ data: generateUser({ role: 'ADMIN' }) });
+        const admin = await prisma.user.create({ data: generateUser({ role: Role.ADMIN }) });
         const job = await prisma.job.create({
             data: generateImportJob({ userId: admin.id, description: 'Bar', state: 'PENDING' })
         });

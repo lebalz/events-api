@@ -10,7 +10,6 @@ import {
     Job,
     JobState,
     RegistrationPeriod,
-    Role,
     TeachingAffected,
     User
 } from 'prisma/generated/client.js';
@@ -400,7 +399,7 @@ describe(`PUT ${API_URL}/events/:id/meta`, () => {
             to: user.id
         });
         const admin = await prisma.user.create({
-            data: generateUser({ email: 'admin@bar.ch', role: Role.ADMIN })
+            data: generateUser({ email: 'admin@bar.ch', role: 'admin' })
         });
         const result2 = await request(app)
             .put(`${API_URL}/events/${event.id}/meta`)
@@ -413,7 +412,7 @@ describe(`PUT ${API_URL}/events/:id/meta`, () => {
         });
     });
     [EventState.PUBLISHED, EventState.REFUSED].forEach((state) => {
-        [Role.USER, Role.ADMIN].forEach((role) => {
+        ['user', 'admin'].forEach((role) => {
             it(`Prevents ${role} to update the meta data of ${state} events`, async () => {
                 const user = await prisma.user.create({
                     data: generateUser({ email: 'foo@bar.ch', role: role })
@@ -846,14 +845,14 @@ describe(`POST ${API_URL}/events/change_state`, () => {
             {
                 from: EventState.DRAFT,
                 to: EventState.REVIEW,
-                for: [Role.USER, Role.ADMIN],
+                for: ['user', 'admin'],
                 notify: ['user', IoRoom.ADMIN]
             },
-            { from: EventState.REVIEW, to: EventState.PUBLISHED, for: [Role.ADMIN], notify: [IoRoom.ALL] },
+            { from: EventState.REVIEW, to: EventState.PUBLISHED, for: ['admin'], notify: [IoRoom.ALL] },
             {
                 from: EventState.REVIEW,
                 to: EventState.REFUSED,
-                for: [Role.ADMIN],
+                for: ['admin'],
                 notify: ['user', IoRoom.ADMIN]
             }
         ];
@@ -907,25 +906,25 @@ describe(`POST ${API_URL}/events/change_state`, () => {
 
     describe('forbidden transitions', () => {
         const FORBIDDEN_TRANSITIONS = [
-            { from: EventState.DRAFT, to: EventState.DRAFT, for: [Role.USER, Role.ADMIN] },
-            { from: EventState.DRAFT, to: EventState.PUBLISHED, for: [Role.USER, Role.ADMIN] },
-            { from: EventState.DRAFT, to: EventState.REFUSED, for: [Role.USER, Role.ADMIN] },
-            { from: EventState.PUBLISHED, to: EventState.PUBLISHED, for: [Role.USER, Role.ADMIN] },
-            { from: EventState.PUBLISHED, to: EventState.DRAFT, for: [Role.USER, Role.ADMIN] },
-            { from: EventState.PUBLISHED, to: EventState.REFUSED, for: [Role.USER, Role.ADMIN] },
-            { from: EventState.PUBLISHED, to: EventState.REVIEW, for: [Role.USER, Role.ADMIN] },
-            { from: EventState.REVIEW, to: EventState.REVIEW, for: [Role.ADMIN] },
+            { from: EventState.DRAFT, to: EventState.DRAFT, for: ['user', 'admin'] },
+            { from: EventState.DRAFT, to: EventState.PUBLISHED, for: ['user', 'admin'] },
+            { from: EventState.DRAFT, to: EventState.REFUSED, for: ['user', 'admin'] },
+            { from: EventState.PUBLISHED, to: EventState.PUBLISHED, for: ['user', 'admin'] },
+            { from: EventState.PUBLISHED, to: EventState.DRAFT, for: ['user', 'admin'] },
+            { from: EventState.PUBLISHED, to: EventState.REFUSED, for: ['user', 'admin'] },
+            { from: EventState.PUBLISHED, to: EventState.REVIEW, for: ['user', 'admin'] },
+            { from: EventState.REVIEW, to: EventState.REVIEW, for: ['admin'] },
             {
                 from: EventState.REVIEW,
                 to: EventState.DRAFT,
-                for: [Role.USER],
+                for: ['user'],
                 errorCode: HttpStatusCode.FORBIDDEN
             },
-            { from: EventState.REVIEW, to: EventState.DRAFT, for: [Role.ADMIN] },
-            { from: EventState.REFUSED, to: EventState.REFUSED, for: [Role.USER, Role.ADMIN] },
-            { from: EventState.REFUSED, to: EventState.DRAFT, for: [Role.USER, Role.ADMIN] },
-            { from: EventState.REFUSED, to: EventState.PUBLISHED, for: [Role.USER, Role.ADMIN] },
-            { from: EventState.REFUSED, to: EventState.REVIEW, for: [Role.USER, Role.ADMIN] }
+            { from: EventState.REVIEW, to: EventState.DRAFT, for: ['admin'] },
+            { from: EventState.REFUSED, to: EventState.REFUSED, for: ['user', 'admin'] },
+            { from: EventState.REFUSED, to: EventState.DRAFT, for: ['user', 'admin'] },
+            { from: EventState.REFUSED, to: EventState.PUBLISHED, for: ['user', 'admin'] },
+            { from: EventState.REFUSED, to: EventState.REVIEW, for: ['user', 'admin'] }
         ];
 
         FORBIDDEN_TRANSITIONS.forEach((transition) => {
@@ -969,7 +968,7 @@ describe(`POST ${API_URL}/events/change_state`, () => {
     describe('versioned transitions', () => {
         it(`lets versioned DRAFTS become a REVIEW`, async () => {
             const user = await prisma.user.create({
-                data: generateUser({ email: 'foo@bar.ch', role: Role.USER })
+                data: generateUser({ email: 'foo@bar.ch', role: 'user' })
             });
             /**
              * event[:published]
@@ -1011,7 +1010,7 @@ describe(`POST ${API_URL}/events/change_state`, () => {
 
         it(`lets versioned REVIEWS become PUBLISHED`, async () => {
             const user = await prisma.user.create({
-                data: generateUser({ email: 'foo@bar.ch', role: Role.ADMIN })
+                data: generateUser({ email: 'foo@bar.ch', role: 'admin' })
             });
             /**
              * event[:published/id:0]                                                       edit3[:published / id:0]  !! keeps published id !!
@@ -1151,7 +1150,7 @@ describe(`POST ${API_URL}/events/change_state`, () => {
 
     it(`lets versioned REVIEWS become PUBLISHED: Scenario 2 (should never happen in real world...)`, async () => {
         const user = await prisma.user.create({
-            data: generateUser({ email: 'foo@bar.ch', role: Role.ADMIN })
+            data: generateUser({ email: 'foo@bar.ch', role: 'admin' })
         });
         /**
          * event[:published/id:0]                                                       edit2[:published / id:0]  !! keeps published id !!
@@ -1298,7 +1297,7 @@ describe(`POST ${API_URL}/events/change_state`, () => {
 
     it(`lets versioned REVIEWS become PUBLISHED and keeps updated departments`, async () => {
         const user = await prisma.user.create({
-            data: generateUser({ email: 'foo@bar.ch', role: Role.ADMIN })
+            data: generateUser({ email: 'foo@bar.ch', role: 'admin' })
         });
         /**
          * event[:published/id:0]
@@ -1355,8 +1354,8 @@ describe(`POST ${API_URL}/events/change_state`, () => {
                     eventRangeEnd: new Date('2024-04-29T24:00:00.000Z'),
                     departmentIds: [gymd.id, fms.id]
                 });
-                user = await createUser({ role: Role.USER });
-                admin = await createUser({ role: Role.ADMIN });
+                user = await createUser({ role: 'user' });
+                admin = await createUser({ role: 'admin' });
                 /** transitions need a semester */
                 await createSemester({
                     start: new Date('2024-02-06T08:00:00.000Z'),
@@ -1369,7 +1368,7 @@ describe(`POST ${API_URL}/events/change_state`, () => {
                         descr: 'start and end in range',
                         from: EventState.DRAFT,
                         to: EventState.REVIEW,
-                        for: [Role.USER, Role.ADMIN],
+                        for: ['user', 'admin'],
                         requestDate: new Date('2024-03-08T08:00:00.000Z'),
                         departments: [Departments.GYMD],
                         event: { start: '2024-04-15T00:00:00.000Z', end: '2024-04-30T12:00:00.000Z' }
@@ -1378,7 +1377,7 @@ describe(`POST ${API_URL}/events/change_state`, () => {
                         descr: 'start in range, end outside range',
                         from: EventState.DRAFT,
                         to: EventState.REVIEW,
-                        for: [Role.USER, Role.ADMIN],
+                        for: ['user', 'admin'],
                         requestDate: new Date('2024-03-08T08:00:00.000Z'),
                         departments: [Departments.FMS],
                         event: { start: '2024-04-15T00:00:00.000Z', end: '2024-04-30T12:00:00.000Z' }
@@ -1387,7 +1386,7 @@ describe(`POST ${API_URL}/events/change_state`, () => {
                         descr: 'allows updates of published versions after reg period',
                         from: EventState.DRAFT,
                         to: EventState.REVIEW,
-                        for: [Role.USER, Role.ADMIN],
+                        for: ['user', 'admin'],
                         requestDate: new Date('2024-04-08T08:00:00.000Z'),
                         hasParent: true,
                         departments: [Departments.GYMF],
@@ -1397,7 +1396,7 @@ describe(`POST ${API_URL}/events/change_state`, () => {
                         descr: 'Admin can transition drafts before period',
                         from: EventState.DRAFT,
                         to: EventState.REVIEW,
-                        for: [Role.ADMIN],
+                        for: ['admin'],
                         requestDate: new Date('2024-03-01T08:00:00.000Z'),
                         departments: [Departments.FMS],
                         event: { start: '2024-04-15T00:00:00.000Z', end: '2024-04-30T12:00:00.000Z' }
@@ -1406,7 +1405,7 @@ describe(`POST ${API_URL}/events/change_state`, () => {
                         descr: 'Admin can transition drafts after period',
                         from: EventState.DRAFT,
                         to: EventState.REVIEW,
-                        for: [Role.ADMIN],
+                        for: ['admin'],
                         requestDate: new Date('2024-03-15T08:00:00.000Z'),
                         departments: [Departments.FMS],
                         event: { start: '2024-04-15T00:00:00.000Z', end: '2024-04-30T12:00:00.000Z' }
@@ -1415,8 +1414,8 @@ describe(`POST ${API_URL}/events/change_state`, () => {
                         descr: 'admin can refuse after period',
                         from: EventState.REVIEW,
                         to: EventState.REFUSED,
-                        for: [Role.ADMIN],
-                        author: Role.USER,
+                        for: ['admin'],
+                        author: 'user',
                         requestDate: new Date('2024-03-15T08:00:00.000Z'),
                         departments: [Departments.GYMD],
                         event: { start: '2024-04-15T00:00:00.000Z', end: '2024-04-30T12:00:00.000Z' }
@@ -1425,8 +1424,8 @@ describe(`POST ${API_URL}/events/change_state`, () => {
                         descr: 'admin can publish before period',
                         from: EventState.REVIEW,
                         to: EventState.PUBLISHED,
-                        for: [Role.ADMIN],
-                        author: Role.USER,
+                        for: ['admin'],
+                        author: 'user',
                         requestDate: new Date('2024-03-01T08:00:00.000Z'),
                         departments: [Departments.FMS],
                         event: { start: '2024-04-15T00:00:00.000Z', end: '2024-04-30T12:00:00.000Z' }
@@ -1435,8 +1434,8 @@ describe(`POST ${API_URL}/events/change_state`, () => {
                         descr: 'admin can publish after period',
                         from: EventState.REVIEW,
                         to: EventState.PUBLISHED,
-                        for: [Role.ADMIN],
-                        author: Role.USER,
+                        for: ['admin'],
+                        author: 'user',
                         requestDate: new Date('2024-03-15T08:00:00.000Z'),
                         departments: [Departments.FMS],
                         event: { start: '2024-04-15T00:00:00.000Z', end: '2024-04-30T12:00:00.000Z' }
@@ -1451,7 +1450,7 @@ describe(`POST ${API_URL}/events/change_state`, () => {
                                 );
                             });
                             it(`lets ${role} change state from ${transition.from} to ${transition.to} with ${transition.descr}`, async () => {
-                                const reqUser = role === Role.USER ? user : admin;
+                                const reqUser = role === 'user' ? user : admin;
                                 const deps = [
                                     transition.departments.includes(Departments.FMS) && fms.id,
                                     transition.departments.includes(Departments.GYMD) && gymd.id,
@@ -1470,7 +1469,7 @@ describe(`POST ${API_URL}/events/change_state`, () => {
                                     data: generateEvent({
                                         ...transition.event,
                                         state: transition.from,
-                                        authorId: transition.author === Role.USER ? user.id : reqUser.id,
+                                        authorId: transition.author === 'user' ? user.id : reqUser.id,
                                         parentId: (transition.hasParent && parent?.id) || undefined,
                                         departmentIds: deps
                                     })
@@ -1518,7 +1517,7 @@ describe(`POST ${API_URL}/events/change_state`, () => {
                         descr: 'start outside range',
                         from: EventState.DRAFT,
                         to: EventState.REVIEW,
-                        for: [Role.USER],
+                        for: ['user'],
                         requestDate: new Date('2024-03-08T08:00:00.000Z'),
                         departments: [Departments.GYMD],
                         event: { start: '2024-04-14T23:59:00.000Z', end: '2024-04-27T12:00:00.000Z' }
@@ -1527,7 +1526,7 @@ describe(`POST ${API_URL}/events/change_state`, () => {
                         descr: 'start and end outside range',
                         from: EventState.DRAFT,
                         to: EventState.REVIEW,
-                        for: [Role.USER],
+                        for: ['user'],
                         requestDate: new Date('2024-03-08T08:00:00.000Z'),
                         departments: [Departments.FMS],
                         event: { start: '2024-04-14T23:59:00.000Z', end: '2024-04-30T12:00:00.000Z' }
@@ -1536,7 +1535,7 @@ describe(`POST ${API_URL}/events/change_state`, () => {
                         descr: 'request before reg period',
                         from: EventState.DRAFT,
                         to: EventState.REVIEW,
-                        for: [Role.USER],
+                        for: ['user'],
                         requestDate: new Date('2024-03-06T07:59:00.000Z'),
                         departments: [Departments.FMS],
                         event: { start: '2024-04-16T23:59:00.000Z', end: '2024-04-27T12:00:00.000Z' }
@@ -1545,7 +1544,7 @@ describe(`POST ${API_URL}/events/change_state`, () => {
                         descr: 'request after reg period',
                         from: EventState.DRAFT,
                         to: EventState.REVIEW,
-                        for: [Role.USER],
+                        for: ['user'],
                         requestDate: new Date('2024-04-30T00:00:01.000Z'),
                         departments: [Departments.FMS],
                         event: { start: '2024-04-16T23:59:00.000Z', end: '2024-04-29T12:00:00.000Z' }
@@ -1554,7 +1553,7 @@ describe(`POST ${API_URL}/events/change_state`, () => {
                         descr: 'department not in reg period',
                         from: EventState.DRAFT,
                         to: EventState.REVIEW,
-                        for: [Role.USER],
+                        for: ['user'],
                         requestDate: new Date('2024-03-08T08:00:00.000Z'),
                         departments: [Departments.GYMF],
                         event: { start: '2024-04-16T00:00:00.000Z', end: '2024-04-29T12:00:00.000Z' }
@@ -1569,7 +1568,7 @@ describe(`POST ${API_URL}/events/change_state`, () => {
                                 );
                             });
                             it(`lets ${role} change state from ${transition.from} to ${transition.to} with ${transition.descr}`, async () => {
-                                const reqUser = role === Role.USER ? user : admin;
+                                const reqUser = role === 'user' ? user : admin;
                                 const deps = [
                                     transition.departments.includes(Departments.FMS) && fms.id,
                                     transition.departments.includes(Departments.GYMD) && gymd.id,
@@ -1643,7 +1642,7 @@ describe(`POST ${API_URL}/events/import`, () => {
     describe('GBSL Format: ?type=GBSL_XLSX', () => {
         it('lets admins import gbsl events: legacy format', async () => {
             const admin = await prisma.user.create({
-                data: generateUser({ email: 'admin@bar.ch', role: Role.ADMIN })
+                data: generateUser({ email: 'admin@bar.ch', role: 'admin' })
             });
 
             const result = await request(app)
@@ -1767,7 +1766,7 @@ describe(`POST ${API_URL}/events/import`, () => {
 
         it('lets report the logs of failed imports', async () => {
             const admin = await prisma.user.create({
-                data: generateUser({ email: 'admin@bar.ch', role: Role.ADMIN })
+                data: generateUser({ email: 'admin@bar.ch', role: 'admin' })
             });
 
             /** expect the logger to report an [error]: invalid signature: 0x73206f6e */
@@ -1804,7 +1803,7 @@ describe(`POST ${API_URL}/events/import`, () => {
     describe('GBJB Format: ?type=GBJB_CSV', () => {
         it('lets admins import gbjb events: legacy format', async () => {
             const admin = await prisma.user.create({
-                data: generateUser({ email: 'admin@bar.ch', role: Role.ADMIN })
+                data: generateUser({ email: 'admin@bar.ch', role: 'admin' })
             });
 
             const result = await request(app)
@@ -1909,7 +1908,7 @@ describe(`POST ${API_URL}/events/import`, () => {
         });
         it('lets users import V1 events', async () => {
             const user = await prisma.user.create({
-                data: generateUser({ email: 'user@bar.ch', role: Role.USER })
+                data: generateUser({ email: 'user@bar.ch', role: 'user' })
             });
 
             const result = await request(app)
@@ -2024,7 +2023,7 @@ describe(`POST ${API_URL}/events/import`, () => {
 
         it('V1 import format handles column name mapping', async () => {
             const user = await prisma.user.create({
-                data: generateUser({ email: 'user@bar.ch', role: Role.USER })
+                data: generateUser({ email: 'user@bar.ch', role: 'user' })
             });
 
             const result = await request(app)
@@ -2072,7 +2071,7 @@ describe(`POST ${API_URL}/events/import`, () => {
 
         it('V1 import format ignores missing columns', async () => {
             const user = await prisma.user.create({
-                data: generateUser({ email: 'user@bar.ch', role: Role.USER })
+                data: generateUser({ email: 'user@bar.ch', role: 'user' })
             });
 
             const result = await request(app)
@@ -2120,7 +2119,7 @@ describe(`POST ${API_URL}/events/import`, () => {
             }
 
             const user = await prisma.user.create({
-                data: generateUser({ email: 'user@bar.ch', role: Role.USER })
+                data: generateUser({ email: 'user@bar.ch', role: 'user' })
             });
 
             const result = await request(app)
@@ -2176,7 +2175,7 @@ describe(`POST ${API_URL}/events/import`, () => {
         it('V1 import format ignores failing rows', async () => {
             /** create some classes */
             const user = await prisma.user.create({
-                data: generateUser({ email: 'user@bar.ch', role: Role.USER })
+                data: generateUser({ email: 'user@bar.ch', role: 'user' })
             });
 
             const result = await request(app)
@@ -2262,7 +2261,7 @@ FAILED:
 
         it('lets report the logs of failed imports', async () => {
             const admin = await prisma.user.create({
-                data: generateUser({ email: 'admin@bar.ch', role: Role.ADMIN })
+                data: generateUser({ email: 'admin@bar.ch', role: 'admin' })
             });
 
             /** expect the logger to report an [error]: invalid signature: 0x73206f6e */

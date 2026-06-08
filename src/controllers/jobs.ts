@@ -8,7 +8,7 @@ import { ApiEvent } from '../models/event.helpers.js';
 
 const NAME = RecordType.Job;
 
-export const find: RequestHandler = async (req, res, next) => {
+export const find: RequestHandler<{ id: string }> = async (req, res, next) => {
     try {
         const job = await Jobs.findModel(req.user!, req.params.id);
         res.json(job);
@@ -51,7 +51,7 @@ export const update: RequestHandler<{ id: string }, any, { data: Job }> = async 
     }
 };
 
-export const destroy: RequestHandler = async (req, res, next) => {
+export const destroy: RequestHandler<{ id: string }> = async (req, res, next) => {
     try {
         try {
             const job = await Jobs.destroy(req.user!, req.params.id);

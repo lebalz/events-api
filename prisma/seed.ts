@@ -1,6 +1,7 @@
 import { getNameFromEmail } from 'src/helpers/email.js';
 import prisma from 'src/prisma.js';
 import { User } from 'prisma/generated/client.js';
+import { Role } from 'src/models/user.js';
 
 async function main() {
     if (process.env.NODE_ENV === 'production' || process.env.NODE_ENV === 'test') {
@@ -15,7 +16,7 @@ async function main() {
         user = await prisma.user.upsert({
             where: { id: USER_ID },
             update: {},
-            create: { email: USER_EMAIL, id: USER_ID, firstName: firstName, lastName: lastName, role: 'USER' }
+            create: { email: USER_EMAIL, id: USER_ID, firstName: firstName, lastName: lastName, role: Role.USER }
         });
         console.log('CREATED USER', user);
     }
@@ -29,7 +30,7 @@ async function main() {
                 id: ADMIN_ID,
                 firstName: firstName,
                 lastName: lastName,
-                role: 'ADMIN'
+                role: Role.ADMIN
             }
         });
         console.log('CREATED ADMIN', admin);

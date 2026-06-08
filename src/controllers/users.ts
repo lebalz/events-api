@@ -1,10 +1,9 @@
-import { Role, User } from 'prisma/generated/client.js';
+import { User } from 'prisma/generated/client.js';
 import { RequestHandler } from 'express';
 import { IoEvent, RecordType } from '../routes/socketEventTypes.js';
 import { IoRoom } from '../routes/socketEvents.js';
-import Users from '../models/user.js';
+import Users, { Role } from '../models/user.js';
 import Events from '../models/event.js';
-import { ApiUser } from '../models/user.helpers.js';
 
 const NAME = RecordType.User;
 

@@ -6,6 +6,8 @@ import { affectedLessons } from '../services/eventChecker.js';
 import { affectedLessons as checkUnpersisted } from '../services/eventCheckUnpersisted.js';
 import Logger from '../utils/logger.js';
 import { ClientToServerEvents, IoEvents, ServerToClientEvents } from './socketEventTypes.js';
+import { auth } from '../auth.js';
+import { Role } from 'src/models/user.js';
 
 export enum IoRoom {
     ADMIN = 'admin',
@@ -13,21 +15,23 @@ export enum IoRoom {
 }
 
 const EventRouter = (io: Server<ClientToServerEvents, ServerToClientEvents>) => {
-    io.on('connection', (socket) => {
-        const user = (socket.request as { user?: User }).user;
+    io.on('connection', async (socket) => {
+        const token = socket.handshake.auth.token;
+        const session = await auth.api.verifyOneTimeToken({ body: { token } }).catch(() => null);
+
+        if (!session?.user) {
+            return socket.disconnect();
+        }
+        const user = session.user as User;
         if (!user) {
             return socket.disconnect();
         }
-        const sid = (socket.request as { sessionID?: string }).sessionID;
-        if (sid) {
-            socket.join(sid);
-        }
-        if (user.role === 'ADMIN') {
+        socket.join(user.id);
+
+        if (user.role === Role.ADMIN) {
             socket.join(IoRoom.ADMIN);
         }
         socket.join(IoRoom.ALL);
-
-        socket.join(user.id);
 
         socket.on(IoEvents.AffectedLessons, async (eventId, semesterId, callback) => {
             try {
@@ -50,20 +54,15 @@ const EventRouter = (io: Server<ClientToServerEvents, ServerToClientEvents>) => 
     });
 
     io.on('disconnect', (socket) => {
-        const { user } = socket.request as { user?: User };
-        /* istanbul ignore next */
-        Logger.info('Socket.io disconnect');
+        Logger.info(`Socket.io disconnect ${socket.id}`);
     });
 
     io.on('error', (socket) => {
-        /* istanbul ignore next */
-        Logger.error(`Socket.io error`);
+        Logger.error(`Socket.io error ${socket.id}`);
     });
 
     io.on('reconnect', (socket) => {
-        const { user } = socket.request as { user?: User };
-        /* istanbul ignore next */
-        Logger.info('Socket.io reconnect');
+        Logger.info(`Socket.io reconnect ${socket.id}`);
     });
 };
 

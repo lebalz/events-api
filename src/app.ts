@@ -1,19 +1,21 @@
-import { strategyForEnvironment } from './auth/index.js';
 import express, { NextFunction, Request, Response } from 'express';
-import session from 'express-session';
 import prisma from 'src/prisma.js';
 import path from 'path';
 import cors from 'cors';
 import morganMiddleware from './middlewares/morgan.middleware.js';
-import passport from 'passport';
 import router from './routes/router.js';
 import routeGuard, { PUBLIC_GET_ACCESS, PUBLIC_GET_ACCESS_REGEX, createAccessRules } from './auth/guard.js';
 import authConfig from './routes/authConfig.js';
 import type { User } from 'prisma/generated/client.js';
-import { HttpStatusCode } from './utils/errors/BaseError.js';
-import { notify } from './middlewares/notify.nop.js';
-import { HTTP401Error } from './utils/errors/Errors.js';
-import connectPgSimple from 'connect-pg-simple';
+import BaseError from './utils/errors/BaseError.js';
+import { fromNodeHeaders, toNodeHandler } from 'better-auth/node';
+import { auth } from './auth.js';
+
+import Logger from './utils/logger.js';
+import { CORS_ORIGIN } from './utils/originConfig.js';
+import { notify } from './socketIoServer.js';
+import { notify as nopNotify } from './middlewares/notify.nop.js';
+
 import { existsSync, mkdirSync } from 'fs';
 
 const AccessRules = createAccessRules(authConfig.accessMatrix);
@@ -27,6 +29,7 @@ const AccessRules = createAccessRules(authConfig.accessMatrix);
 const app = express();
 export const API_VERSION = 'v1';
 export const API_URL = `/api/${API_VERSION}`;
+
 const ICAL_DEFAULT = process.env.EXPORT_DIR || `${__dirname}/../../ical`;
 const ICAL_DEFAULT_DIRS = {
     test: `${__dirname}/../tests/test-data/ical`,
@@ -50,87 +53,35 @@ if (!existsSync(`${STATIC_DIR}/fr`)) {
     mkdirSync(`${STATIC_DIR}/fr`, { recursive: true });
 }
 
+
 /**
- *  this shall not be needed when running behind a reverse proxy
- *  as is the case with dokku
+ *  this is not needed when running behind a reverse proxy
+ *  as is the case with dokku (nginx)
  */
 //  app.use(compression(), express.json({ limit: "5mb" }));
+
 
 // ensure the server can call other domains: enable cross origin resource sharing (cors)
 app.use(
     cors({
+        methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'HEAD'],
+        origin: CORS_ORIGIN,
         credentials: true,
-        origin: process.env.WITH_DEPLOY_PREVIEW
-            ? [
-                process.env.EVENTS_APP_URL || true,
-                /https:\/\/deploy-preview-\d+--gbsl-events-app.netlify.app/
-            ]
-            : process.env.EVENTS_APP_URL || true /* true = strict origin */,
-        methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'HEAD']
     })
 );
 
-// received packages should be presented in the JSON format
-app.use(express.json());
-
+/** make sure to have 1 (reverse) proxy in front of the application
+ * as is the case with dokku (nginx)
+ */
+app.set('trust proxy', 1);
 app.use(morganMiddleware);
 
-const store = new (connectPgSimple(session))({
-    conString: process.env.DATABASE_URL
-});
+// make sure to configure *before* the json middleware
+app.all('/api/auth/{*any}', toNodeHandler(auth));
 
-const subdomain = process.env.EVENTS_APP_URL ? new URL(process.env.EVENTS_APP_URL).hostname : '';
-const subdomainParts = subdomain.split('.');
-const domain = subdomainParts.slice(subdomainParts.length - 2).join('.');
+// received packages should be presented in the JSON format
+app.use(express.json({ limit: '15mb' }));
 
-const SESSION_MAX_AGE = 2592000000 as const; // 1000 * 60 * 60 * 24 * 30 = 2592000000 = 30 days
-
-app.set('trust proxy', 1);
-
-export const sessionMiddleware = session({
-    name: 'eventsApiKey',
-    store: store,
-    secret: process.env.SESSION_SECRET || 'secret',
-    saveUninitialized: false,
-    resave: false,
-    proxy: process.env.NODE_ENV === 'production',
-    cookie: {
-        secure: process.env.NODE_ENV === 'production',
-        httpOnly: true,
-        sameSite: process.env.WITH_DEPLOY_PREVIEW ? 'none' : 'strict',
-        domain: domain.length > 0 ? domain : undefined,
-        maxAge: SESSION_MAX_AGE // 30 days
-    }
-});
-
-app.use(sessionMiddleware);
-
-// export const sessionMiddleware = session({
-//     secret: process.env.SESSION_SECRET || 'secret',
-//     resave: false,
-//     saveUninitialized: false /** TODO: check if false is ok */
-// });
-
-// app.use(sessionMiddleware)
-
-app.use(passport.initialize());
-app.use(passport.session()); /** alias for passport.authenticate('session'); e.g. to use the session... */
-
-passport.use(strategyForEnvironment());
-
-passport.serializeUser((user, done) => {
-    /** ignore this socket */
-    done(null, user.id);
-});
-
-/** ignore this socket */
-passport.deserializeUser(async (id, done) => {
-    const user = await prisma.user.findUnique({ where: { id: id as string } });
-    done(null, user);
-});
-
-const HOSTNAME = new URL(process.env.EVENTS_APP_URL || 'http://localhost').hostname;
-const UMAMI_HOSTNAME = new URL(process.env.UMAMI_URL || 'http://localhost').hostname;
 /** Static folders */
 app.use(
     '/ical',
@@ -146,40 +97,31 @@ app.use(
 // Serve the static files to be accessed by the docs app
 app.use(express.static(path.join(__dirname, '..', 'docs')));
 
-// Public Endpoints
-app.get(`${API_URL}`, (req, res) => {
-    return res.status(200).send('Welcome to the EVENTES-API V1.0');
-});
-
-const SessionOauthStrategy = (req: Request, res: Response, next: NextFunction) => {
-    /* istanbul ignore next */
-    if (req.isAuthenticated()) {
-        return next();
-    }
-    passport.authenticate('oauth-bearer', { session: true })(req, res, next);
+const welcomeApi = (req: Request, res: Response) => {
+    return res.status(200).send('Welcome to the EVENTS-API V1.0');
 };
 
-app.get(
-    `${API_URL}/checklogin`,
-    /* istanbul ignore next */
-    SessionOauthStrategy,
-    /* istanbul ignore next */
-    async (req, res, next) => {
-        try {
-            if (req.user) {
-                return res.status(200).send('OK');
-            }
-            throw new HTTP401Error();
-        } catch (/* istanbul ignore next */ error) {
-            next(error);
-        }
-    }
-);
+// Public Endpoints
+app.get(`${API_URL}`, welcomeApi);
 
-app.post(`${API_URL}/logout`, SessionOauthStrategy, async (req, res) => {
-    await prisma.session.delete({ where: { sid: req.session.id } });
-    res.clearCookie('eventsApiKey').status(200).send('OK');
-});
+const errorHandler = (err: Error, req: Request, res: Response, next: NextFunction) => {
+    if ((err as BaseError).isHttpError) {
+        const httpErr = err as BaseError;
+        res.status(httpErr.statusCode).send({
+            errors: [
+                {
+                    name: httpErr.name,
+                    message: httpErr.message,
+                    status: httpErr.statusCode,
+                    isOperational: httpErr.isOperational
+                }
+            ]
+        });
+    } else {
+        res.status(500).send({ errors: [{ name: err.name, message: err.message }] });
+    }
+    Logger.error(err);
+};
 
 export const configure = (_app: typeof app) => {
     /**
@@ -192,88 +134,59 @@ export const configure = (_app: typeof app) => {
             if (res.statusCode >= 400) {
                 return;
             }
-            const io = req.io;
 
             /* istanbul ignore next */
-            if (res.notifications && io) {
+            if (res.notifications) {
                 res.notifications.forEach((notification) => {
-                    const except: string[] = [];
-                    /** ignore this socket */
-                    if (!notification.toSelf) {
-                        const socketID = req.headers['x-metadata-socketid'] as string;
-                        if (socketID) {
-                            except.push(socketID);
-                        }
-                    }
-                    io.except(except)
-                        .to(notification.to)
-                        .emit(notification.event, notification.message as any);
+                    notify(notification, req.headers['x-metadata-sid'] as string);
                 });
             }
-            res.locals.notifications = res.notifications;
         });
         next();
     });
 
-    if (process.env.NODE_ENV === 'test') {
-        _app.use((req: Request, res, next) => {
-            res.on('finish', async () => {
-                if (res.statusCode >= 400) {
-                    return;
-                }
-                if (res.notifications) {
-                    res.notifications.forEach((notification) => {
-                        notify(notification);
-                    });
-                }
-                res.locals.notifications = res.notifications;
-            });
-            next();
-        });
-    }
-
+    /**
+     * API Route Guard
+     * This middleware will check if the user is authenticated and has the required
+     * permissions to access the requested route.
+     */
     _app.use(
         `${API_URL}`,
         (req, res, next) => {
-            /* istanbul ignore next */
-            if (req.isAuthenticated()) {
-                return next();
-            }
-            passport.authenticate('oauth-bearer', { session: true }, (err: Error, user: User, info: any) => {
-                if (err) {
-                    /**
-                     * An error occurred during authorization. Send a Not Autohrized
-                     * status code.
-                     */
-                    /* istanbul ignore next */
-                    return res.status(HttpStatusCode.UNAUTHORIZED).json({ error: err.message });
-                }
-
-                if (
-                    !user &&
-                    !(
-                        PUBLIC_GET_ACCESS.has(req.path.toLowerCase()) ||
-                        PUBLIC_GET_ACCESS_REGEX.some((regex) => regex.test(req.path))
-                    )
-                ) {
-                    // If no user object found, send a 401 response.
-                    return res.status(HttpStatusCode.UNAUTHORIZED).json({ error: 'Unauthorized' });
-                }
-                req.user = user;
-                if (info) {
-                    // access token payload will be available in req.authInfo downstream
-                    req.authInfo = info;
+            return auth.api
+                .getSession({ headers: fromNodeHeaders(req.headers) })
+                .then((session) => {
+                    if (!session?.user) {
+                        return res.status(401).json({ error: 'Unauthorized' });
+                    }
+                    req.user = session.user as User;
                     return next();
-                }
-            })(req, res, next);
+                })
+                .catch((err) => {
+                    return res.status(401).json({ error: err.message });
+                });
         },
         routeGuard(AccessRules), // route guard middleware
         router // the router with all the routes
     );
+    _app.use(errorHandler);
 };
 
 if (process.env.NODE_ENV === 'test') {
     configure(app);
+    app.use((req: Request, res, next) => {
+        res.on('finish', async () => {
+            if (res.statusCode >= 400) {
+                return;
+            }
+            if (res.notifications) {
+                res.notifications.forEach((notification) => {
+                    nopNotify(notification);
+                });
+            }
+        });
+        next();
+    });
 }
 
 export default app;

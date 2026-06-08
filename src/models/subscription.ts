@@ -1,4 +1,4 @@
-import { PrismaClient, Role, User as Users } from 'prisma/generated/client.js';
+import { PrismaClient, User as Users } from 'prisma/generated/client.js';
 import prisma from 'src/prisma.js';
 import { HTTP403Error, HTTP404Error } from '../utils/errors/Errors.js';
 import { createDataExtractor } from '../controllers/helpers.js';
@@ -18,7 +18,7 @@ function Subscription(db: PrismaClient['subscription']) {
             if (!record) {
                 throw new HTTP404Error('Subscription not found');
             }
-            if (!(record.userId === actor.id || actor.role === Role.ADMIN)) {
+            if (!(record.userId === actor.id || actor.role === 'admin')) {
                 throw new HTTP403Error('Not authorized');
             }
             /** remove fields not updatable*/

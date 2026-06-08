@@ -1,4 +1,4 @@
-import { Event, EventState, Job, JobState, JobType, Prisma, PrismaClient, Role, User } from 'prisma/generated/client.js';
+import { Event, EventState, Job, JobState, JobType, Prisma, PrismaClient, User } from 'prisma/generated/client.js';
 import prisma from 'src/prisma.js';
 import { createDataExtractor } from '../controllers/helpers.js';
 import { ApiEvent, clonedProps, clonedUpdateProps, normalizeAudience, prepareEvent } from './event.helpers.js';
@@ -9,6 +9,7 @@ import Semesters from './semester.js';
 import _ from 'lodash';
 import { rmUndefined } from '../utils/filterHelpers.js';
 import { Meta } from '../services/importGBSL_xlsx.js';
+import { Role } from './user.js';
 
 type ApiEventUpdateInput = Omit<
     Prisma.EventUncheckedUpdateInput,
@@ -118,7 +119,7 @@ function Events(db: PrismaClient['event']) {
                 !(
                     record.authorId === actor.id ||
                     record.groups.some((g) => g.users.map((user) => user.id).includes(actor.id)) ||
-                    actor.role === Role.ADMIN
+                    actor.role === 'admin'
                 )
             ) {
                 throw new HTTP403Error('Not authorized');
@@ -141,7 +142,7 @@ function Events(db: PrismaClient['event']) {
                 return prepareEvent(event);
             }
             if (
-                actor?.role === Role.ADMIN &&
+                actor?.role === 'admin' &&
                 (event.state === EventState.REVIEW || event.state === EventState.REFUSED)
             ) {
                 return prepareEvent(event);
@@ -261,7 +262,7 @@ function Events(db: PrismaClient['event']) {
             id: string,
             requested: EventState
         ): Promise<{ event: ApiEvent; parent?: ApiEvent; previous?: ApiEvent; refused: ApiEvent[] }> {
-            const isAdmin = actor!.role === Role.ADMIN;
+            const isAdmin = actor!.role === 'admin';
             const record = await db.findUnique({
                 where: { id: id },
                 include: {
@@ -615,7 +616,7 @@ function Events(db: PrismaClient['event']) {
             return events.map(prepareEvent);
         },
         async forUser(user: User): Promise<ApiEvent[]> {
-            const isAdmin = user.role === Role.ADMIN;
+            const isAdmin = user.role === 'admin';
             const events = await db.findMany({
                 include: { departments: true, children: true, linkedUsers: { select: { id: true } } },
                 where: {
@@ -660,7 +661,7 @@ function Events(db: PrismaClient['event']) {
                                     {
                                         state: {
                                             in:
-                                                actor.role === 'ADMIN'
+                                                actor.role === Role.ADMIN
                                                     ? [
                                                         EventState.PUBLISHED,
                                                         EventState.REFUSED,

@@ -1,4 +1,4 @@
-import { JobType, Prisma, Role, User } from 'prisma/generated/client.js';
+import { JobType, Prisma } from 'prisma/generated/client.js';
 import Jobs from '../../../src/models/job.js';
 import prisma from 'src/prisma.js';
 import { createUser } from './users.test.js';
@@ -35,7 +35,7 @@ describe('Jobs', () => {
         });
         test('admin can get other users job', async () => {
             const user = await createUser({ firstName: 'Reto' });
-            const admin = await createUser({ role: Role.ADMIN });
+            const admin = await createUser({ role: 'admin' });
             const job = await createJob({ userId: user.id, type: JobType.IMPORT });
             await expect(Jobs.findModel(admin, job.id)).resolves.toEqual({
                 ...job,
@@ -96,7 +96,7 @@ describe('Jobs', () => {
         });
         test('admin can update description of others jobs', async () => {
             const user = await createUser({ firstName: 'Reto' });
-            const admin = await createUser({ role: Role.ADMIN });
+            const admin = await createUser({ role: 'admin' });
             const job = await createJob({ userId: user.id, type: JobType.IMPORT });
             await expect(Jobs.updateModel(admin, job.id, { description: 'FooBar' })).resolves.toEqual({
                 ...job,

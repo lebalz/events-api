@@ -15,7 +15,7 @@ export const all: RequestHandler = async (req, res, next) => {
     }
 };
 
-export const find: RequestHandler = async (req, res, next) => {
+export const find: RequestHandler<{ id: string }> = async (req, res, next) => {
     try {
         const model = await Departments.findModel(req.params.id);
         res.json(model);

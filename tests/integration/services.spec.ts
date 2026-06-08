@@ -1,7 +1,7 @@
 import { API_URL } from '../../src/app.js';
 import prisma from 'src/prisma.js';
 import { generateUser } from '../factories/user.js';
-import { Department, EventGroup, Role, Semester, UntisTeacher } from 'prisma/generated/client.js';
+import { Department, EventGroup, Semester, UntisTeacher } from 'prisma/generated/client.js';
 import _ from 'lodash';
 import { notify } from '../../src/middlewares/notify.nop.js';
 import { generateUntisData, UntisDataProps } from '../factories/untisData.js';
@@ -95,11 +95,11 @@ describe(`GET ${API_URL}/users/:id/affected-event-ids`, () => {
         describe('returns affected lessons', () => {
             it('returns all affected lessons', async () => {
                 const author = await prisma.user.create({
-                    data: generateUser({ role: Role.ADMIN })
+                    data: generateUser({ role: 'admin' })
                 });
                 for (const tchr of untisTeachers) {
                     await prisma.user.create({
-                        data: generateUser({ untisId: tchr.id, role: Role.USER })
+                        data: generateUser({ untisId: tchr.id, role: 'user' })
                     });
                 }
                 const ecgFms = departments.find((d) => d.name === 'ECG/FMS') as Department;

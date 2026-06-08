@@ -8,12 +8,14 @@ export enum HttpStatusCode {
 }
 
 export default class BaseError extends Error {
+    public readonly isHttpError = true;
     public readonly name: string;
     public readonly statusCode: HttpStatusCode;
     public readonly isOperational: boolean;
+    public readonly cause: string;
 
     constructor(name: string, httpCode: HttpStatusCode, description: string, isOperational: boolean) {
-        super(`[${httpCode}] description`);
+        super(`[${httpCode}] ${description}`);
         Object.setPrototypeOf(this, new.target.prototype);
         this.cause = description;
         this.name = name;

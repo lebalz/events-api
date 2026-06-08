@@ -1,6 +1,6 @@
 /* istanbul ignore file */
 
-import { EventState, Role, User } from 'prisma/generated/client.js';
+import { EventState, User } from 'prisma/generated/client.js';
 import { ApiEvent } from '../../models/event.helpers.js';
 import prisma from 'src/prisma.js';
 import { mailOnChange } from './mail/onChange.js';
@@ -20,7 +20,7 @@ export const notifiableUsers = async () => {
     });
     const admins = await prisma.user.findMany({
         where: {
-            role: Role.ADMIN
+            role: 'admin'
         }
     });
     const GBSL_REGEX = /gbsl.ch$/i;
