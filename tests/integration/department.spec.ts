@@ -1,8 +1,8 @@
 import request from 'supertest';
 import app, { API_URL } from '../../src/app';
-import prisma from '../../src/prisma';
+import prisma from 'src/prisma.js';
 import { generateUser } from '../factories/user';
-import { Department, Role } from '@prisma/client';
+import { Department, Role } from 'prisma/generated/client.js';
 import stubs from './stubs/departments.json';
 import _ from 'lodash';
 import { notify } from '../../src/middlewares/notify.nop';

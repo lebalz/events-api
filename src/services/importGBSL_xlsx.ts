@@ -1,4 +1,4 @@
-import { Event, EventAudience, TeachingAffected } from '@prisma/client';
+import { Event, EventAudience, TeachingAffected } from 'prisma/generated/client.js';
 import readXlsxFile from 'read-excel-file/node';
 import { ImportRawEvent } from './importEvents';
 import { rmUndefined } from '../utils/filterHelpers';

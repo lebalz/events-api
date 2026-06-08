@@ -1,6 +1,6 @@
-import prisma from '../prisma';
+import prisma from 'src/prisma.js';
 import { createEvents, DateArray, EventAttributes } from 'ics';
-import { Event, EventAudience, EventState } from '@prisma/client';
+import { Event, EventAudience, EventState } from 'prisma/generated/client.js';
 import { promises as fsPromises } from 'fs';
 import _ from 'lodash';
 import Logger from '../utils/logger';
@@ -223,35 +223,35 @@ export const createIcsFromSubscription = async (subscription: ApiSubscription): 
 
     const subscribedDepartmentEvents = await (subscription.departmentIds.length > 0
         ? prisma.view_EventsClasses.findMany({
-              where: {
-                  departmentId: { in: subscription.departmentIds },
-                  parentId: null,
-                  state: EventState.PUBLISHED,
-                  id: { notIn: [...toIgnore] },
-                  OR: [
-                      { start: { gte: timeRange.from, lte: timeRange.to } },
-                      { end: { gte: timeRange.from, lte: timeRange.to } }
-                  ]
-              },
-              distinct: ['id']
-          })
+            where: {
+                departmentId: { in: subscription.departmentIds },
+                parentId: null,
+                state: EventState.PUBLISHED,
+                id: { notIn: [...toIgnore] },
+                OR: [
+                    { start: { gte: timeRange.from, lte: timeRange.to } },
+                    { end: { gte: timeRange.from, lte: timeRange.to } }
+                ]
+            },
+            distinct: ['id']
+        })
         : Promise.resolve([]));
     subscribedDepartmentEvents.forEach((event) => toIgnore.add(event.id));
 
     const subscribedClassEvents = await (subscription.untisClassIds.length > 0
         ? prisma.view_EventsClasses.findMany({
-              where: {
-                  classId: { in: subscription.untisClassIds },
-                  parentId: null,
-                  state: EventState.PUBLISHED,
-                  id: { notIn: [...toIgnore] },
-                  OR: [
-                      { start: { gte: timeRange.from, lte: timeRange.to } },
-                      { end: { gte: timeRange.from, lte: timeRange.to } }
-                  ]
-              },
-              distinct: ['id']
-          })
+            where: {
+                classId: { in: subscription.untisClassIds },
+                parentId: null,
+                state: EventState.PUBLISHED,
+                id: { notIn: [...toIgnore] },
+                OR: [
+                    { start: { gte: timeRange.from, lte: timeRange.to } },
+                    { end: { gte: timeRange.from, lte: timeRange.to } }
+                ]
+            },
+            distinct: ['id']
+        })
         : Promise.resolve([]));
 
     const allEvents = _.orderBy(

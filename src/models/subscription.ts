@@ -1,5 +1,5 @@
-import { PrismaClient, Role, Subscription, User as Users } from '@prisma/client';
-import prisma from '../prisma';
+import { PrismaClient, Role, Subscription, User as Users } from 'prisma/generated/client.js';
+import prisma from 'src/prisma.js';
 import { HTTP403Error, HTTP404Error } from '../utils/errors/Errors';
 import { createDataExtractor } from '../controllers/helpers';
 import { createIcsFromSubscription } from '../services/createIcs';
@@ -31,18 +31,18 @@ function Subscription(db: PrismaClient['subscription']) {
                     ...sanitized,
                     departments: data.departmentIds
                         ? {
-                              set: data.departmentIds.map((id) => ({ id }))
-                          }
+                            set: data.departmentIds.map((id) => ({ id }))
+                        }
                         : undefined,
                     ignoredEvents: data.ignoredEventIds
                         ? {
-                              set: data.ignoredEventIds.map((id) => ({ id }))
-                          }
+                            set: data.ignoredEventIds.map((id) => ({ id }))
+                        }
                         : undefined,
                     untisClasses: data.untisClassIds
                         ? {
-                              set: data.untisClassIds.map((id) => ({ id }))
-                          }
+                            set: data.untisClassIds.map((id) => ({ id }))
+                        }
                         : undefined
                 },
                 include: DEFAULT_INCLUDE

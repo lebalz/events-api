@@ -7,7 +7,7 @@ import type {
     RegistrationPeriod,
     Semester,
     User
-} from '@prisma/client';
+} from 'prisma/generated/client.js';
 import { IoRoom } from './socketEvents';
 import { ApiEvent } from '../models/event.helpers';
 import { ApiUser } from '../models/user.helpers';

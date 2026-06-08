@@ -1,6 +1,6 @@
-import { Event, EventAudience, EventState, Prisma, TeachingAffected, UntisClass } from '@prisma/client';
+import { Event, EventAudience, EventState, Prisma, TeachingAffected, UntisClass } from 'prisma/generated/client.js';
 import { importExcel as importGBSL_xlsx, LogMessage as LogMessageGBSL } from './importGBSL_xlsx';
-import prisma from '../prisma';
+import prisma from 'src/prisma.js';
 import { KlassName, mapLegacyClassName } from './helpers/klassNames';
 import { importCsv as importGBJB_csv } from './importGBJB_csv';
 import { importExcel as importV1, LogMessage as LogMessageV1 } from './importV1';

@@ -1,7 +1,7 @@
-import { Prisma, Role } from '@prisma/client';
+import { Prisma, Role } from 'prisma/generated/client.js';
 import EventGroups from '../../../src/models/eventGroup';
 import { HTTP404Error } from '../../../src/utils/errors/Errors';
-import prisma from '../../../src/prisma';
+import prisma from 'src/prisma.js';
 import { createUser } from './users.test';
 import { generateEventGroup } from '../../factories/eventGroup';
 import _ from 'lodash';

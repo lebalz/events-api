@@ -1,6 +1,6 @@
-import { EventState, Prisma, PrismaClient, User } from '@prisma/client';
+import { EventState, Prisma, PrismaClient, User } from 'prisma/generated/client.js';
 import { clonedProps as clonedEventProps, prepareEvent } from './event.helpers';
-import prisma from '../prisma';
+import prisma from 'src/prisma.js';
 import { HTTP404Error, HTTP500Error } from '../utils/errors/Errors';
 import { createDataExtractor } from '../controllers/helpers';
 import Events from './event';

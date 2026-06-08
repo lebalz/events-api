@@ -1,5 +1,5 @@
 /* istanbul ignore file */
-import { Semester } from '@prisma/client';
+import { Semester } from 'prisma/generated/client.js';
 import stub from './fetchUntis.stub.json';
 import { UntisData } from '../fetchUntis';
 

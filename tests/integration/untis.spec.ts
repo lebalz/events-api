@@ -1,8 +1,8 @@
 import request from 'supertest';
 import app, { API_URL } from '../../src/app';
-import prisma from '../../src/prisma';
+import prisma from 'src/prisma.js';
 import { generateUser } from '../factories/user';
-import { UntisTeacher } from '@prisma/client';
+import { UntisTeacher } from 'prisma/generated/client.js';
 import stubs from './stubs/semesters.json';
 import _ from 'lodash';
 import { notify } from '../../src/middlewares/notify.nop';

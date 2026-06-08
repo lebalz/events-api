@@ -1,5 +1,5 @@
 import request from 'supertest';
-import prisma from '../../src/prisma';
+import prisma from 'src/prisma.js';
 import app, { API_URL } from '../../src/app';
 import { generateUser } from '../factories/user';
 import { notify } from '../../src/middlewares/notify.nop';

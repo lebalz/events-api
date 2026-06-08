@@ -1,5 +1,5 @@
-import type { Prisma } from '@prisma/client';
-import prisma from '../prisma';
+import type { Prisma } from 'prisma/generated/client.js';
+import prisma from 'src/prisma.js';
 import { getNameFromEmail } from './email';
 
 export const getAuthInfo = (authInfo?: Express.AuthInfo) => {

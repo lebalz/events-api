@@ -1,9 +1,9 @@
-import { EventState, Prisma, Role } from '@prisma/client';
+import { EventState, Prisma, Role } from 'prisma/generated/client.js';
 import { createDepartment } from './departments.test';
 import Events from '../../../src/models/event';
 import { normalizeAudience, prepareEvent } from '../../../src/models/event.helpers';
 import { HTTP400Error, HTTP403Error, HTTP404Error } from '../../../src/utils/errors/Errors';
-import prisma from '../../../src/prisma';
+import prisma from 'src/prisma.js';
 import { createUser } from './users.test';
 import { generateEvent } from '../../factories/event';
 import { setTimeout } from 'timers/promises';

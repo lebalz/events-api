@@ -1,6 +1,6 @@
-import { EventState, Prisma, PrismaClient, Role, Subscription, User as Users } from '@prisma/client';
+import { EventState, Prisma, PrismaClient, Role, Subscription, User as Users } from 'prisma/generated/client.js';
 import { createIcs as createIcsFile } from '../services/createIcs';
-import prisma from '../prisma';
+import prisma from 'src/prisma.js';
 import { HTTP400Error, HTTP403Error, HTTP404Error } from '../utils/errors/Errors';
 import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
 import { ApiEvent, prepareEvent } from './event.helpers';
@@ -128,10 +128,10 @@ function Users(db: PrismaClient['user']) {
             const semester = semesterId
                 ? await prisma.semester.findUnique({ where: { id: semesterId } })
                 : await prisma.semester.findFirst({
-                      where: {
-                          AND: [{ start: { lte: new Date() } }, { end: { gte: new Date() } }]
-                      }
-                  });
+                    where: {
+                        AND: [{ start: { lte: new Date() } }, { end: { gte: new Date() } }]
+                    }
+                });
             if (!semester) {
                 throw new HTTP404Error('Semester not found');
             }

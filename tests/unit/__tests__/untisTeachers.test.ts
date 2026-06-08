@@ -1,6 +1,6 @@
-import { JobType, Prisma, Role, User } from '@prisma/client';
+import { JobType, Prisma, Role, User } from 'prisma/generated/client.js';
 import Semesters from '../../../src/models/semester';
-import prisma from '../../../src/prisma';
+import prisma from 'src/prisma.js';
 import { createUser } from './users.test';
 import { HTTP400Error, HTTP403Error, HTTP404Error } from '../../../src/utils/errors/Errors';
 import untisTeachers from '../../../src/models/untisTeacher';

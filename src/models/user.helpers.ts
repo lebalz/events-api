@@ -1,4 +1,4 @@
-import { User } from '@prisma/client';
+import { User } from 'prisma/generated/client.js';
 import { ApiSubscription, PrepareableSubscription, prepareSubscription } from './subscription.helpers';
 
 export interface ApiUser extends User {

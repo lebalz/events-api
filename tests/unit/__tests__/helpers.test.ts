@@ -7,13 +7,13 @@ import {
 } from '../../../src/services/helpers/departmentNames';
 import { KlassName } from '../../../src/services/helpers/klassNames';
 import { chunks } from '../../../src/services/helpers/splitInChunks';
-import prisma from '../../../src/prisma';
+import prisma from 'src/prisma.js';
 import { rmUndefined } from '../../../src/utils/filterHelpers';
 import { stringify } from '../../../src/utils/logger';
 import { HTTP401Error, HTTP500Error } from '../../../src/utils/errors/Errors';
 import { getDate, getDateLong, getDateTime, getDay, getTime } from '../../../src/services/helpers/time';
 import { translate } from '../../../src/services/helpers/i18n';
-import type { Department } from '@prisma/client';
+import type { Department } from 'prisma/generated/client.js';
 
 describe('Split In Chunks', () => {
     test('fn chunks', async () => {

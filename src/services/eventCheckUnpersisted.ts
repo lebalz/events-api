@@ -1,5 +1,5 @@
-import { EventState, type Event, type Prisma } from '@prisma/client';
-import prisma from '../prisma';
+import { EventState, type Event, type Prisma } from 'prisma/generated/client.js';
+import prisma from 'src/prisma.js';
 import { v4 as uuidv4 } from 'uuid';
 import { ApiEvent } from '../models/event.helpers';
 import Logger from '../utils/logger';

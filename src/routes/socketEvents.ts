@@ -1,6 +1,6 @@
 /* istanbul ignore file */
 
-import type { User } from '@prisma/client';
+import type { User } from 'prisma/generated/client.js';
 import { Server } from 'socket.io';
 import { affectedLessons } from '../services/eventChecker';
 import { affectedLessons as checkUnpersisted } from '../services/eventCheckUnpersisted';

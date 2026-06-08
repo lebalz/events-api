@@ -1,6 +1,6 @@
-import { getNameFromEmail } from '../src/helpers/email';
-import prisma from '../src/prisma.js';
-import { User } from './generated/client';
+import { getNameFromEmail } from 'src/helpers/email.js';
+import prisma from 'src/prisma.js';
+import { User } from 'prisma/generated/client.js';
 
 async function main() {
     if (process.env.NODE_ENV === 'production' || process.env.NODE_ENV === 'test') {

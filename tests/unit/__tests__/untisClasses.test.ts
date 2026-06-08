@@ -1,6 +1,6 @@
-import { Prisma } from '@prisma/client';
+import { Prisma } from 'prisma/generated/client.js';
 import UntisClasses from '../../../src/models/untisClass';
-import prisma from '../../../src/prisma';
+import prisma from 'src/prisma.js';
 import { generateUntisClass } from '../../factories/untisClass';
 
 export const createUntisClass = async (props: Partial<Prisma.UntisClassUncheckedCreateInput>) => {

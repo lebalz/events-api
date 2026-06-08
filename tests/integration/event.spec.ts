@@ -1,6 +1,6 @@
 import request from 'supertest';
 import app, { API_URL } from '../../src/app';
-import prisma from '../../src/prisma';
+import prisma from 'src/prisma.js';
 import { generateUser } from '../factories/user';
 import {
     Department,
@@ -13,7 +13,7 @@ import {
     Role,
     TeachingAffected,
     User
-} from '@prisma/client';
+} from 'prisma/generated/client.js';
 import Jobs from '../../src/models/job';
 import { eventSequence, generateEvent } from '../factories/event';
 import { HttpStatusCode } from '../../src/utils/errors/BaseError';

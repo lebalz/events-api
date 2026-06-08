@@ -1,8 +1,8 @@
 /* istanbul ignore file */
 
-import { EventState, Role, User } from '@prisma/client';
+import { EventState, Role, User } from 'prisma/generated/client.js';
 import { ApiEvent } from '../../models/event.helpers';
-import prisma from '../../prisma';
+import prisma from 'src/prisma.js';
 import { mailOnChange } from './mail/onChange';
 import { mailOnDelete } from './mail/onDelete';
 import { mailOnReviewRequest } from './mail/onReviewRequest';

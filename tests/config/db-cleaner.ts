@@ -1,5 +1,5 @@
 import { Console } from 'console';
-import prisma from '../../src/prisma';
+import prisma from 'src/prisma.js';
 import { truncate } from '../helpers/db';
 
 afterEach(async () => {

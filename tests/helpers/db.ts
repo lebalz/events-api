@@ -1,4 +1,4 @@
-import prisma from '../../src/prisma';
+import prisma from 'src/prisma.js';
 import { mkdirSync, rmSync, writeFileSync } from 'fs';
 
 export const truncate = async (deleteFiles: boolean = true) => {

@@ -1,5 +1,5 @@
 import request from 'supertest';
-import prisma from '../../src/prisma';
+import prisma from 'src/prisma.js';
 import app, { API_URL } from '../../src/app';
 import { prepareUser as apiPrepareUser } from '../../src/models/user.helpers';
 import { generateUser, userSequence } from '../factories/user';
@@ -13,7 +13,7 @@ import {
     TeachingAffected,
     UntisTeacher,
     User
-} from '@prisma/client';
+} from 'prisma/generated/client.js';
 import { generateUntisTeacher } from '../factories/untisTeacher';
 import { eventSequence, generateEvent } from '../factories/event';
 import { generateSemester } from '../factories/semester';

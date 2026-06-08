@@ -1,6 +1,6 @@
 import { fetchUntis } from '../src/services/fetchUntis';
 import { syncUntis2DB } from '../src/services/syncUntis2DB';
-import prisma from '../src/prisma';
+import prisma from 'src/prisma.js';
 
 const main = async () => {
     if (process.argv.length < 3) {

@@ -1,4 +1,4 @@
-import type { EventGroup } from '@prisma/client';
+import type { EventGroup } from 'prisma/generated/client.js';
 import { RequestHandler } from 'express';
 import { IoEvent, RecordType } from '../routes/socketEventTypes';
 import UserEventGroups, { DestroyEventAction } from '../models/eventGroup';

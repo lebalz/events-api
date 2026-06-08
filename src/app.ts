@@ -1,7 +1,7 @@
 import { strategyForEnvironment } from './auth/index';
 import express, { NextFunction, Request, Response } from 'express';
 import session from 'express-session';
-import prisma from './prisma';
+import prisma from 'src/prisma.js';
 import path from 'path';
 import cors from 'cors';
 import morganMiddleware from './middlewares/morgan.middleware';
@@ -9,7 +9,7 @@ import passport from 'passport';
 import router from './routes/router';
 import routeGuard, { PUBLIC_GET_ACCESS, PUBLIC_GET_ACCESS_REGEX, createAccessRules } from './auth/guard';
 import authConfig from './routes/authConfig';
-import type { User } from '@prisma/client';
+import type { User } from 'prisma/generated/client.js';
 import { HttpStatusCode } from './utils/errors/BaseError';
 import { notify } from './middlewares/notify.nop';
 import { HTTP401Error } from './utils/errors/Errors';
@@ -62,9 +62,9 @@ app.use(
         credentials: true,
         origin: process.env.WITH_DEPLOY_PREVIEW
             ? [
-                  process.env.EVENTS_APP_URL || true,
-                  /https:\/\/deploy-preview-\d+--gbsl-events-app.netlify.app/
-              ]
+                process.env.EVENTS_APP_URL || true,
+                /https:\/\/deploy-preview-\d+--gbsl-events-app.netlify.app/
+            ]
             : process.env.EVENTS_APP_URL || true /* true = strict origin */,
         methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'HEAD']
     })

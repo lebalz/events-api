@@ -1,4 +1,4 @@
-import { Subscription } from '@prisma/client';
+import { Subscription } from 'prisma/generated/client.js';
 
 export interface ApiSubscription extends Subscription {
     ignoredEventIds: string[];

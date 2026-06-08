@@ -1,4 +1,4 @@
-import { Role, User } from '@prisma/client';
+import { Role, User } from 'prisma/generated/client.js';
 import { RequestHandler } from 'express';
 import { IoEvent, RecordType } from '../routes/socketEventTypes';
 import { IoRoom } from '../routes/socketEvents';

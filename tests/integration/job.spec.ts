@@ -1,10 +1,10 @@
 import request from 'supertest';
 import app, { API_URL } from '../../src/app';
-import prisma from '../../src/prisma';
+import prisma from 'src/prisma.js';
 import { generateUser } from '../factories/user';
 import { generateImportJob, generateSyncJob, jobSequence } from '../factories/job';
 import { generateSemester } from '../factories/semester';
-import { Event, EventState, Job, Prisma } from '@prisma/client';
+import { Event, EventState, Job, Prisma } from 'prisma/generated/client.js';
 import { eventSequence } from '../factories/event';
 import { notify } from '../../src/middlewares/notify.nop';
 import { IoEvent } from '../../src/routes/socketEventTypes';

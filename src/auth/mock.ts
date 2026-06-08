@@ -3,7 +3,7 @@ import { Request } from 'express';
 import { ParamsDictionary } from 'express-serve-static-core';
 import { Strategy, StrategyCreated, StrategyCreatedStatic } from 'passport';
 import { ParsedQs } from 'qs';
-import prisma from '../prisma';
+import prisma from 'src/prisma.js';
 import Logger from '../utils/logger';
 class MockStrat extends Strategy {
     name = 'oauth-bearer';

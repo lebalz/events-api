@@ -1,7 +1,7 @@
 /**
  * MUST BE IN SYNC WITH THE CLIENT SIDE
  */
-import { Department } from '@prisma/client';
+import { Department } from 'prisma/generated/client.js';
 import { KlassName } from './klassNames';
 
 const GYMD = [

@@ -1,4 +1,4 @@
-import { Role } from '@prisma/client';
+import { Role } from 'prisma/generated/client.js';
 
 interface Credentials {
     tenantID: string;

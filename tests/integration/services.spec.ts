@@ -1,7 +1,7 @@
 import { API_URL } from '../../src/app';
-import prisma from '../../src/prisma';
+import prisma from 'src/prisma.js';
 import { generateUser } from '../factories/user';
-import { Department, EventGroup, Role, Semester, UntisTeacher } from '@prisma/client';
+import { Department, EventGroup, Role, Semester, UntisTeacher } from 'prisma/generated/client.js';
 import _ from 'lodash';
 import { notify } from '../../src/middlewares/notify.nop';
 import { generateUntisData, UntisDataProps } from '../factories/untisData';

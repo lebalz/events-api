@@ -1,4 +1,4 @@
-import { Department, Event, EventState, Prisma } from '@prisma/client';
+import { Department, Event, EventState, Prisma } from 'prisma/generated/client.js';
 import _ from 'lodash';
 
 export interface ApiEvent

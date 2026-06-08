@@ -1,6 +1,6 @@
 import { WebAPITimetable } from 'webuntis';
-import type { Department, Prisma, Semester, UntisLesson } from '@prisma/client';
-import prisma from '../prisma';
+import type { Department, Prisma, Semester, UntisLesson } from 'prisma/generated/client.js';
+import prisma from 'src/prisma.js';
 import {
     ClassLetterMap,
     Colors,
@@ -19,8 +19,8 @@ export const toDisplayLetter = (letter: DepartmentLetter) => {
     return letter === DepartmentLetter.FMPaed
         ? DepartmentLetter.FMS
         : letter === DepartmentLetter.MSOP
-          ? DepartmentLetter.ECG
-          : undefined;
+            ? DepartmentLetter.ECG
+            : undefined;
 };
 
 export const syncUntis2DB = async (

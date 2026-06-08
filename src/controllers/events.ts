@@ -1,9 +1,9 @@
 import { RequestHandler } from 'express';
-import prisma from '../prisma';
+import prisma from 'src/prisma.js';
 import { IoEvent, RecordType } from '../routes/socketEventTypes';
 import { notifyChangedRecord } from '../routes/notify';
-import type { Event, Prisma } from '@prisma/client';
-import { EventState, Role } from '@prisma/client';
+import type { Event, Prisma } from 'prisma/generated/client.js';
+import { EventState, Role } from 'prisma/generated/client.js';
 import { IoRoom } from '../routes/socketEvents';
 import Events from '../models/event';
 import EventGroups from '../models/eventGroup';

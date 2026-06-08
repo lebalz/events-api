@@ -1,6 +1,6 @@
-import { Department, Event, EventAudience, TeachingAffected } from '@prisma/client';
+import { Department, Event, EventAudience, TeachingAffected } from 'prisma/generated/client.js';
 import readXlsxFile, { Row } from 'read-excel-file/node';
-import prisma from '../prisma';
+import prisma from 'src/prisma.js';
 import { i18nKey, translate } from './helpers/i18n';
 import { Departments, fromDisplayClassName } from './helpers/departmentNames';
 import { Cell } from 'read-excel-file/types';

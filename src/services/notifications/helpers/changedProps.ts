@@ -1,4 +1,4 @@
-import { Event } from '@prisma/client';
+import { Event } from 'prisma/generated/client.js';
 import { ApiEvent } from '../../../models/event.helpers';
 import _, { filter } from 'lodash';
 import { i18nKey, translate } from '../../helpers/i18n';

@@ -1,8 +1,8 @@
 import request from 'supertest';
 import app, { API_URL } from '../../src/app';
-import prisma from '../../src/prisma';
+import prisma from 'src/prisma.js';
 import { generateUser } from '../factories/user';
-import { RegistrationPeriod, Role } from '@prisma/client';
+import { RegistrationPeriod, Role } from 'prisma/generated/client.js';
 import _ from 'lodash';
 import { notify } from '../../src/middlewares/notify.nop';
 import { IoEvent } from '../../src/routes/socketEventTypes';

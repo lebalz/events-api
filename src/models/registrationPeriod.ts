@@ -1,5 +1,5 @@
-import { Prisma, PrismaClient, RegistrationPeriod, Role, User } from '@prisma/client';
-import prisma from '../prisma';
+import { Prisma, PrismaClient, RegistrationPeriod, Role, User } from 'prisma/generated/client.js';
+import prisma from 'src/prisma.js';
 import { HTTP403Error, HTTP404Error } from '../utils/errors/Errors';
 import { createDataExtractor } from '../controllers/helpers';
 
@@ -114,8 +114,8 @@ function RegistrationPeriods(db: PrismaClient['registrationPeriod']) {
                     ...sanitized,
                     departments: data.departmentIds
                         ? {
-                              set: data.departmentIds.map((id) => ({ id }))
-                          }
+                            set: data.departmentIds.map((id) => ({ id }))
+                        }
                         : undefined
                 },
                 include: {

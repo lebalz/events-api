@@ -1,5 +1,5 @@
-import { Event, EventState, Job, JobState, JobType, Prisma, PrismaClient, Role, User } from '@prisma/client';
-import prisma from '../prisma';
+import { Event, EventState, Job, JobState, JobType, Prisma, PrismaClient, Role, User } from 'prisma/generated/client.js';
+import prisma from 'src/prisma.js';
 import { createDataExtractor } from '../controllers/helpers';
 import { ApiEvent, clonedProps, clonedUpdateProps, normalizeAudience, prepareEvent } from './event.helpers';
 import { HTTP400Error, HTTP403Error, HTTP404Error } from '../utils/errors/Errors';
@@ -245,9 +245,9 @@ function Events(db: PrismaClient['event']) {
                         metaData === null
                             ? Prisma.DbNull
                             : ({
-                                  ...((record.meta as Prisma.JsonObject) || {}),
-                                  ...metaData
-                              } as Prisma.JsonObject)
+                                ...((record.meta as Prisma.JsonObject) || {}),
+                                ...metaData
+                            } as Prisma.JsonObject)
                 },
                 include: {
                     departments: { select: { id: true } },
@@ -331,36 +331,36 @@ function Events(db: PrismaClient['event']) {
                                 record.classGroups.length === 0;
                             const openRegistrationPeriod = hasOnlyLinkedUsers
                                 ? await prisma.registrationPeriod.findFirst({
-                                      where: {
-                                          eventRangeStart: { lte: record.start },
-                                          eventRangeEnd: { gte: record.start },
-                                          OR: [
-                                              { isOpen: true },
-                                              {
-                                                  AND: [
-                                                      { start: { lte: getCurrentDate() } },
-                                                      { end: { gte: getCurrentDate() } }
-                                                  ]
-                                              }
-                                          ]
-                                      }
-                                  })
+                                    where: {
+                                        eventRangeStart: { lte: record.start },
+                                        eventRangeEnd: { gte: record.start },
+                                        OR: [
+                                            { isOpen: true },
+                                            {
+                                                AND: [
+                                                    { start: { lte: getCurrentDate() } },
+                                                    { end: { gte: getCurrentDate() } }
+                                                ]
+                                            }
+                                        ]
+                                    }
+                                })
                                 : await prisma.view_EventsRegistrationPeriods.findFirst({
-                                      where: {
-                                          eventId: record.id,
-                                          OR: [
-                                              { rpIsOpen: true },
-                                              {
-                                                  AND: [
-                                                      { rpStart: { lte: getCurrentDate() } },
-                                                      { rpEnd: { gte: getCurrentDate() } },
-                                                      { rpEventRangeStart: { lte: record.start } },
-                                                      { rpEventRangeEnd: { gte: record.start } }
-                                                  ]
-                                              }
-                                          ]
-                                      }
-                                  });
+                                    where: {
+                                        eventId: record.id,
+                                        OR: [
+                                            { rpIsOpen: true },
+                                            {
+                                                AND: [
+                                                    { rpStart: { lte: getCurrentDate() } },
+                                                    { rpEnd: { gte: getCurrentDate() } },
+                                                    { rpEventRangeStart: { lte: record.start } },
+                                                    { rpEventRangeEnd: { gte: record.start } }
+                                                ]
+                                            }
+                                        ]
+                                    }
+                                });
                             if (!openRegistrationPeriod && !isAdmin) {
                                 throw new HTTP400Error('No open registration period found.');
                             }
@@ -454,15 +454,15 @@ function Events(db: PrismaClient['event']) {
                                     }),
                                     ...(record.clonedFromId
                                         ? {
-                                              clonedFrom: {
-                                                  connect: {
-                                                      id:
-                                                          record.clonedFromId === parent.id
-                                                              ? record.id
-                                                              : record.clonedFromId
-                                                  }
-                                              }
-                                          }
+                                            clonedFrom: {
+                                                connect: {
+                                                    id:
+                                                        record.clonedFromId === parent.id
+                                                            ? record.id
+                                                            : record.clonedFromId
+                                                }
+                                            }
+                                        }
                                         : {}),
                                     groups: {
                                         set: groups.map((id) => ({ id }))
@@ -657,36 +657,36 @@ function Events(db: PrismaClient['event']) {
                         { id: { in: ids } },
                         actor
                             ? {
-                                  OR: [
-                                      {
-                                          state: {
-                                              in:
-                                                  actor.role === 'ADMIN'
-                                                      ? [
-                                                            EventState.PUBLISHED,
-                                                            EventState.REFUSED,
-                                                            EventState.REVIEW
-                                                        ]
-                                                      : [EventState.PUBLISHED]
-                                          }
-                                      },
-                                      { authorId: actor.id },
-                                      {
-                                          groups: {
-                                              some: {
-                                                  users: {
-                                                      some: {
-                                                          id: actor?.id
-                                                      }
-                                                  }
-                                              }
-                                          }
-                                      }
-                                  ]
-                              }
+                                OR: [
+                                    {
+                                        state: {
+                                            in:
+                                                actor.role === 'ADMIN'
+                                                    ? [
+                                                        EventState.PUBLISHED,
+                                                        EventState.REFUSED,
+                                                        EventState.REVIEW
+                                                    ]
+                                                    : [EventState.PUBLISHED]
+                                        }
+                                    },
+                                    { authorId: actor.id },
+                                    {
+                                        groups: {
+                                            some: {
+                                                users: {
+                                                    some: {
+                                                        id: actor?.id
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                ]
+                            }
                             : {
-                                  state: EventState.PUBLISHED
-                              }
+                                state: EventState.PUBLISHED
+                            }
                     ])
                 },
                 orderBy: { start: 'asc' }

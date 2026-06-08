@@ -1,6 +1,6 @@
-import { Semester } from '@prisma/client';
+import { Semester } from 'prisma/generated/client.js';
 import { RequestHandler } from 'express';
-import prisma from '../prisma';
+import prisma from 'src/prisma.js';
 import { IoEvent, RecordType } from '../routes/socketEventTypes';
 import { createDataExtractor } from './helpers';
 import { IoRoom } from '../routes/socketEvents';

@@ -1,10 +1,10 @@
-import prisma from '../../../src/prisma';
+import prisma from 'src/prisma.js';
 import { createUser } from './users.test';
 import { RPCreate, generateRegistrationPeriod } from '../../factories/registrationPeriod';
 import RegistrationPeriods, { prepareRegistrationPeriod } from '../../../src/models/registrationPeriod';
 import { faker } from '@faker-js/faker';
 import { MINUTE_2_MS } from '../../../src/services/createIcs';
-import { Department, RegistrationPeriod } from '@prisma/client';
+import { Department, RegistrationPeriod } from 'prisma/generated/client.js';
 import { generateDepartment } from '../../factories/department';
 import { createDepartment } from './departments.test';
 

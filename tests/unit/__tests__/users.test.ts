@@ -1,8 +1,8 @@
-import { Prisma, Role } from '@prisma/client';
+import { Prisma, Role } from 'prisma/generated/client.js';
 import _ from 'lodash';
 import Users from '../../../src/models/user';
 import { HTTP403Error, HTTP404Error } from '../../../src/utils/errors/Errors';
-import prisma from '../../../src/prisma';
+import prisma from 'src/prisma.js';
 import { generateUser } from '../../factories/user';
 
 export const createUser = async (props: Partial<Prisma.UserUncheckedCreateInput>) => {

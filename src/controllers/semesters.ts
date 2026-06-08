@@ -1,4 +1,4 @@
-import { Job, Semester } from '@prisma/client';
+import { Job, Semester } from 'prisma/generated/client.js';
 import { RequestHandler } from 'express';
 import { IoEvent, RecordType } from '../routes/socketEventTypes';
 import { notifyChangedRecord } from '../routes/notify';

@@ -1,5 +1,5 @@
-import { PrismaClient } from '@prisma/client';
-import prisma from '../prisma';
+import { PrismaClient } from 'prisma/generated/client.js';
+import prisma from 'src/prisma.js';
 import { HTTP404Error } from '../utils/errors/Errors';
 import { prepareTeacher } from './untis.helpers';
 

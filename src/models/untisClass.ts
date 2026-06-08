@@ -1,5 +1,5 @@
-import { PrismaClient, User } from '@prisma/client';
-import prisma from '../prisma';
+import { PrismaClient, User } from 'prisma/generated/client.js';
+import prisma from 'src/prisma.js';
 import { prepareClass } from './untis.helpers';
 
 function UntisClasses(db: PrismaClient['untisClass']) {

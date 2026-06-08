@@ -1,6 +1,6 @@
-import { Prisma, Role } from '@prisma/client';
+import { Prisma, Role } from 'prisma/generated/client.js';
 import Departments from '../../../src/models/department';
-import prisma from '../../../src/prisma';
+import prisma from 'src/prisma.js';
 import { createUser } from './users.test';
 import { HTTP400Error, HTTP403Error } from '../../../src/utils/errors/Errors';
 import { generateDepartment } from '../../factories/department';

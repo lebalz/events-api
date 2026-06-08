@@ -1,7 +1,7 @@
 import request from 'supertest';
 import app, { API_URL } from '../../src/app';
 import { send } from 'process';
-import prisma from '../../src/prisma';
+import prisma from 'src/prisma.js';
 import { generateUser } from '../factories/user';
 
 describe(`GET ${API_URL}`, () => {

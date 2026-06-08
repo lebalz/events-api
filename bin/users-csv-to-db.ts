@@ -1,9 +1,8 @@
 import { parse } from 'csv-parse';
 import fs from 'fs';
-import os from 'os';
 import { finished } from 'stream/promises';
-import prisma from '../src/prisma';
-import { Prisma, UntisTeacher } from '@prisma/client';
+import { Prisma, UntisTeacher } from 'prisma/generated/client.js';
+import prisma from 'src/prisma.js';
 
 interface Record {
     id: string;
