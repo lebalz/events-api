@@ -81,9 +81,7 @@ describe('Departments', () => {
             const depCD = await createDepartment({ name: 'depCD-', letter: 'm', classLetters: ['C', 'D'] });
             await expect(
                 Departments.updateModel(admin, depCD.id, { classLetters: ['B', 'C', 'D'] })
-            ).rejects.toEqual(
-                new HTTP400Error('Unique Letters Constraint Error: invalid combinations: mB')
-            );
+            ).rejects.toEqual(new HTTP400Error('Unique Letters Constraint Error: invalid combinations: mB'));
         });
     });
     describe('create department', () => {

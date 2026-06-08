@@ -42,20 +42,18 @@ if (!existsSync(`${STATIC_DIR}/fr`)) {
     mkdirSync(`${STATIC_DIR}/fr`, { recursive: true });
 }
 
-
 /**
  *  this is not needed when running behind a reverse proxy
  *  as is the case with dokku (nginx)
  */
 //  app.use(compression(), express.json({ limit: "5mb" }));
 
-
 // ensure the server can call other domains: enable cross origin resource sharing (cors)
 app.use(
     cors({
         methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'HEAD'],
         origin: CORS_ORIGIN,
-        credentials: true,
+        credentials: true
     })
 );
 
@@ -177,7 +175,8 @@ export const configure = (_app: typeof app) => {
             const reqPath = req.path.toLowerCase();
             const isPublicGet =
                 req.method === 'GET' &&
-                (PUBLIC_GET_ACCESS.has(reqPath) || PUBLIC_GET_ACCESS_REGEX.some((regex) => regex.test(reqPath)));
+                (PUBLIC_GET_ACCESS.has(reqPath) ||
+                    PUBLIC_GET_ACCESS_REGEX.some((regex) => regex.test(reqPath)));
 
             const testUser = await getTestUser(req);
             if (testUser) {

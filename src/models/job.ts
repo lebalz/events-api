@@ -1,4 +1,12 @@
-import { JobState, JobType, Job as JobModel, Prisma, PrismaClient, Semester, User } from 'prisma/generated/client.js';
+import {
+    JobState,
+    JobType,
+    Job as JobModel,
+    Prisma,
+    PrismaClient,
+    Semester,
+    User
+} from 'prisma/generated/client.js';
 import prisma from 'src/prisma.js';
 import { HTTP403Error, HTTP404Error } from '../utils/errors/Errors.js';
 import { createDataExtractor } from '../controllers/helpers.js';

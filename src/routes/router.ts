@@ -68,8 +68,8 @@ import multer from 'multer';
 const UPLOAD_DIR = process.env.UPLOAD_DIR
     ? process.env.UPLOAD_DIR
     : process.env.NODE_ENV === 'test'
-        ? 'tests/test-data/uploads'
-        : 'uploads';
+      ? 'tests/test-data/uploads'
+      : 'uploads';
 
 // initialize router
 const router = express.Router();

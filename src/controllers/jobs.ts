@@ -30,8 +30,8 @@ const getAudience = (job: { userId: string; events: (Event | ApiEvent)[] }) => {
     return job.events.some((e) => e.state === EventState.PUBLISHED)
         ? IoRoom.ALL
         : job.events.some((e) => e.state === EventState.REFUSED || e.state === EventState.REVIEW)
-            ? IoRoom.ADMIN
-            : job.userId;
+          ? IoRoom.ADMIN
+          : job.userId;
 };
 
 export const update: RequestHandler<{ id: string }, any, { data: Job }> = async (req, res, next) => {

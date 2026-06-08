@@ -14,7 +14,6 @@ const getData = createDataExtractor<Prisma.UserUncheckedUpdateInput>([
     'notifyAdminOnReviewDecision'
 ]);
 
-
 export enum Role {
     USER = 'user',
     ADMIN = 'admin'
@@ -96,7 +95,9 @@ function Users(db: PrismaClient[Role.USER]) {
                 if (process.env.NODE_ENV !== 'test') {
                     /* no need to await the result */
                     createIcsFile(userId).catch((err) => {
-                        Logger.error(`ICS-Sync after linking to untis failed for ${actor.email}: ${err.message}`);
+                        Logger.error(
+                            `ICS-Sync after linking to untis failed for ${actor.email}: ${err.message}`
+                        );
                     });
                 }
                 return prepareUser(res);
@@ -145,10 +146,10 @@ function Users(db: PrismaClient[Role.USER]) {
             const semester = semesterId
                 ? await prisma.semester.findUnique({ where: { id: semesterId } })
                 : await prisma.semester.findFirst({
-                    where: {
-                        AND: [{ start: { lte: new Date() } }, { end: { gte: new Date() } }]
-                    }
-                });
+                      where: {
+                          AND: [{ start: { lte: new Date() } }, { end: { gte: new Date() } }]
+                      }
+                  });
             if (!semester) {
                 throw new HTTP404Error('Semester not found');
             }

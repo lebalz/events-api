@@ -36,7 +36,9 @@ describe('find eventGroup', () => {
         const bob = await createUser({});
         const admin = await createUser({ role: Role.ADMIN });
         const group = await createEventGroup({ userIds: [alice.id, bob.id], eventIds: [] });
-        await expect(EventGroups.findModel(admin, group.id)).rejects.toEqual(new HTTP404Error(`EventGroup with id ${group.id} and user ${admin.id} not found`));
+        await expect(EventGroups.findModel(admin, group.id)).rejects.toEqual(
+            new HTTP404Error(`EventGroup with id ${group.id} and user ${admin.id} not found`)
+        );
         await expect(EventGroups.findModel(alice, group.id)).resolves.toEqual({
             ...prepareEventGroup(group),
             eventIds: [],
@@ -100,7 +102,9 @@ describe('internal: find raw event group model', () => {
         await expect(EventGroups._findRawModel(admin, group.id)).rejects.toEqual(
             new HTTP404Error(`EventGroup with id ${group.id} and user ${admin.id} not found`)
         );
-        await expect(EventGroups._findRawModel(bob, group.id)).rejects.toEqual(new HTTP404Error(`EventGroup with id ${group.id} and user ${bob.id} not found`));
+        await expect(EventGroups._findRawModel(bob, group.id)).rejects.toEqual(
+            new HTTP404Error(`EventGroup with id ${group.id} and user ${bob.id} not found`)
+        );
         await expect(EventGroups._findRawModel(alice, group.id)).resolves.toEqual(group);
     });
 });

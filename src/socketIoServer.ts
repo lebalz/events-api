@@ -1,6 +1,13 @@
 import { Server } from 'socket.io';
 import type http from 'http';
-import { type ClientToServerEvents, type ServerToClientEvents, type Notification, type ChangedRecord, type RecordType, IoEvent } from './routes/socketEventTypes.js';
+import {
+    type ClientToServerEvents,
+    type ServerToClientEvents,
+    type Notification,
+    type ChangedRecord,
+    type RecordType,
+    IoEvent
+} from './routes/socketEventTypes.js';
 import { CORS_ORIGIN } from './utils/originConfig.js';
 import EventRouter from './routes/socketEvents.js';
 
@@ -35,8 +42,7 @@ export const notify = (notification: Notification, sid?: string) => {
         except.push(sid);
     }
     if (!notification.to) {
-        return io.except(except)
-            .emit(notification.event, notification.message as any);
+        return io.except(except).emit(notification.event, notification.message as any);
     }
     io.except(except)
         .to(notification.to)
@@ -49,4 +55,4 @@ export const notifyChangedRecord = (payload: ChangedRecord<RecordType>, to?: str
         message: payload,
         to: to ? to : ''
     });
-}
+};

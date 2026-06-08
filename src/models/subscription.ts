@@ -31,18 +31,18 @@ function Subscription(db: PrismaClient['subscription']) {
                     ...sanitized,
                     departments: data.departmentIds
                         ? {
-                            set: data.departmentIds.map((id) => ({ id }))
-                        }
+                              set: data.departmentIds.map((id) => ({ id }))
+                          }
                         : undefined,
                     ignoredEvents: data.ignoredEventIds
                         ? {
-                            set: data.ignoredEventIds.map((id) => ({ id }))
-                        }
+                              set: data.ignoredEventIds.map((id) => ({ id }))
+                          }
                         : undefined,
                     untisClasses: data.untisClassIds
                         ? {
-                            set: data.untisClassIds.map((id) => ({ id }))
-                        }
+                              set: data.untisClassIds.map((id) => ({ id }))
+                          }
                         : undefined
                 },
                 include: DEFAULT_INCLUDE

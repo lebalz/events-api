@@ -19,8 +19,8 @@ export const toDisplayLetter = (letter: DepartmentLetter) => {
     return letter === DepartmentLetter.FMPaed
         ? DepartmentLetter.FMS
         : letter === DepartmentLetter.MSOP
-            ? DepartmentLetter.ECG
-            : undefined;
+          ? DepartmentLetter.ECG
+          : undefined;
 };
 
 export const syncUntis2DB = async (

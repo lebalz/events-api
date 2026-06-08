@@ -139,8 +139,8 @@ function RegistrationPeriods(db: PrismaClient['registrationPeriod']) {
                     ...sanitized,
                     departments: data.departmentIds
                         ? {
-                            set: data.departmentIds.map((id) => ({ id }))
-                        }
+                              set: data.departmentIds.map((id) => ({ id }))
+                          }
                         : undefined
                 },
                 include: {

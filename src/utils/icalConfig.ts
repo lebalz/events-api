@@ -1,9 +1,7 @@
-
 import { dirname } from 'path';
 import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
-
 
 /**
  * Architecture samples
@@ -27,4 +25,3 @@ export const ICAL_DIR =
     ICAL_DEFAULT_DIRS[process.env.NODE_ENV as keyof typeof ICAL_DEFAULT_DIRS] || ICAL_DEFAULT;
 export const STATIC_DIR =
     STATIC_DEFAULT_DIRS[process.env.NODE_ENV as keyof typeof STATIC_DEFAULT_DIRS] || STATIC_DEFAULT;
-
