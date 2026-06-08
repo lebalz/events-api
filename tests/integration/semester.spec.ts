@@ -1,16 +1,16 @@
 import request from 'supertest';
-import app, { API_URL } from '../../src/app';
+import app, { API_URL } from '../../src/app.js';
 import prisma from 'src/prisma.js';
-import { generateUser } from '../factories/user';
+import { generateUser } from '../factories/user.js';
 import { Job, JobState, JobType, Role, Semester } from 'prisma/generated/client.js';
-import stubs from './stubs/semesters.json';
+import stubs from './stubs/semesters.json' with { type: 'json' };
 import _ from 'lodash';
-import { notify } from '../../src/middlewares/notify.nop';
-import { IoEvent } from '../../src/routes/socketEventTypes';
+import { notify } from '../../src/middlewares/notify.nop.js';
+import { IoEvent } from '../../src/routes/socketEventTypes.js';
 import { faker } from '@faker-js/faker';
-import Jobs from '../../src/models/job';
-import { IoRoom } from '../../src/routes/socketEvents';
-import { prepareRecord } from '../helpers/prepareRecord';
+import Jobs from '../../src/models/job.js';
+import { IoRoom } from '../../src/routes/socketEvents.js';
+import { prepareRecord } from '../helpers/prepareRecord.js';
 
 jest.mock('../../src/services/fetchUntis');
 jest.mock('../../src/middlewares/notify.nop');

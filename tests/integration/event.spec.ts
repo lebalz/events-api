@@ -1,7 +1,7 @@
 import request from 'supertest';
-import app, { API_URL } from '../../src/app';
+import app, { API_URL } from '../../src/app.js';
 import prisma from 'src/prisma.js';
-import { generateUser } from '../factories/user';
+import { generateUser } from '../factories/user.js';
 import {
     Department,
     Event,
@@ -14,28 +14,28 @@ import {
     TeachingAffected,
     User
 } from 'prisma/generated/client.js';
-import Jobs from '../../src/models/job';
-import { eventSequence, generateEvent } from '../factories/event';
-import { HttpStatusCode } from '../../src/utils/errors/BaseError';
-import { generateSemester } from '../factories/semester';
+import Jobs from '../../src/models/job.js';
+import { eventSequence, generateEvent } from '../factories/event.js';
+import { HttpStatusCode } from '../../src/utils/errors/BaseError.js';
+import { generateSemester } from '../factories/semester.js';
 import { faker } from '@faker-js/faker';
-import { notify } from '../../src/middlewares/notify.nop';
-import { IoEvent, RecordType } from '../../src/routes/socketEventTypes';
-import { IoRoom } from '../../src/routes/socketEvents';
+import { notify } from '../../src/middlewares/notify.nop.js';
+import { IoEvent, RecordType } from '../../src/routes/socketEventTypes.js';
+import { IoRoom } from '../../src/routes/socketEvents.js';
 import _ from 'lodash';
-import { generateDepartment } from '../factories/department';
-import { ImportType } from '../../src/services/importEvents';
-import { createDepartment } from '../unit/__tests__/departments.test';
-import { createSemester } from '../unit/__tests__/semesters.test';
-import { createRegistrationPeriod } from '../unit/__tests__/registrationPeriods.test';
-import { generateUntisClass } from '../factories/untisClass';
-import { createUser } from '../unit/__tests__/users.test';
-import { Departments } from '../../src/services/helpers/departmentNames';
-import * as eventModel from '../../src/models/event';
-import { prepareEvent as originalPrepareEvent } from '../../src/models/event.helpers';
-import { createEvent } from '../unit/__tests__/events.test';
-import department from '../../src/models/department';
-import { generateEventGroup } from '../factories/eventGroup';
+import { generateDepartment } from '../factories/department.js';
+import { ImportType } from '../../src/services/importEvents.js';
+import { createDepartment } from '../unit/__tests__/departments.test.js';
+import { createSemester } from '../unit/__tests__/semesters.test.js';
+import { createRegistrationPeriod } from '../unit/__tests__/registrationPeriods.test.js';
+import { generateUntisClass } from '../factories/untisClass.js';
+import { createUser } from '../unit/__tests__/users.test.js';
+import { Departments } from '../../src/services/helpers/departmentNames.js';
+import * as eventModel from '../../src/models/event.js';
+import { prepareEvent as originalPrepareEvent } from '../../src/models/event.helpers.js';
+import { createEvent } from '../unit/__tests__/events.test.js';
+import department from '../../src/models/department.js';
+import { generateEventGroup } from '../factories/eventGroup.js';
 
 jest.mock('../../src/middlewares/notify.nop');
 const mNotification = <jest.Mock<typeof notify>>notify;

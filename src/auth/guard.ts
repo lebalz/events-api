@@ -1,8 +1,8 @@
 import type { Role } from 'prisma/generated/client.js';
 import { Request, Response, NextFunction } from 'express';
-import { AccessMatrix, PUBLIC_ROUTES } from '../routes/authConfig';
-import Logger from '../utils/logger';
-import { HttpStatusCode } from '../utils/errors/BaseError';
+import { AccessMatrix, PUBLIC_ROUTES } from '../routes/authConfig.js';
+import Logger from '../utils/logger.js';
+import { HttpStatusCode } from '../utils/errors/BaseError.js';
 
 interface AccessRegexRule {
     path: string;

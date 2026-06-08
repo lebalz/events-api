@@ -1,7 +1,7 @@
-import { Prisma, PrismaClient, RegistrationPeriod, Role, User } from 'prisma/generated/client.js';
+import { Prisma, PrismaClient, RegistrationPeriod, User } from 'prisma/generated/client.js';
 import prisma from 'src/prisma.js';
-import { HTTP403Error, HTTP404Error } from '../utils/errors/Errors';
-import { createDataExtractor } from '../controllers/helpers';
+import { HTTP404Error } from '../utils/errors/Errors.js';
+import { createDataExtractor } from '../controllers/helpers.js';
 
 const getData = createDataExtractor<Prisma.RegistrationPeriodUncheckedUpdateInput>([
     'name',

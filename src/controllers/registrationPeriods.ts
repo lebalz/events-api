@@ -1,8 +1,8 @@
 import type { RegistrationPeriod, Semester } from 'prisma/generated/client.js';
 import { RequestHandler } from 'express';
-import { IoEvent, RecordType } from '../routes/socketEventTypes';
-import RegistrationPeriods from '../models/registrationPeriod';
-import { IoRoom } from '../routes/socketEvents';
+import { IoEvent, RecordType } from '../routes/socketEventTypes.js';
+import RegistrationPeriods from '../models/registrationPeriod.js';
+import { IoRoom } from '../routes/socketEvents.js';
 
 const NAME = RecordType.RegistrationPeriod;
 

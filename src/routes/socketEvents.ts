@@ -2,10 +2,10 @@
 
 import type { User } from 'prisma/generated/client.js';
 import { Server } from 'socket.io';
-import { affectedLessons } from '../services/eventChecker';
-import { affectedLessons as checkUnpersisted } from '../services/eventCheckUnpersisted';
-import Logger from '../utils/logger';
-import { ClientToServerEvents, IoEvents, ServerToClientEvents } from './socketEventTypes';
+import { affectedLessons } from '../services/eventChecker.js';
+import { affectedLessons as checkUnpersisted } from '../services/eventCheckUnpersisted.js';
+import Logger from '../utils/logger.js';
+import { ClientToServerEvents, IoEvents, ServerToClientEvents } from './socketEventTypes.js';
 
 export enum IoRoom {
     ADMIN = 'admin',

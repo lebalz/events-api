@@ -1,8 +1,8 @@
 import request from 'supertest';
 import prisma from 'src/prisma.js';
-import app, { API_URL } from '../../src/app';
-import { prepareUser as apiPrepareUser } from '../../src/models/user.helpers';
-import { generateUser, userSequence } from '../factories/user';
+import app, { API_URL } from '../../src/app.js';
+import { prepareUser as apiPrepareUser } from '../../src/models/user.helpers.js';
+import { generateUser, userSequence } from '../factories/user.js';
 import {
     Department,
     Event,
@@ -14,27 +14,27 @@ import {
     UntisTeacher,
     User
 } from 'prisma/generated/client.js';
-import { generateUntisTeacher } from '../factories/untisTeacher';
-import { eventSequence, generateEvent } from '../factories/event';
-import { generateSemester } from '../factories/semester';
-import { generateDepartment } from '../factories/department';
-import { generateUntisClass } from '../factories/untisClass';
-import { generateUntisLesson } from '../factories/untisLesson';
+import { generateUntisTeacher } from '../factories/untisTeacher.js';
+import { eventSequence, generateEvent } from '../factories/event.js';
+import { generateSemester } from '../factories/semester.js';
+import { generateDepartment } from '../factories/department.js';
+import { generateUntisClass } from '../factories/untisClass.js';
+import { generateUntisLesson } from '../factories/untisLesson.js';
 import { existsSync, readFileSync } from 'fs';
 import { createEvents } from 'ics';
-import stubs from './stubs/semesters.json';
-import { prepareEvent } from '../../src/services/createIcs';
-import { notify } from '../../src/middlewares/notify.nop';
-import { IoEvent } from '../../src/routes/socketEventTypes';
-import { IoRoom } from '../../src/routes/socketEvents';
+import stubs from './stubs/semesters.json' with { type: 'json' };
+import { prepareEvent } from '../../src/services/createIcs.js';
+import { notify } from '../../src/middlewares/notify.nop.js';
+import { IoEvent } from '../../src/routes/socketEventTypes.js';
+import { IoRoom } from '../../src/routes/socketEvents.js';
 import { faker } from '@faker-js/faker';
-import { syncUntis2DB } from '../../src/services/syncUntis2DB';
-import { fetchUntis } from '../../src/services/__mocks__/fetchUntis';
-import { UntisDataProps, generateUntisData } from '../factories/untisData';
+import { syncUntis2DB } from '../../src/services/syncUntis2DB.js';
+import { fetchUntis } from '../../src/services/__mocks__/fetchUntis.js';
+import { UntisDataProps, generateUntisData } from '../factories/untisData.js';
 import _ from 'lodash';
-import { withoutDTSTAMP } from '../unit/__tests__/services.test';
-import { prepareRecord } from '../helpers/prepareRecord';
-import { DEFAULT_INCLUDE } from '../../src/models/subscription.helpers';
+import { withoutDTSTAMP } from '../unit/__tests__/services.test.js';
+import { prepareRecord } from '../helpers/prepareRecord.js';
+import { DEFAULT_INCLUDE } from '../../src/models/subscription.helpers.js';
 
 jest.mock('../../src/services/fetchUntis');
 jest.mock('../../src/middlewares/notify.nop');

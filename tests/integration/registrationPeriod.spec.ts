@@ -1,16 +1,16 @@
 import request from 'supertest';
-import app, { API_URL } from '../../src/app';
+import app, { API_URL } from '../../src/app.js';
 import prisma from 'src/prisma.js';
-import { generateUser } from '../factories/user';
+import { generateUser } from '../factories/user.js';
 import { RegistrationPeriod, Role } from 'prisma/generated/client.js';
 import _ from 'lodash';
-import { notify } from '../../src/middlewares/notify.nop';
-import { IoEvent } from '../../src/routes/socketEventTypes';
+import { notify } from '../../src/middlewares/notify.nop.js';
+import { IoEvent } from '../../src/routes/socketEventTypes.js';
 import { faker } from '@faker-js/faker';
-import { prepareRegistrationPeriod as apiPreparedRP } from '../../src/models/registrationPeriod';
-import { generateDepartment } from '../factories/department';
-import { generateRegistrationPeriod } from '../factories/registrationPeriod';
-import { prepareRecord } from '../helpers/prepareRecord';
+import { prepareRegistrationPeriod as apiPreparedRP } from '../../src/models/registrationPeriod.js';
+import { generateDepartment } from '../factories/department.js';
+import { generateRegistrationPeriod } from '../factories/registrationPeriod.js';
+import { prepareRecord } from '../helpers/prepareRecord.js';
 
 jest.mock('../../src/middlewares/notify.nop');
 const mNotification = <jest.Mock<typeof notify>>notify;

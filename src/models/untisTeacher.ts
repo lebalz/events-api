@@ -1,7 +1,7 @@
 import { PrismaClient } from 'prisma/generated/client.js';
 import prisma from 'src/prisma.js';
-import { HTTP404Error } from '../utils/errors/Errors';
-import { prepareTeacher } from './untis.helpers';
+import { HTTP404Error } from '../utils/errors/Errors.js';
+import { prepareTeacher } from './untis.helpers.js';
 
 function UntisTeachers(db: PrismaClient['untisTeacher']) {
     return Object.assign(db, {

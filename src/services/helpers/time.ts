@@ -1,4 +1,4 @@
-import { translate } from './i18n';
+import { translate } from './i18n.js';
 
 export const SEC_2_MS = 1000;
 export const MINUTE_2_MS = 60 * SEC_2_MS;

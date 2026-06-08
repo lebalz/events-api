@@ -1,17 +1,16 @@
 import type {
     Department,
     EventGroup,
-    EventState,
     Job,
     Prisma,
     RegistrationPeriod,
     Semester,
     User
 } from 'prisma/generated/client.js';
-import { IoRoom } from './socketEvents';
-import { ApiEvent } from '../models/event.helpers';
-import { ApiUser } from '../models/user.helpers';
-import { ApiSubscription } from '../models/subscription.helpers';
+import { IoRoom } from './socketEvents.js';
+import { ApiEvent } from '../models/event.helpers.js';
+import { ApiUser } from '../models/user.helpers.js';
+import { ApiSubscription } from '../models/subscription.helpers.js';
 
 export enum IoEvent {
     NEW_RECORD = 'NEW_RECORD',

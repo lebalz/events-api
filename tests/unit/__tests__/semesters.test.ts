@@ -1,9 +1,9 @@
 import { Prisma, Role } from 'prisma/generated/client.js';
-import Semesters from '../../../src/models/semester';
+import Semesters from '../../../src/models/semester.js';
 import prisma from 'src/prisma.js';
-import { createUser } from './users.test';
-import { HTTP400Error, HTTP403Error, HTTP404Error } from '../../../src/utils/errors/Errors';
-import { generateSemester } from '../../factories/semester';
+import { createUser } from './users.test.js';
+import { HTTP400Error, HTTP403Error, HTTP404Error } from '../../../src/utils/errors/Errors.js';
+import { generateSemester } from '../../factories/semester.js';
 
 export const createSemester = async (props: Partial<Prisma.SemesterUncheckedCreateInput>) => {
     return await prisma.semester.create({

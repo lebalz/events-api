@@ -1,12 +1,12 @@
 import prisma from 'src/prisma.js';
-import { createUser } from './users.test';
-import { RPCreate, generateRegistrationPeriod } from '../../factories/registrationPeriod';
-import RegistrationPeriods, { prepareRegistrationPeriod } from '../../../src/models/registrationPeriod';
+import { createUser } from './users.test.js';
+import { RPCreate, generateRegistrationPeriod } from '../../factories/registrationPeriod.js';
+import RegistrationPeriods, { prepareRegistrationPeriod } from '../../../src/models/registrationPeriod.js';
 import { faker } from '@faker-js/faker';
-import { MINUTE_2_MS } from '../../../src/services/createIcs';
+import { MINUTE_2_MS } from '../../../src/services/createIcs.js';
 import { Department, RegistrationPeriod } from 'prisma/generated/client.js';
-import { generateDepartment } from '../../factories/department';
-import { createDepartment } from './departments.test';
+import { generateDepartment } from '../../factories/department.js';
+import { createDepartment } from './departments.test.js';
 
 export const createRegistrationPeriod = async (props: RPCreate) => {
     return await prisma.registrationPeriod.create({

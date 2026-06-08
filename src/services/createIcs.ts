@@ -3,11 +3,11 @@ import { createEvents, DateArray, EventAttributes } from 'ics';
 import { Event, EventAudience, EventState } from 'prisma/generated/client.js';
 import { promises as fsPromises } from 'fs';
 import _ from 'lodash';
-import Logger from '../utils/logger';
-import { ICAL_DIR } from '../app';
-import { translate } from './helpers/i18n';
-import { ApiSubscription } from '../models/subscription.helpers';
-import Subscription from '../models/subscription';
+import Logger from '../utils/logger.js';
+import { ICAL_DIR } from '../app.js';
+import { translate } from './helpers/i18n.js';
+import { ApiSubscription } from '../models/subscription.helpers.js';
+import Subscription from '../models/subscription.js';
 import { mkdir } from 'fs/promises';
 
 export const SEC_2_MS = 1000;

@@ -1,7 +1,7 @@
 /* istanbul ignore file */
 
 import { Server } from 'socket.io';
-import { ChangedRecord, IoEvent, RecordType } from './socketEventTypes';
+import { ChangedRecord, IoEvent, RecordType } from './socketEventTypes.js';
 
 export const notify = (io: Server | undefined, type: IoEvent, payload: Object, to?: string) => {
     if (!io) {

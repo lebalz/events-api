@@ -1,15 +1,14 @@
 import { Event, EventState, Job, JobState, JobType, Prisma, PrismaClient, Role, User } from 'prisma/generated/client.js';
 import prisma from 'src/prisma.js';
-import { createDataExtractor } from '../controllers/helpers';
-import { ApiEvent, clonedProps, clonedUpdateProps, normalizeAudience, prepareEvent } from './event.helpers';
-import { HTTP400Error, HTTP403Error, HTTP404Error } from '../utils/errors/Errors';
-import { importEvents as importService, ImportType, LogMessage } from '../services/importEvents';
-import Logger from '../utils/logger';
-import Semesters from './semester';
-import RegistrationPeriods from './registrationPeriod';
+import { createDataExtractor } from '../controllers/helpers.js';
+import { ApiEvent, clonedProps, clonedUpdateProps, normalizeAudience, prepareEvent } from './event.helpers.js';
+import { HTTP400Error, HTTP403Error, HTTP404Error } from '../utils/errors/Errors.js';
+import { importEvents as importService, ImportType, LogMessage } from '../services/importEvents.js';
+import Logger from '../utils/logger.js';
+import Semesters from './semester.js';
 import _ from 'lodash';
-import { rmUndefined } from '../utils/filterHelpers';
-import { Meta } from '../services/importGBSL_xlsx';
+import { rmUndefined } from '../utils/filterHelpers.js';
+import { Meta } from '../services/importGBSL_xlsx.js';
 
 type ApiEventUpdateInput = Omit<
     Prisma.EventUncheckedUpdateInput,

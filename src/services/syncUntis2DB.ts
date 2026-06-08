@@ -9,11 +9,11 @@ import {
     Departments,
     fromDisplayClassName,
     SchoolDepartments
-} from './helpers/departmentNames';
-import { KlassName, mapLegacyClassName } from './helpers/klassNames';
-import Logger from '../utils/logger';
-import { UntisData, fetchUntis as defaultFetchUntis } from './fetchUntis';
-import { getClassYear } from './helpers/untisKlasse';
+} from './helpers/departmentNames.js';
+import { KlassName, mapLegacyClassName } from './helpers/klassNames.js';
+import Logger from '../utils/logger.js';
+import { UntisData, fetchUntis as defaultFetchUntis } from './fetchUntis.js';
+import { getClassYear } from './helpers/untisKlasse.js';
 
 export const toDisplayLetter = (letter: DepartmentLetter) => {
     return letter === DepartmentLetter.FMPaed

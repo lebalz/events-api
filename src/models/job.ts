@@ -1,9 +1,9 @@
-import { JobState, JobType, Job as Jobs, Prisma, PrismaClient, Role, Semester, User } from 'prisma/generated/client.js';
+import { JobState, JobType, Job as JobModel, Prisma, PrismaClient, Role, Semester, User } from 'prisma/generated/client.js';
 import prisma from 'src/prisma.js';
-import { HTTP403Error, HTTP404Error } from '../utils/errors/Errors';
-import { createDataExtractor } from '../controllers/helpers';
-import { prepareEvent } from './event.helpers';
-import Events from './event';
+import { HTTP403Error, HTTP404Error } from '../utils/errors/Errors.js';
+import { createDataExtractor } from '../controllers/helpers.js';
+import { prepareEvent } from './event.helpers.js';
+import Events from './event.js';
 
 const PROPS: (keyof Prisma.JobUncheckedUpdateInput)[] = ['description'];
 const ADMIN_PROPS: (keyof Prisma.JobUncheckedUpdateInput)[] = [...PROPS, 'state'];
@@ -85,7 +85,7 @@ function Jobs(db: PrismaClient['job']) {
             });
             return job;
         },
-        async _completeJob(job: Jobs, state: JobState, log: string) {
+        async _completeJob(job: JobModel, state: JobState, log: string) {
             return await db.update({
                 where: { id: job.id },
                 data: {

@@ -5,7 +5,7 @@ import {
     IoEvent,
     Notification,
     ServerToClientEvents
-} from '../../routes/socketEventTypes';
+} from '../../routes/socketEventTypes.js';
 
 // to make the file a module and avoid the TypeScript error
 export { };

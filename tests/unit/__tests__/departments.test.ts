@@ -1,9 +1,9 @@
 import { Prisma, Role } from 'prisma/generated/client.js';
-import Departments from '../../../src/models/department';
+import Departments from '../../../src/models/department.js';
 import prisma from 'src/prisma.js';
-import { createUser } from './users.test';
-import { HTTP400Error, HTTP403Error } from '../../../src/utils/errors/Errors';
-import { generateDepartment } from '../../factories/department';
+import { createUser } from './users.test.js';
+import { HTTP400Error, HTTP403Error } from '../../../src/utils/errors/Errors.js';
+import { generateDepartment } from '../../factories/department.js';
 
 export const createDepartment = async (props: Partial<Prisma.DepartmentUncheckedCreateInput>) => {
     return await prisma.department.create({

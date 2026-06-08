@@ -1,9 +1,9 @@
 import { Job, Semester } from 'prisma/generated/client.js';
 import { RequestHandler } from 'express';
-import { IoEvent, RecordType } from '../routes/socketEventTypes';
-import { notifyChangedRecord } from '../routes/notify';
-import Semesters from '../models/semester';
-import { IoRoom } from '../routes/socketEvents';
+import { IoEvent, RecordType } from '../routes/socketEventTypes.js';
+import { notifyChangedRecord } from '../routes/notify.js';
+import Semesters from '../models/semester.js';
+import { IoRoom } from '../routes/socketEvents.js';
 
 const NAME = RecordType.Semester;
 

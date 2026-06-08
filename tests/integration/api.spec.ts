@@ -1,8 +1,8 @@
 import request from 'supertest';
-import app, { API_URL } from '../../src/app';
+import app, { API_URL } from '../../src/app.js';
 import { send } from 'process';
 import prisma from 'src/prisma.js';
-import { generateUser } from '../factories/user';
+import { generateUser } from '../factories/user.js';
 
 describe(`GET ${API_URL}`, () => {
     it("returns 'Welcome to the EVENTS-API V1.0.'", async () => {

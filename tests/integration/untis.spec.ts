@@ -1,13 +1,13 @@
 import request from 'supertest';
-import app, { API_URL } from '../../src/app';
+import app, { API_URL } from '../../src/app.js';
 import prisma from 'src/prisma.js';
-import { generateUser } from '../factories/user';
+import { generateUser } from '../factories/user.js';
 import { UntisTeacher } from 'prisma/generated/client.js';
-import stubs from './stubs/semesters.json';
+import stubs from './stubs/semesters.json' with { type: 'json' };
 import _ from 'lodash';
-import { notify } from '../../src/middlewares/notify.nop';
-import { syncUntis2DB } from '../../src/services/syncUntis2DB';
-import { UntisSubject } from '../../src/models/untisLesson';
+import { notify } from '../../src/middlewares/notify.nop.js';
+import { syncUntis2DB } from '../../src/services/syncUntis2DB.js';
+import { UntisSubject } from '../../src/models/untisLesson.js';
 
 /** checkout ../../src/services/__mocks__/fetchUntis.stub.json
  * to see the stubs for the fetchUntis service

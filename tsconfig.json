@@ -5,13 +5,17 @@
     "moduleResolution": "nodenext",
     // "allowSyntheticDefaultImports": true,
     "resolveJsonModule": true,
+    // "ignoreDeprecations": "6.0",
     "baseUrl": ".",
+    "paths": {
+      "src/*": ["./src/*"]
+    },
     "outDir": "dist",
     "sourceMap": true,
     "strict": true,
     "isolatedModules": true,
     "esModuleInterop": true,
-    "types": ["node"],
+    "types": ["node". "jest"],
     "skipLibCheck": true,
     "typeRoots": [
       "./src/types",

@@ -4,7 +4,7 @@ import { ParamsDictionary } from 'express-serve-static-core';
 import { Strategy, StrategyCreated, StrategyCreatedStatic } from 'passport';
 import { ParsedQs } from 'qs';
 import prisma from 'src/prisma.js';
-import Logger from '../utils/logger';
+import Logger from '../utils/logger.js';
 class MockStrat extends Strategy {
     name = 'oauth-bearer';
     constructor() {

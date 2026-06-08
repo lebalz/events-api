@@ -2,9 +2,9 @@
 
 import prisma from 'src/prisma.js';
 import { BearerStrategy, IBearerStrategyOptionWithRequest, VerifyBearerFunction } from 'passport-azure-ad';
-import { getAuthInfo, userProps } from '../helpers/authInfo';
-import authConfig from '../routes/authConfig';
-import Logger from '../utils/logger';
+import { getAuthInfo, userProps } from '../helpers/authInfo.js';
+import authConfig from '../routes/authConfig.js';
+import Logger from '../utils/logger.js';
 // Set the Azure AD B2C options
 const auth = {
     tenantID: authConfig.credentials.tenantID,

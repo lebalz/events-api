@@ -1,14 +1,14 @@
 /* istanbul ignore file */
 
 import { EventState, Role, User } from 'prisma/generated/client.js';
-import { ApiEvent } from '../../models/event.helpers';
+import { ApiEvent } from '../../models/event.helpers.js';
 import prisma from 'src/prisma.js';
-import { mailOnChange } from './mail/onChange';
-import { mailOnDelete } from './mail/onDelete';
-import { mailOnReviewRequest } from './mail/onReviewRequest';
-import { mailOnRefused } from './mail/onRefused';
-import { mailOnAccept } from './mail/onAccepted';
-import { rmUndefined } from '../../utils/filterHelpers';
+import { mailOnChange } from './mail/onChange.js';
+import { mailOnDelete } from './mail/onDelete.js';
+import { mailOnReviewRequest } from './mail/onReviewRequest.js';
+import { mailOnRefused } from './mail/onRefused.js';
+import { mailOnAccept } from './mail/onAccepted.js';
+import { rmUndefined } from '../../utils/filterHelpers.js';
 
 type Locale = 'de' | 'fr';
 const LOCALES = ['de', 'fr'] as Locale[];

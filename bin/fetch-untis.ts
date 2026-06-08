@@ -1,4 +1,4 @@
-import { fetchUntis } from '../src/services/fetchUntis';
+import { fetchUntis } from '../src/services/fetchUntis.js';
 import prisma from 'src/prisma.js';
 
 const main = async () => {

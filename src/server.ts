@@ -1,11 +1,11 @@
-import app, { configure, sessionMiddleware } from './app';
+import app, { configure, sessionMiddleware } from './app.js';
 import http from 'http';
-import Logger from './utils/logger';
+import Logger from './utils/logger.js';
 import { Server } from 'socket.io';
 import passport from 'passport';
-import EventRouter from './routes/socketEvents';
+import EventRouter from './routes/socketEvents.js';
 import { NextFunction, Request, Response } from 'express';
-import { ClientToServerEvents, ServerToClientEvents } from './routes/socketEventTypes';
+import { ClientToServerEvents, ServerToClientEvents } from './routes/socketEventTypes.js';
 import * as Sentry from '@sentry/node';
 
 const PORT = process.env.PORT || 3002;

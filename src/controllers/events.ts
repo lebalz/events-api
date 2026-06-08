@@ -1,19 +1,18 @@
 import { RequestHandler } from 'express';
-import prisma from 'src/prisma.js';
-import { IoEvent, RecordType } from '../routes/socketEventTypes';
-import { notifyChangedRecord } from '../routes/notify';
-import type { Event, Prisma } from 'prisma/generated/client.js';
+import { IoEvent, RecordType } from '../routes/socketEventTypes.js';
+import { notifyChangedRecord } from '../routes/notify.js';
+import type { Event } from 'prisma/generated/client.js';
 import { EventState, Role } from 'prisma/generated/client.js';
-import { IoRoom } from '../routes/socketEvents';
-import Events from '../models/event';
-import EventGroups from '../models/eventGroup';
-import { HTTP403Error } from '../utils/errors/Errors';
-import { ImportType } from '../services/importEvents';
-import { notifyOnDelete, notifyOnUpdate } from '../services/notifications/notifyUsers';
-import { rmUndefined } from '../utils/filterHelpers';
-import Jobs from '../models/job';
-import { ApiEvent } from '../models/event.helpers';
-import Logger from '../utils/logger';
+import { IoRoom } from '../routes/socketEvents.js';
+import Events from '../models/event.js';
+import EventGroups from '../models/eventGroup.js';
+import { HTTP403Error } from '../utils/errors/Errors.js';
+import { ImportType } from '../services/importEvents.js';
+import { notifyOnDelete, notifyOnUpdate } from '../services/notifications/notifyUsers.js';
+import { rmUndefined } from '../utils/filterHelpers.js';
+import Jobs from '../models/job.js';
+import { ApiEvent } from '../models/event.helpers.js';
+import Logger from '../utils/logger.js';
 
 const NAME = RecordType.Event;
 

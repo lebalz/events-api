@@ -1,12 +1,12 @@
 import { JobType, Prisma, Role, User } from 'prisma/generated/client.js';
-import Jobs from '../../../src/models/job';
+import Jobs from '../../../src/models/job.js';
 import prisma from 'src/prisma.js';
-import { createUser } from './users.test';
-import { HTTP403Error, HTTP404Error } from '../../../src/utils/errors/Errors';
-import { createEvent } from './events.test';
-import Events from '../../../src/models/event';
-import { prepareEvent } from '../../../src/models/event.helpers';
-import { generateJob } from '../../factories/job';
+import { createUser } from './users.test.js';
+import { HTTP403Error, HTTP404Error } from '../../../src/utils/errors/Errors.js';
+import { createEvent } from './events.test.js';
+import Events from '../../../src/models/event.js';
+import { prepareEvent } from 'src/models/event.helpers.js';
+import { generateJob } from '../../factories/job.js';
 import _ from 'lodash';
 
 export const createJob = async (

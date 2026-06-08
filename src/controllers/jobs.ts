@@ -1,10 +1,10 @@
 import { Event, EventState, type Job } from 'prisma/generated/client.js';
 import { RequestHandler } from 'express';
-import { IoEvent, RecordType } from '../routes/socketEventTypes';
-import Jobs from '../models/job';
-import { HTTP404Error } from '../utils/errors/Errors';
-import { IoRoom } from '../routes/socketEvents';
-import { ApiEvent } from '../models/event.helpers';
+import { IoEvent, RecordType } from '../routes/socketEventTypes.js';
+import Jobs from '../models/job.js';
+import { HTTP404Error } from '../utils/errors/Errors.js';
+import { IoRoom } from '../routes/socketEvents.js';
+import { ApiEvent } from '../models/event.helpers.js';
 
 const NAME = RecordType.Job;
 

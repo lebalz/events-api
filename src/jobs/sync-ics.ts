@@ -1,9 +1,8 @@
 import { parentPort } from 'worker_threads';
 import prisma from 'src/prisma.js';
-import Users from '../models/user';
-import { createIcsForClasses, createIcsForDepartments } from '../services/createIcs';
-import Logger from '../utils/logger';
-import { ApiUser } from '../models/user.helpers';
+import Users from '../models/user.js';
+import { createIcsForClasses, createIcsForDepartments } from '../services/createIcs.js';
+import Logger from '../utils/logger.js';
 const BATCH_SIZE = 10;
 (async () => {
     try {

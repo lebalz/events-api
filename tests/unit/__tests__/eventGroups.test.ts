@@ -1,13 +1,13 @@
 import { Prisma, Role } from 'prisma/generated/client.js';
-import EventGroups from '../../../src/models/eventGroup';
-import { HTTP404Error } from '../../../src/utils/errors/Errors';
+import EventGroups from '../../../src/models/eventGroup.js';
+import { HTTP404Error } from '../../../src/utils/errors/Errors.js';
 import prisma from 'src/prisma.js';
-import { createUser } from './users.test';
-import { generateEventGroup } from '../../factories/eventGroup';
+import { createUser } from './users.test.js';
+import { generateEventGroup } from '../../factories/eventGroup.js';
 import _ from 'lodash';
-import { prepareEventGroup } from '../../../src/models/eventGroup.helpers';
-import { createEvent } from './events.test';
-import { prepareEvent } from '../../../src/models/event.helpers';
+import { prepareEventGroup } from '../../../src/models/eventGroup.helpers.js';
+import { createEvent } from './events.test.js';
+import { prepareEvent } from 'src/models/event.helpers.js';
 
 export const createEventGroup = async (
     props: Partial<Prisma.EventGroupUncheckedCreateInput> & { userIds: string[]; eventIds: string[] }

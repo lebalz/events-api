@@ -1,4 +1,4 @@
-import Logger from './utils/logger';
+import Logger from './utils/logger.js';
 import Bree from 'bree';
 import path from 'path';
 

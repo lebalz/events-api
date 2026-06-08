@@ -1,13 +1,13 @@
-import { API_URL } from '../../src/app';
+import { API_URL } from '../../src/app.js';
 import prisma from 'src/prisma.js';
-import { generateUser } from '../factories/user';
+import { generateUser } from '../factories/user.js';
 import { Department, EventGroup, Role, Semester, UntisTeacher } from 'prisma/generated/client.js';
 import _ from 'lodash';
-import { notify } from '../../src/middlewares/notify.nop';
-import { generateUntisData, UntisDataProps } from '../factories/untisData';
-import { syncUntis2DB } from '../../src/services/syncUntis2DB';
-import { fetchUntis } from '../../src/services/__mocks__/fetchUntis';
-import { affectedLessons } from '../../src/services/eventChecker';
+import { notify } from '../../src/middlewares/notify.nop.js';
+import { generateUntisData, UntisDataProps } from '../factories/untisData.js';
+import { syncUntis2DB } from '../../src/services/syncUntis2DB.js';
+import { fetchUntis } from '../../src/services/__mocks__/fetchUntis.js';
+import { affectedLessons } from '../../src/services/eventChecker.js';
 
 jest.mock('../../src/services/fetchUntis');
 jest.mock('../../src/middlewares/notify.nop');

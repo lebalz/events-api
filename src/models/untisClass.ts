@@ -1,6 +1,6 @@
 import { PrismaClient, User } from 'prisma/generated/client.js';
 import prisma from 'src/prisma.js';
-import { prepareClass } from './untis.helpers';
+import { prepareClass } from './untis.helpers.js';
 
 function UntisClasses(db: PrismaClient['untisClass']) {
     return Object.assign(db, {

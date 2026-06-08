@@ -1,7 +1,7 @@
 import { RequestHandler } from 'express';
-import UntisClasses from '../models/untisClass';
-import UntisTeachers from '../models/untisTeacher';
-import UntisLessons from '../models/untisLesson';
+import UntisClasses from '../models/untisClass.js';
+import UntisTeachers from '../models/untisTeacher.js';
+import UntisLessons from '../models/untisLesson.js';
 
 export const teachers: RequestHandler = async (req, res, next) => {
     try {

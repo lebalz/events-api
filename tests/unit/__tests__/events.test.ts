@@ -1,18 +1,18 @@
 import { EventState, Prisma, Role } from 'prisma/generated/client.js';
-import { createDepartment } from './departments.test';
-import Events from '../../../src/models/event';
-import { normalizeAudience, prepareEvent } from '../../../src/models/event.helpers';
-import { HTTP400Error, HTTP403Error, HTTP404Error } from '../../../src/utils/errors/Errors';
+import { createDepartment } from './departments.test.js';
+import Events from '../../../src/models/event.js';
+import { normalizeAudience, prepareEvent } from 'src/models/event.helpers.js';
+import { HTTP400Error, HTTP403Error, HTTP404Error } from '../../../src/utils/errors/Errors.js';
 import prisma from 'src/prisma.js';
-import { createUser } from './users.test';
-import { generateEvent } from '../../factories/event';
+import { createUser } from './users.test.js';
+import { generateEvent } from '../../factories/event.js';
 import { setTimeout } from 'timers/promises';
 import _ from 'lodash';
-import { createEventGroup } from './eventGroups.test';
-import EventGroups from '../../../src/models/eventGroup';
-import { createRegistrationPeriod } from './registrationPeriods.test';
+import { createEventGroup } from './eventGroups.test.js';
+import EventGroups from '../../../src/models/eventGroup.js';
+import { createRegistrationPeriod } from './registrationPeriods.test.js';
 import { faker } from '@faker-js/faker';
-import { createSemester } from './semesters.test';
+import { createSemester } from './semesters.test.js';
 
 export const createEvent = async (
     props: Partial<Prisma.EventUncheckedCreateInput> & {

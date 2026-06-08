@@ -1,12 +1,12 @@
 import { EventState, type Event, type Prisma } from 'prisma/generated/client.js';
 import prisma from 'src/prisma.js';
 import { v4 as uuidv4 } from 'uuid';
-import { ApiEvent } from '../models/event.helpers';
-import Logger from '../utils/logger';
+import { ApiEvent } from '../models/event.helpers.js';
+import Logger from '../utils/logger.js';
 import {
     affectedLessons as checkAffectedLessons,
     affectedTeachers as checkAffectedTeachers
-} from './eventChecker';
+} from './eventChecker.js';
 
 const withTmpEvent = async <T>(
     userId: string,

@@ -1,18 +1,18 @@
-import { strategyForEnvironment } from './auth/index';
+import { strategyForEnvironment } from './auth/index.js';
 import express, { NextFunction, Request, Response } from 'express';
 import session from 'express-session';
 import prisma from 'src/prisma.js';
 import path from 'path';
 import cors from 'cors';
-import morganMiddleware from './middlewares/morgan.middleware';
+import morganMiddleware from './middlewares/morgan.middleware.js';
 import passport from 'passport';
-import router from './routes/router';
-import routeGuard, { PUBLIC_GET_ACCESS, PUBLIC_GET_ACCESS_REGEX, createAccessRules } from './auth/guard';
-import authConfig from './routes/authConfig';
+import router from './routes/router.js';
+import routeGuard, { PUBLIC_GET_ACCESS, PUBLIC_GET_ACCESS_REGEX, createAccessRules } from './auth/guard.js';
+import authConfig from './routes/authConfig.js';
 import type { User } from 'prisma/generated/client.js';
-import { HttpStatusCode } from './utils/errors/BaseError';
-import { notify } from './middlewares/notify.nop';
-import { HTTP401Error } from './utils/errors/Errors';
+import { HttpStatusCode } from './utils/errors/BaseError.js';
+import { notify } from './middlewares/notify.nop.js';
+import { HTTP401Error } from './utils/errors/Errors.js';
 import connectPgSimple from 'connect-pg-simple';
 import { existsSync, mkdirSync } from 'fs';
 

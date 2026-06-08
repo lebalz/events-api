@@ -1,7 +1,7 @@
 /* istanbul ignore file */
 import { Semester } from 'prisma/generated/client.js';
-import stub from './fetchUntis.stub.json';
-import { UntisData } from '../fetchUntis';
+import stub from './fetchUntis.stub.json' with { type: 'json' };
+import { UntisData } from '../fetchUntis.js';
 
 export const fetchUntis = (
     semester: Semester,

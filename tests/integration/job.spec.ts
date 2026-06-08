@@ -1,15 +1,15 @@
 import request from 'supertest';
-import app, { API_URL } from '../../src/app';
+import app, { API_URL } from '../../src/app.js';
 import prisma from 'src/prisma.js';
-import { generateUser } from '../factories/user';
-import { generateImportJob, generateSyncJob, jobSequence } from '../factories/job';
-import { generateSemester } from '../factories/semester';
+import { generateUser } from '../factories/user.js';
+import { generateImportJob, generateSyncJob, jobSequence } from '../factories/job.js';
+import { generateSemester } from '../factories/semester.js';
 import { Event, EventState, Job, Prisma } from 'prisma/generated/client.js';
-import { eventSequence } from '../factories/event';
-import { notify } from '../../src/middlewares/notify.nop';
-import { IoEvent } from '../../src/routes/socketEventTypes';
-import { IoRoom } from '../../src/routes/socketEvents';
-import { prepareRecord } from '../helpers/prepareRecord';
+import { eventSequence } from '../factories/event.js';
+import { notify } from '../../src/middlewares/notify.nop.js';
+import { IoEvent } from '../../src/routes/socketEventTypes.js';
+import { IoRoom } from '../../src/routes/socketEvents.js';
+import { prepareRecord } from '../helpers/prepareRecord.js';
 
 jest.mock('../../src/middlewares/notify.nop');
 const mNotification = <jest.Mock<typeof notify>>notify;

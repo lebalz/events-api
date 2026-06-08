@@ -1,6 +1,6 @@
 import { Console } from 'console';
 import prisma from 'src/prisma.js';
-import { truncate } from '../helpers/db';
+import { truncate } from '../helpers/db.js';
 
 afterEach(async () => {
     await truncate(true);

@@ -1,5 +1,5 @@
-import { fetchUntis } from '../src/services/fetchUntis';
-import { syncUntis2DB } from '../src/services/syncUntis2DB';
+import { fetchUntis } from '../src/services/fetchUntis.js';
+import { syncUntis2DB } from '../src/services/syncUntis2DB.js';
 import prisma from 'src/prisma.js';
 
 const main = async () => {

@@ -1,8 +1,8 @@
 import type { EventGroup } from 'prisma/generated/client.js';
 import { RequestHandler } from 'express';
-import { IoEvent, RecordType } from '../routes/socketEventTypes';
-import UserEventGroups, { DestroyEventAction } from '../models/eventGroup';
-import { ApiEventGroup } from '../models/eventGroup.helpers';
+import { IoEvent, RecordType } from '../routes/socketEventTypes.js';
+import UserEventGroups, { DestroyEventAction } from '../models/eventGroup.js';
+import { ApiEventGroup } from '../models/eventGroup.helpers.js';
 
 const NAME = RecordType.EventGroup;
 
