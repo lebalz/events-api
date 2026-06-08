@@ -2,7 +2,6 @@ import app, { configure, sessionMiddleware } from './app';
 import http from 'http';
 import Logger from './utils/logger';
 import { Server } from 'socket.io';
-import { instrument } from '@socket.io/admin-ui';
 import passport from 'passport';
 import EventRouter from './routes/socketEvents';
 import { NextFunction, Request, Response } from 'express';
@@ -15,11 +14,10 @@ const server = http.createServer(app);
 
 const corsOrigin = process.env.WITH_DEPLOY_PREVIEW
     ? [
-          process.env.EVENTS_APP_URL || true,
-          'https://admin.socket.io',
-          /https:\/\/deploy-preview-\d+--gbsl-events-app.netlify.app/
-      ]
-    : [process.env.EVENTS_APP_URL || true, 'https://admin.socket.io']; /* true = strict origin */
+        process.env.EVENTS_APP_URL || true,
+        /https:\/\/deploy-preview-\d+--gbsl-events-app.netlify.app/
+    ]
+    : [process.env.EVENTS_APP_URL || true]; /* true = strict origin */
 
 const io = new Server<ClientToServerEvents, ServerToClientEvents>(server, {
     cors: {
@@ -28,20 +26,6 @@ const io = new Server<ClientToServerEvents, ServerToClientEvents>(server, {
         methods: ['GET', 'POST', 'PUT', 'DELETE']
     },
     transports: ['websocket' /* , 'polling' */]
-});
-
-instrument(io, {
-    readonly: false,
-    namespaceName: '/sio-admin',
-    mode: 'development',
-    auth: process.env.ADMIN_UI_PASSWORD
-        ? {
-              type: 'basic',
-              username: 'admin',
-              /* generate a bcrypt hashed pw, e.g. with https://bcrypt.online/ */
-              password: process.env.ADMIN_UI_PASSWORD
-          }
-        : false
 });
 
 if (process.env.NODE_ENV === 'production' && process.env.SENTRY_DSN) {

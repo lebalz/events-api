@@ -1,6 +1,6 @@
-import { PrismaClient, User } from '@prisma/client';
 import { getNameFromEmail } from '../src/helpers/email';
-const prisma = new PrismaClient();
+import prisma from '../src/prisma.js';
+import { User } from './generated/client';
 
 async function main() {
     if (process.env.NODE_ENV === 'production' || process.env.NODE_ENV === 'test') {

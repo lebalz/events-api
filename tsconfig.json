@@ -1,33 +1,24 @@
 {
   "compilerOptions": {
-    "sourceMap": true,
-    "outDir": "dist",
-    "strict": true,
-    "lib": ["esnext", "dom"],
-    "moduleResolution": "node",
-    "module": "commonjs",
-    "target": "ES2022",
-    "esModuleInterop": true,
+    "target": "esnext",
+    "module": "nodenext",
+    "moduleResolution": "nodenext",
+    // "allowSyntheticDefaultImports": true,
     "resolveJsonModule": true,
-
+    "baseUrl": ".",
+    "outDir": "dist",
+    "sourceMap": true,
+    "strict": true,
+    "isolatedModules": true,
+    "esModuleInterop": true,
+    "types": ["node"],
+    "skipLibCheck": true,
     "typeRoots": [
       "./src/types",
       "./node_modules/@types/",
       "./src/@types/"
-    ],
-
-    "types": [
-      "node",
-      "jest",
-      "express"
-    ],
-
-    "inlineSources": true,
-
-    // Set `sourceRoot` to  "/" to strip the build path prefix
-    // from generated source code references.
-    // This improves issue grouping in Sentry.
-    "sourceRoot": "/"
+    ]
   },
-  "exclude": ["bin"],
+  "include": ["process.env.d.ts", "./**/*.ts"],
+  "exclude": ["node_modules"]
 }

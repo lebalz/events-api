@@ -1,6 +1,7 @@
 generator client {
-    provider        = "prisma-client-js"
-    previewFeatures = ["postgresqlExtensions", "views"]
+    provider        = "prisma-client"
+    output          = "./generated"
+    previewFeatures = ["postgresqlExtensions", "views", "relationJoins"]
 }
 
 generator docs {
@@ -8,13 +9,18 @@ generator docs {
     output   = "../docs/prisma"
 }
 
-generator dbml {
-    provider = "prisma-dbml-generator"
+generator erd {
+    provider = "prisma-erd-generator"
+    output   = "./erd.svg"
+    disabled = true
 }
+
+// generator dbml {
+//     provider = "prisma-dbml-generator"
+// }
 
 datasource db {
     provider   = "postgresql"
-    url        = env("DATABASE_URL")
     extensions = [pg_trgm, pgcrypto]
 }
 
