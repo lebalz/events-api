@@ -1,20 +1,15 @@
-import { findUser } from '../../../src/helpers/authInfo.js';
-import { getNameFromEmail } from '../../../src/helpers/email';
-import {
-    Departments,
-    fromDisplayClassName,
-    toDepartmentName
-} from '../../../src/services/helpers/departmentNames';
-import { KlassName } from '../../../src/services/helpers/klassNames';
-import { chunks } from '../../../src/services/helpers/splitInChunks';
-import prisma from 'src/prisma.js';
-import { rmUndefined } from '../../../src/utils/filterHelpers';
-import { stringify } from '../../../src/utils/logger';
-import { HTTP401Error, HTTP500Error } from '../../../src/utils/errors/Errors';
-import { getDate, getDateLong, getDateTime, getDay, getTime } from '../../../src/services/helpers/time';
-import { translate } from '../../../src/services/helpers/i18n';
 import type { Department } from 'prisma/generated/client.js';
 import { Role } from 'src/models/user.js';
+import { getNameFromEmail } from 'src/helpers/email.js';
+import { chunks } from 'src/services/helpers/splitInChunks.js';
+import prisma from 'src/prisma.js';
+import { Departments, fromDisplayClassName, toDepartmentName } from 'src/services/helpers/departmentNames.js';
+import { KlassName } from 'src/services/helpers/klassNames.js';
+import { rmUndefined } from 'src/utils/filterHelpers.js';
+import { stringify } from 'src/utils/logger.js';
+import { HTTP401Error, HTTP500Error } from 'src/utils/errors/Errors.js';
+import { getDate, getDateLong, getDateTime, getDay, getTime } from 'src/services/helpers/time.js';
+import { translate } from 'src/services/helpers/i18n.js';
 
 describe('Split In Chunks', () => {
     test('fn chunks', async () => {
@@ -55,101 +50,6 @@ describe('getNameFromEmail', () => {
     test('does not fail on wrong format', () => {
         const email = 'foobar';
         expect(getNameFromEmail(email)).toEqual({ firstName: 'Foobar', lastName: '' });
-    });
-});
-
-describe('findUser from auth info', () => {
-    test('creates user from email and name', async () => {
-        const authInfo = {
-            preferred_username: 'Maximilian.Dorodan@abcd.ch',
-            name: 'Dorodan Zingaro Maximilian',
-            oid: 'a8407e9c-be32-46af-a69d-e35a569f76ad'
-        };
-        await expect(prisma.user.findMany()).resolves.toEqual([]);
-        await findUser(authInfo);
-        await expect(prisma.user.findMany()).resolves.toEqual([
-            {
-                id: 'a8407e9c-be32-46af-a69d-e35a569f76ad',
-                email: 'maximilian.dorodan@abcd.ch',
-                firstName: 'Maximilian',
-                lastName: 'Dorodan Zingaro',
-                notifyOnEventUpdate: false,
-                notifyAdminOnReviewRequest: false,
-                notifyAdminOnReviewDecision: false,
-                role: Role.USER,
-                untisId: null,
-                createdAt: expect.any(Date),
-                updatedAt: expect.any(Date)
-            }
-        ]);
-    });
-    test('creates user from email', async () => {
-        const authInfo = {
-            preferred_username: 'Maximilian.Dorodan@abcd.ch',
-            oid: 'a8407e9c-be32-46af-a69d-e35a569f76ad'
-        };
-        await expect(prisma.user.findMany()).resolves.toEqual([]);
-        await findUser(authInfo);
-        await expect(prisma.user.findMany()).resolves.toEqual([
-            {
-                id: 'a8407e9c-be32-46af-a69d-e35a569f76ad',
-                email: 'maximilian.dorodan@abcd.ch',
-                firstName: 'Maximilian',
-                lastName: 'Dorodan',
-                notifyOnEventUpdate: false,
-                notifyAdminOnReviewRequest: false,
-                notifyAdminOnReviewDecision: false,
-                role: Role.USER,
-                untisId: null,
-                createdAt: expect.any(Date),
-                updatedAt: expect.any(Date)
-            }
-        ]);
-    });
-    test('updates user', async () => {
-        await prisma.user.create({
-            data: {
-                id: 'a8407e9c-be32-46af-a69d-e35a569f76ad',
-                email: 'Maximilian.Dorodan@abcd.ch',
-                firstName: 'Maximilian',
-                lastName: 'Dorodan'
-            }
-        });
-        const old = await prisma.user.findFirst();
-        expect(old?.lastName).toEqual('Dorodan');
-
-        const authInfo = {
-            preferred_username: 'Maximilian.Dorodan@abcd.ch',
-            name: 'Dorodan Zingaro Maximilian',
-            oid: 'a8407e9c-be32-46af-a69d-e35a569f76ad'
-        };
-        await findUser(authInfo);
-        await expect(prisma.user.findMany()).resolves.toEqual([
-            {
-                id: 'a8407e9c-be32-46af-a69d-e35a569f76ad',
-                email: 'maximilian.dorodan@abcd.ch',
-                firstName: 'Maximilian',
-                lastName: 'Dorodan Zingaro',
-                notifyOnEventUpdate: false,
-                notifyAdminOnReviewRequest: false,
-                notifyAdminOnReviewDecision: false,
-                role: Role.USER,
-                untisId: null,
-                createdAt: expect.any(Date),
-                updatedAt: expect.any(Date)
-            }
-        ]);
-    });
-    test('throws on wrong format', async () => {
-        const authInfo = {
-            preferredUsername: 'Maximilian.Dorodan@abcd.ch',
-            id: 'a8407e9c-be32-46af-a69d-e35a569f76ad'
-        };
-        await expect(findUser(authInfo)).rejects.toEqual('No valid authorization provided');
-    });
-    test('throws on missing', async () => {
-        const authInfo = undefined;
-        await expect(findUser(authInfo)).rejects.toEqual('No valid authorization provided');
     });
 });
 

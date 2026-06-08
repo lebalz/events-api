@@ -45,7 +45,7 @@ describe('Jobs', () => {
         test('throws on not existing record', async () => {
             const user = await createUser({ firstName: 'Reto' });
             await expect(Jobs.findModel(user, '1434b208-2a2c-40ab-9473-a0cd947e4fe4')).rejects.toEqual(
-                new HTTP404Error('Job with id a4aa5e33-9041-4e09-8518-339e4d211c4f! not found')
+                new HTTP404Error('Job with id 1434b208-2a2c-40ab-9473-a0cd947e4fe4 not found')
             );
         });
     });

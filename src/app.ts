@@ -17,6 +17,11 @@ import { notify } from './socketIoServer.js';
 import { notify as nopNotify } from './middlewares/notify.nop.js';
 
 import { existsSync, mkdirSync } from 'fs';
+import { dirname } from 'path';
+import { fileURLToPath } from 'url';
+import { ICAL_DIR, STATIC_DIR } from './utils/icalConfig.js';
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 const AccessRules = createAccessRules(authConfig.accessMatrix);
 
@@ -30,22 +35,6 @@ const app = express();
 export const API_VERSION = 'v1';
 export const API_URL = `/api/${API_VERSION}`;
 
-const ICAL_DEFAULT = process.env.EXPORT_DIR || `${__dirname}/../../ical`;
-const ICAL_DEFAULT_DIRS = {
-    test: `${__dirname}/../tests/test-data/ical`,
-    development: ICAL_DEFAULT,
-    production: ICAL_DEFAULT
-};
-const STATIC_DEFAULT = process.env.STATIC_DIR || `${__dirname}/../../static`;
-const STATIC_DEFAULT_DIRS = {
-    test: `${__dirname}/../tests/test-data/static`,
-    development: STATIC_DEFAULT,
-    production: STATIC_DEFAULT
-};
-export const ICAL_DIR =
-    ICAL_DEFAULT_DIRS[process.env.NODE_ENV as keyof typeof ICAL_DEFAULT_DIRS] || ICAL_DEFAULT;
-export const STATIC_DIR =
-    STATIC_DEFAULT_DIRS[process.env.NODE_ENV as keyof typeof STATIC_DEFAULT_DIRS] || STATIC_DEFAULT;
 if (!existsSync(`${STATIC_DIR}/de`)) {
     mkdirSync(`${STATIC_DIR}/de`, { recursive: true });
 }

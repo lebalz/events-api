@@ -3,6 +3,10 @@ import fs from 'fs';
 import { finished } from 'stream/promises';
 import { Prisma, UntisTeacher } from 'prisma/generated/client.js';
 import prisma from 'src/prisma.js';
+import { dirname } from 'path';
+import { fileURLToPath } from 'url';
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 interface Record {
     id: string;

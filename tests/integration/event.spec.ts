@@ -35,6 +35,10 @@ import { prepareEvent as originalPrepareEvent } from '../../src/models/event.hel
 import { createEvent } from '../unit/__tests__/events.test.js';
 import department from '../../src/models/department.js';
 import { generateEventGroup } from '../factories/eventGroup.js';
+import { dirname } from 'path';
+import { fileURLToPath } from 'url';
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 jest.mock('../../src/middlewares/notify.nop');
 const mNotification = <jest.Mock<typeof notify>>notify;

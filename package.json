@@ -15,6 +15,7 @@
     "bree:run": "tsx --env-file=.env ./src/bree-runner.tsx",
     "test:db:create": "npx prisma migrate dev",
     "test": "TZ=UTC jest -c jest.config.unit.js -- && TZ=UTC NODE_ENV=test jest -c jest.config.integration.js --",
+    "jest": "TZ=UTC NODE_OPTIONS=\"$NODE_OPTIONS --experimental-vm-modules\" NODE_ENV=test jest -c jest.config.unit.js --",
     "unit": "TZ=UTC NODE_OPTIONS=\"$NODE_OPTIONS --experimental-vm-modules\" NODE_ENV=test jest -c jest.config.unit.js --",
     "integration": "TZ=UTC NODE_ENV=test jest -c jest.config.integration.js",
     "cov": "TZ=UTC jest --collectCoverage -c jest.config.unit.js -- && TZ=UTC jest --collectCoverage -c jest.config.integration.js --",

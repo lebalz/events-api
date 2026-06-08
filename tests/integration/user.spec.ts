@@ -36,6 +36,11 @@ import { prepareRecord } from '../helpers/prepareRecord.js';
 import { DEFAULT_INCLUDE } from '../../src/models/subscription.helpers.js';
 import { Role } from 'src/models/user.js';
 
+import { dirname } from 'path';
+import { fileURLToPath } from 'url';
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+
 jest.mock('../../src/services/fetchUntis');
 jest.mock('../../src/middlewares/notify.nop');
 const mNotification = <jest.Mock<typeof notify>>notify;

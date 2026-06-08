@@ -4,11 +4,11 @@ import { Event, EventAudience, EventState } from 'prisma/generated/client.js';
 import { promises as fsPromises } from 'fs';
 import _ from 'lodash';
 import Logger from '../utils/logger.js';
-import { ICAL_DIR } from '../app.js';
 import { translate } from './helpers/i18n.js';
 import { ApiSubscription } from '../models/subscription.helpers.js';
 import Subscription from '../models/subscription.js';
 import { mkdir } from 'fs/promises';
+import { ICAL_DIR } from 'src/utils/icalConfig.js';
 
 export const SEC_2_MS = 1000;
 export const MINUTE_2_MS = 60 * SEC_2_MS;

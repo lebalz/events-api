@@ -1,9 +1,10 @@
-import { Prisma, Role } from 'prisma/generated/client.js';
+import { Prisma } from 'prisma/generated/client.js';
 import Semesters from '../../../src/models/semester.js';
 import prisma from 'src/prisma.js';
 import { createUser } from './users.test.js';
 import { HTTP400Error, HTTP403Error, HTTP404Error } from '../../../src/utils/errors/Errors.js';
 import { generateSemester } from '../../factories/semester.js';
+import { Role } from 'src/models/user.js';
 
 export const createSemester = async (props: Partial<Prisma.SemesterUncheckedCreateInput>) => {
     return await prisma.semester.create({
@@ -28,7 +29,7 @@ describe('Semester', () => {
         });
         test('throws on not existing record', async () => {
             await expect(Semesters.findModel('5bb04f7b-dec6-4335-9a84-bdf5fa5e2b87')).rejects.toEqual(
-                new HTTP404Error('Semester with id 5bb04f7b-dec6-4335-9a84-bdf5fa5e2b87! not found')
+                new HTTP404Error('Semester with id 5bb04f7b-dec6-4335-9a84-bdf5fa5e2b87 not found')
             );
         });
     });
@@ -44,7 +45,7 @@ describe('Semester', () => {
             ).rejects.toEqual(new HTTP403Error('Not authorized'));
         });
         test('admin can create a semester', async () => {
-            const admin = await createUser({ role: 'admin' });
+            const admin = await createUser({ role: Role.ADMIN });
             const start = new Date(2023, 8, 4);
             const end = new Date(2023, 8, 12);
             await expect(
@@ -64,7 +65,7 @@ describe('Semester', () => {
             });
         });
         test('can not create semester with end < start', async () => {
-            const admin = await createUser({ role: 'admin' });
+            const admin = await createUser({ role: Role.ADMIN });
             await expect(
                 Semesters.createModel(admin, {
                     name: 'HS',
@@ -83,7 +84,7 @@ describe('Semester', () => {
             );
         });
         test('admin can update semester', async () => {
-            const admin = await createUser({ role: 'admin' });
+            const admin = await createUser({ role: Role.ADMIN });
             const semester = await createSemester({
                 start: new Date(2021, 8, 4),
                 end: new Date(2021, 11, 4)
@@ -108,7 +109,7 @@ describe('Semester', () => {
             });
         });
         test('can not set end < start or start > end', async () => {
-            const admin = await createUser({ role: 'admin' });
+            const admin = await createUser({ role: Role.ADMIN });
             const semester = await createSemester({
                 start: new Date(2023, 8, 4),
                 end: new Date(2023, 11, 4)
@@ -121,7 +122,7 @@ describe('Semester', () => {
             ).rejects.toEqual(new HTTP400Error('End date must be after start date'));
         });
         test('can not set syncdate outside of semester', async () => {
-            const admin = await createUser({ role: 'admin' });
+            const admin = await createUser({ role: Role.ADMIN });
             const semester = await createSemester({
                 start: new Date(2023, 7, 14),
                 end: new Date(2023, 11, 4)
@@ -143,7 +144,7 @@ describe('Semester', () => {
             );
         });
         test('admin can delete semester', async () => {
-            const admin = await createUser({ role: 'admin' });
+            const admin = await createUser({ role: Role.ADMIN });
             const semester = await createSemester({});
             await expect(Semesters.destroy(admin, semester.id)).resolves.toEqual({
                 ...semester
@@ -153,7 +154,7 @@ describe('Semester', () => {
             );
         });
         test('delete semester removes lessons too', async () => {
-            const admin = await createUser({ role: 'admin' });
+            const admin = await createUser({ role: Role.ADMIN });
             const klass = await prisma.untisClass.create({ data: { name: '25h', sf: 'E', year: 2025 } });
             const semester = await createSemester({});
             const lesson = await prisma.untisLesson.create({

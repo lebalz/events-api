@@ -1,4 +1,5 @@
 import _ from 'lodash';
+import { jest } from '@jest/globals';
 import { ApiEvent, prepareEvent } from 'src/models/event.helpers.js';
 import { createIcsForDepartments, prepareEvent as prepareIcsEvent } from '../../../src/services/createIcs.js';
 import { getDateTime } from '../../../src/services/helpers/time.js';
@@ -13,7 +14,6 @@ import { createDepartment } from './departments.test.js';
 import { Event, EventState, Semester, User } from 'prisma/generated/client.js';
 import { createIcsForClasses } from '../../../src/services/createIcs.js';
 import { existsSync, readFileSync } from 'fs';
-import { ICAL_DIR } from '../../../src/app.js';
 import prisma from 'src/prisma.js';
 import { createEvents } from 'ics';
 import stubs from '../../integration/stubs/semesters.json' with { type: 'json' };
@@ -21,8 +21,13 @@ import { syncUntis2DB } from '../../../src/services/syncUntis2DB.js';
 import { generateUser } from '../../factories/user.js';
 import { affectedLessons, affectedTeachers } from '../../../src/services/eventCheckUnpersisted.js';
 import { DepartmentLetter, Departments } from '../../../src/services/helpers/departmentNames.js';
-
-jest.mock('../../../src/services/fetchUntis');
+import { dirname } from 'path';
+import { fileURLToPath } from 'url';
+import { ICAL_DIR } from 'src/utils/icalConfig.js';
+import untisDataStub from '../../../src/services/__mocks__/fetchUntis.stub.json' with { type: 'json' };
+import type { UntisData } from '../../../src/services/fetchUntis.js';
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 export const withoutDTSTAMP = (str: string) => {
     return str.replace(/\s*DTSTAMP.*/g, '');
@@ -252,7 +257,18 @@ describe('sync untis', () => {
             }
         });
         semester = await prisma.semester.findFirstOrThrow({ where: { name: 'HS2023' } });
-        await syncUntis2DB(semester!.id);
+        const mockFetchUntis = async () => {
+            const data = untisDataStub as unknown as UntisData;
+            return {
+                ...data,
+                schoolyear: {
+                    ...data.schoolyear,
+                    startDate: new Date(data.schoolyear.startDate),
+                    endDate: new Date(data.schoolyear.endDate)
+                }
+            };
+        };
+        await syncUntis2DB(semester!.id, mockFetchUntis);
         const teachers = await prisma.untisTeacher.findMany();
         for (const teacher of teachers) {
             await prisma.user.create({ data: generateUser({ untisId: teacher.id }) });
@@ -346,7 +362,18 @@ describe('event > check > unpersisted', () => {
         });
         user = await prisma.user.create({ data: generateUser({}) });
         semester = await prisma.semester.findFirstOrThrow({ where: { name: 'HS2023' } });
-        await syncUntis2DB(semester!.id);
+        const mockFetchUntis = async () => {
+            const data = untisDataStub as unknown as UntisData;
+            return {
+                ...data,
+                schoolyear: {
+                    ...data.schoolyear,
+                    startDate: new Date(data.schoolyear.startDate),
+                    endDate: new Date(data.schoolyear.endDate)
+                }
+            };
+        };
+        await syncUntis2DB(semester!.id, mockFetchUntis);
         const teachers = await prisma.untisTeacher.findMany();
         for (const teacher of teachers) {
             await prisma.user.create({ data: generateUser({ untisId: teacher.id }) });

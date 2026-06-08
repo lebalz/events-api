@@ -1,4 +1,4 @@
-import { Prisma, Role } from 'prisma/generated/client.js';
+import { Prisma } from 'prisma/generated/client.js';
 import Departments from '../../../src/models/department.js';
 import prisma from 'src/prisma.js';
 import { createUser } from './users.test.js';
@@ -76,12 +76,12 @@ describe('Departments', () => {
 
         test('detects invalid letter combinations', async () => {
             const admin = await createUser({ role: 'admin' });
-            const depAB = await createDepartment({ name: 'depAB-', classLetters: ['A', 'B'] });
-            const depCD = await createDepartment({ name: 'depCD-', classLetters: ['C', 'D'] });
+            const depAB = await createDepartment({ name: 'depAB-', letter: 'm', classLetters: ['A', 'B'] });
+            const depCD = await createDepartment({ name: 'depCD-', letter: 'm', classLetters: ['C', 'D'] });
             await expect(
                 Departments.updateModel(admin, depCD.id, { classLetters: ['B', 'C', 'D'] })
             ).rejects.toEqual(
-                new HTTP400Error('Unique Letters Constraint Error: invalid combinations: depCD-B')
+                new HTTP400Error('Unique Letters Constraint Error: invalid combinations: mB')
             );
         });
     });
