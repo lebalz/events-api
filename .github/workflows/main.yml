@@ -30,6 +30,8 @@ jobs:
         node-version: '>=24.13.0'
         cache: 'yarn'
     - run: yarn install --ignore-engines
+    - name: Generate Prisma client
+      run: yarn prisma generate
     - name: Run unit tests
       run: yarn run test:db:create && yarn run cov:unit
       env:
@@ -68,6 +70,8 @@ jobs:
         node-version: '>=24.13.0'
         cache: 'yarn'
     - run: yarn install
+    - name: Generate Prisma client
+      run: yarn prisma generate
     - name: Run integration tests
       run: yarn run test:db:create && yarn run cov:integration
       env:

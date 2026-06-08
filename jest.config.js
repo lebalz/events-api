@@ -12,6 +12,8 @@ const config = {
     }],
   },
   moduleNameMapper: {
+    '^(\.\./prisma/generated/.*)\.js$': '$1.ts',
+    '^prisma/generated/(.*)\.js$': '<rootDir>/prisma/generated/$1.ts',
     '^(\\.{1,2}/.*)\\.js$': '$1',
     '^src/(.*)\\.js$': '<rootDir>/src/$1',
     '^prisma/(.*)\\.js$': '<rootDir>/prisma/$1',
