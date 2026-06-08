@@ -7,7 +7,7 @@ import { getNameFromEmail } from './helpers/email.js';
 import type { GithubProfile, MicrosoftEntraIDProfile } from 'better-auth/social-providers';
 import Logger from './utils/logger.js';
 import { getIo, notify } from './socketIoServer.js';
-import User from './models/user.js';
+import User, { Role } from './models/user.js';
 import { IoRoom } from './routes/socketEvents.js';
 import { IoEvent, RecordType } from './routes/socketEventTypes.js';
 import { adminAc, userAc } from 'better-auth/plugins/admin/access';
@@ -163,8 +163,8 @@ export const auth = betterAuth({
                 admin: adminAc,
                 user: userAc,
             },
-            defaultRole: 'user',
-            adminRoles: ['admin']
+            defaultRole: Role.USER,
+            adminRoles: [Role.ADMIN]
         })
     ],
     logger: {

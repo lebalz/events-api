@@ -1,4 +1,5 @@
 import { UntisClass, UntisLesson, UntisTeacher } from 'prisma/generated/client.js';
+import { Role } from './user.js';
 
 export interface ApiLesson extends Omit<UntisLesson, 'teachers' | 'classes'> {
     teacherIds: number[];

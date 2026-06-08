@@ -1,8 +1,9 @@
 import request from 'supertest';
+import { jest } from '@jest/globals';
 import app, { API_URL } from '../../src/app.js';
 import prisma from 'src/prisma.js';
 import { generateUser } from '../factories/user.js';
-import { Department, Role } from 'prisma/generated/client.js';
+import { Department } from 'prisma/generated/client.js';
 import stubs from './stubs/departments.json' with { type: 'json' };
 import _ from 'lodash';
 import { notify } from '../../src/middlewares/notify.nop.js';
@@ -10,6 +11,7 @@ import { IoEvent } from '../../src/routes/socketEventTypes.js';
 import { faker } from '@faker-js/faker';
 import { prepareRecord } from '../helpers/prepareRecord.js';
 import { toDisplayLetter } from '../../src/services/syncUntis2DB.js';
+import { Role } from 'src/models/user.js';
 
 jest.mock('../../src/middlewares/notify.nop');
 const mNotification = <jest.Mock<typeof notify>>notify;
@@ -83,7 +85,7 @@ describe(`PUT ${API_URL}/departments/:id`, () => {
         expect(mNotification).toHaveBeenCalledTimes(0);
     });
     it('admin can update departments', async () => {
-        const admin = await prisma.user.create({ data: generateUser({ role: 'admin' }) });
+        const admin = await prisma.user.create({ data: generateUser({ role: Role.ADMIN }) });
         const dep = await prisma.department.findFirst();
         const result = await request(app)
             .put(`${API_URL}/departments/${dep!.id}`)
@@ -116,7 +118,7 @@ describe(`PUT ${API_URL}/departments/:id`, () => {
          *       current
          *
          */
-        const admin = await prisma.user.create({ data: generateUser({ role: 'admin' }) });
+        const admin = await prisma.user.create({ data: generateUser({ role: Role.ADMIN }) });
         const deps = await prisma.department.findMany();
         const depA = deps[0];
         const depB = deps[1];
@@ -134,7 +136,7 @@ describe(`PUT ${API_URL}/departments/:id`, () => {
          * GHIJ -> Letter G, classLetters[a-s]
          * GHIJ/GFED -> Letter G, classLetters[wxy]  --> can not be updated to [awxy], because of overlapping classLetters
          */
-        const admin = await prisma.user.create({ data: generateUser({ role: 'admin' }) });
+        const admin = await prisma.user.create({ data: generateUser({ role: Role.ADMIN }) });
         const bili = await prisma.department.findUnique({ where: { name: 'GHIJ/GFED' } });
         const deu = await prisma.department.findUnique({ where: { name: 'GHIJ' } });
         expect(deu?.letter).toEqual(bili!.letter);
@@ -153,7 +155,7 @@ describe(`PUT ${API_URL}/departments/:id`, () => {
          * GHIJ -> Letter G, classLetters[a-s]
          * GHIJ/GFED -> Letter G, classLetters[wxy]  --> can not be updated to [awxy], because of overlapping classLetters
          */
-        const admin = await prisma.user.create({ data: generateUser({ role: 'admin' }) });
+        const admin = await prisma.user.create({ data: generateUser({ role: Role.ADMIN }) });
         const fmp = await prisma.department.findUnique({ where: { name: 'FGDabc' } });
         const fms = await prisma.department.findUnique({ where: { name: 'FGH' } });
         expect(fmp?.displayLetter).toEqual(fms!.letter);
@@ -174,7 +176,7 @@ describe(`PUT ${API_URL}/departments/:id`, () => {
          * GHIJ -> Letter G, classLetters[a-s]
          * GFED -> Letter m, classLetters[A-S]  --> can be updated to [a-s], because letter is distinct
          */
-        const admin = await prisma.user.create({ data: generateUser({ role: 'admin' }) });
+        const admin = await prisma.user.create({ data: generateUser({ role: Role.ADMIN }) });
         const deu = await prisma.department.findUnique({ where: { name: 'GHIJ' } });
         const fra = await prisma.department.findUnique({ where: { name: 'GFED' } });
         expect(deu?.letter).not.toEqual(fra!.letter);
@@ -209,7 +211,7 @@ describe(`POST ${API_URL}/departments`, () => {
         expect(mNotification).toHaveBeenCalledTimes(0);
     });
     it('admin can create a new department', async () => {
-        const admin = await prisma.user.create({ data: generateUser({ role: 'admin' }) });
+        const admin = await prisma.user.create({ data: generateUser({ role: Role.ADMIN }) });
         const dep = await prisma.department.findFirst();
         const result = await request(app)
             .post(`${API_URL}/departments`)
@@ -238,7 +240,7 @@ describe(`DELETE ${API_URL}/departments/:id`, () => {
         expect(mNotification).toHaveBeenCalledTimes(0);
     });
     it('admin can delete a department', async () => {
-        const admin = await prisma.user.create({ data: generateUser({ role: 'admin' }) });
+        const admin = await prisma.user.create({ data: generateUser({ role: Role.ADMIN }) });
         const deps = await prisma.department.findMany();
         expect(deps).toHaveLength(13);
         const dep = deps[0];

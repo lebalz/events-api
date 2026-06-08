@@ -9,6 +9,7 @@ import { mailOnReviewRequest } from './mail/onReviewRequest.js';
 import { mailOnRefused } from './mail/onRefused.js';
 import { mailOnAccept } from './mail/onAccepted.js';
 import { rmUndefined } from '../../utils/filterHelpers.js';
+import { Role } from 'src/models/user.js';
 
 type Locale = 'de' | 'fr';
 const LOCALES = ['de', 'fr'] as Locale[];
@@ -20,7 +21,7 @@ export const notifiableUsers = async () => {
     });
     const admins = await prisma.user.findMany({
         where: {
-            role: 'admin'
+            role: Role.ADMIN
         }
     });
     const GBSL_REGEX = /gbsl.ch$/i;

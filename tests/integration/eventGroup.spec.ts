@@ -1,8 +1,9 @@
 import request from 'supertest';
+import { jest } from '@jest/globals';
 import app, { API_URL } from '../../src/app.js';
 import prisma from 'src/prisma.js';
 import { generateUser } from '../factories/user.js';
-import { EventGroup, Role } from 'prisma/generated/client.js';
+import { EventGroup } from 'prisma/generated/client.js';
 import _, { groupBy } from 'lodash';
 import { notify } from '../../src/middlewares/notify.nop.js';
 import { IoEvent } from '../../src/routes/socketEventTypes.js';
@@ -15,6 +16,7 @@ import { Meta as EventGroupMeta } from '../../src/models/eventGroup.js';
 import { prepareRecord } from '../helpers/prepareRecord.js';
 import { createDepartment } from '../unit/__tests__/departments.test.js';
 import { createEvent } from '../unit/__tests__/events.test.js';
+import { Role } from 'src/models/user.js';
 
 jest.mock('../../src/middlewares/notify.nop');
 const mNotification = <jest.Mock<typeof notify>>notify;
@@ -130,7 +132,7 @@ describe(`PUT ${API_URL}/event_groups/:id`, () => {
     });
     it('prevents admins to modify others Registration Period', async () => {
         const user = await prisma.user.create({ data: generateUser({}) });
-        const admin = await prisma.user.create({ data: generateUser({ role: 'admin' }) });
+        const admin = await prisma.user.create({ data: generateUser({ role: Role.ADMIN }) });
         const ueGroup = await prisma.eventGroup.create({
             data: generateEventGroup({ userIds: [user!.id], eventIds: [] })
         });
@@ -229,13 +231,13 @@ describe(`DELETE ${API_URL}/event_groups/:id`, () => {
         });
         const eventNotifications = mNotification.mock.calls.slice(1).map((mc) => mc[0]);
         expect(eventNotifications.map((e) => e.message.type)).toEqual(['EVENT', 'EVENT']);
-        expect(eventNotifications.find((n) => n.message.id === events[0].id)).toEqual({
+        expect(eventNotifications.find((n) => n.message?.id === events[0].id)).toEqual({
             event: IoEvent.DELETED_RECORD,
             message: { type: 'EVENT', id: events[0].id },
             to: [user.id],
             toSelf: true
         });
-        expect(eventNotifications.find((n) => n.message.id === events[1].id)).toEqual({
+        expect(eventNotifications.find((n) => n.message?.id === events[1].id)).toEqual({
             event: IoEvent.DELETED_RECORD,
             message: { type: 'EVENT', id: events[1].id },
             to: [user.id],

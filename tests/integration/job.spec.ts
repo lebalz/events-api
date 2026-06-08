@@ -1,4 +1,5 @@
 import request from 'supertest';
+import { jest } from '@jest/globals';
 import app, { API_URL } from '../../src/app.js';
 import prisma from 'src/prisma.js';
 import { generateUser } from '../factories/user.js';
@@ -95,7 +96,14 @@ describe(`GET ${API_URL}/jobs/:id`, () => {
             .get(`${API_URL}/jobs/efce93f5-0ead-4d5d-8143-0fd7267db689`)
             .set('authorization', JSON.stringify({ email: user.email }));
         expect(result.statusCode).toEqual(404);
-        expect(result.body).toEqual({});
+        expect(result.body).toEqual({
+            errors: [
+                expect.objectContaining({
+                    status: 404,
+                    name: 'NOT FOUND'
+                })
+            ]
+        });
         expect(mNotification).toHaveBeenCalledTimes(0);
     });
 

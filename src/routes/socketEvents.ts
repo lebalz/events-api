@@ -10,7 +10,7 @@ import { auth } from '../auth.js';
 import { Role } from 'src/models/user.js';
 
 export enum IoRoom {
-    ADMIN = 'admin',
+    ADMIN = Role.ADMIN,
     ALL = 'all'
 }
 

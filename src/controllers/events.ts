@@ -1,6 +1,5 @@
 import { RequestHandler } from 'express';
 import { IoEvent, RecordType } from '../routes/socketEventTypes.js';
-import { notifyChangedRecord } from '../routes/notify.js';
 import type { Event } from 'prisma/generated/client.js';
 import { EventState } from 'prisma/generated/client.js';
 import { IoRoom } from '../routes/socketEvents.js';
@@ -13,8 +12,18 @@ import { rmUndefined } from '../utils/filterHelpers.js';
 import Jobs from '../models/job.js';
 import { ApiEvent } from '../models/event.helpers.js';
 import Logger from '../utils/logger.js';
+import { Role } from 'src/models/user.js';
+import { notifyChangedRecord } from 'src/socketIoServer.js';
 
 const NAME = RecordType.Event;
+
+const getQueryIds = (query: Record<string, unknown>) => {
+    const ids = query.ids ?? query['ids[]'];
+    if (Array.isArray(ids)) {
+        return ids.map((id) => String(id));
+    }
+    return ids ? [String(ids)] : [];
+};
 
 export const find: RequestHandler<{ id: string }> = async (req, res, next) => {
     try {
@@ -204,7 +213,7 @@ export const destroyMany: RequestHandler<any, any, any, { ids: string }> = async
     const deletedIds: string[] = [];
     res.notifications = [];
     try {
-        for (const id of req.query.ids) {
+        for (const id of getQueryIds(req.query as Record<string, unknown>)) {
             try {
                 const event = await Events.destroy(req.user!, id);
                 deletedIds.push(event.id);
@@ -241,8 +250,9 @@ export const all: RequestHandler<any, any, any, { semesterId?: string; ids?: str
     next
 ) => {
     try {
-        if (req.query.ids) {
-            const events = await Events.allByIds(req.user, req.query.ids);
+        const ids = getQueryIds(req.query as Record<string, unknown>);
+        if (ids.length > 0) {
+            const events = await Events.allByIds(req.user, ids);
             return res.json(events);
         }
         const events = await Events.published(req.query.semesterId);
@@ -291,7 +301,7 @@ export const clone: RequestHandler<{ id: string }, any, any> = async (req, res, 
 export const importEvents: RequestHandler<any, any, any, { type: ImportType }> = async (req, res, next) => {
     try {
         if (
-            req.user!.role !== 'admin' &&
+            req.user!.role !== Role.ADMIN &&
             [ImportType.GBSL_XLSX, ImportType.GBJB_CSV].includes(req.query.type)
         ) {
             throw new HTTP403Error('Not authorized to import legacy format');
@@ -303,14 +313,17 @@ export const importEvents: RequestHandler<any, any, any, { type: ImportType }> =
             req.query.type
         );
 
-        importer
-            .catch(() => {
-                return 'error';
-            })
-            .then(async () => {
-                const jobRecord = await Jobs.findModel(req.user!, job.id);
-                notifyChangedRecord(req.io, { type: RecordType.Job, record: jobRecord });
-            });
+        if (process.env.NODE_ENV !== 'test') {
+            importer
+                .catch(() => {
+                    return 'error';
+                })
+                .then(async () => {
+                    const jobRecord = await Jobs.findModel(req.user!, job.id);
+
+                    notifyChangedRecord({ type: RecordType.Job, record: jobRecord });
+                });
+        }
 
         res.notifications = [
             {

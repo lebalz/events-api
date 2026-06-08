@@ -1,4 +1,5 @@
 import { API_URL } from '../../src/app.js';
+import { jest } from '@jest/globals';
 import prisma from 'src/prisma.js';
 import { generateUser } from '../factories/user.js';
 import { Department, EventGroup, Semester, UntisTeacher } from 'prisma/generated/client.js';
@@ -8,6 +9,7 @@ import { generateUntisData, UntisDataProps } from '../factories/untisData.js';
 import { syncUntis2DB } from '../../src/services/syncUntis2DB.js';
 import { fetchUntis } from '../../src/services/__mocks__/fetchUntis.js';
 import { affectedLessons } from '../../src/services/eventChecker.js';
+import { Role } from 'src/models/user.js';
 
 jest.mock('../../src/services/fetchUntis');
 jest.mock('../../src/middlewares/notify.nop');
@@ -95,11 +97,11 @@ describe(`GET ${API_URL}/users/:id/affected-event-ids`, () => {
         describe('returns affected lessons', () => {
             it('returns all affected lessons', async () => {
                 const author = await prisma.user.create({
-                    data: generateUser({ role: 'admin' })
+                    data: generateUser({ role: Role.ADMIN })
                 });
                 for (const tchr of untisTeachers) {
                     await prisma.user.create({
-                        data: generateUser({ untisId: tchr.id, role: 'user' })
+                        data: generateUser({ untisId: tchr.id, role: Role.USER })
                     });
                 }
                 const ecgFms = departments.find((d) => d.name === 'ECG/FMS') as Department;

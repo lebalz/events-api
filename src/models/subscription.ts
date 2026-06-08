@@ -4,7 +4,7 @@ import { HTTP403Error, HTTP404Error } from '../utils/errors/Errors.js';
 import { createDataExtractor } from '../controllers/helpers.js';
 import { createIcsFromSubscription } from '../services/createIcs.js';
 import { ApiSubscription, DEFAULT_INCLUDE, prepareSubscription } from './subscription.helpers.js';
-import User from './user.js';
+import User, { Role } from './user.js';
 const getData = createDataExtractor<Partial<ApiSubscription>>(['subscribeToAffected']);
 
 function Subscription(db: PrismaClient['subscription']) {
@@ -18,7 +18,7 @@ function Subscription(db: PrismaClient['subscription']) {
             if (!record) {
                 throw new HTTP404Error('Subscription not found');
             }
-            if (!(record.userId === actor.id || actor.role === 'admin')) {
+            if (!(record.userId === actor.id || actor.role === Role.ADMIN)) {
                 throw new HTTP403Error('Not authorized');
             }
             /** remove fields not updatable*/

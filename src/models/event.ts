@@ -36,9 +36,15 @@ const getData = createDataExtractor<ApiEventUpdateInput>([
     'teachingAffected'
 ]);
 
-type AllEventQueryCondition = ({ state: EventState } | { authorId: string })[];
 export const getCurrentDate = () => {
-    return new Date();
+    return eventTime.getCurrentDate();
+};
+
+// Jest ESM cannot spy on named exports here, so keep a writable seam for tests.
+export const eventTime = {
+    getCurrentDate() {
+        return new Date();
+    }
 };
 const rootParentSql = (childId: string) => {
     return Prisma.sql`
@@ -119,7 +125,7 @@ function Events(db: PrismaClient['event']) {
                 !(
                     record.authorId === actor.id ||
                     record.groups.some((g) => g.users.map((user) => user.id).includes(actor.id)) ||
-                    actor.role === 'admin'
+                    actor.role === Role.ADMIN
                 )
             ) {
                 throw new HTTP403Error('Not authorized');
@@ -142,7 +148,7 @@ function Events(db: PrismaClient['event']) {
                 return prepareEvent(event);
             }
             if (
-                actor?.role === 'admin' &&
+                actor?.role === Role.ADMIN &&
                 (event.state === EventState.REVIEW || event.state === EventState.REFUSED)
             ) {
                 return prepareEvent(event);
@@ -262,7 +268,7 @@ function Events(db: PrismaClient['event']) {
             id: string,
             requested: EventState
         ): Promise<{ event: ApiEvent; parent?: ApiEvent; previous?: ApiEvent; refused: ApiEvent[] }> {
-            const isAdmin = actor!.role === 'admin';
+            const isAdmin = actor!.role === Role.ADMIN;
             const record = await db.findUnique({
                 where: { id: id },
                 include: {
@@ -616,7 +622,7 @@ function Events(db: PrismaClient['event']) {
             return events.map(prepareEvent);
         },
         async forUser(user: User): Promise<ApiEvent[]> {
-            const isAdmin = user.role === 'admin';
+            const isAdmin = user.role === Role.ADMIN;
             const events = await db.findMany({
                 include: { departments: true, children: true, linkedUsers: { select: { id: true } } },
                 where: {

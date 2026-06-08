@@ -1,4 +1,5 @@
 import request from 'supertest';
+import { jest } from '@jest/globals';
 import app, { API_URL } from '../../src/app.js';
 import prisma from 'src/prisma.js';
 import { generateUser } from '../factories/user.js';
@@ -11,6 +12,7 @@ import { faker } from '@faker-js/faker';
 import Jobs from '../../src/models/job.js';
 import { IoRoom } from '../../src/routes/socketEvents.js';
 import { prepareRecord } from '../helpers/prepareRecord.js';
+import { Role } from 'src/models/user.js';
 
 jest.mock('../../src/services/fetchUntis');
 jest.mock('../../src/middlewares/notify.nop');
@@ -75,7 +77,7 @@ describe(`PUT ${API_URL}/semesters/:id`, () => {
         expect(mNotification).toHaveBeenCalledTimes(0);
     });
     it('lets admins update semesters', async () => {
-        const admin = await prisma.user.create({ data: generateUser({ role: 'admin' }) });
+        const admin = await prisma.user.create({ data: generateUser({ role: Role.ADMIN }) });
         const semester = await prisma.semester.findFirst();
         const result = await request(app)
             .put(`${API_URL}/semesters/${semester!.id}`)
@@ -101,7 +103,7 @@ describe(`PUT ${API_URL}/semesters/:id`, () => {
     });
     it('can not update untis Sync Date to be earlier than the start of the semester', async () => {
         const semester = await prisma.semester.findFirst();
-        const admin = await prisma.user.create({ data: generateUser({ role: 'admin' }) });
+        const admin = await prisma.user.create({ data: generateUser({ role: Role.ADMIN }) });
 
         const result = await request(app)
             .put(`${API_URL}/semesters/${semester!.id}`)
@@ -112,7 +114,7 @@ describe(`PUT ${API_URL}/semesters/:id`, () => {
     });
     it('can not update start Date to be later than the end date', async () => {
         const semester = await prisma.semester.findFirst();
-        const admin = await prisma.user.create({ data: generateUser({ role: 'admin' }) });
+        const admin = await prisma.user.create({ data: generateUser({ role: Role.ADMIN }) });
 
         const result = await request(app)
             .put(`${API_URL}/semesters/${semester!.id}`)
@@ -123,7 +125,7 @@ describe(`PUT ${API_URL}/semesters/:id`, () => {
     });
     it('can not update start Date to be later than the sync date', async () => {
         const semester = await prisma.semester.findFirst();
-        const admin = await prisma.user.create({ data: generateUser({ role: 'admin' }) });
+        const admin = await prisma.user.create({ data: generateUser({ role: Role.ADMIN }) });
 
         const result = await request(app)
             .put(`${API_URL}/semesters/${semester!.id}`)
@@ -136,7 +138,7 @@ describe(`PUT ${API_URL}/semesters/:id`, () => {
     });
     it('can not update end Date to be earlier than the start date', async () => {
         const semester = await prisma.semester.findFirst();
-        const admin = await prisma.user.create({ data: generateUser({ role: 'admin' }) });
+        const admin = await prisma.user.create({ data: generateUser({ role: Role.ADMIN }) });
 
         const result = await request(app)
             .put(`${API_URL}/semesters/${semester!.id}`)
@@ -147,7 +149,7 @@ describe(`PUT ${API_URL}/semesters/:id`, () => {
     });
     it('can not update end Date to be earlier than the sync date', async () => {
         const semester = await prisma.semester.findFirst();
-        const admin = await prisma.user.create({ data: generateUser({ role: 'admin' }) });
+        const admin = await prisma.user.create({ data: generateUser({ role: Role.ADMIN }) });
 
         const result = await request(app)
             .put(`${API_URL}/semesters/${semester!.id}`)
@@ -160,7 +162,7 @@ describe(`PUT ${API_URL}/semesters/:id`, () => {
     });
     it('can not update untis Sync Date to be later than the end of the semester', async () => {
         const semester = await prisma.semester.findFirst();
-        const admin = await prisma.user.create({ data: generateUser({ role: 'admin' }) });
+        const admin = await prisma.user.create({ data: generateUser({ role: Role.ADMIN }) });
 
         const result = await request(app)
             .put(`${API_URL}/semesters/${semester!.id}`)
@@ -171,7 +173,7 @@ describe(`PUT ${API_URL}/semesters/:id`, () => {
     });
     it('can update semester with untis Sync Date between semester range', async () => {
         const semester = await prisma.semester.findFirst();
-        const admin = await prisma.user.create({ data: generateUser({ role: 'admin' }) });
+        const admin = await prisma.user.create({ data: generateUser({ role: Role.ADMIN }) });
 
         const result = await request(app)
             .put(`${API_URL}/semesters/${semester!.id}`)
@@ -205,7 +207,7 @@ describe(`POST ${API_URL}/semesters`, () => {
         expect(mNotification).toHaveBeenCalledTimes(0);
     });
     it('admin can create a new semester', async () => {
-        const admin = await prisma.user.create({ data: generateUser({ role: 'admin' }) });
+        const admin = await prisma.user.create({ data: generateUser({ role: Role.ADMIN }) });
         const start = faker.date.soon();
         const end = faker.date.future({ refDate: start });
         const result = await request(app)
@@ -244,7 +246,7 @@ describe(`DELETE ${API_URL}/semesters/:id`, () => {
         expect(mNotification).toHaveBeenCalledTimes(0);
     });
     it('admin can delete a semester', async () => {
-        const admin = await prisma.user.create({ data: generateUser({ role: 'admin' }) });
+        const admin = await prisma.user.create({ data: generateUser({ role: Role.ADMIN }) });
         const semesters = await prisma.semester.findMany();
         expect(semesters).toHaveLength(4);
         const semester = semesters[0];
@@ -276,7 +278,7 @@ describe(`POST ${API_URL}/semesters/:id/sync_untis`, () => {
     });
     it('admin can sync a semester with untis', async () => {
         const semester = await prisma.semester.findFirst({ where: { name: 'HS2023' } });
-        const admin = await prisma.user.create({ data: generateUser({ role: 'admin' }) });
+        const admin = await prisma.user.create({ data: generateUser({ role: Role.ADMIN }) });
 
         const result = await request(app)
             .post(`${API_URL}/semesters/${semester!.id}/sync_untis`)

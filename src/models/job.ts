@@ -30,7 +30,7 @@ function Jobs(db: PrismaClient['job']) {
             if (!job) {
                 throw new HTTP404Error(`Job with id ${id} not found`);
             }
-            if (job?.userId !== actor.id && actor.role !== 'admin') {
+            if (job?.userId !== actor.id && actor.role !== Role.ADMIN) {
                 throw new HTTP403Error('Not authorized');
             }
             const events = job.events.map(prepareEvent);

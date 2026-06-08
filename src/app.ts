@@ -90,6 +90,32 @@ const welcomeApi = (req: Request, res: Response) => {
     return res.status(200).send('Welcome to the EVENTS-API V1.0');
 };
 
+const getTestUser = async (req: Request) => {
+    if (process.env.NODE_ENV !== 'test') {
+        return null;
+    }
+
+    const authorization = req.headers.authorization;
+    if (!authorization) {
+        return null;
+    }
+
+    try {
+        const authHeader = JSON.parse(authorization) as { email?: string; noAuth?: boolean };
+        if (authHeader.noAuth || !authHeader.email) {
+            return null;
+        }
+
+        return prisma.user.findFirst({
+            where: {
+                OR: [{ email: authHeader.email }, { email: authHeader.email.toLowerCase() }]
+            }
+        });
+    } catch {
+        return null;
+    }
+};
+
 // Public Endpoints
 app.get(`${API_URL}`, welcomeApi);
 
@@ -113,6 +139,8 @@ const errorHandler = (err: Error, req: Request, res: Response, next: NextFunctio
 };
 
 export const configure = (_app: typeof app) => {
+    const sendNotification = process.env.NODE_ENV === 'test' ? nopNotify : notify;
+
     /**
      * Notification Middleware
      * when the response `res` contains a `notifications` property, the middleware will
@@ -127,7 +155,11 @@ export const configure = (_app: typeof app) => {
             /* istanbul ignore next */
             if (res.notifications) {
                 res.notifications.forEach((notification) => {
-                    notify(notification, req.headers['x-metadata-sid'] as string);
+                    if (sendNotification === notify) {
+                        sendNotification(notification, req.headers['x-metadata-sid'] as string);
+                        return;
+                    }
+                    sendNotification(notification);
                 });
             }
         });
@@ -141,17 +173,34 @@ export const configure = (_app: typeof app) => {
      */
     _app.use(
         `${API_URL}`,
-        (req, res, next) => {
+        async (req, res, next) => {
+            const reqPath = req.path.toLowerCase();
+            const isPublicGet =
+                req.method === 'GET' &&
+                (PUBLIC_GET_ACCESS.has(reqPath) || PUBLIC_GET_ACCESS_REGEX.some((regex) => regex.test(reqPath)));
+
+            const testUser = await getTestUser(req);
+            if (testUser) {
+                req.user = testUser as User;
+                return next();
+            }
+
             return auth.api
                 .getSession({ headers: fromNodeHeaders(req.headers) })
                 .then((session) => {
                     if (!session?.user) {
+                        if (isPublicGet) {
+                            return next();
+                        }
                         return res.status(401).json({ error: 'Unauthorized' });
                     }
                     req.user = session.user as User;
                     return next();
                 })
                 .catch((err) => {
+                    if (isPublicGet) {
+                        return next();
+                    }
                     return res.status(401).json({ error: err.message });
                 });
         },
@@ -163,19 +212,6 @@ export const configure = (_app: typeof app) => {
 
 if (process.env.NODE_ENV === 'test') {
     configure(app);
-    app.use((req: Request, res, next) => {
-        res.on('finish', async () => {
-            if (res.statusCode >= 400) {
-                return;
-            }
-            if (res.notifications) {
-                res.notifications.forEach((notification) => {
-                    nopNotify(notification);
-                });
-            }
-        });
-        next();
-    });
 }
 
 export default app;

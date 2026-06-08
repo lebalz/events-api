@@ -14,6 +14,7 @@ const getData = createDataExtractor<Prisma.UserUncheckedUpdateInput>([
     'notifyAdminOnReviewDecision'
 ]);
 
+
 export enum Role {
     USER = 'user',
     ADMIN = 'admin'
@@ -28,7 +29,7 @@ export const getAccessLevel = (role?: Role | null) => {
     return RoleAccessLevel[role] || 0;
 };
 
-function Users(db: PrismaClient['user']) {
+function Users(db: PrismaClient[Role.USER]) {
     return Object.assign(db, {
         /**
          * Signup the first user and create a new team of one. Return the User with
@@ -53,7 +54,7 @@ function Users(db: PrismaClient['user']) {
             if (!record) {
                 throw new HTTP404Error('User not found');
             }
-            if (!(record.id === actor.id || actor.role === 'admin')) {
+            if (!(record.id === actor.id || actor.role === Role.ADMIN)) {
                 throw new HTTP403Error('Not authorized');
             }
             /** remove fields not updatable*/
@@ -75,7 +76,7 @@ function Users(db: PrismaClient['user']) {
             return await db.findMany({});
         },
         async linkToUntis(actor: UserModel, userId: string, untisId: number | null): Promise<ApiUser> {
-            if (actor.role !== 'admin' && actor.id !== userId) {
+            if (actor.role !== Role.ADMIN && actor.id !== userId) {
                 throw new HTTP403Error('Not authorized');
             }
             try {
@@ -92,10 +93,12 @@ function Users(db: PrismaClient['user']) {
                         }
                     }
                 });
-                /* no need to await the result */
-                createIcsFile(userId).catch((err) => {
-                    Logger.error(`ICS-Sync after linking to untis failed for ${actor.email}: ${err.message}`);
-                });
+                if (process.env.NODE_ENV !== 'test') {
+                    /* no need to await the result */
+                    createIcsFile(userId).catch((err) => {
+                        Logger.error(`ICS-Sync after linking to untis failed for ${actor.email}: ${err.message}`);
+                    });
+                }
                 return prepareUser(res);
             } catch (err) {
                 Logger.error(`Linking to untis failed for ${actor.email}: ${JSON.stringify(err, null, 2)}`);
@@ -108,7 +111,7 @@ function Users(db: PrismaClient['user']) {
             }
         },
         async setRole(actor: UserModel, userId: string, role: Role): Promise<UserModel> {
-            if (actor.role !== 'admin') {
+            if (actor.role !== Role.ADMIN) {
                 throw new HTTP403Error('Not authorized');
             }
             return await db.update({
@@ -132,7 +135,7 @@ function Users(db: PrismaClient['user']) {
             };
         },
         async affectedEvents(actor: UserModel, userId: string, semesterId?: string): Promise<ApiEvent[]> {
-            if (actor.id !== userId && actor.role !== 'admin') {
+            if (actor.id !== userId && actor.role !== Role.ADMIN) {
                 throw new HTTP403Error('Not authorized');
             }
             const user = await this.findModel(userId);

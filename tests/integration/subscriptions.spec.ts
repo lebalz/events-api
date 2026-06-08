@@ -1,4 +1,5 @@
 import request from 'supertest';
+import { jest } from '@jest/globals';
 import prisma from 'src/prisma.js';
 import app, { API_URL } from '../../src/app.js';
 import { generateUser } from '../factories/user.js';

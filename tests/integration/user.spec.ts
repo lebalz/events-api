@@ -1,4 +1,5 @@
 import request from 'supertest';
+import { jest } from '@jest/globals';
 import prisma from 'src/prisma.js';
 import app, { API_URL } from '../../src/app.js';
 import { prepareUser as apiPrepareUser } from '../../src/models/user.helpers.js';
@@ -24,7 +25,7 @@ import { createEvents } from 'ics';
 import stubs from './stubs/semesters.json' with { type: 'json' };
 import { prepareEvent } from '../../src/services/createIcs.js';
 import { notify } from '../../src/middlewares/notify.nop.js';
-import { IoEvent } from '../../src/routes/socketEventTypes.js';
+import { IoEvent, RecordType } from '../../src/routes/socketEventTypes.js';
 import { IoRoom } from '../../src/routes/socketEvents.js';
 import { faker } from '@faker-js/faker';
 import { syncUntis2DB } from '../../src/services/syncUntis2DB.js';
@@ -58,26 +59,14 @@ describe(`GET ${API_URL}/user authorized`, () => {
         expect(mNotification).toHaveBeenCalledTimes(0);
     });
     it('authenticates users', async () => {
-        await prisma.user.create({
+        const user = await prisma.user.create({
             data: generateUser({ email: 'foo@bar.ch' })
         });
         const result = await request(app)
             .get(`${API_URL}/user`)
             .set('authorization', JSON.stringify({ email: 'foo@bar.ch' }));
         expect(result.statusCode).toEqual(200);
-        expect(result.body).toEqual({
-            id: expect.any(String),
-            email: 'foo@bar.ch',
-            notifyOnEventUpdate: false,
-            notifyAdminOnReviewRequest: false,
-            notifyAdminOnReviewDecision: false,
-            role: Role.USER,
-            firstName: expect.any(String),
-            lastName: expect.any(String),
-            createdAt: expect.any(String),
-            updatedAt: expect.any(String),
-            untisId: null
-        });
+        expect(result.body).toEqual(prepareUser(user));
         expect(mNotification).toHaveBeenCalledTimes(0);
     });
 });
@@ -177,7 +166,7 @@ describe(`GET ${API_URL}/users/:id/events`, () => {
             data: generateUser({ email: 'foo@bar.ch' })
         });
         const admin = await prisma.user.create({
-            data: generateUser({ email: 'admin@foo.ch', role: 'admin' })
+            data: generateUser({ email: 'admin@foo.ch', role: Role.ADMIN })
         });
         const pubEvents = await Promise.all(
             eventSequence(user.id, 10, { state: EventState.PUBLISHED, between: between }).map((e) =>
@@ -268,7 +257,7 @@ describe(`PUT ${API_URL}/users/:id/link_to_untis`, () => {
         expect(mNotification).toHaveBeenCalledTimes(1);
         expect(mNotification.mock.calls[0][0]).toEqual({
             event: IoEvent.CHANGED_RECORD,
-            message: { type: Role.USER, record: prepareRecord(result.body) },
+            message: { type: RecordType.User, record: prepareRecord(result.body) },
             to: IoRoom.ALL
         });
     });
@@ -309,7 +298,7 @@ describe(`PUT ${API_URL}/users/:id/link_to_untis`, () => {
     });
     it('can link other users when admin role', async () => {
         const admin = await prisma.user.create({
-            data: generateUser({ email: 'admin@bar.ch', role: 'admin' })
+            data: generateUser({ email: 'admin@bar.ch', role: Role.ADMIN })
         });
         const user = await prisma.user.create({
             data: generateUser({ email: 'foo@bar.ch' })
@@ -331,7 +320,7 @@ describe(`PUT ${API_URL}/users/:id/link_to_untis`, () => {
         expect(mNotification).toHaveBeenCalledTimes(1);
         expect(mNotification.mock.calls[0][0]).toEqual({
             event: IoEvent.CHANGED_RECORD,
-            message: { type: Role.USER, record: prepareRecord({ ...result.body }) },
+            message: { type: RecordType.User, record: prepareRecord({ ...result.body }) },
             to: IoRoom.ALL
         });
     });
@@ -474,7 +463,7 @@ describe(`POST ${API_URL}/users/:id/create_ics`, () => {
         expect(mNotification.mock.calls[0][0]).toEqual({
             event: IoEvent.CHANGED_RECORD,
             message: {
-                type: Role.USER,
+                type: RecordType.User,
                 record: prepareRecord({
                     ...result.body,
                     subscription: prepareRecord(result.body.subscription)
@@ -494,13 +483,13 @@ describe(`POST ${API_URL}/users/:id/set_role`, () => {
         const result = await request(app)
             .put(`${API_URL}/users/${user.id}/set_role`)
             .set('authorization', JSON.stringify({ email: user.email }))
-            .send({ data: { role: 'admin' } });
+            .send({ data: { role: Role.ADMIN } });
         expect(result.statusCode).toEqual(403);
         expect(mNotification).toHaveBeenCalledTimes(0);
     });
     it('admin can set role of self', async () => {
         const admin = await prisma.user.create({
-            data: generateUser({ email: 'admin@bar.ch', role: 'admin' })
+            data: generateUser({ email: 'admin@bar.ch', role: Role.ADMIN })
         });
         const result = await request(app)
             .put(`${API_URL}/users/${admin.id}/set_role`)
@@ -515,7 +504,7 @@ describe(`POST ${API_URL}/users/:id/set_role`, () => {
         expect(mNotification).toHaveBeenCalledTimes(1);
         expect(mNotification.mock.calls[0][0]).toEqual({
             event: IoEvent.CHANGED_RECORD,
-            message: { type: Role.USER, record: prepareRecord(result.body) },
+            message: { type: RecordType.User, record: prepareRecord(result.body) },
             to: admin.id,
             toSelf: false
         });
@@ -525,32 +514,32 @@ describe(`POST ${API_URL}/users/:id/set_role`, () => {
             data: generateUser({ email: 'foo@bar.ch' })
         });
         const admin = await prisma.user.create({
-            data: generateUser({ email: 'admin@bar.ch', role: 'admin' })
+            data: generateUser({ email: 'admin@bar.ch', role: Role.ADMIN })
         });
         const result = await request(app)
             .put(`${API_URL}/users/${user.id}/set_role`)
             .set('authorization', JSON.stringify({ email: admin.email }))
-            .send({ data: { role: 'admin' } });
+            .send({ data: { role: Role.ADMIN } });
         expect(result.statusCode).toEqual(200);
         expect(result.body).toEqual({
             ...prepareUser(user),
-            role: 'admin',
+            role: Role.ADMIN,
             updatedAt: expect.any(String)
         });
         expect(mNotification).toHaveBeenCalledTimes(1);
         expect(mNotification.mock.calls[0][0]).toEqual({
             event: IoEvent.CHANGED_RECORD,
-            message: { type: Role.USER, record: prepareRecord(result.body) },
+            message: { type: RecordType.User, record: prepareRecord(result.body) },
             to: user.id,
             toSelf: false
         });
     });
     it('admin can revoke admin privileges', async () => {
         const user = await prisma.user.create({
-            data: generateUser({ email: 'foo@bar.ch', role: 'admin' })
+            data: generateUser({ email: 'foo@bar.ch', role: Role.ADMIN })
         });
         const admin = await prisma.user.create({
-            data: generateUser({ email: 'admin@bar.ch', role: 'admin' })
+            data: generateUser({ email: 'admin@bar.ch', role: Role.ADMIN })
         });
         const result = await request(app)
             .put(`${API_URL}/users/${user.id}/set_role`)
@@ -565,7 +554,7 @@ describe(`POST ${API_URL}/users/:id/set_role`, () => {
         expect(mNotification).toHaveBeenCalledTimes(1);
         expect(mNotification.mock.calls[0][0]).toEqual({
             event: IoEvent.CHANGED_RECORD,
-            message: { type: Role.USER, record: prepareRecord(result.body) },
+            message: { type: RecordType.User, record: prepareRecord(result.body) },
             to: user.id,
             toSelf: false
         });

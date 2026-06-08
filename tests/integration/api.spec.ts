@@ -1,29 +1,28 @@
 import request from 'supertest';
 import app, { API_URL } from '../../src/app.js';
-import { send } from 'process';
 import prisma from 'src/prisma.js';
 import { generateUser } from '../factories/user.js';
 
 describe(`GET ${API_URL}`, () => {
     it("returns 'Welcome to the EVENTS-API V1.0.'", async () => {
         const result = await request(app).get('/api/v1');
-        expect(result.text).toEqual('Welcome to the EVENTES-API V1.0');
+        expect(result.text).toEqual('Welcome to the EVENTS-API V1.0');
         expect(result.statusCode).toEqual(200);
     });
 });
 
-describe(`GET ${API_URL}/checklogin`, () => {
+describe(`GET ${API_URL}/user`, () => {
     it('returns 401 when not logged in', async () => {
-        const result = await request(app).get(`${API_URL}/checklogin`);
+        const result = await request(app).get(`${API_URL}/user`);
         expect(result.statusCode).toEqual(401);
-        expect(result.text).toEqual('Unauthorized');
+        expect(result.body).toEqual({ error: 'Unauthorized' });
     });
     it('returns 200 when logged in', async () => {
         const user = await prisma.user.create({ data: generateUser({}) });
         const result = await request(app)
-            .get(`${API_URL}/checklogin`)
+            .get(`${API_URL}/user`)
             .set('authorization', JSON.stringify({ email: user.email }));
         expect(result.statusCode).toEqual(200);
-        expect(result.text).toEqual('OK');
+        expect(result.body.email).toEqual(user.email);
     });
 });

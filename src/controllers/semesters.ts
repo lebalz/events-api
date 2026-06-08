@@ -1,9 +1,9 @@
 import { Job, Semester } from 'prisma/generated/client.js';
 import { RequestHandler } from 'express';
 import { IoEvent, RecordType } from '../routes/socketEventTypes.js';
-import { notifyChangedRecord } from '../routes/notify.js';
 import Semesters from '../models/semester.js';
 import { IoRoom } from '../routes/socketEvents.js';
+import { notifyChangedRecord } from 'src/socketIoServer.js';
 
 const NAME = RecordType.Semester;
 
@@ -77,7 +77,7 @@ export const destroy: RequestHandler<{ id: string }, any, any> = async (req, res
 export const sync: RequestHandler<{ id: string }, any, any> = async (req, res, next) => {
     try {
         const onComplete = (job: Job) => {
-            notifyChangedRecord(req.io, { type: RecordType.Job, record: job }, IoRoom.ADMIN);
+            notifyChangedRecord({ type: RecordType.Job, record: job }, IoRoom.ADMIN);
         };
         const syncJob = await Semesters.sync(req.user!, req.params.id, onComplete);
 

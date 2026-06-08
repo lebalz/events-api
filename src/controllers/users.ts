@@ -8,7 +8,8 @@ import Events from '../models/event.js';
 const NAME = RecordType.User;
 
 export const user: RequestHandler = async (req, res) => {
-    res.json(req.user);
+    const user = await Users.findModel(req.user!.id);
+    res.json(user);
 };
 
 export const find: RequestHandler<{ id: string }> = async (req, res, next) => {

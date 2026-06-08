@@ -8,6 +8,7 @@ import Events from '../../../src/models/event.js';
 import { prepareEvent } from 'src/models/event.helpers.js';
 import { generateJob } from '../../factories/job.js';
 import _ from 'lodash';
+import { Role } from 'src/models/user.js';
 
 export const createJob = async (
     props: Partial<Prisma.JobUncheckedCreateInput> & { userId: string; type: 'IMPORT' }
@@ -35,7 +36,7 @@ describe('Jobs', () => {
         });
         test('admin can get other users job', async () => {
             const user = await createUser({ firstName: 'Reto' });
-            const admin = await createUser({ role: 'admin' });
+            const admin = await createUser({ role: Role.ADMIN });
             const job = await createJob({ userId: user.id, type: JobType.IMPORT });
             await expect(Jobs.findModel(admin, job.id)).resolves.toEqual({
                 ...job,
@@ -96,7 +97,7 @@ describe('Jobs', () => {
         });
         test('admin can update description of others jobs', async () => {
             const user = await createUser({ firstName: 'Reto' });
-            const admin = await createUser({ role: 'admin' });
+            const admin = await createUser({ role: Role.ADMIN });
             const job = await createJob({ userId: user.id, type: JobType.IMPORT });
             await expect(Jobs.updateModel(admin, job.id, { description: 'FooBar' })).resolves.toEqual({
                 ...job,

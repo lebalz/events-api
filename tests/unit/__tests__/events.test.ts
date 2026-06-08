@@ -1,4 +1,4 @@
-import { EventState, Prisma, Role } from 'prisma/generated/client.js';
+import { EventState, Prisma } from 'prisma/generated/client.js';
 import { createDepartment } from './departments.test.js';
 import Events from '../../../src/models/event.js';
 import { normalizeAudience, prepareEvent } from 'src/models/event.helpers.js';
@@ -13,6 +13,7 @@ import EventGroups from '../../../src/models/eventGroup.js';
 import { createRegistrationPeriod } from './registrationPeriods.test.js';
 import { faker } from '@faker-js/faker';
 import { createSemester } from './semesters.test.js';
+import { Role } from 'src/models/user.js';
 
 export const createEvent = async (
     props: Partial<Prisma.EventUncheckedCreateInput> & {
@@ -51,20 +52,20 @@ describe('find event', () => {
     });
     test('admin can get review event', async () => {
         const user = await createUser({});
-        const admin = await createUser({ role: 'admin' });
+        const admin = await createUser({ role: Role.ADMIN });
         const event = await createEvent({ authorId: user.id, state: EventState.REVIEW });
         await expect(Events.findModel(admin, event.id)).resolves.toEqual(prepareEvent(event));
     });
     test('admin can get refused event', async () => {
         const user = await createUser({});
-        const admin = await createUser({ role: 'admin' });
+        const admin = await createUser({ role: Role.ADMIN });
         const event = await createEvent({ authorId: user.id, state: EventState.REFUSED });
 
         await expect(Events.findModel(admin, event.id)).resolves.toEqual(prepareEvent(event));
     });
     test('admin can not get draft event', async () => {
         const user = await createUser({});
-        const admin = await createUser({ role: 'admin' });
+        const admin = await createUser({ role: Role.ADMIN });
         const event = await createEvent({ authorId: user.id, state: EventState.DRAFT });
 
         await expect(Events.findModel(admin, event.id)).rejects.toEqual(new HTTP403Error('Not authorized'));
@@ -365,7 +366,7 @@ describe('setState transitions', () => {
     });
 
     test('REVIEW -> PUBLISHED', async () => {
-        const admin = await createUser({ role: 'admin' });
+        const admin = await createUser({ role: Role.ADMIN });
         const user = await createUser({});
         const event = await createEvent({ authorId: user.id, state: EventState.REVIEW, userIds: [user.id] });
 
@@ -440,7 +441,7 @@ describe('setState transitions', () => {
             state: EventState.REVIEW,
             parentId: current.id
         });
-        const admin = await createUser({ id: '1dc09750-e026-4f81-923f-0d50202297c7', role: 'admin' });
+        const admin = await createUser({ id: '1dc09750-e026-4f81-923f-0d50202297c7', role: Role.ADMIN });
         await setTimeout(100);
 
         const newCurrent = {
@@ -474,7 +475,7 @@ describe('setState transitions', () => {
     });
 
     test('REVIEW -> PUBLISHED: review replaces model assigned to a group', async () => {
-        const admin = await createUser({ role: 'admin' });
+        const admin = await createUser({ role: Role.ADMIN });
         const user = await createUser({});
         const current = await createEvent({ authorId: user.id, state: EventState.PUBLISHED });
         const event = await createEvent({
@@ -594,7 +595,7 @@ describe('destroyEvent', () => {
     });
     test('admin can delete users event', async () => {
         const user = await createUser({ id: '3535b2ee-806f-425c-a4f5-394d8b16f6f9' });
-        const admin = await createUser({ id: 'ccccbd50-99ee-4e75-bb83-d6517ea604b2', role: 'admin' });
+        const admin = await createUser({ id: 'ccccbd50-99ee-4e75-bb83-d6517ea604b2', role: Role.ADMIN });
         const event = await createEvent({
             id: '7cf72375-4ee7-4a13-afeb-8d68883acdf4',
             authorId: user.id,
@@ -614,7 +615,7 @@ describe('destroyEvent', () => {
 describe('allEvents', () => {
     const setup = async () => {
         const maria = await createUser({});
-        const jack = await createUser({ role: 'admin' });
+        const jack = await createUser({ role: Role.ADMIN });
 
         const pub1 = await createEvent({ authorId: maria.id, state: EventState.PUBLISHED });
         const draft1 = await createEvent({ authorId: maria.id, state: EventState.DRAFT });

@@ -6,6 +6,7 @@ import Logger from '../utils/logger.js';
 import Jobs from './job.js';
 import { syncUntis2DB } from '../services/syncUntis2DB.js';
 import { WEEK_2_MS } from '../services/helpers/time.js';
+import { Role } from './user.js';
 
 const getData = createDataExtractor<Prisma.SemesterUncheckedUpdateInput>([
     'name',
@@ -52,7 +53,7 @@ function Semesters(db: PrismaClient['semester']) {
             return model;
         },
         async createModel(actor: User, data: { name: string; start: Date | string; end: Date | string }) {
-            if (actor.role !== 'admin') {
+            if (actor.role !== Role.ADMIN) {
                 throw new HTTP403Error('Not authorized');
             }
             const { name } = data;
@@ -73,7 +74,7 @@ function Semesters(db: PrismaClient['semester']) {
             return model;
         },
         async updateModel(actor: User, id: string, data: Prisma.SemesterUncheckedUpdateInput) {
-            if (actor.role !== 'admin') {
+            if (actor.role !== Role.ADMIN) {
                 throw new HTTP403Error('Not authorized');
             }
             const semester = await this.findModel(id);
@@ -99,7 +100,7 @@ function Semesters(db: PrismaClient['semester']) {
             return model;
         },
         async destroy(actor: User, id: string) {
-            if (actor.role !== 'admin') {
+            if (actor.role !== Role.ADMIN) {
                 throw new HTTP403Error('Not authorized');
             }
             return await db.delete({
