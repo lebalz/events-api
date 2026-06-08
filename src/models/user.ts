@@ -1,20 +1,34 @@
-import { EventState, Prisma, PrismaClient, Role, Subscription, User as Users } from '@prisma/client';
-import { createIcs as createIcsFile } from '../services/createIcs';
-import prisma from '../prisma';
-import { HTTP400Error, HTTP403Error, HTTP404Error } from '../utils/errors/Errors';
-import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
-import { ApiEvent, prepareEvent } from './event.helpers';
-import { createDataExtractor } from '../controllers/helpers';
-import Logger from '../utils/logger';
-import { DEFAULT_INCLUDE as SUBSCRIPTION_INCLUDE } from './subscription.helpers';
-import { ApiUser, prepareUser } from './user.helpers';
+import { EventState, Prisma, PrismaClient, User as UserModel } from 'prisma/generated/client.js';
+import { createIcs as createIcsFile } from '../services/createIcs.js';
+import prisma from 'src/prisma.js';
+import { HTTP400Error, HTTP403Error, HTTP404Error } from '../utils/errors/Errors.js';
+import { ApiEvent, prepareEvent } from './event.helpers.js';
+import { createDataExtractor } from '../controllers/helpers.js';
+import Logger from '../utils/logger.js';
+import { DEFAULT_INCLUDE as SUBSCRIPTION_INCLUDE } from './subscription.helpers.js';
+import { ApiUser, prepareUser } from './user.helpers.js';
+import { PrismaClientKnownRequestError } from '@prisma/client/runtime/client';
 const getData = createDataExtractor<Prisma.UserUncheckedUpdateInput>([
     'notifyOnEventUpdate',
     'notifyAdminOnReviewRequest',
     'notifyAdminOnReviewDecision'
 ]);
 
-function Users(db: PrismaClient['user']) {
+export enum Role {
+    USER = 'user',
+    ADMIN = 'admin'
+}
+
+const RoleAccessLevel: { [key in Role]: number } = { [Role.USER]: 0, [Role.ADMIN]: 1 };
+
+export const getAccessLevel = (role?: Role | null) => {
+    if (!role) {
+        return 0;
+    }
+    return RoleAccessLevel[role] || 0;
+};
+
+function Users(db: PrismaClient[Role.USER]) {
     return Object.assign(db, {
         /**
          * Signup the first user and create a new team of one. Return the User with
@@ -34,7 +48,7 @@ function Users(db: PrismaClient['user']) {
             }
             return prepareUser(user);
         },
-        async updateModel(actor: Users, id: string, data: Partial<Users>): Promise<ApiUser> {
+        async updateModel(actor: UserModel, id: string, data: Partial<UserModel>): Promise<ApiUser> {
             const record = await db.findUnique({ where: { id: id } });
             if (!record) {
                 throw new HTTP404Error('User not found');
@@ -57,10 +71,10 @@ function Users(db: PrismaClient['user']) {
             });
             return prepareUser(res);
         },
-        async all(): Promise<Users[]> {
+        async all(): Promise<UserModel[]> {
             return await db.findMany({});
         },
-        async linkToUntis(actor: Users, userId: string, untisId: number | null): Promise<ApiUser> {
+        async linkToUntis(actor: UserModel, userId: string, untisId: number | null): Promise<ApiUser> {
             if (actor.role !== Role.ADMIN && actor.id !== userId) {
                 throw new HTTP403Error('Not authorized');
             }
@@ -78,10 +92,14 @@ function Users(db: PrismaClient['user']) {
                         }
                     }
                 });
-                /* no need to await the result */
-                createIcsFile(userId).catch((err) => {
-                    Logger.error(`ICS-Sync after linking to untis failed for ${actor.email}: ${err.message}`);
-                });
+                if (process.env.NODE_ENV !== 'test') {
+                    /* no need to await the result */
+                    createIcsFile(userId).catch((err) => {
+                        Logger.error(
+                            `ICS-Sync after linking to untis failed for ${actor.email}: ${err.message}`
+                        );
+                    });
+                }
                 return prepareUser(res);
             } catch (err) {
                 Logger.error(`Linking to untis failed for ${actor.email}: ${JSON.stringify(err, null, 2)}`);
@@ -93,7 +111,7 @@ function Users(db: PrismaClient['user']) {
                 throw error;
             }
         },
-        async setRole(actor: Users, userId: string, role: Role): Promise<Users> {
+        async setRole(actor: UserModel, userId: string, role: Role): Promise<UserModel> {
             if (actor.role !== Role.ADMIN) {
                 throw new HTTP403Error('Not authorized');
             }
@@ -106,7 +124,7 @@ function Users(db: PrismaClient['user']) {
                 }
             });
         },
-        async createIcs(actor: Users, userId: string): Promise<ApiUser> {
+        async createIcs(actor: UserModel, userId: string): Promise<ApiUser> {
             if (actor.id !== userId) {
                 throw new HTTP403Error('Not authorized');
             }
@@ -117,7 +135,7 @@ function Users(db: PrismaClient['user']) {
                 subscription: subscription
             };
         },
-        async affectedEvents(actor: Users, userId: string, semesterId?: string): Promise<ApiEvent[]> {
+        async affectedEvents(actor: UserModel, userId: string, semesterId?: string): Promise<ApiEvent[]> {
             if (actor.id !== userId && actor.role !== Role.ADMIN) {
                 throw new HTTP403Error('Not authorized');
             }

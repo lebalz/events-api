@@ -1,7 +1,7 @@
 /* istanbul ignore file */
 import { createTransport } from 'nodemailer';
-import Mail from 'nodemailer/lib/mailer';
-import SMTPTransport from 'nodemailer/lib/smtp-transport';
+import Mail from 'nodemailer/lib/mailer/index.js';
+import SMTPTransport from 'nodemailer/lib/smtp-transport/index.js';
 
 export const authConfig: Readonly<SMTPTransport.Options> = Object.freeze({
     service: 'edubern365', // your email domain

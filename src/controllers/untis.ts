@@ -1,7 +1,7 @@
 import { RequestHandler } from 'express';
-import UntisClasses from '../models/untisClass';
-import UntisTeachers from '../models/untisTeacher';
-import UntisLessons from '../models/untisLesson';
+import UntisClasses from '../models/untisClass.js';
+import UntisTeachers from '../models/untisTeacher.js';
+import UntisLessons from '../models/untisLesson.js';
 
 export const teachers: RequestHandler = async (req, res, next) => {
     try {
@@ -12,7 +12,7 @@ export const teachers: RequestHandler = async (req, res, next) => {
     }
 };
 
-export const teacher: RequestHandler = async (req, res, next) => {
+export const teacher: RequestHandler<{ id: string }> = async (req, res, next) => {
     try {
         const tchr = await UntisTeachers.findModel(req.params.id);
         res.json(tchr);

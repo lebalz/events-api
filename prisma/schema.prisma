@@ -1,6 +1,7 @@
 generator client {
-    provider        = "prisma-client-js"
-    previewFeatures = ["postgresqlExtensions", "views"]
+    provider        = "prisma-client"
+    output          = "./generated"
+    previewFeatures = ["postgresqlExtensions", "views", "relationJoins"]
 }
 
 generator docs {
@@ -8,24 +9,32 @@ generator docs {
     output   = "../docs/prisma"
 }
 
-generator dbml {
-    provider = "prisma-dbml-generator"
+generator erd {
+    provider = "prisma-erd-generator"
+    output   = "./erd.svg"
+    disabled = true
 }
+
+// generator dbml {
+//     provider = "prisma-dbml-generator"
+// }
 
 datasource db {
     provider   = "postgresql"
-    url        = env("DATABASE_URL")
     extensions = [pg_trgm, pgcrypto]
 }
 
 model User {
-    id             String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-    email          String        @unique
+    id            String  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+    name          String  @default("")
+    email         String  @unique
+    emailVerified Boolean @default(false) @map("email_verified")
+    image         String?
+
     untis          UntisTeacher? @relation(fields: [untisId], references: [id])
     untisId        Int?          @unique @map("untis_id")
     firstName      String        @map("first_name")
     lastName       String        @map("last_name")
-    role           Role          @default(USER)
     createdAt      DateTime      @default(now()) @map("created_at")
     updatedAt      DateTime      @default(now()) @updatedAt @map("updated_at")
     events         Event[]       @relation("events")
@@ -36,12 +45,74 @@ model User {
 
     eventGroups EventGroup[] @relation("users_to_event_groups")
 
+    role       String    @default("user")
+    banned     Boolean?  @default(false)
+    banReason  String?   @map("ban_reason")
+    banExpires DateTime? @map("ban_expires")
+    sessions   Session[]
+    accounts   Account[]
+
     notifyOnEventUpdate         Boolean? @default(false) @map("notify_on_event_update")
     notifyAdminOnReviewRequest  Boolean? @default(false) @map("notify_admin_on_review_request")
     notifyAdminOnReviewDecision Boolean? @default(false) @map("notify_admin_on_review_decision")
 
     @@map("users")
 }
+
+// BETTER AUTH: Start
+model Session {
+    id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+    ipAddress String?  @map("ip_address")
+    userAgent String?  @map("user_agent")
+    userId    String   @map("user_id") @db.Uuid
+    user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+    token     String   @unique
+    expiresAt DateTime @map("expires_at")
+    createdAt DateTime @default(now()) @map("created_at")
+    updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
+
+    impersonatedBy String? @map("impersonated_by") @db.Uuid
+
+    @@index([userId])
+    @@index([userId, token])
+    @@map("sessions")
+}
+
+model Account {
+    id                    String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+    accountId             String    @map("account_id")
+    providerId            String    @map("provider_id")
+    userId                String    @map("user_id") @db.Uuid
+    user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+    accessToken           String?   @map("access_token")
+    refreshToken          String?   @map("refresh_token")
+    idToken               String?   @map("id_token")
+    expiresAt             DateTime? @map("expires_at")
+    password              String?
+    accessTokenExpiresAt  DateTime? @map("access_token_expires_at")
+    refreshTokenExpiresAt DateTime? @map("refresh_token_expires_at")
+    scope                 String?
+    createdAt             DateTime  @default(now()) @map("created_at")
+    updatedAt             DateTime  @default(now()) @updatedAt @map("updated_at")
+
+    @@index([userId])
+    @@map("accounts")
+}
+
+model Verification {
+    id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+    identifier String
+    value      String
+    expiresAt  DateTime @map("expires_at")
+
+    createdAt DateTime? @default(now()) @map("created_at")
+    updatedAt DateTime? @default(now()) @updatedAt @map("updated_at")
+
+    @@index([identifier])
+    @@map("verifications")
+}
+
+// BETTER AUTH: End
 
 model Event {
     id       String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
@@ -264,15 +335,6 @@ model UntisClass {
     @@map("untis_classes")
 }
 
-model Session {
-    sid    String   @id @db.VarChar
-    sess   Json     @db.Json
-    expire DateTime @db.Timestamp(6)
-
-    @@index([expire], map: "IDX_session_expire")
-    @@map("session")
-}
-
 view view_KLPs {
     userId      String @map("u_id") @db.Uuid
     teacherId   Int    @map("t_id")
@@ -456,11 +518,6 @@ view view_EventsRegistrationPeriods {
 
     @@unique([eventId, rpId])
     @@map("view__events_registration_periods")
-}
-
-enum Role {
-    USER
-    ADMIN
 }
 
 enum EventState {

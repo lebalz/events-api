@@ -1,4 +1,4 @@
-import express, { RequestHandler } from 'express';
+import express from 'express';
 import {
     create as createEvent,
     all as allEvents,
@@ -12,27 +12,27 @@ import {
     updateBatch as updateEventsBatch,
     updateMeta,
     normalizeAudience
-} from '../controllers/events';
+} from '../controllers/events.js';
 import {
     find as findJob,
     all as allJobs,
     destroy as deleteJob,
     update as updateJob
-} from '../controllers/jobs';
+} from '../controllers/jobs.js';
 import {
     all as allDepartments,
     find as findDepartment,
     update as updateDepartment,
     create as createDepartment,
     destroy as deleteDepartment
-} from '../controllers/departments';
+} from '../controllers/departments.js';
 import {
     find as findRegistrationPeriod,
     all as allRegistrationPeriods,
     update as updateRegistrationPeriod,
     destroy as deleteRegistrationPeriod,
     create as createRegistrationPeriod
-} from '../controllers/registrationPeriods';
+} from '../controllers/registrationPeriods.js';
 import {
     find as findEventGroup,
     allOfUser as usersEventGroup,
@@ -41,7 +41,7 @@ import {
     create as createEventGroup,
     events as eventsFromEventGroup,
     clone as cloneEventGroup
-} from '../controllers/eventGroups';
+} from '../controllers/eventGroups.js';
 import {
     find as findSemester,
     update as updateSemester,
@@ -49,8 +49,8 @@ import {
     create as createSemester,
     destroy as deleteSemester,
     sync
-} from '../controllers/semesters';
-import { teachers, teacher, classes, subjects, teachersSubjects } from '../controllers/untis';
+} from '../controllers/semesters.js';
+import { teachers, teacher, classes, subjects, teachersSubjects } from '../controllers/untis.js';
 import {
     user,
     events as usersEvents,
@@ -61,8 +61,8 @@ import {
     createIcs,
     setRole,
     affectedEventIds
-} from '../controllers/users';
-import { update as updateSubscription, create as createSubscription } from '../controllers/subscriptions';
+} from '../controllers/users.js';
+import { update as updateSubscription, create as createSubscription } from '../controllers/subscriptions.js';
 import multer from 'multer';
 
 const UPLOAD_DIR = process.env.UPLOAD_DIR

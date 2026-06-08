@@ -1,6 +1,6 @@
-import { Event } from '@prisma/client';
-import { getDateTime, getDay } from './helpers/time';
-import { translate } from './helpers/i18n';
+import { Event } from 'prisma/generated/client.js';
+import { getDateTime, getDay } from './helpers/time.js';
+import { translate } from './helpers/i18n.js';
 
 export const createIcsHtmlContent = (
     event: Event,

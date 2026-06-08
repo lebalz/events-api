@@ -4,6 +4,10 @@ import * as yaml from 'js-yaml';
 import { default as parseArgs } from 'minimist';
 import { exit } from 'process';
 
+import { fileURLToPath } from 'url';
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
 const currentDir = __dirname;
 const CONFIG_FILENAME = 'migrate.config.yml' as const;
 interface Config {

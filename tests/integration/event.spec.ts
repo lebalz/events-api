@@ -1,7 +1,8 @@
 import request from 'supertest';
-import app, { API_URL } from '../../src/app';
-import prisma from '../../src/prisma';
-import { generateUser } from '../factories/user';
+import { jest } from '@jest/globals';
+import app, { API_URL } from '../../src/app.js';
+import prisma from 'src/prisma.js';
+import { generateUser } from '../factories/user.js';
 import {
     Department,
     Event,
@@ -10,32 +11,36 @@ import {
     Job,
     JobState,
     RegistrationPeriod,
-    Role,
     TeachingAffected,
     User
-} from '@prisma/client';
-import Jobs from '../../src/models/job';
-import { eventSequence, generateEvent } from '../factories/event';
-import { HttpStatusCode } from '../../src/utils/errors/BaseError';
-import { generateSemester } from '../factories/semester';
+} from 'prisma/generated/client.js';
+import Jobs from '../../src/models/job.js';
+import { eventSequence, generateEvent } from '../factories/event.js';
+import { HttpStatusCode } from '../../src/utils/errors/BaseError.js';
+import { generateSemester } from '../factories/semester.js';
 import { faker } from '@faker-js/faker';
-import { notify } from '../../src/middlewares/notify.nop';
-import { IoEvent, RecordType } from '../../src/routes/socketEventTypes';
-import { IoRoom } from '../../src/routes/socketEvents';
+import { notify } from '../../src/middlewares/notify.nop.js';
+import { IoEvent, RecordType } from '../../src/routes/socketEventTypes.js';
+import { IoRoom } from '../../src/routes/socketEvents.js';
 import _ from 'lodash';
-import { generateDepartment } from '../factories/department';
-import { ImportType } from '../../src/services/importEvents';
-import { createDepartment } from '../unit/__tests__/departments.test';
-import { createSemester } from '../unit/__tests__/semesters.test';
-import { createRegistrationPeriod } from '../unit/__tests__/registrationPeriods.test';
-import { generateUntisClass } from '../factories/untisClass';
-import { createUser } from '../unit/__tests__/users.test';
-import { Departments } from '../../src/services/helpers/departmentNames';
-import * as eventModel from '../../src/models/event';
-import { prepareEvent as originalPrepareEvent } from '../../src/models/event.helpers';
-import { createEvent } from '../unit/__tests__/events.test';
-import department from '../../src/models/department';
-import { generateEventGroup } from '../factories/eventGroup';
+import { generateDepartment } from '../factories/department.js';
+import { ImportType } from '../../src/services/importEvents.js';
+import { createDepartment } from '../unit/__tests__/departments.test.js';
+import { createSemester } from '../unit/__tests__/semesters.test.js';
+import { createRegistrationPeriod } from '../unit/__tests__/registrationPeriods.test.js';
+import { generateUntisClass } from '../factories/untisClass.js';
+import { createUser } from '../unit/__tests__/users.test.js';
+import { Departments } from '../../src/services/helpers/departmentNames.js';
+import * as eventModel from '../../src/models/event.js';
+import { prepareEvent as originalPrepareEvent } from '../../src/models/event.helpers.js';
+import { createEvent } from '../unit/__tests__/events.test.js';
+import department from '../../src/models/department.js';
+import { generateEventGroup } from '../factories/eventGroup.js';
+import { dirname } from 'path';
+import { fileURLToPath } from 'url';
+import { Role } from 'src/models/user.js';
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 jest.mock('../../src/middlewares/notify.nop');
 const mNotification = <jest.Mock<typeof notify>>notify;
@@ -847,14 +852,14 @@ describe(`POST ${API_URL}/events/change_state`, () => {
                 from: EventState.DRAFT,
                 to: EventState.REVIEW,
                 for: [Role.USER, Role.ADMIN],
-                notify: ['user', IoRoom.ADMIN]
+                notify: [Role.USER, IoRoom.ADMIN]
             },
             { from: EventState.REVIEW, to: EventState.PUBLISHED, for: [Role.ADMIN], notify: [IoRoom.ALL] },
             {
                 from: EventState.REVIEW,
                 to: EventState.REFUSED,
                 for: [Role.ADMIN],
-                notify: ['user', IoRoom.ADMIN]
+                notify: [Role.USER, IoRoom.ADMIN]
             }
         ];
         ALLOWED_TRANSITIONS.forEach((transition) => {
@@ -896,7 +901,7 @@ describe(`POST ${API_URL}/events/change_state`, () => {
                         expect(mNotification.mock.calls[idx][0]).toEqual({
                             event: IoEvent.CHANGED_RECORD,
                             message: { type: RecordType.Event, record: originalPrepareEvent(updated) },
-                            to: to === 'user' ? user.id : to,
+                            to: to === Role.USER ? user.id : to,
                             toSelf: true
                         });
                     });
@@ -1446,7 +1451,7 @@ describe(`POST ${API_URL}/events/change_state`, () => {
                     transition.for.forEach((role) => {
                         describe(transition.descr, () => {
                             beforeEach(() => {
-                                jest.spyOn(eventModel, 'getCurrentDate').mockReturnValue(
+                                jest.spyOn(eventModel.eventTime, 'getCurrentDate').mockReturnValue(
                                     new Date(transition.requestDate)
                                 );
                             });
@@ -1489,7 +1494,7 @@ describe(`POST ${API_URL}/events/change_state`, () => {
             });
             describe('allows transition of an event having only linked users as audience', () => {
                 beforeEach(() => {
-                    jest.spyOn(eventModel, 'getCurrentDate').mockReturnValue(
+                    jest.spyOn(eventModel.eventTime, 'getCurrentDate').mockReturnValue(
                         new Date('2024-03-08T08:00:00.000Z')
                     );
                 });
@@ -1564,7 +1569,7 @@ describe(`POST ${API_URL}/events/change_state`, () => {
                     transition.for.forEach((role) => {
                         describe(transition.descr, () => {
                             beforeEach(() => {
-                                jest.spyOn(eventModel, 'getCurrentDate').mockReturnValue(
+                                jest.spyOn(eventModel.eventTime, 'getCurrentDate').mockReturnValue(
                                     new Date(transition.requestDate)
                                 );
                             });
@@ -1598,7 +1603,7 @@ describe(`POST ${API_URL}/events/change_state`, () => {
             });
             describe('forbids transition of an event having only linked users as audience outside of registration period', () => {
                 beforeEach(() => {
-                    jest.spyOn(eventModel, 'getCurrentDate').mockReturnValue(
+                    jest.spyOn(eventModel.eventTime, 'getCurrentDate').mockReturnValue(
                         new Date('2024-04-30T00:00:01.000Z')
                     );
                 });

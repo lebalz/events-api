@@ -1,12 +1,12 @@
 /* istanbul ignore file */
 import Mailgen from 'mailgen';
-import { getEventProps } from '../helpers/changedProps';
-import { authConfig, sendMail } from './authConfig';
-import { ApiEvent } from '../../../models/event.helpers';
-import { getDate } from '../../helpers/time';
-import { translate } from '../../helpers/i18n';
-import { Color } from '../helpers/colors';
-import { User } from '@prisma/client';
+import { getEventProps } from '../helpers/changedProps.js';
+import { authConfig, sendMail } from './authConfig.js';
+import { ApiEvent } from 'src/models/event.helpers.js';
+import { getDate } from '../../helpers/time.js';
+import { translate } from '../../helpers/i18n.js';
+import { Color } from '../helpers/colors.js';
+import { User } from 'prisma/generated/client.js';
 const APP_URL = process.env.EVENTS_APP_URL || 'https://events.gbsl.website';
 const APP_URL_FR = `${APP_URL}/fr`;
 

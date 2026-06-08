@@ -1,10 +1,10 @@
-import { PrismaClient, Role, Subscription, User as Users } from '@prisma/client';
-import prisma from '../prisma';
-import { HTTP403Error, HTTP404Error } from '../utils/errors/Errors';
-import { createDataExtractor } from '../controllers/helpers';
-import { createIcsFromSubscription } from '../services/createIcs';
-import { ApiSubscription, DEFAULT_INCLUDE, prepareSubscription } from './subscription.helpers';
-import User from './user';
+import { PrismaClient, User as Users } from 'prisma/generated/client.js';
+import prisma from 'src/prisma.js';
+import { HTTP403Error, HTTP404Error } from '../utils/errors/Errors.js';
+import { createDataExtractor } from '../controllers/helpers.js';
+import { createIcsFromSubscription } from '../services/createIcs.js';
+import { ApiSubscription, DEFAULT_INCLUDE, prepareSubscription } from './subscription.helpers.js';
+import User, { Role } from './user.js';
 const getData = createDataExtractor<Partial<ApiSubscription>>(['subscribeToAffected']);
 
 function Subscription(db: PrismaClient['subscription']) {

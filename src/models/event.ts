@@ -1,15 +1,30 @@
-import { Event, EventState, Job, JobState, JobType, Prisma, PrismaClient, Role, User } from '@prisma/client';
-import prisma from '../prisma';
-import { createDataExtractor } from '../controllers/helpers';
-import { ApiEvent, clonedProps, clonedUpdateProps, normalizeAudience, prepareEvent } from './event.helpers';
-import { HTTP400Error, HTTP403Error, HTTP404Error } from '../utils/errors/Errors';
-import { importEvents as importService, ImportType, LogMessage } from '../services/importEvents';
-import Logger from '../utils/logger';
-import Semesters from './semester';
-import RegistrationPeriods from './registrationPeriod';
+import {
+    Event,
+    EventState,
+    Job,
+    JobState,
+    JobType,
+    Prisma,
+    PrismaClient,
+    User
+} from 'prisma/generated/client.js';
+import prisma from 'src/prisma.js';
+import { createDataExtractor } from '../controllers/helpers.js';
+import {
+    ApiEvent,
+    clonedProps,
+    clonedUpdateProps,
+    normalizeAudience,
+    prepareEvent
+} from './event.helpers.js';
+import { HTTP400Error, HTTP403Error, HTTP404Error } from '../utils/errors/Errors.js';
+import { importEvents as importService, ImportType, LogMessage } from '../services/importEvents.js';
+import Logger from '../utils/logger.js';
+import Semesters from './semester.js';
 import _ from 'lodash';
-import { rmUndefined } from '../utils/filterHelpers';
-import { Meta } from '../services/importGBSL_xlsx';
+import { rmUndefined } from '../utils/filterHelpers.js';
+import { Meta } from '../services/importGBSL_xlsx.js';
+import { Role } from './user.js';
 
 type ApiEventUpdateInput = Omit<
     Prisma.EventUncheckedUpdateInput,
@@ -36,9 +51,15 @@ const getData = createDataExtractor<ApiEventUpdateInput>([
     'teachingAffected'
 ]);
 
-type AllEventQueryCondition = ({ state: EventState } | { authorId: string })[];
 export const getCurrentDate = () => {
-    return new Date();
+    return eventTime.getCurrentDate();
+};
+
+// Jest ESM cannot spy on named exports here, so keep a writable seam for tests.
+export const eventTime = {
+    getCurrentDate() {
+        return new Date();
+    }
 };
 const rootParentSql = (childId: string) => {
     return Prisma.sql`
@@ -661,7 +682,7 @@ function Events(db: PrismaClient['event']) {
                                       {
                                           state: {
                                               in:
-                                                  actor.role === 'ADMIN'
+                                                  actor.role === Role.ADMIN
                                                       ? [
                                                             EventState.PUBLISHED,
                                                             EventState.REFUSED,

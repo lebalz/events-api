@@ -1,10 +1,10 @@
-import { Event, EventAudience, EventState, Prisma, TeachingAffected, UntisClass } from '@prisma/client';
-import { importExcel as importGBSL_xlsx, LogMessage as LogMessageGBSL } from './importGBSL_xlsx';
-import prisma from '../prisma';
-import { KlassName, mapLegacyClassName } from './helpers/klassNames';
-import { importCsv as importGBJB_csv } from './importGBJB_csv';
-import { importExcel as importV1, LogMessage as LogMessageV1 } from './importV1';
-import { DepartmentLetter, FMPaed, GYMDBilingual, GYMFBilingual } from './helpers/departmentNames';
+import { Event, EventAudience, EventState, TeachingAffected, UntisClass } from 'prisma/generated/client.js';
+import { importExcel as importGBSL_xlsx, LogMessage as LogMessageGBSL } from './importGBSL_xlsx.js';
+import prisma from 'src/prisma.js';
+import { KlassName, mapLegacyClassName } from './helpers/klassNames.js';
+import { importCsv as importGBJB_csv } from './importGBJB_csv.js';
+import { importExcel as importV1, LogMessage as LogMessageV1 } from './importV1.js';
+import { DepartmentLetter, FMPaed, GYMDBilingual, GYMFBilingual } from './helpers/departmentNames.js';
 import _ from 'lodash';
 
 export enum ImportType {

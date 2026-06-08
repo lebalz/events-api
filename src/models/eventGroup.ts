@@ -1,10 +1,10 @@
-import { EventState, Prisma, PrismaClient, User } from '@prisma/client';
-import { clonedProps as clonedEventProps, prepareEvent } from './event.helpers';
-import prisma from '../prisma';
-import { HTTP404Error, HTTP500Error } from '../utils/errors/Errors';
-import { createDataExtractor } from '../controllers/helpers';
-import Events from './event';
-import { prepareEventGroup, ApiEventGroup } from './eventGroup.helpers';
+import { EventState, Prisma, PrismaClient, User } from 'prisma/generated/client.js';
+import { clonedProps as clonedEventProps, prepareEvent } from './event.helpers.js';
+import prisma from 'src/prisma.js';
+import { HTTP404Error, HTTP500Error } from '../utils/errors/Errors.js';
+import { createDataExtractor } from '../controllers/helpers.js';
+import Events from './event.js';
+import { prepareEventGroup, ApiEventGroup } from './eventGroup.helpers.js';
 
 const getData = createDataExtractor<Prisma.EventGroupUncheckedUpdateInput>([
     'name',

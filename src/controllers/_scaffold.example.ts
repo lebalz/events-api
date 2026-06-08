@@ -1,9 +1,9 @@
-import { Semester } from '@prisma/client';
+import { Semester } from 'prisma/generated/client.js';
 import { RequestHandler } from 'express';
-import prisma from '../prisma';
-import { IoEvent, RecordType } from '../routes/socketEventTypes';
-import { createDataExtractor } from './helpers';
-import { IoRoom } from '../routes/socketEvents';
+import prisma from 'src/prisma.js';
+import { IoEvent, RecordType } from '../routes/socketEventTypes.js';
+import { createDataExtractor } from './helpers.js';
+import { IoRoom } from '../routes/socketEvents.js';
 
 const NAME = RecordType.Semester;
 const getData = createDataExtractor<Semester>(['name', 'start', 'end']);

@@ -1,5 +1,5 @@
-import { fetchUntis } from '../src/services/fetchUntis';
-import prisma from '../src/prisma';
+import { fetchUntis } from '../src/services/fetchUntis.js';
+import prisma from 'src/prisma.js';
 
 const main = async () => {
     const semester = await prisma.semester.findFirst({
