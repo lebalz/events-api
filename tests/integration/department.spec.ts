@@ -1,15 +1,17 @@
 import request from 'supertest';
-import app, { API_URL } from '../../src/app';
-import prisma from '../../src/prisma';
-import { generateUser } from '../factories/user';
-import { Department, Role } from '@prisma/client';
-import stubs from './stubs/departments.json';
+import { jest } from '@jest/globals';
+import app, { API_URL } from '../../src/app.js';
+import prisma from 'src/prisma.js';
+import { generateUser } from '../factories/user.js';
+import { Department } from 'prisma/generated/client.js';
+import stubs from './stubs/departments.json' with { type: 'json' };
 import _ from 'lodash';
-import { notify } from '../../src/middlewares/notify.nop';
-import { IoEvent } from '../../src/routes/socketEventTypes';
+import { notify } from '../../src/middlewares/notify.nop.js';
+import { IoEvent } from '../../src/routes/socketEventTypes.js';
 import { faker } from '@faker-js/faker';
-import { prepareRecord } from '../helpers/prepareRecord';
-import { toDisplayLetter } from '../../src/services/syncUntis2DB';
+import { prepareRecord } from '../helpers/prepareRecord.js';
+import { toDisplayLetter } from '../../src/services/syncUntis2DB.js';
+import { Role } from 'src/models/user.js';
 
 jest.mock('../../src/middlewares/notify.nop');
 const mNotification = <jest.Mock<typeof notify>>notify;

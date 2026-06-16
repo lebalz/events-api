@@ -1,19 +1,36 @@
-module.exports = {
-    clearMocks: true,
-    preset: 'ts-jest',
-    testEnvironment: 'node',
-    coverageReporters: ['json'],
-    setupFiles: [
-      '<rootDir>/tests/config/jest.env.ts'
-    ],
-    setupFilesAfterEnv: [
-      '<rootDir>/tests/config/db-cleaner.ts'
-    ],
-    testRegex: "\\.(spec|test)\\.ts$",
-    coveragePathIgnorePatterns: [
-      '<rootDir>/node_modules/',
-      '<rootDir>/tests/',
-      '.query.ts',
-    ],
-    maxWorkers: 1,
-  }
+/** @type {import('jest').Config} */
+const config = {
+  clearMocks: true,
+  preset: 'ts-jest/presets/default-esm',
+  extensionsToTreatAsEsm: ['.ts'],
+  testEnvironment: 'node',
+  coverageReporters: ['json'],
+  transform: {
+    '^.+\\.tsx?$': ['ts-jest', {
+      useESM: true,
+      tsconfig: './tsconfig.json',
+    }],
+  },
+  moduleNameMapper: {
+    '^(\.\./prisma/generated/.*)\.js$': '$1.ts',
+    '^prisma/generated/(.*)\.js$': '<rootDir>/prisma/generated/$1.ts',
+    '^(\\.{1,2}/.*)\\.js$': '$1',
+    '^src/(.*)\\.js$': '<rootDir>/src/$1',
+    '^prisma/(.*)\\.js$': '<rootDir>/prisma/$1',
+  },
+  setupFiles: [
+    '<rootDir>/tests/config/jest.env.ts'
+  ],
+  setupFilesAfterEnv: [
+    '<rootDir>/tests/config/db-cleaner.ts'
+  ],
+  testRegex: "\\.(spec|test)\\.ts$",
+  coveragePathIgnorePatterns: [
+    '<rootDir>/node_modules/',
+    '<rootDir>/tests/',
+    '.query.ts',
+  ],
+  maxWorkers: 1,
+}
+
+export default config;

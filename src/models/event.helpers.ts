@@ -1,8 +1,10 @@
-import { Department, Event, EventState, Prisma } from '@prisma/client';
+import { Department, Event, EventState, Prisma } from 'prisma/generated/client.js';
 import _ from 'lodash';
 
-export interface ApiEvent
-    extends Omit<Event, 'job' | 'author' | 'departments' | 'children' | 'clones' | 'meta'> {
+export interface ApiEvent extends Omit<
+    Event,
+    'job' | 'author' | 'departments' | 'children' | 'clones' | 'meta'
+> {
     jobId: string | null;
     meta?: Prisma.JsonValue | null;
     authorId: string;

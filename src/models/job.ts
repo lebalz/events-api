@@ -1,9 +1,18 @@
-import { JobState, JobType, Job as Jobs, Prisma, PrismaClient, Role, Semester, User } from '@prisma/client';
-import prisma from '../prisma';
-import { HTTP403Error, HTTP404Error } from '../utils/errors/Errors';
-import { createDataExtractor } from '../controllers/helpers';
-import { prepareEvent } from './event.helpers';
-import Events from './event';
+import {
+    JobState,
+    JobType,
+    Job as JobModel,
+    Prisma,
+    PrismaClient,
+    Semester,
+    User
+} from 'prisma/generated/client.js';
+import prisma from 'src/prisma.js';
+import { HTTP403Error, HTTP404Error } from '../utils/errors/Errors.js';
+import { createDataExtractor } from '../controllers/helpers.js';
+import { prepareEvent } from './event.helpers.js';
+import Events from './event.js';
+import { Role } from './user.js';
 
 const PROPS: (keyof Prisma.JobUncheckedUpdateInput)[] = ['description'];
 const ADMIN_PROPS: (keyof Prisma.JobUncheckedUpdateInput)[] = [...PROPS, 'state'];
@@ -47,7 +56,7 @@ function Jobs(db: PrismaClient['job']) {
         async updateModel(actor: User, id: string, data: Prisma.JobUncheckedUpdateInput) {
             /** ensure all permissions are correct */
             await this.findModel(actor, id);
-            const sanitized = actor.role === 'ADMIN' ? getAdminData(data) : getData(data);
+            const sanitized = actor.role === Role.ADMIN ? getAdminData(data) : getData(data);
             const model = await db.update({
                 where: {
                     id: id
@@ -85,7 +94,7 @@ function Jobs(db: PrismaClient['job']) {
             });
             return job;
         },
-        async _completeJob(job: Jobs, state: JobState, log: string) {
+        async _completeJob(job: JobModel, state: JobState, log: string) {
             return await db.update({
                 where: { id: job.id },
                 data: {

@@ -1,4 +1,4 @@
-import { EventGroup } from '@prisma/client';
+import { EventGroup } from 'prisma/generated/client.js';
 export interface ApiEventGroup extends Omit<EventGroup, 'events' | 'users'> {
     eventIds: string[];
     userIds: string[];

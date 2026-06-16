@@ -1,13 +1,14 @@
-import { JobType, Prisma, Role, User } from '@prisma/client';
-import Jobs from '../../../src/models/job';
-import prisma from '../../../src/prisma';
-import { createUser } from './users.test';
-import { HTTP403Error, HTTP404Error } from '../../../src/utils/errors/Errors';
-import { createEvent } from './events.test';
-import Events from '../../../src/models/event';
-import { prepareEvent } from '../../../src/models/event.helpers';
-import { generateJob } from '../../factories/job';
+import { JobType, Prisma } from 'prisma/generated/client.js';
+import Jobs from '../../../src/models/job.js';
+import prisma from 'src/prisma.js';
+import { createUser } from './users.test.js';
+import { HTTP403Error, HTTP404Error } from '../../../src/utils/errors/Errors.js';
+import { createEvent } from './events.test.js';
+import Events from '../../../src/models/event.js';
+import { prepareEvent } from 'src/models/event.helpers.js';
+import { generateJob } from '../../factories/job.js';
 import _ from 'lodash';
+import { Role } from 'src/models/user.js';
 
 export const createJob = async (
     props: Partial<Prisma.JobUncheckedCreateInput> & { userId: string; type: 'IMPORT' }
@@ -45,7 +46,7 @@ describe('Jobs', () => {
         test('throws on not existing record', async () => {
             const user = await createUser({ firstName: 'Reto' });
             await expect(Jobs.findModel(user, '1434b208-2a2c-40ab-9473-a0cd947e4fe4')).rejects.toEqual(
-                new HTTP404Error('Job with id a4aa5e33-9041-4e09-8518-339e4d211c4f! not found')
+                new HTTP404Error('Job with id 1434b208-2a2c-40ab-9473-a0cd947e4fe4 not found')
             );
         });
     });

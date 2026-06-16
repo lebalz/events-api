@@ -1,4 +1,4 @@
-import prisma from '../src/prisma';
+import prisma from 'src/prisma.js';
 const main = async () => {
     const icsLocator = await prisma.$queryRaw<
         { ics_locator: string }[]

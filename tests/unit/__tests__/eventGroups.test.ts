@@ -1,13 +1,14 @@
-import { Prisma, Role } from '@prisma/client';
-import EventGroups from '../../../src/models/eventGroup';
-import { HTTP404Error } from '../../../src/utils/errors/Errors';
-import prisma from '../../../src/prisma';
-import { createUser } from './users.test';
-import { generateEventGroup } from '../../factories/eventGroup';
+import { Prisma } from 'prisma/generated/client.js';
+import EventGroups from '../../../src/models/eventGroup.js';
+import { HTTP404Error } from '../../../src/utils/errors/Errors.js';
+import prisma from 'src/prisma.js';
+import { createUser } from './users.test.js';
+import { generateEventGroup } from '../../factories/eventGroup.js';
 import _ from 'lodash';
-import { prepareEventGroup } from '../../../src/models/eventGroup.helpers';
-import { createEvent } from './events.test';
-import { prepareEvent } from '../../../src/models/event.helpers';
+import { prepareEventGroup } from '../../../src/models/eventGroup.helpers.js';
+import { createEvent } from './events.test.js';
+import { prepareEvent } from 'src/models/event.helpers.js';
+import { Role } from 'src/models/user.js';
 
 export const createEventGroup = async (
     props: Partial<Prisma.EventGroupUncheckedCreateInput> & { userIds: string[]; eventIds: string[] }
@@ -35,7 +36,9 @@ describe('find eventGroup', () => {
         const bob = await createUser({});
         const admin = await createUser({ role: Role.ADMIN });
         const group = await createEventGroup({ userIds: [alice.id, bob.id], eventIds: [] });
-        await expect(EventGroups.findModel(admin, group.id)).rejects.toEqual(new HTTP404Error('Not found'));
+        await expect(EventGroups.findModel(admin, group.id)).rejects.toEqual(
+            new HTTP404Error(`EventGroup with id ${group.id} and user ${admin.id} not found`)
+        );
         await expect(EventGroups.findModel(alice, group.id)).resolves.toEqual({
             ...prepareEventGroup(group),
             eventIds: [],
@@ -97,9 +100,11 @@ describe('internal: find raw event group model', () => {
         const admin = await createUser({ role: Role.ADMIN });
         const group = await createEventGroup({ userIds: [alice.id], eventIds: [] });
         await expect(EventGroups._findRawModel(admin, group.id)).rejects.toEqual(
-            new HTTP404Error('Not found')
+            new HTTP404Error(`EventGroup with id ${group.id} and user ${admin.id} not found`)
         );
-        await expect(EventGroups._findRawModel(bob, group.id)).rejects.toEqual(new HTTP404Error('Not found'));
+        await expect(EventGroups._findRawModel(bob, group.id)).rejects.toEqual(
+            new HTTP404Error(`EventGroup with id ${group.id} and user ${bob.id} not found`)
+        );
         await expect(EventGroups._findRawModel(alice, group.id)).resolves.toEqual(group);
     });
 });

@@ -1,9 +1,35 @@
-import { Prisma, PrismaClient } from '@prisma/client';
+import { Prisma, PrismaClient } from '../prisma/generated/client.js';
+import { PrismaPg } from '@prisma/adapter-pg';
 
-const options: Prisma.PrismaClientOptions = {};
+const connectionString = `${process.env.DATABASE_URL}`;
+
+const adapter = new PrismaPg({ connectionString: connectionString, connectionTimeoutMillis: 5_000 });
+
+const LOG_OPTIONS: Prisma.PrismaClientOptions['log'] = [
+    {
+        emit: 'event',
+        level: 'query'
+    },
+    {
+        emit: 'stdout',
+        level: 'error'
+    },
+    {
+        emit: 'stdout',
+        level: 'info'
+    },
+    {
+        emit: 'stdout',
+        level: 'warn'
+    }
+];
+
+const prisma = new PrismaClient({ adapter: adapter, log: process.env.LOG ? LOG_OPTIONS : ['warn', 'error'] });
+
 if (process.env.LOG) {
-    options.log = ['query', 'info', 'warn'];
+    prisma.$on('query', (e) => {
+        console.log(`Query: ${e.query}; ${e.params.slice(0, 120)}; -- ${e.duration}ms`);
+    });
 }
-const prisma = new PrismaClient(options);
 
 export default prisma;

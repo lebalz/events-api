@@ -1,8 +1,8 @@
-import { Event } from '@prisma/client';
-import { ApiEvent } from '../../../models/event.helpers';
-import _, { filter } from 'lodash';
-import { i18nKey, translate } from '../../helpers/i18n';
-import { getDateTime } from '../../helpers/time';
+import { Event } from 'prisma/generated/client.js';
+import { ApiEvent } from 'src/models/event.helpers.js';
+import _ from 'lodash';
+import { i18nKey, translate } from '../../helpers/i18n.js';
+import { getDateTime } from '../../helpers/time.js';
 import diff, { DifferenceChange } from 'microdiff';
 
 const EXCLUDED_PROPS = new Set<keyof ApiEvent>([

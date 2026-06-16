@@ -2,9 +2,9 @@
 
 import { authenticator as Authenticator } from 'otplib';
 import { Base, Klasse, SchoolYear, Subject, Teacher, WebAPITimetable, WebUntisSecretAuth } from 'webuntis';
-import Logger from '../utils/logger';
-import { Semester } from '@prisma/client';
-import { getClassYear } from './helpers/untisKlasse';
+import Logger from '../utils/logger.js';
+import { Semester } from 'prisma/generated/client.js';
+import { getClassYear } from './helpers/untisKlasse.js';
 
 const OPTIONAL_COURSE_REGEX = /FA[KC]/;
 const MAX_LOGIN_TRIES = 1;
