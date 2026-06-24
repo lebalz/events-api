@@ -19,8 +19,8 @@ export const toDisplayLetter = (letter: DepartmentLetter) => {
     return letter === DepartmentLetter.FMPaed
         ? DepartmentLetter.FMS
         : letter === DepartmentLetter.MSOP
-          ? DepartmentLetter.ECG
-          : undefined;
+            ? DepartmentLetter.ECG
+            : undefined;
 };
 
 export const syncUntis2DB = async (
@@ -129,7 +129,13 @@ export const syncUntis2DB = async (
     const classIdMap = new Map<number, number>();
     data.classes.forEach((c) => {
         const isoUntisName = mapLegacyClassName(c.name) as KlassName;
-        const isoName = fromDisplayClassName(isoUntisName, departments);
+        let isoName: KlassName;
+        try {
+            isoName = fromDisplayClassName(isoUntisName, departments);
+        } catch (error) {
+            Logger.info(`Error mapping class name ${isoUntisName} to display name - ignoring`, error);
+            return;
+        }
         const currentClass = currentClasses.find((cc) => cc.name === isoName && cc.id !== c.id);
         if (currentClass) {
             classIdMap.set(c.id, currentClass.id);
@@ -171,7 +177,13 @@ export const syncUntis2DB = async (
     /** CONNECT CLASSES TO DEPARTMENTS */
     data.classes.forEach((c) => {
         const isoUntisName = mapLegacyClassName(c.name) as KlassName;
-        const isoName = fromDisplayClassName(isoUntisName, departments);
+        let isoName: KlassName;
+        try {
+            isoName = fromDisplayClassName(isoUntisName, departments);
+        } catch (error) {
+            Logger.info(`Error mapping class name ${isoUntisName} to display name - ignoring`, error);
+            return;
+        }
         const dLetter = isoName.slice(2, 3); /** third letter, e.g. 26gA --> g */
         const cLetter = isoName.slice(3, 4); /** fourth letter, e.g. 26gA --> A */
         const department = departments.find((d) => d.letter === dLetter && d.classLetters.includes(cLetter));
