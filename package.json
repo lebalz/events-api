@@ -8,7 +8,7 @@
   "type": "module",
   "scripts": {
     "clean": "rm -rf dist",
-    "build": "npx prisma generate && tsc --build ./tsconfig.build.json && yarn copy-files && (yarn sentry:sourcemaps || true)",
+    "build": "npx prisma generate && tsc --build ./tsconfig.build.json && tsc-alias -p ./tsconfig.build.json && yarn copy-files && (yarn sentry:sourcemaps || true)",
     "copy-files": "cp -r docs dist/docs",
     "start": "cross-env NODE_ENV=production node --import ./dist/src/instrumentation.js ./dist/src/server.js",
     "dev": "cross-env NODE_ENV=development nodemon -r tsconfig-paths/register --exec \"tsx --env-file=.env\" ./src/server.ts",
@@ -106,6 +106,7 @@
     "prisma-erd-generator": "^2.4.2",
     "supertest": "^7.0.0",
     "ts-jest": "^29.1.1",
+    "tsc-alias": "^1.8.17",
     "tsconfig-paths": "^4.2.0",
     "tsx": "^4.22.4",
     "typescript": "^6.0.3"
