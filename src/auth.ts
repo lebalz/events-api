@@ -11,10 +11,12 @@ import User, { Role } from './models/user.js';
 import { IoRoom } from './routes/socketEvents.js';
 import { IoEvent, RecordType } from './routes/socketEventTypes.js';
 import { adminAc, userAc } from 'better-auth/plugins/admin/access';
+import dotenv from 'dotenv';
+dotenv.config();
 
 // If your Prisma file is located elsewhere, you can change the path
 
-const COOKIE_PREFIX = process.env.APP_NAME || 'tdev';
+const COOKIE_PREFIX = process.env.APP_NAME || 'events';
 
 const getNameFromMsftProfile = (profile: MicrosoftEntraIDProfile) => {
     if (profile.name) {
@@ -29,6 +31,7 @@ const getNameFromMsftProfile = (profile: MicrosoftEntraIDProfile) => {
 };
 
 const HAS_PROVIDER_MSFT = !!process.env.MSAL_CLIENT_ID && !!process.env.MSAL_CLIENT_SECRET;
+console.log(`Microsoft provider ${HAS_PROVIDER_MSFT ? 'enabled' : 'disabled'} (MSAL_CLIENT_ID and MSAL_CLIENT_SECRET ${HAS_PROVIDER_MSFT ? 'found' : 'missing'})`);
 
 export const auth = betterAuth({
     // baseUrl: set over BETTER_AUTH_URL,
