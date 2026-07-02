@@ -108,7 +108,7 @@
     "ts-jest": "^29.1.1",
     "tsconfig-paths": "^4.2.0",
     "tsx": "^4.22.4",
-    "typescript": "^5.9.2"
+    "typescript": "^6.0.3"
   },
   "optionalDependencies": {
     "bufferutil": "^4.0.7",
