@@ -11,8 +11,6 @@ import User, { Role } from './models/user.js';
 import { IoRoom } from './routes/socketEvents.js';
 import { IoEvent, RecordType } from './routes/socketEventTypes.js';
 import { adminAc, userAc } from 'better-auth/plugins/admin/access';
-import dotenv from 'dotenv';
-dotenv.config();
 
 // If your Prisma file is located elsewhere, you can change the path
 
