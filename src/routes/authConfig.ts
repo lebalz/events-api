@@ -1,19 +1,5 @@
 import { Role } from 'src/models/user.js';
 
-interface Credentials {
-    tenantID: string;
-    clientID: string;
-}
-interface Metadata {
-    authority: string;
-    discovery: string;
-    version: string;
-}
-interface Settings {
-    validateIssuer: boolean;
-    passReqToCallback: boolean;
-    loggingLevel: string;
-}
 export interface AccessMatrix {
     [key: string]: {
         path: string;
@@ -22,9 +8,6 @@ export interface AccessMatrix {
 }
 
 interface Config {
-    credentials: Credentials;
-    metadata: Metadata;
-    settings: Settings;
     accessMatrix: AccessMatrix;
 }
 
@@ -35,20 +18,6 @@ interface Config {
 export const PUBLIC_ROUTES = ['/events', '/events/:id', '/departments', '/semesters', '/untis/classes'];
 
 const authConfig: Config = {
-    credentials: {
-        tenantID: process.env.TENANT_ID || '',
-        clientID: process.env.CLIENT_ID || ''
-    },
-    metadata: {
-        authority: 'login.microsoftonline.com',
-        discovery: '.well-known/openid-configuration',
-        version: 'v2.0'
-    },
-    settings: {
-        validateIssuer: true,
-        passReqToCallback: false,
-        loggingLevel: 'warn'
-    },
     accessMatrix: {
         user: {
             path: '/user',

@@ -4,7 +4,7 @@ import prisma from './prisma.js';
 import { admin, createAuthMiddleware, oneTimeToken } from 'better-auth/plugins';
 import { CORS_ORIGIN_STRINGIFIED } from './utils/originConfig.js';
 import { getNameFromEmail } from './helpers/email.js';
-import type { GithubProfile, MicrosoftEntraIDProfile } from 'better-auth/social-providers';
+import type { MicrosoftEntraIDProfile } from 'better-auth/social-providers';
 import Logger from './utils/logger.js';
 import { getIo, notify } from './socketIoServer.js';
 import User, { Role } from './models/user.js';
@@ -26,19 +26,6 @@ const getNameFromMsftProfile = (profile: MicrosoftEntraIDProfile) => {
         }
     }
     return getNameFromEmail(profile.email || profile.preferred_username);
-};
-
-const getNameFromGithubProfile = (profile: GithubProfile) => {
-    if (profile.name) {
-        const parts = profile.name.split(', ')[0]?.split(' ') || [];
-        if (parts.length > 1) {
-            const firstName = parts.pop()!;
-            const lastName = parts.join(' ');
-            return { firstName, lastName };
-        }
-    }
-    const { firstName, lastName } = getNameFromEmail(profile.email);
-    return { firstName: firstName ?? profile.login, lastName: lastName ?? profile.login };
 };
 
 const HAS_PROVIDER_MSFT = !!process.env.MSAL_CLIENT_ID && !!process.env.MSAL_CLIENT_SECRET;
@@ -74,26 +61,26 @@ export const auth = betterAuth({
     socialProviders: {
         ...(HAS_PROVIDER_MSFT
             ? {
-                  microsoft: {
-                      clientId: process.env.MSAL_CLIENT_ID as string,
-                      clientSecret: process.env.MSAL_CLIENT_SECRET as string,
-                      tenantId: process.env.MSAL_TENANT_ID || 'common', // Use 'common' for multi-tenant applications
-                      authority: 'https://login.microsoftonline.com', // Authentication authority URL
-                      prompt: 'select_account', // Forces account selection,
-                      responseMode: 'query',
-                      mapProfileToUser: (profile) => {
-                          const email = (profile.email || profile.preferred_username)?.toLowerCase();
-                          const name = getNameFromMsftProfile(profile);
-                          return {
-                              id: profile.oid,
-                              email: email,
-                              firstName: name.firstName || '',
-                              lastName: name.lastName || ''
-                              // You can extract and map other fields as needed
-                          };
-                      }
-                  }
-              }
+                microsoft: {
+                    clientId: process.env.MSAL_CLIENT_ID as string,
+                    clientSecret: process.env.MSAL_CLIENT_SECRET as string,
+                    tenantId: process.env.MSAL_TENANT_ID || 'common', // Use 'common' for multi-tenant applications
+                    authority: 'https://login.microsoftonline.com', // Authentication authority URL
+                    prompt: 'select_account', // Forces account selection,
+                    responseMode: 'query',
+                    mapProfileToUser: (profile) => {
+                        const email = (profile.email || profile.preferred_username)?.toLowerCase();
+                        const name = getNameFromMsftProfile(profile);
+                        return {
+                            id: profile.oid,
+                            email: email,
+                            firstName: name.firstName || '',
+                            lastName: name.lastName || ''
+                            // You can extract and map other fields as needed
+                        };
+                    }
+                }
+            }
             : {})
     },
     trustedOrigins: CORS_ORIGIN_STRINGIFIED,
@@ -105,13 +92,13 @@ export const auth = betterAuth({
         },
         cookies: process.env.NETLIFY_PROJECT_NAME
             ? {
-                  session_token: {
-                      attributes: {
-                          sameSite: 'none',
-                          secure: true
-                      }
-                  }
-              }
+                session_token: {
+                    attributes: {
+                        sameSite: 'none',
+                        secure: true
+                    }
+                }
+            }
             : undefined,
         database: { generateId: false, useNumberId: false }
     },
@@ -177,3 +164,4 @@ export const auth = betterAuth({
         }
     }
 });
+console.log(`Microsoft provider is ${HAS_PROVIDER_MSFT ? 'enabled' : 'disabled'} - ${Object.keys(auth.options.socialProviders)}.`);

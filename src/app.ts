@@ -42,12 +42,6 @@ if (!existsSync(`${STATIC_DIR}/fr`)) {
     mkdirSync(`${STATIC_DIR}/fr`, { recursive: true });
 }
 
-/**
- *  this is not needed when running behind a reverse proxy
- *  as is the case with dokku (nginx)
- */
-//  app.use(compression(), express.json({ limit: "5mb" }));
-
 // ensure the server can call other domains: enable cross origin resource sharing (cors)
 app.use(
     cors({

@@ -5,7 +5,7 @@
     "moduleResolution": "nodenext",
     // "allowSyntheticDefaultImports": true,
     "resolveJsonModule": true,
-    // "ignoreDeprecations": "6.0",
+    "ignoreDeprecations": "6.0",
     "baseUrl": ".",
     "paths": {
       "src/*": ["./src/*"],
