@@ -29,7 +29,6 @@ const getNameFromMsftProfile = (profile: MicrosoftEntraIDProfile) => {
 };
 
 const HAS_PROVIDER_MSFT = !!process.env.MSAL_CLIENT_ID && !!process.env.MSAL_CLIENT_SECRET;
-console.log(`Microsoft provider ${HAS_PROVIDER_MSFT ? 'enabled' : 'disabled'} (MSAL_CLIENT_ID and MSAL_CLIENT_SECRET ${HAS_PROVIDER_MSFT ? 'found' : 'missing'})`);
 
 export const auth = betterAuth({
     // baseUrl: set over BETTER_AUTH_URL,
@@ -165,4 +164,6 @@ export const auth = betterAuth({
         }
     }
 });
-console.log(`Microsoft provider is ${HAS_PROVIDER_MSFT ? 'enabled' : 'disabled'} - ${Object.keys(auth.options.socialProviders)}.`);
+console.log(
+    `Microsoft provider is ${HAS_PROVIDER_MSFT ? 'enabled' : 'disabled'} - ${Object.keys(auth.options.socialProviders)}.`
+);
