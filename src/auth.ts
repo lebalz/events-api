@@ -164,6 +164,3 @@ export const auth = betterAuth({
         }
     }
 });
-console.log(
-    `Microsoft provider is ${HAS_PROVIDER_MSFT ? 'enabled' : 'disabled'} - ${Object.keys(auth.options.socialProviders)}.`
-);
