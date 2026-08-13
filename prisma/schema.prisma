@@ -131,11 +131,14 @@ model EventGroup {
 }
 
 model Department {
-    id            String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-    name          String   @unique
-    description   String   @default("")
-    letter        String   @default("")
-    schoolYears   Int      @default(4) @map("school_years")
+    id                      String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+    name                    String @unique
+    description             String @default("")
+    letter                  String @default("")
+    schoolYears             Int    @default(4) @map("school_years")
+    semesterTransitionMonth Int    @default(7) @map("semester_transition_month") @db.SmallInt()
+    semesterTransitionDay   Int    @default(14) @map("semester_transition_day") @db.SmallInt()
+
     displayLetter String?  @map("display_letter")
     classLetters  String[] @default([]) @map("class_letters")
 

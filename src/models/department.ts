@@ -7,6 +7,8 @@ import { invalidLetterCombinations } from './department.helpers';
 const getData = createDataExtractor<Prisma.DepartmentUncheckedUpdateInput>([
     'name',
     'schoolYears',
+    'semesterTransitionDay',
+    'semesterTransitionMonth',
     'description',
     'color',
     'letter',

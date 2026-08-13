@@ -31,3 +31,4 @@ docs/prisma/**/*
 .sentryclirc
 backup*.sql
 backup*.dump
+prisma/generated

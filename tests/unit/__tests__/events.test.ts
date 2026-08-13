@@ -879,6 +879,21 @@ describe('normalize audience', () => {
         expect(normalized.classGroups).toHaveLength(0);
         expect(normalized.classes.sort()).toEqual(['24Ga', '25Ga', '26Ga', '27Ga'].sort());
     });
+    test('respectes semester transition dates when normalizing classes', async () => {
+        const deps = await Promise.all([
+            createDepartment({ letter: 'G', classLetters: ['a', 'b', 'c'], schoolYears: 4, semesterTransitionDay: 14, semesterTransitionMonth: 7 }),
+            createDepartment({ letter: 'p', classLetters: ['A', 'B'], schoolYears: 1, semesterTransitionDay: 16, semesterTransitionMonth: 7 })
+        ]);
+        const normalized = normalizeAudience(deps, {
+            departmentIds: [],
+            classGroups: [],
+            classes: ['24Ga', '25Ga', '24pA', '25pB', '26pA'],
+            start: new Date('2024-07-15'),
+            end: new Date('2024-07-15')
+        });
+        expect(normalized.classGroups).toHaveLength(0);
+        expect(normalized.classes.sort()).toEqual(['25Ga', '24pA'].sort());
+    });
     test('removes classGroups which did already graduate more than a year ago or are not at the school', async () => {
         const deps = await setup();
         const normalized = normalizeAudience(deps, {
@@ -890,5 +905,20 @@ describe('normalize audience', () => {
         });
         expect(normalized.classGroups.sort()).toEqual(['24G', '25G', '26G', '27G'].sort());
         expect(normalized.classes).toHaveLength(0);
+    });
+    test('respectes semester transition dates when normalizing class groups', async () => {
+        const deps = await Promise.all([
+            createDepartment({ letter: 'G', classLetters: ['a', 'b', 'c'], schoolYears: 4, semesterTransitionDay: 14, semesterTransitionMonth: 7 }),
+            createDepartment({ letter: 'p', classLetters: ['A', 'B'], schoolYears: 1, semesterTransitionDay: 16, semesterTransitionMonth: 7 })
+        ]);
+        const normalized = normalizeAudience(deps, {
+            departmentIds: [],
+            classGroups: ['24G', '25G', '24p', '25p', '26p'],
+            classes: [],
+            start: new Date('2024-07-15'),
+            end: new Date('2024-07-15')
+        });
+        expect(normalized.classes).toHaveLength(0);
+        expect(normalized.classGroups.sort()).toEqual(['25G', '24p'].sort());
     });
 });
