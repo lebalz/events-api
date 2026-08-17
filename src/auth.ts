@@ -17,6 +17,8 @@ import { adminAc, userAc } from 'better-auth/plugins/admin/access';
 
 const COOKIE_PREFIX = process.env.APP_NAME || 'events';
 
+const IsValidEmail = /@(gbsl|gbjb)\.ch/i;
+
 const getNameFromMsftProfile = (profile: MicrosoftEntraIDProfile) => {
     if (profile.name) {
         const parts = profile.name.split(', ')[0]?.split(' ') || [];
@@ -62,26 +64,27 @@ export const auth = betterAuth({
     socialProviders: {
         ...(HAS_PROVIDER_MSFT
             ? {
-                  microsoft: {
-                      clientId: process.env.MSAL_CLIENT_ID as string,
-                      clientSecret: process.env.MSAL_CLIENT_SECRET as string,
-                      tenantId: process.env.MSAL_TENANT_ID || 'common', // Use 'common' for multi-tenant applications
-                      authority: 'https://login.microsoftonline.com', // Authentication authority URL
-                      prompt: 'select_account', // Forces account selection,
-                      responseMode: 'query',
-                      mapProfileToUser: (profile) => {
-                          const email = (profile.email || profile.preferred_username)?.toLowerCase();
-                          const name = getNameFromMsftProfile(profile);
-                          return {
-                              id: profile.oid,
-                              email: email,
-                              firstName: name.firstName || '',
-                              lastName: name.lastName || ''
-                              // You can extract and map other fields as needed
-                          };
-                      }
-                  }
-              }
+                microsoft: {
+                    clientId: process.env.MSAL_CLIENT_ID as string,
+                    clientSecret: process.env.MSAL_CLIENT_SECRET as string,
+                    tenantId: process.env.MSAL_TENANT_ID || 'common', // Use 'common' for multi-tenant applications
+                    authority: 'https://login.microsoftonline.com', // Authentication authority URL
+                    prompt: 'select_account', // Forces account selection,
+                    responseMode: 'query',
+                    mapProfileToUser: (profile) => {
+                        const email = (profile.email || profile.preferred_username)?.toLowerCase();
+                        const name = getNameFromMsftProfile(profile);
+                        return {
+                            id: profile.oid,
+                            email: email,
+                            firstName: name.firstName || '',
+                            lastName: name.lastName || ''
+                            // You can extract and map other fields as needed
+                        };
+                    },
+
+                }
+            }
             : {})
     },
     trustedOrigins: CORS_ORIGIN_STRINGIFIED,
@@ -93,15 +96,28 @@ export const auth = betterAuth({
         },
         cookies: process.env.NETLIFY_PROJECT_NAME
             ? {
-                  session_token: {
-                      attributes: {
-                          sameSite: 'none',
-                          secure: true
-                      }
-                  }
-              }
+                session_token: {
+                    attributes: {
+                        sameSite: 'none',
+                        secure: true
+                    }
+                }
+            }
             : undefined,
         database: { generateId: false, useNumberId: false }
+    },
+    databaseHooks: {
+        user: {
+            create: {
+                before: async (user) => {
+                    if (!IsValidEmail.test(user.email)) {
+                        // Perform any necessary actions for edu emails
+                        throw new Error("Only @gbsl.ch or @gbjb.ch email addresses are allowed.");
+                    }
+                    return { data: user };
+                }
+            }
+        }
     },
     hooks: {
         after: createAuthMiddleware(async (ctx) => {
