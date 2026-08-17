@@ -38,6 +38,7 @@ jobs:
       run: yarn run test:db:create && yarn run cov:unit
       env:
         DATABASE_URL: "postgres://postgres:postgres@localhost:5432/events_api_test"
+        BETTER_AUTH_URL: "http://localhost:3000"
     - name: Upload coverage reports to Codecov
       uses: codecov/codecov-action@v7
       with:
@@ -80,6 +81,7 @@ jobs:
       run: yarn run test:db:create && yarn run cov:integration
       env:
         DATABASE_URL: "postgres://postgres:postgres@localhost:5432/events_api_test"
+        BETTER_AUTH_URL: "http://localhost:3000"
     - name: Upload coverage reports to Codecov
       uses: codecov/codecov-action@v7
       with:
