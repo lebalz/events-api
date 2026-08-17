@@ -19,8 +19,8 @@ export const toDisplayLetter = (letter: DepartmentLetter) => {
     return letter === DepartmentLetter.FMPaed
         ? DepartmentLetter.FMS
         : letter === DepartmentLetter.MSOP
-          ? DepartmentLetter.ECG
-          : undefined;
+            ? DepartmentLetter.ECG
+            : undefined;
 };
 
 export const syncUntis2DB = async (
@@ -127,7 +127,9 @@ export const syncUntis2DB = async (
     /** UPSERT CLASSES - class names might show up multiple time - normalize them here... */
     const currentClasses = await prisma.untisClass.findMany({});
     const classIdMap = new Map<number, number>();
-    data.classes.forEach((c) => {
+    const invalidClassNames = data.classes.filter((c) => c.name.length > 4 || c.name.length < 3).map((c) => c.name);
+    const processableClasses = data.classes.filter((c) => c.name.length <= 4 && c.name.length >= 3);
+    processableClasses.forEach((c) => {
         const isoUntisName = mapLegacyClassName(c.name) as KlassName;
         const isoName = fromDisplayClassName(isoUntisName, departments);
         const currentClass = currentClasses.find((cc) => cc.name === isoName && cc.id !== c.id);
@@ -169,7 +171,7 @@ export const syncUntis2DB = async (
     const unknownClassDepartments: { [key: string]: any } = {};
 
     /** CONNECT CLASSES TO DEPARTMENTS */
-    data.classes.forEach((c) => {
+    processableClasses.forEach((c) => {
         const isoUntisName = mapLegacyClassName(c.name) as KlassName;
         const isoName = fromDisplayClassName(isoUntisName, departments);
         const dLetter = isoName.slice(2, 3); /** third letter, e.g. 26gA --> g */
@@ -390,7 +392,7 @@ export const syncUntis2DB = async (
         });
     });
 
-    data.classes.forEach((cls) => {
+    processableClasses.forEach((cls) => {
         const cid = classIdMap.get(cls.id) || cls.id;
         const update = prisma.untisClass.update({
             where: {
@@ -443,6 +445,9 @@ export const syncUntis2DB = async (
             }
         }
     });
+    if (invalidClassNames.length > 0) {
+        summary['invalidClassNames'] = invalidClassNames;
+    }
     /* istanbul ignore next */
     if (Object.keys(unknownClassDepartments).length > 0) {
         summary['unknownClassDepartments'] = unknownClassDepartments;
