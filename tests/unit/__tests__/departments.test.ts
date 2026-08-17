@@ -98,6 +98,8 @@ describe('Departments', () => {
                 color: '#306cce',
                 description: '',
                 schoolYears: 4,
+                semesterTransitionDay: 14,
+                semesterTransitionMonth: 7,
                 name: 'new name',
                 classLetters: [],
                 letter: '',

@@ -8,6 +8,8 @@ import { Role } from './user.js';
 const getData = createDataExtractor<Prisma.DepartmentUncheckedUpdateInput>([
     'name',
     'schoolYears',
+    'semesterTransitionDay',
+    'semesterTransitionMonth',
     'description',
     'color',
     'letter',
