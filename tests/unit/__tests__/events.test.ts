@@ -882,8 +882,20 @@ describe('normalize audience', () => {
     });
     test('respectes semester transition dates when normalizing classes', async () => {
         const deps = await Promise.all([
-            createDepartment({ letter: 'G', classLetters: ['a', 'b', 'c'], schoolYears: 4, semesterTransitionDay: 14, semesterTransitionMonth: 7 }),
-            createDepartment({ letter: 'p', classLetters: ['A', 'B'], schoolYears: 1, semesterTransitionDay: 16, semesterTransitionMonth: 7 })
+            createDepartment({
+                letter: 'G',
+                classLetters: ['a', 'b', 'c'],
+                schoolYears: 4,
+                semesterTransitionDay: 14,
+                semesterTransitionMonth: 7
+            }),
+            createDepartment({
+                letter: 'p',
+                classLetters: ['A', 'B'],
+                schoolYears: 1,
+                semesterTransitionDay: 16,
+                semesterTransitionMonth: 7
+            })
         ]);
         const normalized = normalizeAudience(deps, {
             departmentIds: [],
@@ -909,8 +921,20 @@ describe('normalize audience', () => {
     });
     test('respectes semester transition dates when normalizing class groups', async () => {
         const deps = await Promise.all([
-            createDepartment({ letter: 'G', classLetters: ['a', 'b', 'c'], schoolYears: 4, semesterTransitionDay: 14, semesterTransitionMonth: 7 }),
-            createDepartment({ letter: 'p', classLetters: ['A', 'B'], schoolYears: 1, semesterTransitionDay: 16, semesterTransitionMonth: 7 })
+            createDepartment({
+                letter: 'G',
+                classLetters: ['a', 'b', 'c'],
+                schoolYears: 4,
+                semesterTransitionDay: 14,
+                semesterTransitionMonth: 7
+            }),
+            createDepartment({
+                letter: 'p',
+                classLetters: ['A', 'B'],
+                schoolYears: 1,
+                semesterTransitionDay: 16,
+                semesterTransitionMonth: 7
+            })
         ]);
         const normalized = normalizeAudience(deps, {
             departmentIds: [],

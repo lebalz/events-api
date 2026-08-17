@@ -163,7 +163,11 @@ const currentGradeDate = (year: Date | string = new Date(), department: Departme
     return refDate;
 };
 
-const isValidGradeYear = (klass: string, event: { start: Date | string; end: Date | string }, departments: Department[]): boolean => {
+const isValidGradeYear = (
+    klass: string,
+    event: { start: Date | string; end: Date | string },
+    departments: Department[]
+): boolean => {
     if (klass.length < 2) {
         return false;
     }

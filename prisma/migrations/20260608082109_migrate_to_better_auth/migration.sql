@@ -16,6 +16,7 @@ ADD COLUMN "trole" TEXT NOT NULL DEFAULT 'user';
 
 UPDATE "public"."users" SET "trole" = 'admin' WHERE "role" = 'ADMIN';
 UPDATE "public"."users" SET "trole" = 'user' WHERE "role" = 'USER';
+UPDATE "public"."users" SET "email_verified" = true;
 
 
 ALTER TABLE "public"."users"
