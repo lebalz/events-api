@@ -19,8 +19,8 @@ export const toDisplayLetter = (letter: DepartmentLetter) => {
     return letter === DepartmentLetter.FMPaed
         ? DepartmentLetter.FMS
         : letter === DepartmentLetter.MSOP
-            ? DepartmentLetter.ECG
-            : undefined;
+          ? DepartmentLetter.ECG
+          : undefined;
 };
 
 export const syncUntis2DB = async (
@@ -127,7 +127,9 @@ export const syncUntis2DB = async (
     /** UPSERT CLASSES - class names might show up multiple time - normalize them here... */
     const currentClasses = await prisma.untisClass.findMany({});
     const classIdMap = new Map<number, number>();
-    const invalidClassNames = data.classes.filter((c) => c.name.length > 4 || c.name.length < 3).map((c) => c.name);
+    const invalidClassNames = data.classes
+        .filter((c) => c.name.length > 4 || c.name.length < 3)
+        .map((c) => c.name);
     const processableClasses = data.classes.filter((c) => c.name.length <= 4 && c.name.length >= 3);
     processableClasses.forEach((c) => {
         const isoUntisName = mapLegacyClassName(c.name) as KlassName;

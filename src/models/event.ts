@@ -136,13 +136,11 @@ function Events(db: PrismaClient['event']) {
             if (!actor) {
                 throw new HTTP403Error('Not authorized');
             }
-            if (
-                !(
-                    record.authorId === actor.id ||
-                    record.groups.some((g) => g.users.map((user) => user.id).includes(actor.id)) ||
-                    actor.role === Role.ADMIN
-                )
-            ) {
+            if (!(
+                record.authorId === actor.id ||
+                record.groups.some((g) => g.users.map((user) => user.id).includes(actor.id)) ||
+                actor.role === Role.ADMIN
+            )) {
                 throw new HTTP403Error('Not authorized');
             }
             return record;
