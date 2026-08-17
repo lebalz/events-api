@@ -1,6 +1,6 @@
 import { WebUntisElementType } from 'webuntis';
-import { UntisData } from '../../src/services/fetchUntis';
-import { DAYS } from '../../src/services/helpers/time';
+import { UntisData } from '../../src/services/fetchUntis.js';
+import { DAYS } from '../../src/services/helpers/time.js';
 
 const SUNDAY = 20231015; /* the 15.10.2023 is a sunday */
 export interface UntisDataProps {

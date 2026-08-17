@@ -1,10 +1,9 @@
-import { Department, Event, EventAudience, TeachingAffected } from '@prisma/client';
-import readXlsxFile, { Row } from 'read-excel-file/node';
-import prisma from '../prisma';
-import { i18nKey, translate } from './helpers/i18n';
-import { Departments, fromDisplayClassName } from './helpers/departmentNames';
-import { Cell } from 'read-excel-file/types';
-import { KlassName, mapLegacyClassName } from './helpers/klassNames';
+import { Department, Event, EventAudience, TeachingAffected } from 'prisma/generated/client.js';
+import readXlsxFile, { type CellValue, type Row } from 'read-excel-file/node';
+import prisma from 'src/prisma.js';
+import { i18nKey, translate } from './helpers/i18n.js';
+import { Departments, fromDisplayClassName } from './helpers/departmentNames.js';
+import { KlassName, mapLegacyClassName } from './helpers/klassNames.js';
 
 const CLASS_NAME_MATCHER = /(\d\d)([a-z][A-Z]|[A-Z][a-z])/g;
 const LEGACY_CLASS_NAME_MATCHER = /(2[456][a-zA-Z])(?=[^a-zA-Z\*]|$)/g;
@@ -93,7 +92,7 @@ const mapAlias = (name: string): string => {
 };
 
 const getColumnIndex = (header: Row, key: string) => {
-    const sanitizer = (s: Cell) =>
+    const sanitizer = (s: CellValue) =>
         mapAlias(`${s}`)
             .replaceAll(/[^a-zA-Z0-9]/g, '')
             .toLowerCase();

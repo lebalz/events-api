@@ -1,9 +1,12 @@
+import config from './jest.config.js';
 process.env.TZ = 'UTC';
 
-var config = require('./jest.config')
-config.testRegex = "\\.spec\\.ts$"
+const integrationConfig = {
+    ...config,
+    testRegex: '\\.spec\\.ts$',
+    coverageDirectory: 'coverage.integration'
+};
 
-config.coverageDirectory = 'coverage.integration',
-console.log('RUNNING INTEGRATION TESTS')
+console.log('RUNNING INTEGRATION TESTS');
 
-module.exports = config
+export default integrationConfig;

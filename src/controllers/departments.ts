@@ -1,10 +1,8 @@
-import type { Department } from '@prisma/client';
+import type { Department } from 'prisma/generated/client.js';
 import { RequestHandler } from 'express';
-import prisma from '../prisma';
-import { IoEvent, RecordType } from '../routes/socketEventTypes';
-import Departments from '../models/department';
-import { createDataExtractor } from './helpers';
-import { IoRoom } from '../routes/socketEvents';
+import { IoEvent, RecordType } from '../routes/socketEventTypes.js';
+import Departments from '../models/department.js';
+import { IoRoom } from '../routes/socketEvents.js';
 
 const NAME = RecordType.Department;
 
@@ -17,7 +15,7 @@ export const all: RequestHandler = async (req, res, next) => {
     }
 };
 
-export const find: RequestHandler = async (req, res, next) => {
+export const find: RequestHandler<{ id: string }> = async (req, res, next) => {
     try {
         const model = await Departments.findModel(req.params.id);
         res.json(model);

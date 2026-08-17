@@ -1,8 +1,12 @@
-import * as fs from 'fs';
-import * as path from 'path';
-import * as yaml from 'js-yaml';
+import * as fs from 'node:fs';
+import * as path from 'node:path';
+import { load as yamlLoad } from 'js-yaml';
 import { default as parseArgs } from 'minimist';
-import { exit } from 'process';
+import process from 'node:process';
+
+import { fileURLToPath } from 'node:url';
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const currentDir = __dirname;
 const CONFIG_FILENAME = 'migrate.config.yml' as const;
@@ -10,7 +14,7 @@ interface Config {
     name: string;
     depends_on: string[];
 }
-const config = yaml.load(fs.readFileSync(path.resolve(currentDir, CONFIG_FILENAME), 'utf8')) as Config[];
+const config = yamlLoad(fs.readFileSync(path.resolve(currentDir, CONFIG_FILENAME), 'utf8')) as Config[];
 const HELP_TEXT = `
 yarn run db:migrate-view [view-name [view-name ...]]
 
@@ -25,26 +29,26 @@ const argv = parseArgs(process.argv.slice(2));
 
 if (argv.help) {
     console.log(HELP_TEXT);
-    exit(0);
+    process.exit(0);
 }
 
 const viewNames = argv._.filter(Boolean);
 if (viewNames.length === 0) {
     console.error('Error: No view name provided.');
     console.log(HELP_TEXT);
-    exit(1);
+    process.exit(1);
 }
-if (viewNames.some((viewName) => !config.find((c) => c.name === viewName))) {
+if (viewNames.some((viewName: string) => !config.find((c) => c.name === viewName))) {
     console.error(
         'Error: Invalid view name provided. Unknown views:\n',
         viewNames
-            .filter((viewName) => !config.find((c) => c.name === viewName))
-            .map((n) => `- ${n}`)
+            .filter((viewName: string) => !config.find((c) => c.name === viewName))
+            .map((n: string) => `- ${n}`)
             .join(`\n`),
         `\nCheck ${CONFIG_FILENAME} to configure additional views.`
     );
     console.log(HELP_TEXT);
-    exit(1);
+    process.exit(1);
 }
 
 async function createViewMigration(viewNames: string[]) {

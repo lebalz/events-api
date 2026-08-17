@@ -1,6 +1,11 @@
 import { Console } from 'console';
-import prisma from '../../src/prisma';
-import { truncate } from '../helpers/db';
+import { jest } from '@jest/globals';
+import prisma from 'src/prisma.js';
+import { truncate } from '../helpers/db.js';
+
+beforeEach(() => {
+    jest.clearAllMocks();
+});
 
 afterEach(async () => {
     await truncate(true);

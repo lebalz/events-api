@@ -1,9 +1,10 @@
-import { Prisma, Role } from '@prisma/client';
-import Departments from '../../../src/models/department';
-import prisma from '../../../src/prisma';
-import { createUser } from './users.test';
-import { HTTP400Error, HTTP403Error } from '../../../src/utils/errors/Errors';
-import { generateDepartment } from '../../factories/department';
+import { Prisma } from 'prisma/generated/client.js';
+import Departments from '../../../src/models/department.js';
+import prisma from 'src/prisma.js';
+import { createUser } from './users.test.js';
+import { HTTP400Error, HTTP403Error } from '../../../src/utils/errors/Errors.js';
+import { generateDepartment } from '../../factories/department.js';
+import { Role } from 'src/models/user.js';
 
 export const createDepartment = async (props: Partial<Prisma.DepartmentUncheckedCreateInput>) => {
     return await prisma.department.create({
@@ -76,13 +77,11 @@ describe('Departments', () => {
 
         test('detects invalid letter combinations', async () => {
             const admin = await createUser({ role: Role.ADMIN });
-            const depAB = await createDepartment({ name: 'depAB-', classLetters: ['A', 'B'] });
-            const depCD = await createDepartment({ name: 'depCD-', classLetters: ['C', 'D'] });
+            const depAB = await createDepartment({ name: 'depAB-', letter: 'm', classLetters: ['A', 'B'] });
+            const depCD = await createDepartment({ name: 'depCD-', letter: 'm', classLetters: ['C', 'D'] });
             await expect(
                 Departments.updateModel(admin, depCD.id, { classLetters: ['B', 'C', 'D'] })
-            ).rejects.toEqual(
-                new HTTP400Error('Unique Letters Constraint Error: invalid combinations: depCD-B')
-            );
+            ).rejects.toEqual(new HTTP400Error('Unique Letters Constraint Error: invalid combinations: mB'));
         });
     });
     describe('create department', () => {

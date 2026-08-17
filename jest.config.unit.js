@@ -1,6 +1,11 @@
-var config = require('./jest.config')
-config.testRegex = "\\.test\\.ts$" //Overriding testRegex option
-config.coverageDirectory = 'coverage.unit';
-console.log('RUNNING UNIT TESTS')
+import config from './jest.config.js';
 
-module.exports = config
+const unitConfig = {
+    ...config,
+    testRegex: '\\.test\\.ts$',
+    coverageDirectory: 'coverage.unit'
+};
+
+console.log('RUNNING UNIT TESTS');
+
+export default unitConfig;

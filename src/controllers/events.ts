@@ -1,23 +1,31 @@
 import { RequestHandler } from 'express';
-import prisma from '../prisma';
-import { IoEvent, RecordType } from '../routes/socketEventTypes';
-import { notifyChangedRecord } from '../routes/notify';
-import type { Event, Prisma } from '@prisma/client';
-import { EventState, Role } from '@prisma/client';
-import { IoRoom } from '../routes/socketEvents';
-import Events from '../models/event';
-import EventGroups from '../models/eventGroup';
-import { HTTP403Error } from '../utils/errors/Errors';
-import { ImportType } from '../services/importEvents';
-import { notifyOnDelete, notifyOnUpdate } from '../services/notifications/notifyUsers';
-import { rmUndefined } from '../utils/filterHelpers';
-import Jobs from '../models/job';
-import { ApiEvent } from '../models/event.helpers';
-import Logger from '../utils/logger';
+import { IoEvent, RecordType } from '../routes/socketEventTypes.js';
+import type { Event } from 'prisma/generated/client.js';
+import { EventState } from 'prisma/generated/client.js';
+import { IoRoom } from '../routes/socketEvents.js';
+import Events from '../models/event.js';
+import EventGroups from '../models/eventGroup.js';
+import { HTTP403Error } from '../utils/errors/Errors.js';
+import { ImportType } from '../services/importEvents.js';
+import { notifyOnDelete, notifyOnUpdate } from '../services/notifications/notifyUsers.js';
+import { rmUndefined } from '../utils/filterHelpers.js';
+import Jobs from '../models/job.js';
+import { ApiEvent } from '../models/event.helpers.js';
+import Logger from '../utils/logger.js';
+import { Role } from 'src/models/user.js';
+import { notifyChangedRecord } from 'src/socketIoServer.js';
 
 const NAME = RecordType.Event;
 
-export const find: RequestHandler = async (req, res, next) => {
+const getQueryIds = (query: Record<string, unknown>) => {
+    const ids = query.ids ?? query['ids[]'];
+    if (Array.isArray(ids)) {
+        return ids.map((id) => String(id));
+    }
+    return ids ? [String(ids)] : [];
+};
+
+export const find: RequestHandler<{ id: string }> = async (req, res, next) => {
     try {
         const event = await Events.findModel(req.user, req.params.id);
         res.status(200).json(event);
@@ -174,7 +182,7 @@ export const setState: RequestHandler<
     }
 };
 
-export const destroy: RequestHandler = async (req, res, next) => {
+export const destroy: RequestHandler<{ id: string }> = async (req, res, next) => {
     try {
         const event = await Events.destroy(req.user!, req.params.id);
         if (event.state === EventState.DRAFT) {
@@ -205,7 +213,7 @@ export const destroyMany: RequestHandler<any, any, any, { ids: string }> = async
     const deletedIds: string[] = [];
     res.notifications = [];
     try {
-        for (const id of req.query.ids) {
+        for (const id of getQueryIds(req.query as Record<string, unknown>)) {
             try {
                 const event = await Events.destroy(req.user!, id);
                 deletedIds.push(event.id);
@@ -242,8 +250,9 @@ export const all: RequestHandler<any, any, any, { semesterId?: string; ids?: str
     next
 ) => {
     try {
-        if (req.query.ids) {
-            const events = await Events.allByIds(req.user, req.query.ids);
+        const ids = getQueryIds(req.query as Record<string, unknown>);
+        if (ids.length > 0) {
+            const events = await Events.allByIds(req.user, ids);
             return res.json(events);
         }
         const events = await Events.published(req.query.semesterId);
@@ -304,14 +313,17 @@ export const importEvents: RequestHandler<any, any, any, { type: ImportType }> =
             req.query.type
         );
 
-        importer
-            .catch(() => {
-                return 'error';
-            })
-            .then(async () => {
-                const jobRecord = await Jobs.findModel(req.user!, job.id);
-                notifyChangedRecord(req.io, { type: RecordType.Job, record: jobRecord });
-            });
+        if (process.env.NODE_ENV !== 'test') {
+            importer
+                .catch(() => {
+                    return 'error';
+                })
+                .then(async () => {
+                    const jobRecord = await Jobs.findModel(req.user!, job.id);
+
+                    notifyChangedRecord({ type: RecordType.Job, record: jobRecord });
+                });
+        }
 
         res.notifications = [
             {

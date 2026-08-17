@@ -1,4 +1,4 @@
-import { JobType, Prisma } from '@prisma/client';
+import { JobType, Prisma } from 'prisma/generated/client.js';
 import { faker } from '@faker-js/faker';
 
 const _generateJob = (

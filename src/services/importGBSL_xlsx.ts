@@ -1,8 +1,6 @@
-import { Event, EventAudience, TeachingAffected } from '@prisma/client';
-import readXlsxFile from 'read-excel-file/node';
-import { ImportRawEvent } from './importEvents';
-import { rmUndefined } from '../utils/filterHelpers';
-import { Cell } from 'read-excel-file/types';
+import { Event, EventAudience, TeachingAffected } from 'prisma/generated/client.js';
+import readXlsxFile, { type CellValue } from 'read-excel-file/node';
+import { ImportRawEvent } from './importEvents.js';
 
 const COLUMNS = {
     KW: 0,
@@ -133,7 +131,7 @@ const extractTeachingAffectedFromNumber = (audience?: number) => {
     }
 };
 
-const extractNumericCell = (cell: Cell): number | undefined => {
+const extractNumericCell = (cell: CellValue): number | undefined => {
     try {
         return Number.parseInt(`${cell}`, 10);
     } catch (e) {

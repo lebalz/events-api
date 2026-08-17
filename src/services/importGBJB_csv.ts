@@ -1,7 +1,7 @@
 import fs from 'fs';
 import { finished } from 'stream/promises';
 import { parse } from 'csv-parse';
-import { ImportRawEvent } from './importEvents';
+import { ImportRawEvent } from './importEvents.js';
 
 interface Record {
     ID: string;

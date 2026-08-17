@@ -1,40 +1,46 @@
 import request from 'supertest';
-import prisma from '../../src/prisma';
-import app, { API_URL } from '../../src/app';
-import { prepareUser as apiPrepareUser } from '../../src/models/user.helpers';
-import { generateUser, userSequence } from '../factories/user';
+import { jest } from '@jest/globals';
+import prisma from 'src/prisma.js';
+import app, { API_URL } from '../../src/app.js';
+import { prepareUser as apiPrepareUser } from '../../src/models/user.helpers.js';
+import { generateUser, userSequence } from '../factories/user.js';
 import {
     Department,
     Event,
     EventAudience,
     EventState,
-    Role,
     Semester,
     TeachingAffected,
     UntisTeacher,
     User
-} from '@prisma/client';
-import { generateUntisTeacher } from '../factories/untisTeacher';
-import { eventSequence, generateEvent } from '../factories/event';
-import { generateSemester } from '../factories/semester';
-import { generateDepartment } from '../factories/department';
-import { generateUntisClass } from '../factories/untisClass';
-import { generateUntisLesson } from '../factories/untisLesson';
+} from 'prisma/generated/client.js';
+import { generateUntisTeacher } from '../factories/untisTeacher.js';
+import { eventSequence, generateEvent } from '../factories/event.js';
+import { generateSemester } from '../factories/semester.js';
+import { generateDepartment } from '../factories/department.js';
+import { generateUntisClass } from '../factories/untisClass.js';
+import { generateUntisLesson } from '../factories/untisLesson.js';
 import { existsSync, readFileSync } from 'fs';
 import { createEvents } from 'ics';
-import stubs from './stubs/semesters.json';
-import { prepareEvent } from '../../src/services/createIcs';
-import { notify } from '../../src/middlewares/notify.nop';
-import { IoEvent } from '../../src/routes/socketEventTypes';
-import { IoRoom } from '../../src/routes/socketEvents';
+import stubs from './stubs/semesters.json' with { type: 'json' };
+import { prepareEvent } from '../../src/services/createIcs.js';
+import { notify } from '../../src/middlewares/notify.nop.js';
+import { IoEvent, RecordType } from '../../src/routes/socketEventTypes.js';
+import { IoRoom } from '../../src/routes/socketEvents.js';
 import { faker } from '@faker-js/faker';
-import { syncUntis2DB } from '../../src/services/syncUntis2DB';
-import { fetchUntis } from '../../src/services/__mocks__/fetchUntis';
-import { UntisDataProps, generateUntisData } from '../factories/untisData';
+import { syncUntis2DB } from '../../src/services/syncUntis2DB.js';
+import { fetchUntis } from '../../src/services/__mocks__/fetchUntis.js';
+import { UntisDataProps, generateUntisData } from '../factories/untisData.js';
 import _ from 'lodash';
-import { withoutDTSTAMP } from '../unit/__tests__/services.test';
-import { prepareRecord } from '../helpers/prepareRecord';
-import { DEFAULT_INCLUDE } from '../../src/models/subscription.helpers';
+import { withoutDTSTAMP } from '../unit/__tests__/services.test.js';
+import { prepareRecord } from '../helpers/prepareRecord.js';
+import { DEFAULT_INCLUDE } from '../../src/models/subscription.helpers.js';
+import { Role } from 'src/models/user.js';
+
+import { dirname } from 'path';
+import { fileURLToPath } from 'url';
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 jest.mock('../../src/services/fetchUntis');
 jest.mock('../../src/middlewares/notify.nop');
@@ -53,26 +59,14 @@ describe(`GET ${API_URL}/user authorized`, () => {
         expect(mNotification).toHaveBeenCalledTimes(0);
     });
     it('authenticates users', async () => {
-        await prisma.user.create({
+        const user = await prisma.user.create({
             data: generateUser({ email: 'foo@bar.ch' })
         });
         const result = await request(app)
             .get(`${API_URL}/user`)
             .set('authorization', JSON.stringify({ email: 'foo@bar.ch' }));
         expect(result.statusCode).toEqual(200);
-        expect(result.body).toEqual({
-            id: expect.any(String),
-            email: 'foo@bar.ch',
-            notifyOnEventUpdate: false,
-            notifyAdminOnReviewRequest: false,
-            notifyAdminOnReviewDecision: false,
-            role: Role.USER,
-            firstName: expect.any(String),
-            lastName: expect.any(String),
-            createdAt: expect.any(String),
-            updatedAt: expect.any(String),
-            untisId: null
-        });
+        expect(result.body).toEqual(prepareUser(user));
         expect(mNotification).toHaveBeenCalledTimes(0);
     });
 });
@@ -263,7 +257,7 @@ describe(`PUT ${API_URL}/users/:id/link_to_untis`, () => {
         expect(mNotification).toHaveBeenCalledTimes(1);
         expect(mNotification.mock.calls[0][0]).toEqual({
             event: IoEvent.CHANGED_RECORD,
-            message: { type: 'USER', record: prepareRecord(result.body) },
+            message: { type: RecordType.User, record: prepareRecord(result.body) },
             to: IoRoom.ALL
         });
     });
@@ -326,7 +320,7 @@ describe(`PUT ${API_URL}/users/:id/link_to_untis`, () => {
         expect(mNotification).toHaveBeenCalledTimes(1);
         expect(mNotification.mock.calls[0][0]).toEqual({
             event: IoEvent.CHANGED_RECORD,
-            message: { type: 'USER', record: prepareRecord({ ...result.body }) },
+            message: { type: RecordType.User, record: prepareRecord({ ...result.body }) },
             to: IoRoom.ALL
         });
     });
@@ -469,7 +463,7 @@ describe(`POST ${API_URL}/users/:id/create_ics`, () => {
         expect(mNotification.mock.calls[0][0]).toEqual({
             event: IoEvent.CHANGED_RECORD,
             message: {
-                type: 'USER',
+                type: RecordType.User,
                 record: prepareRecord({
                     ...result.body,
                     subscription: prepareRecord(result.body.subscription)
@@ -510,7 +504,7 @@ describe(`POST ${API_URL}/users/:id/set_role`, () => {
         expect(mNotification).toHaveBeenCalledTimes(1);
         expect(mNotification.mock.calls[0][0]).toEqual({
             event: IoEvent.CHANGED_RECORD,
-            message: { type: 'USER', record: prepareRecord(result.body) },
+            message: { type: RecordType.User, record: prepareRecord(result.body) },
             to: admin.id,
             toSelf: false
         });
@@ -535,7 +529,7 @@ describe(`POST ${API_URL}/users/:id/set_role`, () => {
         expect(mNotification).toHaveBeenCalledTimes(1);
         expect(mNotification.mock.calls[0][0]).toEqual({
             event: IoEvent.CHANGED_RECORD,
-            message: { type: 'USER', record: prepareRecord(result.body) },
+            message: { type: RecordType.User, record: prepareRecord(result.body) },
             to: user.id,
             toSelf: false
         });
@@ -560,7 +554,7 @@ describe(`POST ${API_URL}/users/:id/set_role`, () => {
         expect(mNotification).toHaveBeenCalledTimes(1);
         expect(mNotification.mock.calls[0][0]).toEqual({
             event: IoEvent.CHANGED_RECORD,
-            message: { type: 'USER', record: prepareRecord(result.body) },
+            message: { type: RecordType.User, record: prepareRecord(result.body) },
             to: user.id,
             toSelf: false
         });

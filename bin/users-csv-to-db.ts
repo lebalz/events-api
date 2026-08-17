@@ -1,9 +1,12 @@
 import { parse } from 'csv-parse';
 import fs from 'fs';
-import os from 'os';
 import { finished } from 'stream/promises';
-import prisma from '../src/prisma';
-import { Prisma, UntisTeacher } from '@prisma/client';
+import { Prisma, UntisTeacher } from 'prisma/generated/client.js';
+import prisma from 'src/prisma.js';
+import { dirname } from 'path';
+import { fileURLToPath } from 'url';
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 interface Record {
     id: string;

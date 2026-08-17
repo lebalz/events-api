@@ -1,7 +1,7 @@
 import { RequestHandler } from 'express';
-import { IoEvent, RecordType } from '../routes/socketEventTypes';
-import Subscription from '../models/subscription';
-import { ApiSubscription } from '../models/subscription.helpers';
+import { IoEvent, RecordType } from '../routes/socketEventTypes.js';
+import Subscription from '../models/subscription.js';
+import { ApiSubscription } from '../models/subscription.helpers.js';
 
 const NAME = RecordType.Subscription;
 

@@ -1,17 +1,14 @@
-import type { Role } from '@prisma/client';
-import { Request, Response, NextFunction } from 'express';
-import { AccessMatrix, PUBLIC_ROUTES } from '../routes/authConfig';
-import Logger from '../utils/logger';
-import { HttpStatusCode } from '../utils/errors/BaseError';
+import { NextFunction, Request, Response } from 'express';
+import { AccessMatrix, PUBLIC_ROUTES } from '../routes/authConfig.js';
+import Logger from '../utils/logger.js';
+import { HttpStatusCode } from '../utils/errors/BaseError.js';
+import { getAccessLevel, Role } from '../models/user.js';
 
 interface AccessRegexRule {
     path: string;
     regex: RegExp;
     weight: number;
-    access: {
-        methods: ('GET' | 'POST' | 'PUT' | 'DELETE')[];
-        roles: Role[];
-    }[];
+    access: { methods: ('GET' | 'POST' | 'PUT' | 'DELETE')[]; minRole: Role }[];
 }
 
 const regexFromRoute = (route: string) => {
@@ -40,7 +37,6 @@ export const createAccessRules = (accessMatrix: AccessMatrix): AccessRegexRule[]
     }, 0);
     const accessRulesWithRegex = accessRules.map((accessRule) => {
         const parts = accessRule.path.split('/');
-        let wildcards = 0;
         let weight = 0;
         const path = parts
             .map((part, idx) => {
@@ -55,12 +51,7 @@ export const createAccessRules = (accessMatrix: AccessMatrix): AccessRegexRule[]
             .join('\\/');
 
         const regex = new RegExp(`^${path}`, 'i');
-        return {
-            ...accessRule,
-            path: accessRule.path.toLowerCase(),
-            regex: regex,
-            weight: weight
-        };
+        return { ...accessRule, path: accessRule.path.toLowerCase(), regex: regex, weight: weight };
     });
     const rules = accessRulesWithRegex.sort((a, b) => b.weight - a.weight);
     Object.freeze(rules);
@@ -76,13 +67,20 @@ const routeGuard = (accessMatrix: AccessRegexRule[]) => {
         const reqPath = req.path.toLowerCase();
         /* istanbul ignore if */
         if (
-            !req.user &&
+            !(req as any).user &&
             !(PUBLIC_GET_ACCESS.has(reqPath) || PUBLIC_GET_ACCESS_REGEX.some((regex) => regex.test(reqPath)))
         ) {
             return res.status(HttpStatusCode.FORBIDDEN).json({ error: 'No roles claim found!' });
         }
 
-        if (!requestHasRequiredAttributes(accessMatrix, req.path, req.method, req.user?.role || 'PUBLIC')) {
+        if (
+            !requestHasRequiredAttributes(
+                accessMatrix,
+                req.path,
+                req.method,
+                (req.user?.role as Role | undefined) ?? 'PUBLIC'
+            )
+        ) {
             return res
                 .status(HttpStatusCode.FORBIDDEN)
                 .json({ error: 'User does not have the role, method or path' });
@@ -112,11 +110,16 @@ const requestHasRequiredAttributes = (
     if (!accessRule) {
         return false;
     }
-    const hasRole = accessRule.access.some(
+    const userAccessLevel = getAccessLevel(role);
+    const hasAccess = accessRule.access.some(
         (rule) =>
-            rule.roles.includes(role) && rule.methods.includes(method as 'GET' | 'POST' | 'PUT' | 'DELETE')
+            userAccessLevel >= getAccessLevel(rule.minRole) &&
+            rule.methods.includes(method as 'GET' | 'POST' | 'PUT' | 'DELETE')
     );
-    return hasRole;
+    Logger.info(
+        `${hasAccess ? '✅' : '❌'} Access Rule for ${role}: [${method}:${path}] ${JSON.stringify(accessRule)}`
+    );
+    return hasAccess;
 };
 
 export default routeGuard;

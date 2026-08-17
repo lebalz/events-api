@@ -1,7 +1,7 @@
-import { Prisma, PrismaClient, RegistrationPeriod, Role, User } from '@prisma/client';
-import prisma from '../prisma';
-import { HTTP403Error, HTTP404Error } from '../utils/errors/Errors';
-import { createDataExtractor } from '../controllers/helpers';
+import { Prisma, PrismaClient, RegistrationPeriod, User } from 'prisma/generated/client.js';
+import prisma from 'src/prisma.js';
+import { HTTP400Error, HTTP404Error } from '../utils/errors/Errors.js';
+import { createDataExtractor } from '../controllers/helpers.js';
 
 const getData = createDataExtractor<Prisma.RegistrationPeriodUncheckedUpdateInput>([
     'name',
@@ -24,6 +24,17 @@ export const prepareRegistrationPeriod = (
         delete prepared.departments;
     }
     return prepared;
+};
+
+const toDate = (value: unknown) => {
+    if (value instanceof Date) {
+        return value;
+    }
+    if (typeof value === 'string' || typeof value === 'number') {
+        const date = new Date(value);
+        return Number.isNaN(date.getTime()) ? null : date;
+    }
+    return null;
 };
 
 function RegistrationPeriods(db: PrismaClient['registrationPeriod']) {
@@ -89,6 +100,9 @@ function RegistrationPeriods(db: PrismaClient['registrationPeriod']) {
         async createModel(data: Prisma.RegistrationPeriodUncheckedCreateInput) {
             /** authorization handled by route guard */
             const { start, end, name, eventRangeEnd, eventRangeStart } = data;
+            if (toDate(start)! > toDate(end)!) {
+                throw new HTTP400Error('Start date must be before end date');
+            }
             const model = await db.create({
                 data: {
                     start,
@@ -107,6 +121,17 @@ function RegistrationPeriods(db: PrismaClient['registrationPeriod']) {
             /** authorization handled by route guard */
             /** remove fields not updatable*/
             const sanitized = getData(data);
+
+            const current = await db.findUnique({ where: { id } });
+            if (!current) {
+                throw new HTTP404Error('Registration Period not found');
+            }
+
+            const nextStart = toDate(sanitized.start) ?? current.start;
+            const nextEnd = toDate(sanitized.end) ?? current.end;
+            if (nextStart > nextEnd) {
+                throw new HTTP400Error('Start date must be before end date');
+            }
 
             const model = await db.update({
                 where: { id: id },

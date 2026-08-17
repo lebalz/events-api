@@ -1,27 +1,28 @@
 import type {
     Department,
     EventGroup,
-    EventState,
     Job,
     Prisma,
     RegistrationPeriod,
     Semester,
     User
-} from '@prisma/client';
-import { IoRoom } from './socketEvents';
-import { ApiEvent } from '../models/event.helpers';
-import { ApiUser } from '../models/user.helpers';
-import { ApiSubscription } from '../models/subscription.helpers';
+} from 'prisma/generated/client.js';
+import { IoRoom } from './socketEvents.js';
+import { ApiEvent } from '../models/event.helpers.js';
+import { ApiUser } from '../models/user.helpers.js';
+import { ApiSubscription } from '../models/subscription.helpers.js';
+import { Role } from 'src/models/user.js';
 
 export enum IoEvent {
     NEW_RECORD = 'NEW_RECORD',
     CHANGED_RECORD = 'CHANGED_RECORD',
-    DELETED_RECORD = 'DELETED_RECORD'
+    DELETED_RECORD = 'DELETED_RECORD',
+    ACTION = 'ACTION'
 }
 
 export enum RecordType {
     Event = 'EVENT',
-    User = 'USER',
+    User = Role.USER,
     Job = 'JOB',
     Department = 'DEPARTMENT',
     Semester = 'SEMESTER',
@@ -44,16 +45,19 @@ type TypeRecordMap = {
 export interface NewRecord<T extends RecordType> {
     type: T;
     record: TypeRecordMap[T];
+    id?: never;
 }
 
 export interface ChangedRecord<T extends RecordType> {
     type: T;
     record: TypeRecordMap[T];
+    id?: never;
 }
 
 export interface DeletedRecord {
     type: RecordType;
     id: string;
+    record?: never;
 }
 
 interface NotificationBase {
@@ -85,10 +89,17 @@ export enum IoEvents {
     AffectedTeachersTmp = 'affectedTeachers:tmp'
 }
 
+export interface Action<T = {}> {
+    action: T;
+    roomIds: string[];
+    userIds: string[];
+}
+
 export type ServerToClientEvents = {
     [IoEvent.NEW_RECORD]: (message: NewRecord<RecordType>) => void;
     [IoEvent.CHANGED_RECORD]: (message: ChangedRecord<RecordType>) => void;
     [IoEvent.DELETED_RECORD]: (message: DeletedRecord) => void;
+    [IoEvent.ACTION]: (message: Action['action']) => void;
 };
 
 export interface ClientToServerEvents {

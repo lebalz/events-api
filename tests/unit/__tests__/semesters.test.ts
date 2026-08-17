@@ -1,9 +1,10 @@
-import { Prisma, Role } from '@prisma/client';
-import Semesters from '../../../src/models/semester';
-import prisma from '../../../src/prisma';
-import { createUser } from './users.test';
-import { HTTP400Error, HTTP403Error, HTTP404Error } from '../../../src/utils/errors/Errors';
-import { generateSemester } from '../../factories/semester';
+import { Prisma } from 'prisma/generated/client.js';
+import Semesters from '../../../src/models/semester.js';
+import prisma from 'src/prisma.js';
+import { createUser } from './users.test.js';
+import { HTTP400Error, HTTP403Error, HTTP404Error } from '../../../src/utils/errors/Errors.js';
+import { generateSemester } from '../../factories/semester.js';
+import { Role } from 'src/models/user.js';
 
 export const createSemester = async (props: Partial<Prisma.SemesterUncheckedCreateInput>) => {
     return await prisma.semester.create({
@@ -28,7 +29,7 @@ describe('Semester', () => {
         });
         test('throws on not existing record', async () => {
             await expect(Semesters.findModel('5bb04f7b-dec6-4335-9a84-bdf5fa5e2b87')).rejects.toEqual(
-                new HTTP404Error('Semester with id 5bb04f7b-dec6-4335-9a84-bdf5fa5e2b87! not found')
+                new HTTP404Error('Semester with id 5bb04f7b-dec6-4335-9a84-bdf5fa5e2b87 not found')
             );
         });
     });
