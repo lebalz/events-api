@@ -11,6 +11,7 @@
       "src/*": ["./src/*"],
       "prisma/*": ["./prisma/*"],
     },
+    "rootDir": ".",
     "outDir": "dist",
     "sourceMap": true,
     "strict": true,
