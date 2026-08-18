@@ -12,7 +12,7 @@ export const prepareUser = (
 ): ApiUser => {
     const isSelf = !actor || actor.id === user.id;
     const subscription = (user.subscription && isSelf) ? prepareSubscription(user.subscription) : undefined;
-    const prepared = {
+    const prepared: ApiUser = {
         ...user,
         subscription: subscription
     };
@@ -23,8 +23,11 @@ export const prepareUser = (
         delete (prepared as any).subscription;
     }
     if (isSelf || actor.role === 'admin') {
-        (prepared as unknown as ApiUser).authProviders = (user.accounts || []).map((a) => a.providerId);
+        prepared.authProviders = (user.accounts || []).map((a) => a.providerId);
     }
-    delete (user as any).accounts;
+    if (prepared.authProviders && prepared.authProviders.length === 0) {
+        delete (prepared as any).authProviders;
+    }
+    delete (prepared as any).accounts;
     return prepared;
 };
