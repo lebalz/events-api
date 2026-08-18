@@ -22,7 +22,7 @@ export enum IoEvent {
 
 export enum RecordType {
     Event = 'EVENT',
-    User = Role.USER,
+    User = 'USER',
     Job = 'JOB',
     Department = 'DEPARTMENT',
     Semester = 'SEMESTER',

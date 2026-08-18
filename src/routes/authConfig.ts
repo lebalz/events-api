@@ -19,6 +19,10 @@ export const PUBLIC_ROUTES = ['/events', '/events/:id', '/departments', '/semest
 
 const authConfig: Config = {
     accessMatrix: {
+        admin: {
+            path: '/admin',
+            access: [{ methods: ['DELETE', 'GET', 'POST', 'PUT'], minRole: Role.ADMIN }]
+        },
         user: {
             path: '/user',
             access: [
