@@ -40,7 +40,7 @@ export const update: RequestHandler<{ id: string }, any, { data: User }> = async
 
 export const all: RequestHandler = async (req, res, next) => {
     try {
-        const [users, currentUser] = await Promise.all([Users.all(), Users.findModel(req.user!.id)]);
+        const [users, currentUser] = await Promise.all([Users.all(req.user), Users.findModel(req.user!.id)]);
         if (currentUser) {
             const userIdx = users.findIndex((u) => u.id === currentUser.id);
             users.splice(userIdx, 1, currentUser);

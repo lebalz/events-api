@@ -425,7 +425,7 @@ describe(`POST ${API_URL}/users/:id/create_ics`, () => {
         });
         expect(subscription).not.toBeNull();
         expect(result.body).toEqual({
-            ...prepareUser(apiPrepareUser({ ...user, subscription: subscription })),
+            ...prepareUser(apiPrepareUser({ ...user, subscription: subscription, accounts: [] })),
             updatedAt: expect.any(String)
         });
         expect(

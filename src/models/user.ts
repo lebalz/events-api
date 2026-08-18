@@ -73,7 +73,7 @@ function Users(db: PrismaClient[Role.USER]) {
             });
             return prepareUser(res);
         },
-        async all(actor: UserModel): Promise<ApiUser[]> {
+        async all(actor?: UserModel): Promise<ApiUser[]> {
             const all = await db.findMany({
                 include: {
                     subscription: {
