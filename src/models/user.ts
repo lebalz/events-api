@@ -40,7 +40,8 @@ function Users(db: PrismaClient[Role.USER]) {
                 include: {
                     subscription: {
                         include: SUBSCRIPTION_INCLUDE
-                    }
+                    },
+                    accounts: { select: { providerId: true } }
                 }
             });
             if (!user) {
@@ -66,13 +67,24 @@ function Users(db: PrismaClient[Role.USER]) {
                 include: {
                     subscription: {
                         include: SUBSCRIPTION_INCLUDE
-                    }
+                    },
+                    accounts: { select: { providerId: true } }
                 }
             });
             return prepareUser(res);
         },
-        async all(): Promise<UserModel[]> {
-            return await db.findMany({});
+        async all(actor: UserModel): Promise<ApiUser[]> {
+            const all = await db.findMany({
+                include: {
+                    subscription: {
+                        include: SUBSCRIPTION_INCLUDE
+                    },
+                    accounts: {
+                        select: { providerId: true }
+                    }
+                }
+            });
+            return all.map((user) => prepareUser(user, actor));
         },
         async linkToUntis(actor: UserModel, userId: string, untisId: number | null): Promise<ApiUser> {
             if (actor.role !== Role.ADMIN && actor.id !== userId) {
@@ -89,7 +101,8 @@ function Users(db: PrismaClient[Role.USER]) {
                     include: {
                         subscription: {
                             include: SUBSCRIPTION_INCLUDE
-                        }
+                        },
+                        accounts: { select: { providerId: true } }
                     }
                 });
                 if (process.env.NODE_ENV !== 'test') {
@@ -111,18 +124,25 @@ function Users(db: PrismaClient[Role.USER]) {
                 throw error;
             }
         },
-        async setRole(actor: UserModel, userId: string, role: Role): Promise<UserModel> {
+        async setRole(actor: UserModel, userId: string, role: Role): Promise<ApiUser> {
             if (actor.role !== Role.ADMIN) {
                 throw new HTTP403Error('Not authorized');
             }
-            return await db.update({
+            const user = await db.update({
                 where: {
                     id: userId
                 },
                 data: {
                     role: role
+                },
+                include: {
+                    subscription: {
+                        include: SUBSCRIPTION_INCLUDE
+                    },
+                    accounts: { select: { providerId: true } }
                 }
             });
+            return prepareUser(user);
         },
         async createIcs(actor: UserModel, userId: string): Promise<ApiUser> {
             if (actor.id !== userId) {
@@ -130,10 +150,11 @@ function Users(db: PrismaClient[Role.USER]) {
             }
             const subscription = await createIcsFile(userId);
             delete (subscription as any).userId; // remove redundant userId
-            return {
-                ...prepareUser({ ...actor, subscription: null }),
-                subscription: subscription
-            };
+            const user = await this.findModel(userId);
+            if (!user) {
+                throw new HTTP404Error('User not found');
+            }
+            return user;
         },
         async affectedEvents(actor: UserModel, userId: string, semesterId?: string): Promise<ApiEvent[]> {
             if (actor.id !== userId && actor.role !== Role.ADMIN) {
@@ -146,10 +167,10 @@ function Users(db: PrismaClient[Role.USER]) {
             const semester = semesterId
                 ? await prisma.semester.findUnique({ where: { id: semesterId } })
                 : await prisma.semester.findFirst({
-                      where: {
-                          AND: [{ start: { lte: new Date() } }, { end: { gte: new Date() } }]
-                      }
-                  });
+                    where: {
+                        AND: [{ start: { lte: new Date() } }, { end: { gte: new Date() } }]
+                    }
+                });
             if (!semester) {
                 throw new HTTP404Error('Semester not found');
             }
