@@ -1,16 +1,18 @@
 import request from 'supertest';
-import app, { API_URL } from '../../src/app';
-import prisma from '../../src/prisma';
-import { generateUser } from '../factories/user';
-import { RegistrationPeriod, Role } from '@prisma/client';
+import { jest } from '@jest/globals';
+import app, { API_URL } from '../../src/app.js';
+import prisma from 'src/prisma.js';
+import { generateUser } from '../factories/user.js';
+import { RegistrationPeriod } from 'prisma/generated/client.js';
 import _ from 'lodash';
-import { notify } from '../../src/middlewares/notify.nop';
-import { IoEvent } from '../../src/routes/socketEventTypes';
+import { notify } from '../../src/middlewares/notify.nop.js';
+import { IoEvent } from '../../src/routes/socketEventTypes.js';
 import { faker } from '@faker-js/faker';
-import { prepareRegistrationPeriod as apiPreparedRP } from '../../src/models/registrationPeriod';
-import { generateDepartment } from '../factories/department';
-import { generateRegistrationPeriod } from '../factories/registrationPeriod';
-import { prepareRecord } from '../helpers/prepareRecord';
+import { prepareRegistrationPeriod as apiPreparedRP } from '../../src/models/registrationPeriod.js';
+import { generateDepartment } from '../factories/department.js';
+import { generateRegistrationPeriod } from '../factories/registrationPeriod.js';
+import { prepareRecord } from '../helpers/prepareRecord.js';
+import { Role } from 'src/models/user.js';
 
 jest.mock('../../src/middlewares/notify.nop');
 const mNotification = <jest.Mock<typeof notify>>notify;
@@ -132,7 +134,7 @@ describe(`PUT ${API_URL}/registration_periods/:id`, () => {
         });
         expect(mNotification).toHaveBeenCalledTimes(1);
         expect(
-            prepareRecord(mNotification.mock.calls[0][0], {
+            prepareRecord(mNotification.mock.calls[0][0] as any, {
                 sortedArrayFields: ['message.record.departmentIds']
             })
         ).toEqual({

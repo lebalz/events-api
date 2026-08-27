@@ -1,15 +1,17 @@
 import request from 'supertest';
-import app, { API_URL } from '../../src/app';
-import prisma from '../../src/prisma';
-import { generateUser } from '../factories/user';
-import { generateImportJob, generateSyncJob, jobSequence } from '../factories/job';
-import { generateSemester } from '../factories/semester';
-import { Event, EventState, Job, Prisma } from '@prisma/client';
-import { eventSequence } from '../factories/event';
-import { notify } from '../../src/middlewares/notify.nop';
-import { IoEvent } from '../../src/routes/socketEventTypes';
-import { IoRoom } from '../../src/routes/socketEvents';
-import { prepareRecord } from '../helpers/prepareRecord';
+import { jest } from '@jest/globals';
+import app, { API_URL } from '../../src/app.js';
+import prisma from 'src/prisma.js';
+import { generateUser } from '../factories/user.js';
+import { generateImportJob, generateSyncJob, jobSequence } from '../factories/job.js';
+import { generateSemester } from '../factories/semester.js';
+import { Event, EventState, Job, Prisma } from 'prisma/generated/client.js';
+import { eventSequence } from '../factories/event.js';
+import { notify } from '../../src/middlewares/notify.nop.js';
+import { IoEvent } from '../../src/routes/socketEventTypes.js';
+import { IoRoom } from '../../src/routes/socketEvents.js';
+import { prepareRecord } from '../helpers/prepareRecord.js';
+import { Role } from 'src/models/user.js';
 
 jest.mock('../../src/middlewares/notify.nop');
 const mNotification = <jest.Mock<typeof notify>>notify;
@@ -94,7 +96,14 @@ describe(`GET ${API_URL}/jobs/:id`, () => {
             .get(`${API_URL}/jobs/efce93f5-0ead-4d5d-8143-0fd7267db689`)
             .set('authorization', JSON.stringify({ email: user.email }));
         expect(result.statusCode).toEqual(404);
-        expect(result.body).toEqual({});
+        expect(result.body).toEqual({
+            errors: [
+                expect.objectContaining({
+                    status: 404,
+                    name: 'NOT FOUND'
+                })
+            ]
+        });
         expect(mNotification).toHaveBeenCalledTimes(0);
     });
 
@@ -110,7 +119,7 @@ describe(`GET ${API_URL}/jobs/:id`, () => {
     });
 
     it('admin can get others jobs', async () => {
-        const admin = await prisma.user.create({ data: generateUser({ role: 'ADMIN' }) });
+        const admin = await prisma.user.create({ data: generateUser({ role: Role.ADMIN }) });
         const other = await prisma.user.create({ data: generateUser() });
         const job = await prisma.job.create({ data: generateImportJob({ userId: other.id }) });
         const result = await request(app)
@@ -162,7 +171,7 @@ describe(`PUT ${API_URL}/jobs/:id`, () => {
     });
 
     it('allows admins to update description and state', async () => {
-        const admin = await prisma.user.create({ data: generateUser({ role: 'ADMIN' }) });
+        const admin = await prisma.user.create({ data: generateUser({ role: Role.ADMIN }) });
         const job = await prisma.job.create({
             data: generateImportJob({ userId: admin.id, description: 'Bar', state: 'PENDING' })
         });
@@ -330,7 +339,7 @@ describe(`PUT ${API_URL}/jobs/:id`, () => {
         const other = await prisma.user.create({ data: generateUser() });
         const semester = await prisma.semester.create({ data: generateSemester() });
 
-        const admin = await prisma.user.create({ data: generateUser({ role: 'ADMIN' }) });
+        const admin = await prisma.user.create({ data: generateUser({ role: Role.ADMIN }) });
         const job = await prisma.job.create({
             data: generateImportJob({ userId: admin.id, description: 'Bar', state: 'PENDING' })
         });

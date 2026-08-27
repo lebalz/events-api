@@ -1,4 +1,4 @@
-import prisma from '../prisma';
+import prisma from 'src/prisma.js';
 
 export const affectedLessons = async (eventId: string, semesterId: string) => {
     const result = await prisma.view_LessonsAffectedByEvents.findMany({

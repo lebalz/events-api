@@ -1,5 +1,5 @@
-import { Prisma, PrismaClient } from '@prisma/client';
-import prisma from '../prisma';
+import { Prisma, PrismaClient } from 'prisma/generated/client.js';
+import prisma from 'src/prisma.js';
 
 export interface UntisSubject {
     name: string;

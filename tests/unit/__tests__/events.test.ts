@@ -1,18 +1,19 @@
-import { EventState, Prisma, Role } from '@prisma/client';
-import { createDepartment } from './departments.test';
-import Events from '../../../src/models/event';
-import { normalizeAudience, prepareEvent } from '../../../src/models/event.helpers';
-import { HTTP400Error, HTTP403Error, HTTP404Error } from '../../../src/utils/errors/Errors';
-import prisma from '../../../src/prisma';
-import { createUser } from './users.test';
-import { generateEvent } from '../../factories/event';
+import { EventState, Prisma } from 'prisma/generated/client.js';
+import { createDepartment } from './departments.test.js';
+import Events from '../../../src/models/event.js';
+import { normalizeAudience, prepareEvent } from 'src/models/event.helpers.js';
+import { HTTP400Error, HTTP403Error, HTTP404Error } from '../../../src/utils/errors/Errors.js';
+import prisma from 'src/prisma.js';
+import { createUser } from './users.test.js';
+import { generateEvent } from '../../factories/event.js';
 import { setTimeout } from 'timers/promises';
 import _ from 'lodash';
-import { createEventGroup } from './eventGroups.test';
-import EventGroups from '../../../src/models/eventGroup';
-import { createRegistrationPeriod } from './registrationPeriods.test';
+import { createEventGroup } from './eventGroups.test.js';
+import EventGroups from '../../../src/models/eventGroup.js';
+import { createRegistrationPeriod } from './registrationPeriods.test.js';
 import { faker } from '@faker-js/faker';
-import { createSemester } from './semesters.test';
+import { createSemester } from './semesters.test.js';
+import { Role } from 'src/models/user.js';
 
 export const createEvent = async (
     props: Partial<Prisma.EventUncheckedCreateInput> & {
@@ -879,6 +880,33 @@ describe('normalize audience', () => {
         expect(normalized.classGroups).toHaveLength(0);
         expect(normalized.classes.sort()).toEqual(['24Ga', '25Ga', '26Ga', '27Ga'].sort());
     });
+    test('respectes semester transition dates when normalizing classes', async () => {
+        const deps = await Promise.all([
+            createDepartment({
+                letter: 'G',
+                classLetters: ['a', 'b', 'c'],
+                schoolYears: 4,
+                semesterTransitionDay: 14,
+                semesterTransitionMonth: 7
+            }),
+            createDepartment({
+                letter: 'p',
+                classLetters: ['A', 'B'],
+                schoolYears: 1,
+                semesterTransitionDay: 16,
+                semesterTransitionMonth: 7
+            })
+        ]);
+        const normalized = normalizeAudience(deps, {
+            departmentIds: [],
+            classGroups: [],
+            classes: ['24Ga', '25Ga', '24pA', '25pB', '26pA'],
+            start: new Date('2024-07-15'),
+            end: new Date('2024-07-15')
+        });
+        expect(normalized.classGroups).toHaveLength(0);
+        expect(normalized.classes.sort()).toEqual(['25Ga', '24pA'].sort());
+    });
     test('removes classGroups which did already graduate more than a year ago or are not at the school', async () => {
         const deps = await setup();
         const normalized = normalizeAudience(deps, {
@@ -890,5 +918,32 @@ describe('normalize audience', () => {
         });
         expect(normalized.classGroups.sort()).toEqual(['24G', '25G', '26G', '27G'].sort());
         expect(normalized.classes).toHaveLength(0);
+    });
+    test('respectes semester transition dates when normalizing class groups', async () => {
+        const deps = await Promise.all([
+            createDepartment({
+                letter: 'G',
+                classLetters: ['a', 'b', 'c'],
+                schoolYears: 4,
+                semesterTransitionDay: 14,
+                semesterTransitionMonth: 7
+            }),
+            createDepartment({
+                letter: 'p',
+                classLetters: ['A', 'B'],
+                schoolYears: 1,
+                semesterTransitionDay: 16,
+                semesterTransitionMonth: 7
+            })
+        ]);
+        const normalized = normalizeAudience(deps, {
+            departmentIds: [],
+            classGroups: ['24G', '25G', '24p', '25p', '26p'],
+            classes: [],
+            start: new Date('2024-07-15'),
+            end: new Date('2024-07-15')
+        });
+        expect(normalized.classes).toHaveLength(0);
+        expect(normalized.classGroups.sort()).toEqual(['25G', '24p'].sort());
     });
 });

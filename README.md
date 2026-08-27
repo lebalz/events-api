@@ -31,8 +31,24 @@ yarn run prisma migrate dev
 | `ICAL_DIR`            | Directory to export .ics files to                                                                                                                         | `./ical`    |
 | `EXPORT_DIR`          | Directory to export .xlsx files to                                                                                                                        | `./export`  |
 | `UPLOAD_DIR`          | Directory to upload excels for import                                                                                                                     | `./uploads` |
-| `WITH_DEPLOY_PREVIEW` | When set to `true`, the app will allow requests from `https://deploy-preview-\d+--gbsl-events-app.netlify.app` and use `sameSite=none` instead of strict. |             |
 | `SENTRY_AUTH_TOKEN`   | Auth token for uploading sourcemaps to sentry. Get it by configuring your app with `npx @sentry/wizard@latest -i sourcemaps`.                             |             |
+| `APP_NAME`            | App name, used to create the cookie name for authentication.                                                                                              |             |
+| `ALLOWED_ORIGINS`     | Comma-Separated Origins whicht are allowed to fetch from the API. `ALLOWED_ORIGINS="https://events.gbsl.website,https://..."`                             |             |
+| `BETTER_AUTH_SECRET`  | `openssl rand -base64 32` generated secret.                                                                                                               |             |
+| `BETTER_AUTH_URL`     | Url of the api, e.g. `https://events-dev-api.gbsl.website`                                                                                                |             |
+| `EVENTS_APP_URL`      | Domain where the Frontend is hosted, e.g. `https://events-dev.gbsl.website`                                                                               |             |
+| `MAIL_HOST`           | e.g. `authsmtp.securemail.pro`                                                                                                                            |             |
+| `MAIL_PASSWORD`       |                                                                                                                                                           |             |
+| `MAIL_USERNAME`       | `mail@domain.ch`                                                                                                                                          |             |
+| `MSAL_CLIENT_ID`      | `xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx`                                                                                                                    |             |
+| `MSAL_CLIENT_SECRET`  |                                                                                                                                                           |             |
+| `MSAL_TENANT_ID`      | `xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx`                                                                                                                    |             |
+| `NETLIFY_PROJECT_NAME`| optional, used to allow deploy previews to request the api. `gbsl-events-app`                                                                             |             |
+| `UNTIS_BASE_URL`      | `gym-biel-bienne.webuntis.com`                                                                                                                            |             |
+| `UNTIS_SCHOOL`        | `gym-biel-bienne`                                                                                                                                         |             |
+| `UNTIS_SECRET`        |                                                                                                                                                           |             |
+| `UNTIS_USER`          |                                                                                                                                                           |             |
+|
 
 for development only (for seeding the db):
 

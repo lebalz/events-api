@@ -1,33 +1,13 @@
-import { Role } from '@prisma/client';
+import { Role } from 'src/models/user.js';
 
-interface Credentials {
-    tenantID: string;
-    clientID: string;
-}
-interface Metadata {
-    authority: string;
-    discovery: string;
-    version: string;
-}
-interface Settings {
-    validateIssuer: boolean;
-    passReqToCallback: boolean;
-    loggingLevel: string;
-}
 export interface AccessMatrix {
     [key: string]: {
         path: string;
-        access: {
-            methods: ('GET' | 'POST' | 'PUT' | 'DELETE')[];
-            roles: Role[];
-        }[];
+        access: { methods: ('GET' | 'POST' | 'PUT' | 'DELETE')[]; minRole: Role }[];
     };
 }
 
 interface Config {
-    credentials: Credentials;
-    metadata: Metadata;
-    settings: Settings;
     accessMatrix: AccessMatrix;
 }
 
@@ -38,36 +18,17 @@ interface Config {
 export const PUBLIC_ROUTES = ['/events', '/events/:id', '/departments', '/semesters', '/untis/classes'];
 
 const authConfig: Config = {
-    credentials: {
-        tenantID: process.env.TENANT_ID || '',
-        clientID: process.env.CLIENT_ID || ''
-    },
-    metadata: {
-        authority: 'login.microsoftonline.com',
-        discovery: '.well-known/openid-configuration',
-        version: 'v2.0'
-    },
-    settings: {
-        validateIssuer: true,
-        passReqToCallback: false,
-        loggingLevel: 'warn'
-    },
     accessMatrix: {
-        checklogin: {
-            path: '/checklogin',
-            access: [
-                {
-                    methods: ['GET'],
-                    roles: [Role.ADMIN, Role.USER]
-                }
-            ]
+        admin: {
+            path: '/admin',
+            access: [{ methods: ['DELETE', 'GET', 'POST', 'PUT'], minRole: Role.ADMIN }]
         },
         user: {
             path: '/user',
             access: [
                 {
                     methods: ['GET', 'POST'],
-                    roles: [Role.ADMIN, Role.USER]
+                    minRole: Role.USER
                 }
             ]
         },
@@ -76,7 +37,7 @@ const authConfig: Config = {
             access: [
                 {
                     methods: ['GET'],
-                    roles: [Role.ADMIN, Role.USER]
+                    minRole: Role.USER
                 }
             ]
         },
@@ -85,7 +46,7 @@ const authConfig: Config = {
             access: [
                 {
                     methods: ['GET'],
-                    roles: [Role.ADMIN, Role.USER]
+                    minRole: Role.USER
                 }
             ]
         },
@@ -94,7 +55,7 @@ const authConfig: Config = {
             access: [
                 {
                     methods: ['GET', 'PUT'],
-                    roles: [Role.ADMIN, Role.USER]
+                    minRole: Role.USER
                 }
             ]
         },
@@ -103,7 +64,7 @@ const authConfig: Config = {
             access: [
                 {
                     methods: ['PUT'],
-                    roles: [Role.ADMIN, Role.USER]
+                    minRole: Role.USER
                 }
             ]
         },
@@ -112,7 +73,7 @@ const authConfig: Config = {
             access: [
                 {
                     methods: ['PUT'],
-                    roles: [Role.ADMIN]
+                    minRole: Role.ADMIN
                 }
             ]
         },
@@ -121,7 +82,7 @@ const authConfig: Config = {
             access: [
                 {
                     methods: ['POST'],
-                    roles: [Role.ADMIN, Role.USER]
+                    minRole: Role.USER
                 }
             ]
         },
@@ -130,7 +91,7 @@ const authConfig: Config = {
             access: [
                 {
                     methods: ['GET'],
-                    roles: [Role.ADMIN, Role.USER]
+                    minRole: Role.USER
                 }
             ]
         },
@@ -139,7 +100,7 @@ const authConfig: Config = {
             access: [
                 {
                     methods: ['POST'],
-                    roles: [Role.ADMIN, Role.USER]
+                    minRole: Role.USER
                 }
             ]
         },
@@ -148,11 +109,11 @@ const authConfig: Config = {
             access: [
                 {
                     methods: ['GET'],
-                    roles: [Role.ADMIN, Role.USER]
+                    minRole: Role.USER
                 },
                 {
                     methods: ['POST', 'PUT', 'DELETE'],
-                    roles: [Role.ADMIN, Role.USER]
+                    minRole: Role.USER
                 }
             ]
         },
@@ -161,7 +122,7 @@ const authConfig: Config = {
             access: [
                 {
                     methods: ['POST'],
-                    roles: [Role.ADMIN, Role.USER]
+                    minRole: Role.USER
                 }
             ]
         },
@@ -170,7 +131,7 @@ const authConfig: Config = {
             access: [
                 {
                     methods: ['GET', 'POST', 'PUT', 'DELETE'],
-                    roles: [Role.USER, Role.ADMIN]
+                    minRole: Role.USER
                 }
             ]
         },
@@ -179,11 +140,11 @@ const authConfig: Config = {
             access: [
                 {
                     methods: ['GET'],
-                    roles: [Role.ADMIN, Role.USER]
+                    minRole: Role.USER
                 },
                 {
                     methods: ['GET', 'POST'],
-                    roles: [Role.ADMIN]
+                    minRole: Role.ADMIN
                 }
             ]
         },
@@ -192,7 +153,7 @@ const authConfig: Config = {
             access: [
                 {
                     methods: ['POST'],
-                    roles: [Role.ADMIN]
+                    minRole: Role.ADMIN
                 }
             ]
         },
@@ -201,7 +162,7 @@ const authConfig: Config = {
             access: [
                 {
                     methods: ['GET'],
-                    roles: [Role.ADMIN, Role.USER]
+                    minRole: Role.USER
                 }
             ]
         },
@@ -210,7 +171,7 @@ const authConfig: Config = {
             access: [
                 {
                     methods: ['GET', 'PUT', 'DELETE'],
-                    roles: [Role.ADMIN, Role.USER]
+                    minRole: Role.USER
                 }
             ]
         },
@@ -219,11 +180,11 @@ const authConfig: Config = {
             access: [
                 {
                     methods: ['GET'],
-                    roles: [Role.ADMIN, Role.USER]
+                    minRole: Role.USER
                 },
                 {
                     methods: ['GET', 'PUT', 'POST', 'DELETE'],
-                    roles: [Role.ADMIN]
+                    minRole: Role.ADMIN
                 }
             ]
         },
@@ -232,11 +193,11 @@ const authConfig: Config = {
             access: [
                 {
                     methods: ['GET'],
-                    roles: [Role.ADMIN, Role.USER]
+                    minRole: Role.USER
                 },
                 {
                     methods: ['GET', 'PUT', 'POST', 'DELETE'],
-                    roles: [Role.ADMIN]
+                    minRole: Role.ADMIN
                 }
             ]
         },
@@ -245,11 +206,11 @@ const authConfig: Config = {
             access: [
                 {
                     methods: ['GET'],
-                    roles: [Role.ADMIN, Role.USER]
+                    minRole: Role.USER
                 },
                 {
                     methods: ['PUT', 'DELETE', 'POST'],
-                    roles: [Role.ADMIN]
+                    minRole: Role.ADMIN
                 }
             ]
         },
@@ -258,7 +219,7 @@ const authConfig: Config = {
             access: [
                 {
                     methods: ['PUT', 'POST'],
-                    roles: [Role.ADMIN, Role.USER]
+                    minRole: Role.USER
                 }
             ]
         }

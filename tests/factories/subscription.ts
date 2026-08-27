@@ -1,6 +1,6 @@
-import { Prisma } from '@prisma/client';
+import { Prisma } from 'prisma/generated/client.js';
 import { faker } from '@faker-js/faker';
-import { ApiSubscription } from '../../src/models/subscription.helpers';
+import { ApiSubscription } from '../../src/models/subscription.helpers.js';
 
 export const generateSubscription = (
     props: Partial<ApiSubscription> & {

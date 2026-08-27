@@ -1,13 +1,15 @@
-import { API_URL } from '../../src/app';
-import prisma from '../../src/prisma';
-import { generateUser } from '../factories/user';
-import { Department, EventGroup, Role, Semester, UntisTeacher } from '@prisma/client';
+import { API_URL } from '../../src/app.js';
+import { jest } from '@jest/globals';
+import prisma from 'src/prisma.js';
+import { generateUser } from '../factories/user.js';
+import { Department, EventGroup, Semester, UntisTeacher } from 'prisma/generated/client.js';
 import _ from 'lodash';
-import { notify } from '../../src/middlewares/notify.nop';
-import { generateUntisData, UntisDataProps } from '../factories/untisData';
-import { syncUntis2DB } from '../../src/services/syncUntis2DB';
-import { fetchUntis } from '../../src/services/__mocks__/fetchUntis';
-import { affectedLessons } from '../../src/services/eventChecker';
+import { notify } from '../../src/middlewares/notify.nop.js';
+import { generateUntisData, UntisDataProps } from '../factories/untisData.js';
+import { syncUntis2DB } from '../../src/services/syncUntis2DB.js';
+import { fetchUntis } from '../../src/services/__mocks__/fetchUntis.js';
+import { affectedLessons } from '../../src/services/eventChecker.js';
+import { Role } from 'src/models/user.js';
 
 jest.mock('../../src/services/fetchUntis');
 jest.mock('../../src/middlewares/notify.nop');

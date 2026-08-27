@@ -1,14 +1,12 @@
-import { JobType, Prisma, Role, User } from '@prisma/client';
-import Semesters from '../../../src/models/semester';
-import prisma from '../../../src/prisma';
-import { createUser } from './users.test';
-import { HTTP400Error, HTTP403Error, HTTP404Error } from '../../../src/utils/errors/Errors';
-import untisTeachers from '../../../src/models/untisTeacher';
-import { createSemester } from './semesters.test';
-import { generateUntisLesson } from '../../factories/untisLesson';
-import { generateUntisTeacher } from '../../factories/untisTeacher';
+import { Prisma } from 'prisma/generated/client.js';
+import Semesters from '../../../src/models/semester.js';
+import prisma from 'src/prisma.js';
+import untisTeachers from '../../../src/models/untisTeacher.js';
+import { createSemester } from './semesters.test.js';
+import { generateUntisLesson } from '../../factories/untisLesson.js';
+import { generateUntisTeacher } from '../../factories/untisTeacher.js';
 import _ from 'lodash';
-import { prepareLesson, prepareTeacher } from '../../../src/models/untis.helpers';
+import { prepareLesson, prepareTeacher } from '../../../src/models/untis.helpers.js';
 
 export const createUntisLesson = async (props: Partial<Prisma.UntisLessonUncheckedCreateInput>) => {
     let sid: string = '';

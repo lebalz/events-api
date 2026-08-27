@@ -1,4 +1,4 @@
-import { Prisma } from '@prisma/client';
+import { Prisma } from 'prisma/generated/client.js';
 import { faker } from '@faker-js/faker';
 
 export const generateDepartment = (

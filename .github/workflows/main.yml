@@ -23,19 +23,24 @@ jobs:
           # Maps tcp port 5432 on service container to the host
           - 5432:5432
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v6
     - name: Use Node.js ${{ matrix.node-version }}
-      uses: actions/setup-node@v4
+      uses: actions/setup-node@v6
       with:
-        node-version: 22
+        node-version: '24.18'
         cache: 'yarn'
     - run: yarn install --ignore-engines
+    - name: Generate Prisma client
+      run: yarn prisma generate
+      env:
+        DATABASE_URL: "postgres://postgres:postgres@localhost:5432/events_api_test"
     - name: Run unit tests
       run: yarn run test:db:create && yarn run cov:unit
       env:
         DATABASE_URL: "postgres://postgres:postgres@localhost:5432/events_api_test"
+        BETTER_AUTH_URL: "http://localhost:3000"
     - name: Upload coverage reports to Codecov
-      uses: codecov/codecov-action@v4
+      uses: codecov/codecov-action@v7
       with:
         directory: ./coverage.unit/
       env:
@@ -61,19 +66,24 @@ jobs:
           # Maps tcp port 5432 on service container to the host
           - 5432:5432
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v6
     - name: Use Node.js ${{ matrix.node-version }}
-      uses: actions/setup-node@v4
+      uses: actions/setup-node@v6
       with:
-        node-version: 22
+        node-version: '24.18'
         cache: 'yarn'
-    - run: yarn install
+    - run: yarn install --ignore-engines
+    - name: Generate Prisma client
+      run: yarn prisma generate
+      env:
+        DATABASE_URL: "postgres://postgres:postgres@localhost:5432/events_api_test"
     - name: Run integration tests
       run: yarn run test:db:create && yarn run cov:integration
       env:
         DATABASE_URL: "postgres://postgres:postgres@localhost:5432/events_api_test"
+        BETTER_AUTH_URL: "http://localhost:3000"
     - name: Upload coverage reports to Codecov
-      uses: codecov/codecov-action@v4
+      uses: codecov/codecov-action@v7
       with:
         directory: ./coverage.integration/
       env:

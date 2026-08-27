@@ -1,14 +1,14 @@
-import { Event, EventState, type Job } from '@prisma/client';
+import { Event, EventState, type Job } from 'prisma/generated/client.js';
 import { RequestHandler } from 'express';
-import { IoEvent, RecordType } from '../routes/socketEventTypes';
-import Jobs from '../models/job';
-import { HTTP404Error } from '../utils/errors/Errors';
-import { IoRoom } from '../routes/socketEvents';
-import { ApiEvent } from '../models/event.helpers';
+import { IoEvent, RecordType } from '../routes/socketEventTypes.js';
+import Jobs from '../models/job.js';
+import { HTTP404Error } from '../utils/errors/Errors.js';
+import { IoRoom } from '../routes/socketEvents.js';
+import { ApiEvent } from '../models/event.helpers.js';
 
 const NAME = RecordType.Job;
 
-export const find: RequestHandler = async (req, res, next) => {
+export const find: RequestHandler<{ id: string }> = async (req, res, next) => {
     try {
         const job = await Jobs.findModel(req.user!, req.params.id);
         res.json(job);
@@ -51,7 +51,7 @@ export const update: RequestHandler<{ id: string }, any, { data: Job }> = async 
     }
 };
 
-export const destroy: RequestHandler = async (req, res, next) => {
+export const destroy: RequestHandler<{ id: string }> = async (req, res, next) => {
     try {
         try {
             const job = await Jobs.destroy(req.user!, req.params.id);

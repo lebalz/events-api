@@ -1,6 +1,6 @@
 import { WebAPITimetable } from 'webuntis';
-import type { Department, Prisma, Semester, UntisLesson } from '@prisma/client';
-import prisma from '../prisma';
+import type { Department, Prisma, Semester, UntisLesson } from 'prisma/generated/client.js';
+import prisma from 'src/prisma.js';
 import {
     ClassLetterMap,
     Colors,
@@ -9,18 +9,18 @@ import {
     Departments,
     fromDisplayClassName,
     SchoolDepartments
-} from './helpers/departmentNames';
-import { KlassName, mapLegacyClassName } from './helpers/klassNames';
-import Logger from '../utils/logger';
-import { UntisData, fetchUntis as defaultFetchUntis } from './fetchUntis';
-import { getClassYear } from './helpers/untisKlasse';
+} from './helpers/departmentNames.js';
+import { KlassName, mapLegacyClassName } from './helpers/klassNames.js';
+import Logger from '../utils/logger.js';
+import { UntisData, fetchUntis as defaultFetchUntis } from './fetchUntis.js';
+import { getClassYear } from './helpers/untisKlasse.js';
 
 export const toDisplayLetter = (letter: DepartmentLetter) => {
     return letter === DepartmentLetter.FMPaed
         ? DepartmentLetter.FMS
         : letter === DepartmentLetter.MSOP
-            ? DepartmentLetter.ECG
-            : undefined;
+          ? DepartmentLetter.ECG
+          : undefined;
 };
 
 export const syncUntis2DB = async (
@@ -127,7 +127,9 @@ export const syncUntis2DB = async (
     /** UPSERT CLASSES - class names might show up multiple time - normalize them here... */
     const currentClasses = await prisma.untisClass.findMany({});
     const classIdMap = new Map<number, number>();
-    const invalidClassNames = data.classes.filter((c) => c.name.length > 4 || c.name.length < 3).map((c) => c.name);
+    const invalidClassNames = data.classes
+        .filter((c) => c.name.length > 4 || c.name.length < 3)
+        .map((c) => c.name);
     const processableClasses = data.classes.filter((c) => c.name.length <= 4 && c.name.length >= 3);
     processableClasses.forEach((c) => {
         const isoUntisName = mapLegacyClassName(c.name) as KlassName;

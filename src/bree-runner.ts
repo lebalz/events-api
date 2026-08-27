@@ -1,6 +1,9 @@
-import Logger from './utils/logger';
+import Logger from './utils/logger.js';
 import Bree from 'bree';
 import path from 'path';
+import { fileURLToPath } from 'url';
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 if (process.env.NODE_ENV === 'production' || process.env.BREE) {
     const bree = new Bree({

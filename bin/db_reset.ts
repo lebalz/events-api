@@ -1,5 +1,5 @@
-import { Prisma } from '@prisma/client';
-import prisma from '../src/prisma';
+import { Prisma } from 'prisma/generated/client.js';
+import prisma from 'src/prisma.js';
 
 async function main() {
     const res = await prisma.$queryRaw<{ query: string }[]>(

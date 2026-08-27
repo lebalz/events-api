@@ -87,6 +87,8 @@ Table departments {
   description String [not null, default: '']
   letter String [not null, default: '']
   schoolYears Int [not null, default: 4]
+  semesterTransitionMonth Int [not null, default: 7]
+  semesterTransitionDay Int [not null, default: 14]
   displayLetter String
   classLetters String[] [not null]
   department1_Id String [unique]
