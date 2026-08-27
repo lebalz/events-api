@@ -7,7 +7,6 @@ import { auth } from '../auth.js';
 import User from '../models/user.js';
 import { fromNodeHeaders } from 'better-auth/node';
 
-
 export const linkUserPassword: RequestHandler<{ id: string }, any, { pw: string }> = async (
     req,
     res,

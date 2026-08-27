@@ -69,8 +69,8 @@ import { linkUserPassword, revokeUserPassword } from 'src/controllers/admin.js';
 const UPLOAD_DIR = process.env.UPLOAD_DIR
     ? process.env.UPLOAD_DIR
     : process.env.NODE_ENV === 'test'
-        ? 'tests/test-data/uploads'
-        : 'uploads';
+      ? 'tests/test-data/uploads'
+      : 'uploads';
 
 // initialize router
 const router = express.Router();
@@ -141,7 +141,6 @@ router.post('/event_groups/:id/clone', cloneEventGroup);
 
 router.put('/subscriptions/:id', updateSubscription);
 router.post('/subscriptions', createSubscription);
-
 
 router.post('/admin/users/:id/linkUserPassword', linkUserPassword);
 router.post('/admin/users/:id/revokeUserPassword', revokeUserPassword);

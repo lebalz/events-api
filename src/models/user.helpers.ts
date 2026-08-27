@@ -11,7 +11,7 @@ export const prepareUser = (
     actor?: { id: string; role: string }
 ): ApiUser => {
     const isSelf = !actor || actor.id === user.id;
-    const subscription = (user.subscription && isSelf) ? prepareSubscription(user.subscription) : undefined;
+    const subscription = user.subscription && isSelf ? prepareSubscription(user.subscription) : undefined;
     const prepared: ApiUser = {
         ...user,
         subscription: subscription
