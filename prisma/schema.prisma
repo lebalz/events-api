@@ -168,7 +168,7 @@ model Event {
 
 model Subscription {
     id     String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-    user   User   @relation(fields: [userId], references: [id])
+    user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
     userId String @unique @map("user_id") @db.Uuid()
 
     subscribeToAffected Boolean @default(true) @map("subscribe_to_affected")
