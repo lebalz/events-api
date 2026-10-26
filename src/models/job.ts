@@ -48,8 +48,16 @@ function Jobs(db: PrismaClient['job']) {
             };
         },
         async all(actor: User) {
+            const isAdmin = actor.role === Role.ADMIN;
             const models = await db.findMany({
-                where: { userId: actor.id }
+                where: isAdmin ? {
+                    OR: [
+                        { userId: actor.id },
+                        { type: JobType.SYNC_UNTIS }
+                    ]
+                } : {
+                    userId: actor.id
+                }
             });
             return models;
         },
